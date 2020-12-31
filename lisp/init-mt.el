@@ -16,7 +16,7 @@
     "If we are in `tramp-mode', switch to TERM-BUFFER based on DEFAULT-DIR."
     (switch-to-buffer term-buffer)
     ;; Just test tramp file when library `tramp' is loaded.
-    (setq multi-term-tramp-default-dir nil)
+    (setq multi-term-tramp-default-dir default-dir)
     (when (and (featurep 'tramp)
                (tramp-tramp-file-p default-dir))
       (setq multi-term-tramp-default-dir default-dir)
