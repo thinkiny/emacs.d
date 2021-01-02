@@ -4,10 +4,10 @@
 (setq multi-term-program "/bin/bash")
 (setq multi-term-program-switches "--login")
 
-(after-load 'term
+(add-hook 'term-mode-hook (lambda ()
   (define-key term-raw-map (kbd "C-c C-y") 'term-paste)
   (define-key term-raw-map (kbd "C-c C-k") 'term-char-mode)
-  (define-key term-raw-map (kbd "C-c C-j") 'term-line-mode))
+  (define-key term-raw-map (kbd "C-c C-j") 'term-line-mode)))
 
 ;; support different ssh port
 (defvar multi-term-tramp-default-dir nil)

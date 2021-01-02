@@ -37,12 +37,12 @@
   (helm-autoresize-mode 1))
 
 (use-package helm-projectile
-   :after helm
-   :init (helm-projectile-on))
+  :after helm
+  :init (helm-projectile-on))
 
 (use-package helm-ag
-   :after helm
-   :config (setq helm-ag-use-agignore t))
+  :after helm
+  :config (setq helm-ag-use-agignore t))
 
 (use-package helm-xref :after helm)
 

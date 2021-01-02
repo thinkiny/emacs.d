@@ -45,7 +45,7 @@ source or `helm-follow-input-idle-delay' or
                  curr-sel)
         (helm-follow-mode-set-source 1 src)
         (run-with-idle-timer helm-follow-input-idle-delay nil (lambda (curr-sel)
-                                      (when (and helm-alive-p (equal curr-sel (helm-get-selection nil nil (helm-get-current-source))))
+                                      (when (and helm-alive-p (equal curr-sel (helm-get-selection)))
                                         (helm-execute-persistent-action)))
                              curr-sel)))))
 

@@ -5,24 +5,34 @@
 (require 'init-gtags)
 
 (use-package bazel-mode :mode "\\.BUILD$")
-(use-package ccls
-  :config
-  (setq ccls-sem-highlight-method 'font-lock))
+;; use ccls
+;; (use-package ccls
+;;   :config
+;;   (setq ccls-sem-highlight-method 'font-lock))
 
-(after-load 'ccls
-  (require 'dap-cpptools)
+;; (after-load 'ccls
+;;   (require 'dap-cpptools)
+;;   (lsp-register-client
+;;    (make-lsp-client
+;;     :new-connection (lsp-tramp-connection ccls-executable)
+;;     :major-modes '(c-mode c++-mode cuda-mode objc-mode)
+;;     :server-id 'ccls-remote
+;;     :multi-root nil
+;;     :remote? t
+;;     :notification-handlers
+;;     (lsp-ht ("$ccls/publishSkippedRanges" #'ccls--publish-skipped-ranges)
+;;             ("$ccls/publishSemanticHighlight" #'ccls--publish-semantic-highlight))
+;;     :initialization-options nil
+;;     :library-folders-fn nil)))
+
+;; use clangd
+(after-load 'lsp-mode
   (lsp-register-client
-   (make-lsp-client
-    :new-connection (lsp-tramp-connection ccls-executable)
-    :major-modes '(c-mode c++-mode cuda-mode objc-mode)
-    :server-id 'ccls-remote
-    :multi-root nil
-    :remote? t
-    :notification-handlers
-    (lsp-ht ("$ccls/publishSkippedRanges" #'ccls--publish-skipped-ranges)
-            ("$ccls/publishSemanticHighlight" #'ccls--publish-semantic-highlight))
-    :initialization-options nil
-    :library-folders-fn nil)))
+   (make-lsp-client :new-connection (lsp-tramp-connection "clangd")
+                    :major-modes '(c-mode c++-mode objc-mode)
+                    :priority -1
+                    :server-id 'clangd-remote
+                    :remote? t)))
 
 ;; styles
 (require 'google-c-style)
