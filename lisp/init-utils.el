@@ -103,14 +103,15 @@ DOCSTRING and BODY are as in `defun'.
   (when (buffer-live-p (process-buffer proc))
     (display-buffer (process-buffer proc))
     (with-current-buffer (process-buffer proc)
-      (read-only-mode 0)
+      ;;(read-only-mode 0)
       (let ((moving (= (point) (process-mark proc))))
         (save-excursion
           (goto-char (process-mark proc))
           (insert string)
           (set-marker (process-mark proc) (point)))
         (if moving (goto-char (process-mark proc))))
-      (read-only-mode 1))))
+      ;;(read-only-mode 1)
+      )))
 
 
 (defun get-tramp-local-name (path)
