@@ -70,12 +70,12 @@
 (defvar-local lsp-format-at-save t)
 (defun update-lsp-format-at-save (enable)
   (if enable
-      (progn
-        (whitespace-cleanup-mode 0)
-        (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format))
     (progn
       (whitespace-cleanup-mode 1)
-      (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)))
+      (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format))
+    (progn
+        (whitespace-cleanup-mode 0)
+        (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)))
   (setq-local lsp-format-at-save enable)
   (if enable
       (message "enable lsp format at saving files")

@@ -2,17 +2,15 @@
 ;;; Commentary:
 ;;; Code:
 
-(require-package 'exec-path-from-shell)
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns x))
+  :demand t
+  :config
+  (exec-path-from-shell-initialize))
 
-(after-load 'exec-path-from-shell
+(with-eval-after-load 'exec-path-from-shell
   (dolist (var '("SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO" "LANG" "LC_CTYPE" "JAVA_HOME"))
     (add-to-list 'exec-path-from-shell-variables var)))
-
-
-(when (or (memq window-system '(mac ns x))
-          (unless (memq system-type '(ms-dos windows-nt))
-            (daemonp)))
-  (exec-path-from-shell-initialize))
 
 (provide 'init-exec-path)
 ;;; init-exec-path.el ends here
