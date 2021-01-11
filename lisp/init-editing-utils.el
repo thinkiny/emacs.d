@@ -25,8 +25,7 @@
               truncate-lines nil
               truncate-partial-width-windows nil
               nxml-slash-auto-complete-flag t
-              line-number-mode t
-              visual-line-mode t)
+              line-number-mode t)
 
 (add-to-list 'backup-directory-alist
              (cons tramp-file-name-regexp nil))
@@ -230,5 +229,9 @@ With arg N, insert N newlines."
   (setq view-read-only t)
   (unset-all-keys view-mode-map))
 
+;; long line mode
+(unless (fboundp 'global-so-long-mode)
+  (require-package 'so-long))
+(global-so-long-mode 1)
 
 (provide 'init-editing-utils)

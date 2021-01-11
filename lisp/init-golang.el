@@ -1,13 +1,14 @@
 (use-package go-mode
   :after lsp-mode
   :config
-  (setq lsp-go-codelens nil)
   (lsp-register-custom-settings
    '(("gopls.completeUnimported" t t)
      ("gopls.staticcheck" t t)
      ("gopls.deepCompletion" t t))))
 
-(after-load 'lsp-mode
+(after-load 'lsp-go
+  (setq lsp-go-codelens nil)
+  (setq-local lsp-go-env (make-hash-table))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection
                                      (lambda () (cons lsp-go-gopls-server-path lsp-go-gopls-server-args)))
@@ -43,7 +44,5 @@
   (interactive)
   (update-go-module-on nil))
 
-(add-hook 'go-mode-hook (lambda ()
-                          (lsp)
-                          (set-local lsp-go-env (make-hash-table))))
+(add-hook 'go-mode-hook #'lsp)
 (provide 'init-golang)

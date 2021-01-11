@@ -91,7 +91,7 @@ Suitable for inclusion in `c-offsets-alist'."
                         (case-label . +)
                         (statement-case-open . +)
                         (statement-case-intro . +) ; case w/o {
-                        (access-label . /)
+                        (access-label . -)
                         (innamespace . 0)))))
 
 (provide 'google-c-style)
