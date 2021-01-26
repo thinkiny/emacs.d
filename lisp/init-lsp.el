@@ -42,16 +42,17 @@
   (lsp-mode . my-lsp-mode-hook))
 
 (advice-add 'lsp :before (lambda (&optional arg)
-                           (if (file-remote-p (buffer-file-name))
-                               (setq-local lsp-log-io t))))
+                           (when-let ((name (buffer-file-name)))
+                             (if (file-remote-p name)
+                                 (setq-local lsp-log-io t)))))
 
 ;; fix lsp-mode on emacs@28
 (defun start-file-process-shell-command@around (start-file-process-shell-command name buffer &rest args)
-      "Start a program in a subprocess.  Return the process object for it.
+  "Start a program in a subprocess.  Return the process object for it.
 Similar to `start-process-shell-command', but calls `start-file-process'."
-      ;; On remote hosts, the local `shell-file-name' might be useless.
-      (let ((command (mapconcat 'identity args " ")))
-        (funcall start-file-process-shell-command name buffer command)))
+  ;; On remote hosts, the local `shell-file-name' might be useless.
+  (let ((command (mapconcat 'identity args " ")))
+    (funcall start-file-process-shell-command name buffer command)))
 
 (unless (version< emacs-version "28")
   (advice-add 'start-file-process-shell-command :around #'start-file-process-shell-command@around))
@@ -80,17 +81,18 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
 
 (defvar-local lsp-format-at-save t)
 (defun update-lsp-format-at-save (enable)
-  (if enable
-    (progn
-      (whitespace-cleanup-mode 1)
-      (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format))
-    (progn
+  (when (bound-and-true-p lsp-mode)
+    (if enable
+        (progn
+          (whitespace-cleanup-mode 1)
+          (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format))
+      (progn
         (whitespace-cleanup-mode 0)
         (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)))
-  (setq-local lsp-format-at-save enable)
-  (if enable
-      (message "enable lsp format at saving files")
-    (message "disable lsp format at saving files")))
+    (setq-local lsp-format-at-save enable)
+    (if enable
+        (message "enable lsp format at saving files")
+      (message "disable lsp format at saving files"))))
 
 (defun disable-lsp-format-at-save ()
   (interactive)

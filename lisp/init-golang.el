@@ -22,7 +22,7 @@
                                      (setq-local lsp-completion-filter-on-incomplete nil)))))
 
 (defun update-go-module-on (enable)
-  (if (derived-mode-p 'go-mode 'lsp-mode)
+  (if (and (bound-and-true-p lsp-mode) (derived-mode-p 'go-mode))
       (progn
         (clrhash lsp-go-env)
         (if enable

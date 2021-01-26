@@ -54,12 +54,15 @@
 (require 'init-asm)
 (require 'init-run)
 
-;; file
+;;file
 (require 'init-markdown)
 (require 'init-toml)
 (require 'init-yaml)
 (when window-system
   (require 'init-pdf))
+
+;;other
+(require 'init-leetcode)
 
 (when (file-exists-p custom-file)
   (load custom-file))

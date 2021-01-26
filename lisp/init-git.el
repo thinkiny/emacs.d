@@ -28,58 +28,24 @@
       (if prompt
           (magit-log-buffer-file-popup)
         (magit-log-buffer-file t))
-    (vc-print-log))
-
-  (after-load 'vc
-    (define-key vc-prefix-map (kbd "l") 'sanityinc/magit-or-vc-log-file)))
-
+    (vc-print-log)))
 
 (after-load 'magit
-  (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up))
+  (setq magit-refresh-status-buffer nil)
+  (setq auto-revert-buffer-list-filter 'magit-auto-revert-repository-buffer-p)
+  (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
+  (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window)
+  (define-key magit-hunk-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
 
-(require-package 'magit-todos)
-
-(require-package 'fullframe)
-(after-load 'magit
-  (fullframe magit-status magit-mode-quit-window))
-
-(when (maybe-require-package 'git-commit)
-  (add-hook 'git-commit-mode-hook 'goto-address-mode))
-
-
 (when *is-a-mac*
   (after-load 'magit
     (add-hook 'magit-mode-hook (lambda () (local-unset-key [(meta h)])))))
 
-
 
 ;; Convenient binding for vc-git-grep
 (after-load 'vc
+  (define-key vc-prefix-map (kbd "l") 'sanityinc/magit-or-vc-log-file)
   (define-key vc-prefix-map (kbd "f") 'vc-git-grep))
-
-(after-load 'compile
-  (dolist (defn (list '(git-svn-updated "^\t[A-Z]\t\\(.*\\)$" 1 nil nil 0 1)
-                      '(git-svn-needs-update "^\\(.*\\): needs update$" 1 nil nil 2 1)))
-    (add-to-list 'compilation-error-regexp-alist-alist defn)
-    (add-to-list 'compilation-error-regexp-alist (car defn))))
-
-(defvar git-svn--available-commands nil "Cached list of git svn subcommands")
-(defun git-svn--available-commands ()
-  (or git-svn--available-commands
-      (setq git-svn--available-commands
-            (sanityinc/string-all-matches
-             "^  \\([a-z\\-]+\\) +"
-             (shell-command-to-string "git svn help") 1))))
-
-(autoload 'vc-git-root "vc-git")
-
-(defun git-svn (dir command)
-  "Run a git svn subcommand in DIR."
-  (interactive (list (read-directory-name "Directory: ")
-                     (completing-read "git-svn command: " (git-svn--available-commands) nil t nil nil (git-svn--available-commands))))
-  (let* ((default-directory (vc-git-root dir))
-         (compilation-buffer-name-function (lambda (major-mode-name) "*git-svn*")))
-    (compile (concat "git svn " command))))
 
 (provide 'init-git)
 ;;; init-git.el ends here
