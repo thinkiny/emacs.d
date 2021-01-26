@@ -124,4 +124,21 @@ DOCSTRING and BODY are as in `defun'.
   (map-keymap (lambda (key binding)
                 (define-key keymap (vector key) nil))
               keymap))
+
+(defun deserialize-from-file (file)
+  "Read a lisp expression from FILE."
+  (with-temp-buffer
+    (insert-file-contents file)
+    (cl-first (read-from-string
+               (buffer-substring-no-properties (point-min) (point-max))))))
+
+(defun serialize-to-file (file to-persist)
+  "Serialize TO-PERSIST to FILE."
+  (with-demoted-errors
+      "Failed to persist file: %S"
+    (make-directory (file-name-directory file) t)
+    (with-temp-file file
+      (erase-buffer)
+      (insert (prin1-to-string to-persist)))))
+
 (provide 'init-utils)

@@ -1,7 +1,7 @@
 (defun my-asm-mode-hook ()
   ;; you can use `comment-dwim' (M-;) for this kind of behaviour anyway
   (local-unset-key (vector asm-comment-char))
-  (electric-indent-local-mode)
+  (electric-indent-local-mode -1)
   (setq tab-always-indent (default-value 'tab-always-indent))
 
   (defun asm-calculate-indentation ()

@@ -50,7 +50,7 @@
 (setq-default vlf-tune-enabled nil)
 
 ;; Enter key executes newline-and-indent
-(global-set-key (kbd "RET") 'newline-and-indent)
+;;(global-set-key (kbd "RET") 'newline-and-indent)
 (defun sanityinc/newline-at-end-of-line ()
   "Move to end of line, enter a newline, and reindent."
   (interactive)
@@ -174,10 +174,7 @@ With arg N, insert N newlines."
 
 (require 'scroll-other-window)
 (fset 'yes-or-no-p 'y-or-n-p)
-(when (fboundp 'prog-mode)
-  (add-hook 'prog-mode-hook 'goto-address-prog-mode))
 (setq goto-address-mail-face 'link)
-
 (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
 
 ;;hs-minor-mode
@@ -222,7 +219,6 @@ With arg N, insert N newlines."
 (defun unset-proxy()
   (interactive)
   (setq url-proxy-services nil))
-
 
 ;; view-mode
 (after-load 'view

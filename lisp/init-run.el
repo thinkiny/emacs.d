@@ -1,10 +1,7 @@
 (defun load-run-conf-from-file (file)
   (if (file-exists-p file)
-      (dap--read-from-file file)
+      (deserialize-from-file file)
     (make-hash-table :test 'equal)))
-
-(defun save-run-conf-to-file (file conf)
-  (dap--persist file conf))
 
 (defmacro register-run-template (mode get-args execute-args)
   "Register run template."
@@ -25,7 +22,7 @@
              (interactive)
              (let ((conf (funcall ,get-args)))
                (puthash (buffer-file-name) conf ,table-name)
-               (save-run-conf-to-file ,conf-file ,table-name)
+               (serialize-to-file ,conf-file ,table-name)
                conf))
 
          (defun ,reset-name()

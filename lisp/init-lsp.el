@@ -21,6 +21,7 @@
         lsp-idle-delay 0.500
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
+        lsp-enable-dap-auto-configure nil
         helm-lsp-treemacs-icons nil
         warning-minimum-level :error)
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
@@ -64,11 +65,10 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
 (use-package hydra)
 (use-package posframe)
 (use-package dap-mode
-  :demand t
+  :after lsp-mode
   :config
   (setq dap-auto-configure-features '(locals tooltip))
   (setq dap-debug-restart-keep-session nil)
-  (dap-auto-configure-mode)
   (define-key dap-mode-map (kbd "C-c /") #'dap-lsp-debug))
 
 (add-hook 'dap-stopped-hook
@@ -79,6 +79,7 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
   (dap-delete-all-sessions)
   (call-interactively 'dap-debug))
 
+;; format
 (defvar-local lsp-format-at-save t)
 (defun update-lsp-format-at-save (enable)
   (when (bound-and-true-p lsp-mode)

@@ -26,7 +26,6 @@
 ;;(require 'init-eshell)
 (require 'init-mt)
 (require 'init-rpm)
-(require 'init-engine)
 (require 'init-git)
 (require 'init-http)
 (require 'init-dired)
