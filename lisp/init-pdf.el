@@ -1,6 +1,8 @@
 ;; pdf-tools
 (use-package pdf-tools
   :demand t
+  :init
+  (require 'pdf-macs)
   :config
   (require 'pdf-continuous-scroll-mode)
   (pdf-tools-install nil t t nil)

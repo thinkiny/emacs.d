@@ -45,6 +45,17 @@
                            (if (file-remote-p (buffer-file-name))
                                (setq-local lsp-log-io t))))
 
+;; fix lsp-mode on emacs@28
+(defun start-file-process-shell-command@around (start-file-process-shell-command name buffer &rest args)
+      "Start a program in a subprocess.  Return the process object for it.
+Similar to `start-process-shell-command', but calls `start-file-process'."
+      ;; On remote hosts, the local `shell-file-name' might be useless.
+      (let ((command (mapconcat 'identity args " ")))
+        (funcall start-file-process-shell-command name buffer command)))
+
+(unless (version< emacs-version "28")
+  (advice-add 'start-file-process-shell-command :around #'start-file-process-shell-command@around))
+
 (use-package helm-lsp :after lsp-mode)
 ;;(use-package lsp-sonarlint :after lsp-mode)
 

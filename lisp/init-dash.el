@@ -10,15 +10,15 @@
 
 (add-hook 'c++-mode-hook
           (lambda ()
-            (setq-local dash-docs-docsets '("C++" "C" "Boost"))))
+            (setq-local dash-docs-docsets '("C++" "C" "Boost" "Man_Pages"))))
 
 (add-hook 'scala-mode-hook
           (lambda ()
-            (setq-local dash-docs-docsets '("Scala" "Java_SE8"))))
+            (setq-local dash-docs-docsets '("Scala" "Java_SE11"))))
 
 (add-hook 'java-mode-hook
           (lambda ()
-            (setq-local dash-docs-docsets '("Java_SE8"))))
+            (setq-local dash-docs-docsets '("Java_SE11"))))
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
