@@ -1,7 +1,9 @@
 ;;; init-lisp.el --- Emacs lisp settings, and common config for other lisps -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code:
+(require-package 'ipretty)
 (add-hook 'emacs-lisp-mode-hook (lambda ()
+                                  (ipretty-mode)
                                   (setq mode-name "ELisp")))
 
 (defun sanityinc/headerise-elisp ()
@@ -17,35 +19,6 @@
               ";;; Code:\n\n")
       (goto-char (point-max))
       (insert ";;; " fname " ends here\n"))))
-
-
-;; Make C-x C-e run 'eval-region if the region is active
-
-(defun sanityinc/eval-last-sexp-or-region (prefix)
-  "Eval region from BEG to END if active, otherwise the last sexp."
-  (interactive "P")
-  (if (and (mark) (use-region-p))
-      (eval-region (min (point) (mark)) (max (point) (mark)))
-    (pp-eval-last-sexp prefix)))
-
-(global-set-key [remap eval-expression] 'pp-eval-expression)
-
-(with-eval-after-load 'lisp-mode
-  (define-key emacs-lisp-mode-map (kbd "C-x C-e") 'sanityinc/eval-last-sexp-or-region)
-  (define-key emacs-lisp-mode-map (kbd "C-c C-e") 'pp-eval-expression))
-
-(when (maybe-require-package 'ipretty)
-  (add-hook 'after-init-hook 'ipretty-mode))
-
-
-(defun sanityinc/make-read-only (expression out-buffer-name)
-  "Enable `view-mode' in the output buffer - if any - so it can be closed with `\"q\"."
-  (when (get-buffer out-buffer-name)
-    (with-current-buffer out-buffer-name
-      (view-mode 1))))
-(advice-add 'pp-display-expression :after 'sanityinc/make-read-only)
-
-
 
 (defun sanityinc/load-this-file ()
   "Load the current file or buffer.
@@ -238,48 +211,21 @@ there is no current file, eval the current buffer."
   (define-key emacs-lisp-mode-map (kbd "C-c x") 'macrostep-expand))
 
 
-
 ;; A quick way to jump to the definition of a function given its key binding
 (global-set-key (kbd "C-h K") 'find-function-on-key)
-
-
-
-;; Extras for theme editing
-(when (maybe-require-package 'rainbow-mode)
-  (defun sanityinc/enable-rainbow-mode-if-theme ()
-    (when (and (buffer-file-name) (string-match-p "\\(color-theme-\\|-theme\\.el\\)" (buffer-file-name)))
-      (rainbow-mode)))
-  (add-hook 'emacs-lisp-mode-hook 'sanityinc/enable-rainbow-mode-if-theme)
-  (add-hook 'help-mode-hook 'rainbow-mode)
-  (with-eval-after-load 'rainbow-mode
-    (diminish 'rainbow-mode)))
-
-
 
 (when (maybe-require-package 'highlight-quoted)
   (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
 
-
-(when (maybe-require-package 'flycheck)
-  (require-package 'flycheck-package)
-  (with-eval-after-load 'flycheck
-    (with-eval-after-load 'elisp-mode
-      (flycheck-package-setup))))
-
-
-
-;; ERT
-(with-eval-after-load 'ert
-  (define-key ert-results-mode-map (kbd "g") 'ert-results-rerun-all-tests))
-
-
 (maybe-require-package 'cl-libify)
 
-
+
 (maybe-require-package 'flycheck-relint)
 
-
-
 (maybe-require-package 'cask-mode)
+
+(use-package erefactor
+  :bind (:map emacs-lisp-mode-map
+              ("C-c r" . #'erefactor-rename-symbol-in-package)))
 
 (provide 'init-lisp)

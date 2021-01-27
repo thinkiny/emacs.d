@@ -38,14 +38,7 @@
   (define-key lsp-mode-map (kbd "C-c e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
-  (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous)
-  :hook
-  (lsp-mode . #'my-lsp-mode-hook))
-
-(advice-add 'lsp :before (lambda (&optional arg)
-                           (when-let ((name (buffer-file-name)))
-                             (if (file-remote-p name)
-                                 (setq-local lsp-log-io t)))))
+  (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
 
 ;; fix lsp-mode on emacs@28
 (defun start-file-process-shell-command@around (start-file-process-shell-command name buffer &rest args)
@@ -83,7 +76,7 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
 (defvar-local lsp-enable-save-format t)
 (defun lsp-save-format-on ()
   (interactive)
-  (when (bound-and-true-p lsp-mode)
+  (when lsp-mode
     (whitespace-cleanup-mode 1)
     (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)
     (setq-local lsp-enable-save-format t)
@@ -91,7 +84,7 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
 
 (defun lsp-save-format-off ()
   (interactive)
-  (when (bound-and-true-p lsp-mode)
+  (when lsp-mode
     (whitespace-cleanup-mode 0)
     (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
     (setq-local lsp-enable-save-format nil)
@@ -102,11 +95,19 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
   (when-let ((project-root (projectile-project-root)))
     (write-region (format "((%s . ((eval . (lsp-save-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
-(defun my-lsp-mode-hook()
-  (setq-local flycheck-idle-change-delay 1.0)
-  (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
-  (setq-local global-whitespace-cleanup-mode nil)
-  (lsp-format-on-save lsp-enable-save-format))
+;; tramp
+(advice-add 'lsp :before (lambda (&optional arg)
+                           (when-let ((name (buffer-file-name)))
+                             (if (file-remote-p name)
+                                 (setq-local lsp-log-io t)))))
+
+;; hook
+(add-hook 'lsp-mode-hook (lambda ()
+                           (setq-local flycheck-idle-change-delay 1.0)
+                           (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+                           (setq-local global-whitespace-cleanup-mode nil)
+                           (if lsp-enable-save-format
+                               (lsp-save-format-on))))
 
 ;; lsp-ui
 (use-package lsp-ui
