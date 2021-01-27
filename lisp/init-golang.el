@@ -16,9 +16,9 @@
                     :priority 0
                     :server-id 'gopls-remote
                     :completion-in-comments? t
-                    :library-folders-fn #'lsp-go--library-default-directories)))
-                    ;; :after-open-fn (lambda ()
-;;                  (setq-local lsp-completion-filter-on-incomplete nil)))))
+                    :library-folders-fn #'lsp-go--library-default-directories
+                    :after-open-fn (lambda ()
+                                     (setq-local lsp-completion-filter-on-incomplete nil)))))
 
 (defun check-valid-lsp-go-mode()
   (let ((res (and (bound-and-true-p lsp-mode) (derived-mode-p 'go-mode))))

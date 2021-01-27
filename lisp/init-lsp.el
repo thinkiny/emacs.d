@@ -100,11 +100,11 @@
 
 ;; lsp-ui
 (use-package lsp-ui
-  :ensure t
   :after lsp-mode
   :config
   (setq lsp-ui-sideline-update-mode 'line
         lsp-ui-doc-enable nil
+        lsp-ui-doc-position 'at-point
         lsp-ui-sideline-enable t
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-show-symbol nil

@@ -6,12 +6,12 @@
   :mode "\\.s\\(cala\\|bt\\|c\\)$")
 
 (defun my-scala-mode-hook()
+  (lsp)
+  (lsp-lens-mode 1)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
      ((string= ext "sc")  (setq-local lsp-skip-format-at-save t))
-     ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode))))
-  (lsp)
-  (lsp-lens-mode 1))
+     ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode)))))
 
 (defun sbt-shell()
   (interactive)
