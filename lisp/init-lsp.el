@@ -40,7 +40,7 @@
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
   (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous)
   :hook
-  (lsp-mode . my-lsp-mode-hook))
+  (lsp-mode . #'my-lsp-mode-hook))
 
 (advice-add 'lsp :before (lambda (&optional arg)
                            (when-let ((name (buffer-file-name)))
@@ -80,40 +80,33 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
   (call-interactively 'dap-debug))
 
 ;; format
-(defvar-local lsp-format-at-save t)
-(defun update-lsp-format-at-save (enable)
-  (when (bound-and-true-p lsp-mode)
-    (if enable
-        (progn
-          (whitespace-cleanup-mode 1)
-          (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format))
-      (progn
-        (whitespace-cleanup-mode 0)
-        (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)))
-    (setq-local lsp-format-at-save enable)
-    (if enable
-        (message "enable lsp format at saving files")
-      (message "disable lsp format at saving files"))))
-
-(defun disable-lsp-format-at-save ()
+(defvar-local lsp-enable-save-format t)
+(defun lsp-save-format-on ()
   (interactive)
-  (update-lsp-format-at-save nil))
+  (when (bound-and-true-p lsp-mode)
+    (whitespace-cleanup-mode 1)
+    (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)
+    (setq-local lsp-enable-save-format t)
+    (message "enable lsp format on save")))
+
+(defun lsp-save-format-off ()
+  (interactive)
+  (when (bound-and-true-p lsp-mode)
+    (whitespace-cleanup-mode 0)
+    (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
+    (setq-local lsp-enable-save-format nil)
+    (message "disable lsp format on save")))
 
 (defun disable-lsp-format-this-project()
   (interactive)
   (when-let ((project-root (projectile-project-root)))
-    (write-region (format "((%s . ((eval . (disable-lsp-format-at-save)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
-
-(defun enable-lsp-format-at-save ()
-  (interactive)
-  (update-lsp-format-at-save t))
+    (write-region (format "((%s . ((eval . (lsp-save-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
 (defun my-lsp-mode-hook()
   (setq-local flycheck-idle-change-delay 1.0)
   (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
   (setq-local global-whitespace-cleanup-mode nil)
-  (if lsp-format-at-save
-      (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)))
+  (lsp-format-on-save lsp-enable-save-format))
 
 ;; lsp-ui
 (use-package lsp-ui

@@ -21,28 +21,26 @@
                     :after-open-fn (lambda ()
                                      (setq-local lsp-completion-filter-on-incomplete nil)))))
 
-(defun update-go-module-on (enable)
-  (if (and (bound-and-true-p lsp-mode) (derived-mode-p 'go-mode))
-      (progn
-        (clrhash lsp-go-env)
-        (if enable
-            (puthash "GO111MODULE" "on" lsp-go-env)
-          (progn
-            (puthash "GO111MODULE" "off" lsp-go-env)
-            (puthash "GOPATH" (get-tramp-local-name (projectile-project-root)) lsp-go-env)))
-        (call-interactively #'lsp-workspace-restart)
-        (if enable
-            (message "go module on")
-          (message "go module off")))
+(defun check-valid-go-mode()
+  (unless (and (bound-and-true-p lsp-mode) (derived-mode-p 'go-mode))
     (message "current file is not in go-mode and lsp-mode")))
 
-(defun enable-go-module ()
+(defun lsp-go-module-on ()
   (interactive)
-  (update-go-module-on t))
+  (when (check-valid-go-mode)
+    (clrhash lsp-go-env)
+    (puthash "GO111MODULE" "on" lsp-go-env)
+    (call-interactively #'lsp-workspace-restart)
+    (message "lsp go module on")))
 
-(defun disable-go-module ()
+(defun lsp-go-module-off ()
   (interactive)
-  (update-go-module-on nil))
+  (when (check-valid-go-mode)
+      (clrhash lsp-go-env)
+      (puthash "GO111MODULE" "off" lsp-go-env)
+      (puthash "GOPATH" (get-tramp-local-name (projectile-project-root)) lsp-go-env)
+      (call-interactively #'lsp-workspace-restart)
+      (message "go module off")))
 
 (add-hook 'go-mode-hook #'lsp)
 (provide 'init-golang)

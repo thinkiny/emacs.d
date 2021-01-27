@@ -37,16 +37,6 @@
                     :remote? t)))
 
 ;; styles
-(defun enable-tab-indent()
-    (interactive)
-    (setq-local indent-tabs-mode t)
-    (setq-local c-basic-offset tab-width))
-
-(defun disable-tab-indent()
-    (interactive)
-    (setq-local indent-tabs-mode nil)
-    (kill-local-variable c-basic-offset))
-
 (require 'google-c-style)
 (defun my-c-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -

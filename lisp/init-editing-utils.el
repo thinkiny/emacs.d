@@ -230,4 +230,15 @@ With arg N, insert N newlines."
   (require-package 'so-long))
 (global-so-long-mode 1)
 
+;; tab indent
+(defun tab-indent-on()
+  (interactive)
+  (setq-local indent-tabs-mode t)
+  (setq-local c-basic-offset tab-width))
+
+(defun tab-indent-off()
+  (interactive)
+  (setq-local indent-tabs-mode nil)
+  (kill-local-variable c-basic-offset))
+
 (provide 'init-editing-utils)
