@@ -1,7 +1,7 @@
 (use-package helm-dash
   :config
   (setq dash-docs-enable-debugging nil)
-  ;;(setq dash-docs-browser-func 'browse-url-default-macosx-browser)
+  ;;(setq dash-docs-browser-func #'eww-browse-url)
   (setq dash-docs-browser-func #'xwidget-webkit-browse-url)
   (setq dash-docs-min-length 3)
   :bind (:map global-map
@@ -10,7 +10,7 @@
 
 (add-hook 'c++-mode-hook
           (lambda ()
-            (setq-local dash-docs-docsets '("C++" "C" "Boost" "Man_Pages"))))
+            (setq-local dash-docs-docsets '("C++" "C" "Boost" "Man_Pages" "Linux"))))
 
 (add-hook 'scala-mode-hook
           (lambda ()
@@ -34,6 +34,6 @@
 
 (add-hook 'sh-mode-hook
           (lambda ()
-            (setq-local dash-docs-docsets '("Bash"))))
+            (setq-local dash-docs-docsets '("Bash" "Linux"))))
 
 (provide 'init-dash)

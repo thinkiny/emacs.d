@@ -1,12 +1,10 @@
 ;; pdf-tools
 (use-package pdf-tools
   :demand t
-  :init
-  (require 'pdf-macs)
   :config
-  (require 'pdf-continuous-scroll-mode)
-  (pdf-tools-install nil t t nil)
   (set-face-attribute 'outline-1 nil :height 1.0)
+  (pdf-tools-install t t t nil)
+  (require 'pdf-continuous-scroll-mode)
   (setq pdf-view-use-unicode-ligther nil)
   (setq pdf-view-use-scaling t)
   (setq pdf-view-use-imagemagick nil)
@@ -126,7 +124,8 @@
                                 (blink-cursor-mode -1)
                                 (eldoc-mode -1)
                                 (whitespace-cleanup-mode -1)
-                                (electric-indent-mode -1)
+                                (electric-pair-local-mode -1)
+                                (electric-indent-local-mode -1)
                                 (font-lock-mode -1)
                                 (yas-minor-mode -1)
                                 (setq-local left-fringe-width 1)

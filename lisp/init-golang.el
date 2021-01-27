@@ -21,7 +21,7 @@
 ;;                  (setq-local lsp-completion-filter-on-incomplete nil)))))
 
 (defun check-valid-lsp-go-mode()
-  (let ((res (and lsp-mode (derived-mode-p 'go-mode))))
+  (let ((res (and (bound-and-true-p lsp-mode) (derived-mode-p 'go-mode))))
     (unless res
       (message "current file is not in go-mode and lsp-mode"))
     res))
