@@ -68,16 +68,14 @@
   (when (bound-and-true-p lsp-mode)
     (whitespace-cleanup-mode 1)
     (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)
-    (setq-local lsp-enable-save-format t)
-    (message "enable lsp format on save")))
+    (setq-local lsp-enable-save-format t)))
 
 (defun lsp-save-format-off ()
   (interactive)
   (when (bound-and-true-p lsp-mode)
     (whitespace-cleanup-mode 0)
     (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
-    (setq-local lsp-enable-save-format nil)
-    (message "disable lsp format on save")))
+    (setq-local lsp-enable-save-format nil)))
 
 (defun disable-lsp-format-this-project()
   (interactive)

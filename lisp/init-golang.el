@@ -31,8 +31,7 @@
   (when (check-valid-lsp-go-mode)
     (clrhash lsp-go-env)
     (puthash "GO111MODULE" "on" lsp-go-env)
-    (call-interactively #'lsp-workspace-restart)
-    (message "lsp go module on")))
+    (call-interactively #'lsp-workspace-restart)))
 
 (defun lsp-go-module-off ()
   (interactive)
@@ -40,8 +39,7 @@
       (clrhash lsp-go-env)
       (puthash "GO111MODULE" "off" lsp-go-env)
       (puthash "GOPATH" (get-tramp-local-name (projectile-project-root)) lsp-go-env)
-      (call-interactively #'lsp-workspace-restart)
-      (message "go module off")))
+      (call-interactively #'lsp-workspace-restart)))
 
 (add-hook 'go-mode-hook #'lsp)
 (provide 'init-golang)
