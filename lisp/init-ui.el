@@ -141,8 +141,6 @@
                 " "
                 global-mode-string))
 
-(use-package helm-themes)
-
 ;; (use-package centaur-tabs
 ;;   :demand
 ;;   :config

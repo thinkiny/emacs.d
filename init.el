@@ -1,8 +1,10 @@
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (setq inhibit-compacting-font-caches t)
-(setq gc-cons-threshold (* 256 1024 1024))
+(setq gc-cons-threshold (* 128 1024 1024))
 (setq read-process-output-max (* 2048 1024))
+(defconst *use-helm* t)
+(defconst *use-ivy* nil)
 
 (require 'init-package)
 (require 'init-utils)
@@ -16,23 +18,16 @@
 (require 'init-ibuffer)
 (require 'init-recentf)
 
-(require 'init-helm)
+(if *use-helm*
+    (require 'init-helm))
+
 (require 'init-company)
 (require 'init-windows)
 (require 'init-editing-utils)
-
 (require 'init-projectile)
 (require 'init-yasnippet)
-;;(require 'init-eshell)
-(require 'init-mt)
-(require 'init-rpm)
-(require 'init-git)
-(require 'init-http)
 (require 'init-dired)
 (require 'init-whitespace)
-(require 'init-xwidget-webkit)
-(require 'init-dash)
-(require 'init-god)
 (require 'init-tramp)
 
 ;;language
@@ -61,6 +56,14 @@
   (require 'init-pdf))
 
 ;;other
+;;(require 'init-eshell)
+;;(require 'init-mt)
+(require 'init-rpm)
+(require 'init-git)
+(require 'init-http)
+(require 'init-xwidget-webkit)
+(require 'init-dash)
+(require 'init-god)
 (require 'init-leetcode)
 
 (when (file-exists-p custom-file)

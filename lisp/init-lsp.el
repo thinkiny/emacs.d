@@ -22,7 +22,6 @@
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil
-        helm-lsp-treemacs-icons nil
         warning-minimum-level :error)
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
@@ -30,7 +29,6 @@
   (define-key lsp-mode-map (kbd "C-c w r") 'lsp-workspace-restart)
   (define-key lsp-mode-map (kbd "C-c w a") 'lsp-workspace-folders-add)
   (define-key lsp-mode-map (kbd "C-c w d") 'lsp-workspace-folders-remove)
-  (define-key lsp-mode-map (kbd "C-c w s") 'helm-lsp-workspace-symbol)
   (define-key lsp-mode-map (kbd "C-c SPC") 'lsp-signature-activate)
   (define-key lsp-mode-map (kbd "C-c y") 'dap-hydra)
   ;;(define-key lsp-mode-map (kbd "C-c v") 'lsp-ui-peek-find-implementation)
@@ -38,9 +36,18 @@
   (define-key lsp-mode-map (kbd "C-c e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
-  (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
+  (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous)
 
-(use-package helm-lsp :after lsp-mode)
+  (dolist (func '(lsp lsp-restart-workspace))
+    (advice-add func :around #'tramp-ssh-control-master-none)))
+
+(when *use-helm*
+  (use-package helm-lsp
+    :after lsp-mode
+    :config
+    (setq helm-lsp-treemacs-icons nil)
+    (define-key lsp-mode-map (kbd "C-c w s") 'helm-lsp-workspace-symbol)
+    (define-key lsp-mode-map (kbd "C-c l") 'helm-imenu)))
 ;;(use-package lsp-sonarlint :after lsp-mode)
 
 ;;dap-mode

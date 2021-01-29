@@ -1,7 +1,6 @@
 (require-package 'cff)
 (require-package 'cmake-mode)
 
-;;(require 'init-rtags)
 (require 'init-gtags)
 
 (use-package bazel-mode :mode "\\.BUILD$")

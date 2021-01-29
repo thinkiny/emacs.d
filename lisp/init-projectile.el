@@ -1,14 +1,12 @@
 (use-package projectile
-  :ensure t
-  :init
-  (projectile-mode +1)
   :config
-  (diminish 'projectile-mode)
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-  (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
   (add-to-list 'projectile-globally-ignored-directories ".metals")
   (add-to-list 'projectile-globally-ignored-directories ".bloop")
-  (add-to-list 'projectile-globally-ignored-directories ".settings"))
+  (add-to-list 'projectile-globally-ignored-directories ".settings")
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
+  (projectile-mode)
+  (diminish 'projectile-mode))
 
 (defun projectile-kill-not-project-buffers ()
   "Kill buffers not belongs to this project including dired-mode buffer"
@@ -29,7 +27,6 @@
 (use-package ag
   :config
   (set-face-attribute 'ag-hit-face nil :inherit 'highlight)
-  (set-face-attribute 'ag-match-face nil :inherit 'helm-match-item)
   (setq ag-reuse-buffers t)
   (setq ag-group-matches nil)
   (setq ag-arguments (delete "--stats" ag-arguments))
@@ -37,6 +34,5 @@
   (add-hook 'ag-search-finished-hook
             (lambda ()
               (pop-to-buffer next-error-last-buffer))))
-
 
 (provide 'init-projectile)

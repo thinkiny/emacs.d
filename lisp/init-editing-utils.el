@@ -27,16 +27,13 @@
               nxml-slash-auto-complete-flag t
               line-number-mode t)
 
+(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
 (add-to-list 'backup-directory-alist
              (cons tramp-file-name-regexp nil))
 
 (delete-selection-mode 1)
 (diminish 'visual-line-mode)
-(add-hook 'after-init-hook 'global-auto-revert-mode)
-(setq global-auto-revert-non-file-buffers t
-      auto-revert-verbose nil)
-(after-load 'autorevert
-  (diminish 'auto-revert-mode))
+
 (add-hook 'after-init-hook 'transient-mark-mode)
 
 (global-set-key "\C-c$" 'toggle-truncate-lines)
@@ -48,16 +45,6 @@
 (setq-default vlf-application 'dont-ask)
 (setq-default vlf-batch-size 4096000)
 (setq-default vlf-tune-enabled nil)
-
-;; Enter key executes newline-and-indent
-;;(global-set-key (kbd "RET") 'newline-and-indent)
-(defun sanityinc/newline-at-end-of-line ()
-  "Move to end of line, enter a newline, and reindent."
-  (interactive)
-  (move-end-of-line 1)
-  (newline-and-indent))
-
-(global-set-key (kbd "S-<return>") 'sanityinc/newline-at-end-of-line)
 
 (require-package 'browse-kill-ring)
 (setq browse-kill-ring-separator "\f")

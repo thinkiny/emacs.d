@@ -1,12 +1,13 @@
-(use-package helm-dash
-  :config
-  (setq dash-docs-enable-debugging nil)
-  ;;(setq dash-docs-browser-func #'eww-browse-url)
-  (setq dash-docs-browser-func #'xwidget-webkit-browse-url)
-  (setq dash-docs-min-length 3)
-  :bind (:map global-map
-              ("C-c d"  . helm-dash)
-              ("C-." . helm-dash-at-point)))
+(when *use-helm*
+  (use-package helm-dash
+    :config
+    (setq dash-docs-enable-debugging nil)
+    ;;(setq dash-docs-browser-func #'eww-browse-url)
+    (setq dash-docs-browser-func #'xwidget-webkit-browse-url)
+    (setq dash-docs-min-length 3)
+    :bind (:map global-map
+                ("C-c d"  . helm-dash)
+                ("C-." . helm-dash-at-point))))
 
 (add-hook 'c++-mode-hook
           (lambda ()

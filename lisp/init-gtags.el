@@ -1,12 +1,3 @@
-(use-package helm-gtags
-  :config
-  (setq helm-gtags-ignore-case t
-        helm-gtags-auto-update t
-        helm-gtags-path-style 'relative
-        helm-gtags-use-input-at-cursor t
-        helm-gtags-pulse-at-cursor t
-        helm-gtags-suggested-key-mapping t))
-
 (defun gtags-get-rootpath ()
   (let (path buffer)
     (save-excursion
@@ -17,14 +8,23 @@
       (kill-buffer buffer))
     path))
 
-(add-hook 'helm-gtags-mode-hook
-          (lambda ()
-            (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-find-pattern)
-            (define-key helm-gtags-mode-map (kbd "M-.") 'helm-gtags-find-symbol)
-            (define-key helm-gtags-mode-map (kbd "C-c f") 'helm-gtags-find-rtag)
-            (define-key helm-gtags-mode-map (kbd "C-c l") 'helm-gtags-parse-file)))
+(when *use-helm*
+  (use-package helm-gtags
+    :config
+    (setq helm-gtags-ignore-case t
+          helm-gtags-auto-update t
+          helm-gtags-path-style 'relative
+          helm-gtags-use-input-at-cursor t
+          helm-gtags-pulse-at-cursor t
+          helm-gtags-suggested-key-mapping t))
 
-(add-hook 'lua-mode-hook 'helm-gtags-mode)
-;;(add-hook 'go-mode-hook 'helm-gtags-mode)
+  (add-hook 'helm-gtags-mode-hook
+            (lambda ()
+              (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-find-pattern)
+              (define-key helm-gtags-mode-map (kbd "M-.") 'helm-gtags-find-symbol)
+              (define-key helm-gtags-mode-map (kbd "C-c f") 'helm-gtags-find-rtag)
+              (define-key helm-gtags-mode-map (kbd "C-c l") 'helm-gtags-parse-file)))
+
+  (add-hook 'lua-mode-hook 'helm-gtags-mode))
 
 (provide 'init-gtags)
