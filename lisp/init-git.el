@@ -34,8 +34,7 @@
   (setq magit-refresh-status-buffer nil)
   (setq auto-revert-buffer-list-filter 'magit-auto-revert-repository-buffer-p)
   (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
-  (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window)
-  (define-key magit-hunk-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
+  (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
 
 (when *is-a-mac*
   (after-load 'magit

@@ -7,7 +7,7 @@
 ;; support different ssh port
 (use-package multi-term
   :init
-  (defvar multi-term-tramp-default-dir nil)
+  (defvar-local multi-term-default-dir nil)
   :config
   (setq multi-term-program "/bin/bash")
   (setq multi-term-program-switches "--login")
@@ -16,10 +16,9 @@
     "If we are in `tramp-mode', switch to TERM-BUFFER based on DEFAULT-DIR."
     (switch-to-buffer term-buffer)
     ;; Just test tramp file when library `tramp' is loaded.
-    (setq multi-term-tramp-default-dir default-dir)
+    (setq-local multi-term-default-dir default-dir)
     (when (and (featurep 'tramp)
                (tramp-tramp-file-p default-dir))
-      (setq multi-term-tramp-default-dir default-dir)
       (with-parsed-tramp-file-name default-dir path
         (let ((method (cadr (assoc `tramp-login-program (assoc path-method tramp-methods)))))
           (if path-port
@@ -50,5 +49,9 @@ prefix argument.  MODE is either 'term or 'shell."
         (setq name (or multi-term-tramp-default-dir (helm-mt/get-buffer-process-cwd (current-buffer)))))
       (rename-buffer (generate-new-buffer-name (format "*%s<%s>*" name-prefix name)))))
   (global-set-key (kbd "C-x t") 'helm-mt))
+
+(when *use-ivy*
+  (require 'counsel-mt)
+  (global-set-key (kbd "C-x t") 'counsel-mt))
 
 (provide 'init-mt)

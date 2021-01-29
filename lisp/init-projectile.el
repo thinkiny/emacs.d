@@ -5,6 +5,10 @@
   (add-to-list 'projectile-globally-ignored-directories ".settings")
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
+  (if *use-helm*
+      (setq projectile-completion-system 'helm))
+  (if *use-ivy*
+      (setq projectile-completion-system 'ivy))
   (projectile-mode)
   (diminish 'projectile-mode))
 

@@ -207,9 +207,6 @@ there is no current file, eval the current buffer."
 
 (require-package 'macrostep)
 
-(with-eval-after-load 'lisp-mode
-  (define-key emacs-lisp-mode-map (kbd "C-c x") 'macrostep-expand))
-
 
 ;; A quick way to jump to the definition of a function given its key binding
 (global-set-key (kbd "C-h K") 'find-function-on-key)
@@ -219,13 +216,15 @@ there is no current file, eval the current buffer."
 
 (maybe-require-package 'cl-libify)
 
-
 (maybe-require-package 'flycheck-relint)
 
 (maybe-require-package 'cask-mode)
 
 (use-package erefactor
   :bind (:map emacs-lisp-mode-map
-              ("C-c r" . #'erefactor-rename-symbol-in-package)))
+              ("C-c r" . #'erefactor-rename-symbol-in-package))
+  :config
+  ;; disable erefactor-lhl--start
+  (defun erefactor-lhl--start()))
 
 (provide 'init-lisp)

@@ -4,7 +4,7 @@
 ;; Some basic preferences
 ;;----------------------------------------------------------------------------
 (setq-default bookmark-default-file (expand-file-name ".bookmarks.el" user-emacs-directory)
-              blink-cursor-interval 0.4
+              blink-cursor-interval 1
               buffers-menu-max-size 30
               case-fold-search t
               visible-bell nil
@@ -25,6 +25,7 @@
               truncate-lines nil
               truncate-partial-width-windows nil
               nxml-slash-auto-complete-flag t
+              warning-minimum-level :error
               line-number-mode t)
 
 (add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
@@ -37,7 +38,6 @@
 (add-hook 'after-init-hook 'transient-mark-mode)
 
 (global-set-key "\C-c$" 'toggle-truncate-lines)
-(global-set-key "\C-cb" 'switch-to-buffer)
 
 ;; Huge files
 (require-package 'vlf)
@@ -45,14 +45,6 @@
 (setq-default vlf-application 'dont-ask)
 (setq-default vlf-batch-size 4096000)
 (setq-default vlf-tune-enabled nil)
-
-(require-package 'browse-kill-ring)
-(setq browse-kill-ring-separator "\f")
-(global-set-key (kbd "M-Y") 'browse-kill-ring)
-(after-load 'browse-kill-ring
-  (define-key browse-kill-ring-mode-map (kbd "C-g") 'browse-kill-ring-quit)
-  (define-key browse-kill-ring-mode-map (kbd "M-n") 'browse-kill-ring-forward)
-  (define-key browse-kill-ring-mode-map (kbd "M-p") 'browse-kill-ring-previous))
 
 ;;----------------------------------------------------------------------------
 ;; Don't disable narrowing commands

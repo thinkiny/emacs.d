@@ -124,7 +124,7 @@
   (cond ((eq 'pdf-view-mode major-mode) (mode-line-pdfview-page-number))
         ((eq 'doc-view-mode major-mode) (mode-line-docview-page-number))
         ((member major-mode '(term-mode xwidget-webkit-mode)) "")
-        (t (format-mode-line " %l:"))))
+        (t (format-mode-line " %l:%c"))))
 
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)

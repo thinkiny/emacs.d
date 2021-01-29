@@ -21,8 +21,7 @@
         lsp-idle-delay 0.500
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
-        lsp-enable-dap-auto-configure nil
-        warning-minimum-level :error)
+        lsp-enable-dap-auto-configure nil)
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
   (define-key lsp-mode-map (kbd "C-c i") 'lsp-organize-imports)
@@ -36,10 +35,7 @@
   (define-key lsp-mode-map (kbd "C-c e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
-  (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous)
-
-  (dolist (func '(lsp lsp-restart-workspace))
-    (advice-add func :around #'tramp-ssh-control-master-none)))
+  (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
 
 (when *use-helm*
   (use-package helm-lsp
@@ -48,6 +44,14 @@
     (setq helm-lsp-treemacs-icons nil)
     (define-key lsp-mode-map (kbd "C-c w s") 'helm-lsp-workspace-symbol)
     (define-key lsp-mode-map (kbd "C-c l") 'helm-imenu)))
+
+(when *use-ivy*
+  (use-package lsp-ivy
+    :demand t
+    :after lsp-mode
+    :config
+    (define-key lsp-mode-map (kbd "C-c w s") 'lsp-ivy-workspace-symbol)
+    (define-key lsp-mode-map (kbd "C-c l") 'counsel-imenu)))
 ;;(use-package lsp-sonarlint :after lsp-mode)
 
 ;;dap-mode
@@ -94,6 +98,9 @@
                            (when-let ((name (buffer-file-name)))
                              (if (file-remote-p name)
                                  (setq-local lsp-log-io t)))))
+
+(dolist (func '(lsp lsp-restart-workspace))
+  (advice-add func :around #'tramp-ssh-control-master-none))
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()

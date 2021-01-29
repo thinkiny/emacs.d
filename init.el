@@ -1,10 +1,10 @@
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (setq inhibit-compacting-font-caches t)
-(setq gc-cons-threshold (* 128 1024 1024))
+(setq gc-cons-threshold (* 256 1024 1024))
 (setq read-process-output-max (* 2048 1024))
-(defconst *use-helm* t)
-(defconst *use-ivy* nil)
+(defconst *use-helm* nil)
+(defconst *use-ivy* t)
 
 (require 'init-package)
 (require 'init-utils)
@@ -17,14 +17,17 @@
 (require 'init-uniquify)
 (require 'init-ibuffer)
 (require 'init-recentf)
+(require 'init-projectile)
 
 (if *use-helm*
     (require 'init-helm))
 
+(if *use-ivy*
+    (require 'init-ivy))
+
 (require 'init-company)
 (require 'init-windows)
 (require 'init-editing-utils)
-(require 'init-projectile)
 (require 'init-yasnippet)
 (require 'init-dired)
 (require 'init-whitespace)
@@ -57,7 +60,7 @@
 
 ;;other
 ;;(require 'init-eshell)
-;;(require 'init-mt)
+(require 'init-mt)
 (require 'init-rpm)
 (require 'init-git)
 (require 'init-http)
