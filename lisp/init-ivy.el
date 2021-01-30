@@ -9,6 +9,7 @@
                 ivy-magic-tilde nil
                 enable-recursive-minibuffers t
                 ivy-use-selectable-prompt t)
+
   (define-key ivy-minibuffer-map (kbd "<up>") #'ivy-previous-line-or-history)
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)
   (bind-key "C-c c" 'ivy-resume))

@@ -5,6 +5,7 @@
 (require 'cl-lib)
 (require 'multi-term)
 
+(defconst counsel-mt-buffer-header "*term-")
 (defun counsel-mt/terminal-buffers ()
   "Filter for buffers that are terminals only.
 Includes buffers managed by `multi-term' (excludes dedicated term
@@ -12,7 +13,8 @@ buffers) and buffers in `shell-mode'."
   (cl-loop for buf in (buffer-list)
            if (or (member buf multi-term-buffer-list)
                   (eq (buffer-local-value 'major-mode buf) 'shell-mode))
-           collect (cons (buffer-name buf) buf)))
+           collect (cons (string-trim (buffer-name buf) counsel-mt-buffer-header)
+                         buf)))
 
 (defun counsel-mt/get-buffer-process-cwd ()
   "The current working directory of the process of buffer BUF, or nil (depends on lsof)."
@@ -33,7 +35,7 @@ buffers) and buffers in `shell-mode'."
 (defun counsel-mt/launch-terminal ()
   "Launch a terminal in a new buffer."
   (call-interactively 'multi-term)
-  (rename-buffer (generate-new-buffer-name (counsel-mt/get-terminal-name))))
+  (rename-buffer (generate-new-buffer-name (format "%s%s" counsel-mt-buffer-header (counsel-mt/get-terminal-name)))))
 
 (defun counsel-mt/source-terminals ()
   "Counsel source with candidates for all terminal buffers."
