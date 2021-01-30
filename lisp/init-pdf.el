@@ -3,14 +3,57 @@
   :demand t
   :config
   (set-face-attribute 'outline-1 nil :height 1.0)
-  (pdf-tools-install t t t nil)
+  ;;(pdf-tools-install t t t nil)
   (require 'pdf-continuous-scroll-mode)
   (setq pdf-view-use-unicode-ligther nil)
   (setq pdf-view-use-scaling t)
   (setq pdf-view-use-imagemagick nil)
   (setq pdf-tools-enabled-modes (remove 'pdf-sync-minor-mode pdf-tools-enabled-modes))
   (setq pdf-links-browse-uri-function #'xwidget-webkit-browse-url)
-  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+
+  ;; HACK `pdf-tools-install-noverify' tries to "reset" open pdf-view-mode
+  ;;      buffers, but does so incorrectly, causing errors when pdf-tools is
+  ;;      loaded after opening a pdf file. We've done its job ourselves in
+  ;;      `+pdf--install-epdfinfo-a' instead.
+  (defadvice! +pdf--inhibit-pdf-view-mode-resets-a (orig-fn &rest args)
+    :around #'pdf-tools-install-noverify
+    (letf! ((#'pdf-tools-pdf-buffer-p #'ignore))
+      (apply orig-fn args)))
+
+  (defadvice! +pdf--install-epdfinfo-a (orig-fn &rest args)
+    "Install epdfinfo after the first PDF file, if needed."
+    :around #'pdf-view-mode
+    ;; Prevent "epdfinfo not an executable" error short-circuiting this advice
+    (prog1 (with-demoted-errors "%s" (apply orig-fn args))
+      ;; ...so we can go ahead and install it afterwards.
+      (cond ((file-executable-p pdf-info-epdfinfo-program))
+            ((y-or-n-p "To read PDFs in Emacs the epdfinfo program must be built. Build it now?")
+             (message nil) ; flush lingering prompt in echo-area
+             ;; Make sure this doesn't run more than once
+             (advice-remove #'pdf-view-mode #'+pdf--install-epdfinfo-a)
+             (unless (or (pdf-info-running-p)
+                         (ignore-errors (pdf-info-check-epdfinfo) t))
+               ;; HACK On the first pdf you open (before pdf-tools loaded)
+               ;;      `pdf-tools-install' throws errors because it has hardcoded
+               ;;      opinions about what buffer should be focused when it is run.
+               ;;      These errors cause `compile' to position the compilation
+               ;;      window incorrectly or can interfere with the opening of the
+               ;;      original pdf--sometimes aborting/burying it altogether. A
+               ;;      timer works around this.
+               (run-at-time
+                0.1 nil
+                (lambda ()
+                  (with-current-buffer (pdf-tools-install t)
+                    (add-hook! 'compilation-finish-functions :local
+                               (dolist (buf (buffer-list))
+                                 (with-current-buffer buf
+                                   (and (buffer-file-name)
+                                        (or (pdf-tools-pdf-buffer-p)
+                                            (derived-mode-p 'pdf-view-mode))
+                                        (revert-buffer t t))))))))))
+            ((message "Aborted"))))))
+(pdf-tools-install-noverify)
 
 (defun pdf-view-next-page-start ()
   "View the next page in the PDF."

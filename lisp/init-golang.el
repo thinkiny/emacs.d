@@ -8,7 +8,6 @@
 
 (after-load 'lsp-go
   (setq lsp-go-codelens nil)
-  (setq-local lsp-go-env (make-hash-table))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection "gopls")
                     :major-modes '(go-mode go-dot-mod-mode)
@@ -28,18 +27,20 @@
 
 (defun lsp-go-module-on ()
   (interactive)
-  (when (check-valid-lsp-go-mode)
+  (when (and (check-valid-lsp-go-mode) (lsp-workspace-get-metadata 'go-path))
     (clrhash lsp-go-env)
     (puthash "GO111MODULE" "on" lsp-go-env)
-    (call-interactively #'lsp-workspace-restart)))
+    (call-interactively #'lsp-workspace-restart)
+    (lsp-workspace-set-metadata 'go-path nil)))
 
 (defun lsp-go-module-off ()
   (interactive)
-  (when (check-valid-lsp-go-mode)
+  (when (and (check-valid-lsp-go-mode) (not (lsp-workspace-get-metadata 'go-path))
       (clrhash lsp-go-env)
       (puthash "GO111MODULE" "off" lsp-go-env)
       (puthash "GOPATH" (get-tramp-local-name (projectile-project-root)) lsp-go-env)
-      (call-interactively #'lsp-workspace-restart)))
+      (call-interactively #'lsp-workspace-restart)
+      (lsp-workspace-set-metadata 'go-path t))))
 
 (add-hook 'go-mode-hook #'lsp)
 (provide 'init-golang)

@@ -1,15 +1,14 @@
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(setq inhibit-compacting-font-caches t)
-(setq gc-cons-threshold (* 256 1024 1024))
-(setq read-process-output-max (* 2048 1024))
 (defconst *use-helm* nil)
 (defconst *use-ivy* t)
 
+(require 'init-gc)
 (require 'init-package)
 (require 'init-utils)
 (require 'init-exec-path)
 
+(require 'init-editing-utils)
 (require 'init-treemacs)
 (require 'init-ui)
 (require 'init-platform)
@@ -27,7 +26,6 @@
 
 (require 'init-company)
 (require 'init-windows)
-(require 'init-editing-utils)
 (require 'init-yasnippet)
 (require 'init-dired)
 (require 'init-whitespace)

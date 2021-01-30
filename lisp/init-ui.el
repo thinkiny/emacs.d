@@ -16,8 +16,6 @@
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)
 (setq-default line-number-display-limit-width 2000)
-(setq-default bidi-paragraph-direction 'left-to-right)
-(setq-default bidi-inhibit-bpa t)
 (setq-default window-divider-default-right-width 1)
 (setq-default window-divider-default-right-width 1)
 
@@ -32,9 +30,8 @@
   (add-to-list 'initial-frame-alist no-border))
 
 ;; icons
-(setq inhibit-compacting-font-caches t)
-(require-package 'all-the-icons)
-(require-package 'all-the-icons-dired)
+(use-package all-the-icons)
+(use-package all-the-icons-dired)
 (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
 
 (defun set-frame-transparency (value)
@@ -117,7 +114,6 @@
   (format " %d/%d"
           (eval `(doc-view-current-page))
           (doc-view-last-page-number)))
-
 
 (defun mode-line-linum()
   "Display line number."
