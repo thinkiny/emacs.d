@@ -68,7 +68,7 @@ the step size for scrolling use the ARG in
   (if pdf-continuous-scroll-mode
          (let ((hscroll (window-hscroll))
                (cur-page (pdf-view-current-page)))
-             (print (format
+	         (print (format
                    "%s: window-total-height %s, frame-height %s\nnext line: vscroll value, second next line: output value (image-next-line)"
                    (alist-get 'pdf-scroll-window-status (window-parameters))
                    (window-total-height)
@@ -79,8 +79,8 @@ the step size for scrolling use the ARG in
                          (window-vscroll nil pdf-view-have-image-mode-pixel-vscroll)
                          (get-buffer-create "*pdf-scroll-log*"))
                         (print (image-next-line arg) (get-buffer-create "*pdf-scroll-log*")))
-                   (cond
-                    ((not (window-full-height-p))
+	               (cond
+	                ((not (window-full-height-p))
                    (condition-case nil
                        (window-resize (get-buffer-window) -1 nil t)
                      (error (delete-window)
@@ -112,7 +112,8 @@ the step size for scrolling use the ARG in
                       (set-window-parameter nil 'pdf-scroll-window-status 'single)))
              (windmove-up)
              (image-next-line 1)
-             (windmove-down)))))
+             (windmove-down)))
+  (message "pdf-continuous-scroll-mode not activated")))
 
 (defun pdf-continuous-scroll-forward (arg)
   (interactive "P")
@@ -181,7 +182,8 @@ To increase the step size for scrolling use the ARG in
                        ((= (window-total-height) (- (frame-height) window-min-height))
                         (set-window-parameter nil 'pdf-scroll-window-status 'single)
                         (windmove-down)
-                        (delete-window))))))))
+                        (delete-window))))))
+    (message "pdf-continuous-scroll-mode not activated")))
 
 (defun pdf-continuous-scroll-backward (arg)
   (interactive "P")
@@ -351,8 +353,10 @@ windows."
 (define-key pdf-continuous-scroll-mode-map  (kbd "<up>") #'pdf-continuous-scroll-backward)
 (define-key pdf-continuous-scroll-mode-map (kbd "<wheel-up>") #'pdf-cs-mouse-scroll-backward)
 (define-key pdf-continuous-scroll-mode-map  (kbd "<mouse-4>") #'pdf-cs-mouse-scroll-backward)
-;; (define-key pdf-continuous-scroll-mode-map  "n" #'pdf-continuous-next-page)
-;; (define-key pdf-continuous-scroll-mode-map  "p" #'pdf-continuous-previous-page)
+(define-key pdf-continuous-scroll-mode-map  "n" #'pdf-continuous-next-page)
+(define-key pdf-continuous-scroll-mode-map  "p" #'pdf-continuous-previous-page)
+(define-key pdf-continuous-scroll-mode-map (kbd "<prior>") 'pdf-continuous-previous-page)
+(define-key pdf-continuous-scroll-mode-map (kbd "<next>") 'pdf-continuous-next-page)
 ;; (define-key pdf-continuous-scroll-mode-map  (kbd "M-<") #'pdf-cscroll-view-goto-page)
 (define-key pdf-continuous-scroll-mode-map  (kbd "M-g g") #'pdf-cscroll-view-goto-page)
 (define-key pdf-continuous-scroll-mode-map  (kbd "M-g M-g") #'pdf-cscroll-view-goto-page)
@@ -364,9 +368,13 @@ windows."
 (define-key pdf-continuous-scroll-mode-map  [remap left-char] #'pdf-cscroll-image-backward-hscroll)
 (define-key pdf-continuous-scroll-mode-map  "T" #'pdf-cscroll-toggle-mode-line)
 (define-key pdf-continuous-scroll-mode-map  "M" #'pdf-cscroll-toggle-narrow-mode-line)
+(define-key pdf-continuous-scroll-mode-map (kbd "q") '(lambda ()  (interactive) (pdf-continuous-scroll-mode -1)))
 (define-key pdf-continuous-scroll-mode-map  "Q" #'pdf-cscroll-kill-buffer-and-windows)
 (define-key pdf-continuous-scroll-mode-map  (kbd "C-c C-a l") #'pdf-cscroll-annot-list-annotations)
 
+;;;###autoload
+(with-eval-after-load 'pdf-view
+  (define-key pdf-view-mode-map  "c" #'pdf-continuous-scroll-mode))
 
 (when (boundp 'spacemacs-version)
   (evil-define-minor-mode-key 'evilified 'pdf-continuous-scroll-mode
@@ -387,8 +395,10 @@ windows."
     "h" #'pdf-cscroll-image-backward-hscroll)
   (spacemacs/set-leader-keys-for-minor-mode
     'pdf-continuous-scroll-mode
-    (kbd "a l") #'pdf-cscroll-annot-list-annotations))
+    (kbd "a l") #'pdf-cscroll-annot-list-annotations)
+  )
 
+;;;###autoload
 (define-minor-mode pdf-continuous-scroll-mode
   "Emulate continuous scroll with two synchronized buffers"
   nil

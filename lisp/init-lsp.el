@@ -99,8 +99,7 @@
                              (if (file-remote-p name)
                                  (setq-local lsp-log-io t)))))
 
-(dolist (func '(lsp lsp-restart-workspace))
-  (advice-add func :around #'tramp-ssh-control-master-none))
+(ignore-tramp-ssh-control-master 'lsp 'lsp-restart-workspace)
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()

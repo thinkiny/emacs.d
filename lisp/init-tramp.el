@@ -27,6 +27,10 @@
       (setq tramp-ssh-controlmaster-options origin-options)
       res)))
 
+(defun ignore-tramp-ssh-control-master (&rest funcs)
+  (dolist (func funcs)
+    (advice-add func :around #'tramp-ssh-control-master-none)))
+
 (use-package docker-tramp :after tramp)
 
 (provide 'init-tramp)

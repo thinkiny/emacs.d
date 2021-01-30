@@ -126,7 +126,7 @@ Suitable for inclusion in `c-offsets-alist'."
                         (case-label . +)
                         (statement-case-open . +)
                         (statement-case-intro . +) ; case w/o {
-                        (access-label . -)
+                        (access-label . /)
                         (innamespace . 0))))
   "Google C/C++ Programming Style.")
 
@@ -138,6 +138,14 @@ Suitable for inclusion in `c-offsets-alist'."
   (make-local-variable 'c-tab-always-indent)
   (setq c-tab-always-indent t)
   (c-add-style "Google" google-c-style t))
+
+;;;###autoload
+(defun google-make-newline-indent ()
+  "Sets up preferred newline behavior. Not set by default. Meant
+  to be added to `c-mode-common-hook'."
+  (interactive)
+  (define-key c-mode-base-map "\C-m" 'newline-and-indent)
+  (define-key c-mode-base-map [ret] 'newline-and-indent))
 
 (provide 'google-c-style)
 ;;; google-c-style.el ends here

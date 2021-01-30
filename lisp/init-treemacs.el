@@ -52,7 +52,7 @@
   :bind
   (:map global-map
         ("M-0"     . treemacs-select-window)
-        ("C-x p"   . treemacs)))
+        ("C-x p t"   . treemacs)))
 
 (use-package treemacs-projectile
   :after treemacs projectile

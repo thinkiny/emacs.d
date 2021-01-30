@@ -1,11 +1,12 @@
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+(add-to-list 'load-path (expand-file-name "third-parties" user-emacs-directory))
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (defconst *use-helm* nil)
 (defconst *use-ivy* t)
 
-(require 'init-gc)
-(require 'init-package)
 (require 'init-utils)
+(require 'init-performance)
+(require 'init-package)
 (require 'init-exec-path)
 
 (require 'init-editing-utils)

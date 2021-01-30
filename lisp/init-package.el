@@ -42,10 +42,10 @@ locate PACKAGE."
 (fullframe list-packages quit-window)
 
 (require-package 'cl-lib)
-(require-package 'use-package)
 (require-package 'gnu-elpa-keyring-update)
 (require-package 'diminish)
 
+(require-package 'use-package)
 (setq use-package-always-defer t
       use-package-always-ensure t)
 
