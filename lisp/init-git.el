@@ -22,14 +22,14 @@
   (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
   (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
 
-(defcustom magit-status-remapping-list '()
-  "Magit status remapping dirs,  from remote to local"
+(defcustom magit-status-mapping-list '()
+  "Magit status mapping dirs,  from remote to local"
   :type '(alist :key-type string :value-type string)
   :group 'magit-status)
 
 (defun magit-status-get-directory()
   (if (file-remote-p default-directory)
-      (or (cdr (assoc (magit-toplevel) magit-status-remapping-list))
+      (or (cdr (assoc (magit-toplevel) magit-status-mapping-list))
           default-directory)
     default-directory))
 

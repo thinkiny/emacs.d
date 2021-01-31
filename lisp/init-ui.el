@@ -30,9 +30,10 @@
   (add-to-list 'initial-frame-alist no-border))
 
 ;; icons
-(use-package all-the-icons)
-(use-package all-the-icons-dired)
-(add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
+(when window-system
+  (use-package all-the-icons)
+  (use-package all-the-icons-dired)
+  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
 (defun set-frame-transparency (value)
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
@@ -77,12 +78,12 @@
             (set-face-attribute 'fringe nil :background nil)))
 
 ;;fonts
-(use-package cnfonts
-  :demand t
-  :config
-  (setq cnfonts-use-face-font-rescale t)
-  (if window-system
-                (cnfonts-enable)))
+(when window-system
+  (use-package cnfonts
+    :demand t
+    :config
+    (setq cnfonts-use-face-font-rescale t)
+    (cnfonts-enable)))
 
 ;;size
 (defun set-frame-size-according-to-resolution ()

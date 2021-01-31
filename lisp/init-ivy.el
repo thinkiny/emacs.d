@@ -21,6 +21,14 @@
   (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
   (counsel-mode))
 
+(use-package counsel-projectile
+  :init (counsel-projectile-mode))
+
+;; icons
+(when window-system
+  (use-package all-the-icons-ivy-rich
+    :init (all-the-icons-ivy-rich-mode 1)))
+
 (use-package ivy-rich
   :diminish ivy-rich-mode
   :after (ivy counsel)
@@ -29,9 +37,6 @@
   (setq ivy-virtual-abbreviate 'abbreviate
         ivy-rich-path-style 'abbrev)
   (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line))
-
-(use-package counsel-projectile
-  :init (counsel-projectile-mode))
 
 (use-package ivy-xref
   :init

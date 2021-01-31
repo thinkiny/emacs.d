@@ -39,7 +39,7 @@ buffers) and buffers in `shell-mode'."
 
 (defun counsel-mt/source-terminals ()
   "Counsel source with candidates for all terminal buffers."
-  (cons '("Launch new terminal" . ()) (counsel-mt/terminal-buffers)))
+  (cons '("Launch new terminal") (counsel-mt/terminal-buffers)))
 
 ;;;###autoload
 (defun counsel-mt ()
@@ -51,7 +51,8 @@ buffers) and buffers in `shell-mode'."
                       (let ((buf (cdr candidate)))
                         (if buf
                             (switch-to-buffer buf)
-                          (counsel-mt/launch-terminal))))))
+                          (counsel-mt/launch-terminal))))
+            :caller 'counsel-mt))
 
 (provide 'counsel-mt)
 ;;; counsel-mt.el ends here
