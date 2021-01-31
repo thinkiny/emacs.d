@@ -66,7 +66,6 @@
 (require 'init-xwidget-webkit)
 (require 'init-dash)
 (require 'init-god)
-(require 'init-leetcode)
 
 (when (file-exists-p custom-file)
   (load custom-file))

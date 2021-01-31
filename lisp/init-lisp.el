@@ -1,11 +1,6 @@
 ;;; init-lisp.el --- Emacs lisp settings, and common config for other lisps -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code:
-(require-package 'ipretty)
-(add-hook 'emacs-lisp-mode-hook (lambda ()
-                                  (ipretty-mode)
-                                  (setq mode-name "ELisp")))
-
 (defun sanityinc/headerise-elisp ()
   "Add minimal header and footer to an elisp buffer in order to placate flycheck."
   (interactive)
