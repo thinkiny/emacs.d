@@ -5,8 +5,6 @@
         gcmh-high-cons-threshold (* 128 1024 1024))
   (gcmh-mode 1))
 
-(require 'explain-pause-mode)
-
 (global-set-key (kbd "C-x p s") (lambda ()
                                   (interactive)
                                   (profiler-start 'cpu)))
