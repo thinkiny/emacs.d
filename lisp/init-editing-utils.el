@@ -223,10 +223,6 @@ With arg N, insert N newlines."
 (global-set-key (kbd "M-[") #'xref-pop-marker-stack)
 (global-set-key (kbd "M-,") #'xref-find-references)
 
-(require-package 'smex)
-(smex-initialize)
-(global-set-key (kbd "M-x") 'smex)
-
 (use-package bing-dict
   :config
   (setq bing-dict-cache-auto-save t)
