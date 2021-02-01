@@ -58,8 +58,8 @@
   (require 'init-pdf))
 
 ;;other
-;;(require 'init-eshell)
 (require 'init-mt)
+(require 'init-eshell)
 (require 'init-rpm)
 (require 'init-git)
 (require 'init-http)

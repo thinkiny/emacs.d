@@ -6,13 +6,18 @@
 (require 'multi-term)
 
 (defconst counsel-mt-buffer-header "*term-")
+(defcustom counsel-mt-terminal-use-eshell t
+  "Counsel-mt use eshell"
+  :type 'boolean
+  :group 'eshell)
+
 (defun counsel-mt/terminal-buffers ()
   "Filter for buffers that are terminals only.
 Includes buffers managed by `multi-term' (excludes dedicated term
 buffers) and buffers in `shell-mode'."
   (cl-loop for buf in (buffer-list)
            if (or (member buf multi-term-buffer-list)
-                  (eq (buffer-local-value 'major-mode buf) 'shell-mode))
+                  (eq (buffer-local-value 'major-mode buf) 'eshell-mode))
            collect (cons (string-trim (buffer-name buf) counsel-mt-buffer-header)
                          buf)))
 
@@ -34,7 +39,9 @@ buffers) and buffers in `shell-mode'."
 
 (defun counsel-mt/launch-terminal ()
   "Launch a terminal in a new buffer."
-  (call-interactively 'multi-term)
+  (if counsel-mt-terminal-use-eshell
+      (call-interactively 'eshell)
+    (call-interactively 'multi-term))
   (rename-buffer (generate-new-buffer-name (format "%s%s" counsel-mt-buffer-header (counsel-mt/get-terminal-name)))))
 
 (defun counsel-mt/source-terminals ()

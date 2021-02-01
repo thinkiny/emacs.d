@@ -27,6 +27,9 @@
                      (funcall pcomplete-command-completion-function)
                      (pcomplete-arg 'last) t)))))))
 
+(after-load 'em-prompt
+  (set-face-attribute 'eshell-prompt nil :foreground "DeepSkyBlue4"))
+
 (defun eshell-maybe-bol ()
   (interactive)
   (let ((p (point)))
@@ -40,10 +43,10 @@
             (setenv "PAGER" "cat")
             (setenv "GIT_EDITOR" "emacsclient")
             (eshell-cmpl-initialize)
-            (setq-local helm-show-completion-display-function 'helm-default-display-buffer)
             (define-key eshell-mode-map (kbd "C-a") 'eshell-maybe-bol)
-            (define-key eshell-mode-map [remap completion-at-point] 'helm-esh-pcomplete)
             (when *use-helm*
+              (setq-local helm-show-completion-display-function 'helm-default-display-buffer)
+              (define-key eshell-mode-map [remap completion-at-point] 'helm-esh-pcomplete)
               (define-key eshell-mode-map (kbd "M-r") 'helm-eshell-history))))
 
 (provide 'init-eshell)
