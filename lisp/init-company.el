@@ -12,7 +12,7 @@
   (setq company-tooltip-align-annotations t)
   (setq company-backends (delete 'company-semantic company-backends))
   (setq company-backends (delete 'company-clang company-backends))
-  (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
+  ;;(set-face-attribute 'company-preview nil :inherit 'company-tooltip)
   (diminish 'company-mode))
 
 ;; company-theme

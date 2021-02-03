@@ -34,7 +34,8 @@
   :after (ivy counsel)
   :init (ivy-rich-mode 1)
   :config
-  (setq ivy-virtual-abbreviate 'abbreviate
+  (setq ivy-rich-parse-remote-buffer nil
+        ivy-virtual-abbreviate 'abbreviate
         ivy-rich-path-style 'abbrev)
   (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line))
 

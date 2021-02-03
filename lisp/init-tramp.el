@@ -7,11 +7,7 @@
   (setq tramp-default-method "ssh")
   ;;(setq tramp-chunksize 500)
   (setq remote-file-name-inhibit-cache 30)
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-  (setq vc-ignore-dir-regexp
-        (format "\\(%s\\)\\|\\(%s\\)"
-                vc-ignore-dir-regexp
-                tramp-file-name-regexp)))
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 (require 'tramp-sh)
 ;;same as ~/.ssh/config
