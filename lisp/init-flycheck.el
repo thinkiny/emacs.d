@@ -11,8 +11,6 @@
   (dolist (checker '(emacs-lisp-checkdoc go-build))
     (setq flycheck-checkers (delq checker flycheck-checkers)))
 
-  (set-face-attribute 'flycheck-warning nil :background nil)
-  (set-face-attribute 'flycheck-error nil :background nil)
   (add-to-list 'display-buffer-alist
                `(,(rx bos "*Flycheck errors*" eos)
                  (display-buffer-reuse-window

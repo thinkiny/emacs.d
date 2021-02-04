@@ -9,7 +9,6 @@
                 ivy-magic-tilde nil
                 enable-recursive-minibuffers t
                 ivy-use-selectable-prompt t)
-
   (define-key ivy-minibuffer-map (kbd "<up>") #'ivy-previous-line-or-history)
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)
   (bind-key "C-c c" 'ivy-resume))
@@ -40,12 +39,11 @@
   (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line))
 
 (use-package ivy-xref
+  :after ivy
   :init
   (when (>= emacs-major-version 27)
     (setq xref-show-definitions-function #'ivy-xref-show-defs))
-  (setq xref-show-xrefs-function 'ivy-xref-show-xrefs)
-  :config
-  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4"))
+  (setq xref-show-xrefs-function 'ivy-xref-show-xrefs))
 
 (provide 'init-ivy)
 ;;; init-ivy.el ends here

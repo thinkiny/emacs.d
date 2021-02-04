@@ -25,9 +25,9 @@
 ;;     :library-folders-fn nil)))
 
 ;; use clangd
-(after-load 'lsp-mode
+(after-load 'lsp-clangd
   (require 'dap-cpptools)
-  (setq lsp-clients-clangd-args '("-header-insertion-decorators=0" "--suggest-missing-includes" "--cross-file-rename" "--collect-main-file-refs"))
+  (setq lsp-clients-clangd-args '("-header-insertion-decorators=0" "--suggest-missing-includes" "--cross-file-rename"))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection 'lsp-clients--clangd-command)
                     :major-modes '(c-mode c++-mode objc-mode)

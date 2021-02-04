@@ -75,7 +75,8 @@
                 (load-theme custom-gui-theme t)
               (load-theme custom-terminal-theme t))
             (set-face-attribute 'button nil :background nil)
-            (set-face-attribute 'fringe nil :background nil)))
+            (set-face-attribute 'fringe nil :background nil)
+            (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")))
 
 ;;fonts
 (when window-system

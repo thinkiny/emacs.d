@@ -8,7 +8,7 @@
 (require-package 'pip-requirements)
 (require-package 'indent-guide)
 
-(after-load 'lsp-mode
+(after-load 'lsp-pyls
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection
                                    (lambda () lsp-clients-python-command))
