@@ -216,11 +216,28 @@ With arg N, insert N newlines."
 
 (require-package 'htmlize)
 
-;;(global-set-key "\C-w" 'clipboard-kill-region)
-;;(global-set-key "\M-w" 'clipboard-kill-ring-save)
-;;(global-set-key "\C-y" 'clipboard-yank)
+;;xref
 (setq xref-prompt-for-identifier nil)
-(global-set-key (kbd "M-[") #'xref-pop-marker-stack)
+(defun xref-pop-curr-marker-stack ()
+  "Pop back to where \\[xref-find-definitions] was last invoked."
+  (interactive)
+  (let ((ring xref--marker-ring))
+    (when (ring-empty-p ring)
+      (user-error "Marker stack is empty"))
+    (let* ((idx (or (ring-member ring (mark-marker)) 0))
+           (before (ring-remove ring idx))
+           (marker (ring-remove ring idx)))
+      (set-marker before nil nil)
+      (switch-to-buffer (or (marker-buffer marker)
+                            (user-error "The marked buffer has been deleted")))
+      (goto-char (marker-position marker))
+      (set-marker marker nil nil)
+      (run-hooks 'xref-after-return-hook))))
+
+(defun xref-push-curr-marker-stack(&optional rest) (xref--push-markers))
+(advice-add 'xref-find-definitions :after #'xref-push-curr-marker-stack)
+
+(global-set-key (kbd "M-[") #'xref-pop-curr-marker-stack)
 (global-set-key (kbd "M-,") #'xref-find-references)
 
 (use-package bing-dict

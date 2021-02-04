@@ -4,7 +4,7 @@
   :init (ivy-mode 1)
   :config
   (setq-default ivy-use-virtual-buffers t
-                ivy-virtual-abbreviate 'fullpath
+                ivy-virtual-abbreviate 'abbreviate
                 ivy-count-format ""
                 ivy-magic-tilde nil
                 enable-recursive-minibuffers t
@@ -34,7 +34,6 @@
   :init (ivy-rich-mode 1)
   :config
   (setq ivy-rich-parse-remote-buffer nil
-        ivy-virtual-abbreviate 'abbreviate
         ivy-rich-path-style 'abbrev)
   (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line))
 
