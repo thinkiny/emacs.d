@@ -234,8 +234,9 @@ With arg N, insert N newlines."
       (set-marker marker nil nil)
       (run-hooks 'xref-after-return-hook))))
 
-(defun xref-push-curr-marker-stack(&optional rest) (xref--push-markers))
-(advice-add 'xref-find-definitions :after #'xref-push-curr-marker-stack)
+(defun xref-push-curr-marker-stack(&rest _) (xref--push-markers))
+(advice-add 'xref-pop-to-location :after #'xref-push-curr-marker-stack)
+(advice-add 'xref--show-xref-buffer :after #'xref-push-curr-marker-stack)
 
 (global-set-key (kbd "M-[") #'xref-pop-curr-marker-stack)
 (global-set-key (kbd "M-,") #'xref-find-references)

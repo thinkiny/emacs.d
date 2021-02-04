@@ -4,11 +4,12 @@
 (setq-default switch-window-timeout nil)
 
 (global-set-key (kbd "C-x o") 'switch-window)
+(global-set-key (kbd "C-x x")  'ace-swap-window)
 (global-set-key (kbd "C-c [")  'windmove-left)
 (global-set-key (kbd "C-c ]") 'windmove-right)
 (global-set-key (kbd "C-c k")    'windmove-up)
 (global-set-key (kbd "C-c j")  'windmove-down)
-(global-set-key (kbd "C-c x")  'ace-swap-window)
+
 
 (defun crux-transpose-windows (arg)
   "Transpose the buffers shown in two windows.
