@@ -41,6 +41,10 @@
           (lambda ()
             (setq-local dash-docs-docsets '("Go"))))
 
+(add-hook 'python-mode-hook
+          (lambda ()
+            (setq-local dash-docs-docsets '("Python_2"))))
+
 (add-hook 'cmake-mode-hook
           (lambda ()
             (setq-local dash-docs-docsets '("CMake"))))
