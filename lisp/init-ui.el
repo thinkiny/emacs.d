@@ -73,10 +73,13 @@
           (lambda ()
             (if window-system
                 (load-theme custom-gui-theme t)
-              (load-theme custom-terminal-theme t))
+                (load-theme custom-terminal-theme t))
+
+            ;;custom faces
             (set-face-attribute 'button nil :background nil)
             (set-face-attribute 'fringe nil :background nil)
-            (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")))
+            (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
+            (set-face-attribute 'outline-1 nil :height 1.0)))
 
 ;;fonts
 (when window-system

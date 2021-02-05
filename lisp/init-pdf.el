@@ -2,7 +2,6 @@
 (use-package pdf-tools
   :demand t
   :config
-  (set-face-attribute 'outline-1 nil :height 1.0)
   ;;(pdf-tools-install t t t nil)
   (require 'pdf-continuous-scroll-mode)
   (setq pdf-view-use-unicode-ligther nil)
@@ -10,6 +9,7 @@
   (setq pdf-view-use-imagemagick nil)
   (setq pdf-tools-enabled-modes (remove 'pdf-sync-minor-mode pdf-tools-enabled-modes))
   (setq pdf-links-browse-uri-function #'xwidget-webkit-browse-url)
+  (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
 
   ;; HACK `pdf-tools-install-noverify' tries to "reset" open pdf-view-mode
@@ -172,17 +172,14 @@
                                 (font-lock-mode -1)
                                 (yas-minor-mode -1)
                                 (setq-local left-fringe-width 1)
-                                (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
                                 (pdf-view-midnight-minor-mode)
                                 (pdf-continuous-scroll-mode)
                                 (local-set-key (kbd "q") #'kill-current-buffer)
                                 (local-set-key (kbd "0") #'pdf-view-goto-page-start)
                                 (local-set-key (kbd "M-n") #'pdf-view-next-page-start)
                                 (local-set-key (kbd "M-p") #'pdf-view-prev-page-start)
-                                (local-set-key (kbd "n")  #'pdf-continuous-scroll-forward)
-                                (local-set-key (kbd "p")  #'pdf-continuous-scroll-backward)
-                                ;;(local-set-key (kbd "n") #'pdf-view-next-page-start)
-                                ;;(local-set-key (kbd "p") #'pdf-view-prev-page-start)
+                                (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
+                                (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
                                 (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
                                 (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)))
 
