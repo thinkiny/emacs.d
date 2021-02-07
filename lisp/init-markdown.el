@@ -1,7 +1,8 @@
 (use-package markdown-mode
-  :ensure t
   :mode ("\\.md\\'" . gfm-mode)
-  :commands (markdown-mode gfm-mode))
+  :commands (markdown-mode gfm-mode)
+  :bind (:map markdown-mode-map
+              ("C-c C-c p" . #'markdown-html-preview)))
 
 (use-package impatient-mode
   :ensure t

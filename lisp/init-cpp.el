@@ -73,7 +73,7 @@ returned to avoid that the echo area grows uncomfortably."
   (c-add-style "Google" google-c-style t)
   (define-key c-mode-base-map (kbd "C-c x") 'cff-find-other-file)
   (if (gtags-get-rootpath)
-      (helm-gtags-mode)
+      (gtags-mode-on)
     (lsp)))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))

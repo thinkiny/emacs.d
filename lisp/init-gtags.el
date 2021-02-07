@@ -23,8 +23,25 @@
               (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-find-pattern)
               (define-key helm-gtags-mode-map (kbd "M-.") 'helm-gtags-find-symbol)
               (define-key helm-gtags-mode-map (kbd "C-c f") 'helm-gtags-find-rtag)
-              (define-key helm-gtags-mode-map (kbd "C-c l") 'helm-gtags-parse-file)))
+              (define-key helm-gtags-mode-map (kbd "C-c l") 'helm-gtags-parse-file))))
 
-  (add-hook 'lua-mode-hook 'helm-gtags-mode))
+(when *use-ivy*
+  (use-package counsel-gtags
+    :bind (:map counsel-gtags-mode-map
+                ("M-," . counsel-gtags-find-reference)
+                ("M-." . counsel-gtags-find-definition)
+                ("C-c f" . counsel-gtags-find-symbol))
+    :config
+    (setq counsel-gtags-auto-update t)))
+
+(defun gtags-mode-on ()
+  (interactive)
+  (when *use-helm*
+    (helm-gtags-mode))
+  (when *use-ivy*
+    (counsel-gtags-mode)))
+
+(add-hook 'lua-mode-hook 'gtags-mode-on)
+(add-hook 'asm-mode-hook 'gtags-mode-on)
 
 (provide 'init-gtags)
