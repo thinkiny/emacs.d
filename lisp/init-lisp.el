@@ -217,7 +217,7 @@ there is no current file, eval the current buffer."
 
 (use-package erefactor
   :bind (:map emacs-lisp-mode-map
-              ("C-c r" . #'erefactor-rename-symbol-in-package))
+              ("C-c r" . #'erefactor-rename-symbol-in-buffer))
   :config
   ;; disable erefactor-lhl--start
   (defun erefactor-lhl--start()))
