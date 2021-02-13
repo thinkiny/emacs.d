@@ -1,8 +1,6 @@
 (require-package 'cff)
 (require-package 'cmake-mode)
 
-(require 'init-gtags)
-
 (use-package bazel-mode :mode "\\.BUILD$")
 ;; use ccls
 ;; (use-package ccls
@@ -68,12 +66,15 @@ returned to avoid that the echo area grows uncomfortably."
 ;; styles
 (require 'google-c-style)
 
+;;gtags
+(require 'init-gtags)
+
 (defun my-c-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -
   (c-add-style "Google" google-c-style t)
   (define-key c-mode-base-map (kbd "C-c x") 'cff-find-other-file)
-  (if (gtags-get-rootpath)
-      (gtags-mode-on)
+  (if (global-tags--get-dbpath default-directory)
+      (global-tags-exclusive-backend-mode)
     (lsp)))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))

@@ -50,8 +50,7 @@
     :demand t
     :after lsp-mode
     :config
-    (define-key lsp-mode-map (kbd "C-c w s") 'lsp-ivy-workspace-symbol)
-    (define-key lsp-mode-map (kbd "C-c l") 'counsel-imenu)))
+    (define-key lsp-mode-map (kbd "C-c w s") 'lsp-ivy-workspace-symbol)))
 ;;(use-package lsp-sonarlint :after lsp-mode)
 
 ;;dap-mode

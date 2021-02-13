@@ -18,6 +18,7 @@
   :config
   (setq-default counsel-mode-override-describe-bindings t)
   (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
+  (global-set-key (kbd "C-c l") 'counsel-imenu)
   (counsel-mode))
 
 (use-package counsel-projectile
