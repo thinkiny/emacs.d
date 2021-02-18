@@ -25,7 +25,7 @@
 ;; use clangd
 (after-load 'lsp-clangd
   (require 'dap-cpptools)
-  (setq lsp-clients-clangd-args '("-header-insertion-decorators=0" "--suggest-missing-includes" "--cross-file-rename"))
+  (setq lsp-clients-clangd-args '("-header-insertion-decorators=0"))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection 'lsp-clients--clangd-command)
                     :major-modes '(c-mode c++-mode objc-mode)

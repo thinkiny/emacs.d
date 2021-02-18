@@ -73,6 +73,7 @@
 (advice-add #'global-tags--get-locations :around #'global-tags-smart-get-locations)
 (add-hook 'lua-mode-hook #'global-tags-exclusive-backend-mode)
 (add-hook 'asm-mode-hook #'global-tags-exclusive-backend-mode)
+(add-hook 'sh-mode-hook #'global-tags-exclusive-backend-mode)
 (add-hook 'global-tags-exclusive-backend-mode-hook
           (lambda ()
             (local-set-key (kbd "C-c w s") #'gtags-search-tag)

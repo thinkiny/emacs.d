@@ -79,7 +79,8 @@
             (set-face-attribute 'button nil :background nil)
             (set-face-attribute 'fringe nil :background nil)
             (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
-            (set-face-attribute 'outline-1 nil :height 1.0)))
+            (set-face-attribute 'outline-1 nil :height 1.0)
+            (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
 
 ;;fonts
 (when window-system
