@@ -236,7 +236,11 @@ With arg N, insert N newlines."
       (run-hooks 'xref-after-return-hook))))
 
 (defun xref-push-curr-marker-stack(&rest _) (xref--push-markers))
+(defun xref-push-curr-marker-stack-twice(&rest _)
+  (xref--push-markers)
+  (xref--push-markers))
 (advice-add 'xref--goto-char :after #'xref-push-curr-marker-stack)
+(advice-add 'imenu :after #'xref-push-curr-marker-stack-twice)
 
 (global-set-key (kbd "M-[") #'xref-pop-curr-marker-stack)
 (global-set-key (kbd "M-,") #'xref-find-references)

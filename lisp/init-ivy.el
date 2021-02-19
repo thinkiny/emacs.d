@@ -71,7 +71,34 @@
   :init
   (when (>= emacs-major-version 27)
     (setq xref-show-definitions-function #'ivy-xref-show-defs))
-  (setq xref-show-xrefs-function 'ivy-xref-show-xrefs))
+  (setq xref-show-xrefs-function 'ivy-xref-show-xrefs)
+  (setq ivy-xref-use-file-path t)
+  :config
+  (defun ivy-xref-make-collection (xrefs)
+    "Transform XREFS into a collection for display via `ivy-read'."
+    (let ((collection nil))
+      (dolist (xref xrefs)
+        (with-slots (summary location) xref
+          (let* ((line (xref-location-line location))
+                 (file (xref-location-group location))
+                 (candidate
+                  (concat
+                   (propertize
+                    (concat
+                     (if ivy-xref-use-file-path
+                         ;; strip path
+                         (string-trim-left file "\\(\\.\\./\\)*")
+                       (file-name-nondirectory file))
+                     (if (integerp line)
+                         (format ":%d: " line)
+                       ": "))
+                    'face 'compilation-info)
+                   (progn
+                     (when ivy-xref-remove-text-properties
+                       (set-text-properties 0 (length summary) nil summary))
+                     summary))))
+            (push `(,candidate . ,location) collection))))
+      (nreverse collection))))
 
 (provide 'init-ivy)
 ;;; init-ivy.el ends here

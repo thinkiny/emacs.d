@@ -54,14 +54,22 @@
     (beginning-of-line)
     (looking-at reg)))
 
+(defun global-tags-filter-current-file (tags)
+  (let* ((match (seq-filter (lambda (x)
+                              (string-equal (file-name-nondirectory (buffer-file-name))
+                                            (cdr (car x))))
+                            tags)))
+    (or match tags)))
+
 (defun global-tags-smart-get-locations (origin &rest args)
-  (cond
-   ((gtags-match-pattern gtags-include-pattern) (apply origin `(,(match-string 1) path)))
-   ((gtags-match-pattern gtags-type-pattern)
-    (let ((pattern (string-join `(,(match-string 1) ,(match-string 2) "{?" "$") "[[:space:]]*"))
-          (res (apply origin args)))
-      (seq-filter (lambda (x) (string-match-p pattern (cdr (nth 2 x)))) res)))
-   (t (apply origin args))))
+  (global-tags-filter-current-file
+   (cond
+    ((gtags-match-pattern gtags-include-pattern) (apply origin `(,(match-string 1) path)))
+    ((gtags-match-pattern gtags-type-pattern)
+     (let ((pattern (string-join `(,(match-string 1) ,(match-string 2) "{?" "$") "[[:space:]]*"))
+           (res (apply origin args)))
+       (seq-filter (lambda (x) (string-match-p pattern (cdr (nth 2 x)))) res)))
+    (t (apply origin args)))))
 
 (defun gtags-search-tag()
   (interactive)
@@ -71,6 +79,7 @@
             :action #'xref-find-definitions))
 
 (advice-add #'global-tags--get-locations :around #'global-tags-smart-get-locations)
+
 (add-hook 'lua-mode-hook #'global-tags-exclusive-backend-mode)
 (add-hook 'asm-mode-hook #'global-tags-exclusive-backend-mode)
 (add-hook 'sh-mode-hook #'global-tags-exclusive-backend-mode)
