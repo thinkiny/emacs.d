@@ -1,7 +1,7 @@
 (use-package gcmh
   :init
   (setq gcmh-idle-delay 5
-        gcmh-high-cons-threshold (* 64 1024 1024))
+        gcmh-high-cons-threshold (* 128 1024 1024))
   (gcmh-mode 1))
 
 (global-set-key (kbd "C-x p s") (lambda ()

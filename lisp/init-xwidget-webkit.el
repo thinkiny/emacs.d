@@ -24,24 +24,6 @@
         (switch-to-buffer (xwidget-buffer session))
       (xwidget-webkit-browse (read-string "URL: ")))))
 
-(when *use-helm*
-  (defun helm-xwidget-webkit/sources ()
-    (helm-build-sync-source "Sites"
-      :candidates (lambda () (mapcar #'car xwidget-webkit-urls))
-      :filtered-candidate-transformer (lambda (candidates _source)
-                                        (or candidates
-                                            (list helm-pattern)))
-      :volatile t
-      :action (helm-make-actions "visit URL"
-                                 (lambda (candidate)
-                                   (let ((url (cdr (assoc candidate xwidget-webkit-urls))))
-                                     (xwidget-webkit-browse (or url candidate)))))))
-
-  (defun helm-xwidget-webkit ()
-    (interactive)
-    (helm :sources `(,(helm-xwidget-webkit/sources))
-          :buffer "*helm xwidget-webkit*")))
-
 (global-set-key (kbd "C-x /") #'switch-or-create-xwidget-webkit-buffer)
 
 (provide 'init-xwidget-webkit)

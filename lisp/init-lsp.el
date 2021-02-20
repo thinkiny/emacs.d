@@ -37,20 +37,12 @@
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
   (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
 
-(when *use-helm*
-  (use-package helm-lsp
-    :after lsp-mode
-    :config
-    (setq helm-lsp-treemacs-icons nil)
-    (define-key lsp-mode-map (kbd "C-c w s") 'helm-lsp-workspace-symbol)
-    (define-key lsp-mode-map (kbd "C-c l") 'helm-imenu)))
 
-(when *use-ivy*
-  (use-package lsp-ivy
-    :demand t
-    :after lsp-mode
-    :config
-    (define-key lsp-mode-map (kbd "C-c w s") 'lsp-ivy-workspace-symbol)))
+(use-package lsp-ivy
+  :demand t
+  :after lsp-mode
+  :config
+  (define-key lsp-mode-map (kbd "C-c w s") 'lsp-ivy-workspace-symbol))
 ;;(use-package lsp-sonarlint :after lsp-mode)
 
 ;;dap-mode

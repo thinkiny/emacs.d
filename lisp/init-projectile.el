@@ -5,10 +5,7 @@
   (add-to-list 'projectile-globally-ignored-directories ".settings")
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
-  (if *use-helm*
-      (setq projectile-completion-system 'helm))
-  (if *use-ivy*
-      (setq projectile-completion-system 'ivy))
+  (setq projectile-completion-system 'ivy)
   (projectile-mode)
   (diminish 'projectile-mode))
 
@@ -26,7 +23,6 @@
         (if (not (string-match "^\*" (string-trim-left (buffer-name buffer))))
             (kill-buffer buffer))))
     (message (format "Killed buffers not belongs to %s" project-name))))
-
 
 (use-package ag
   :config
