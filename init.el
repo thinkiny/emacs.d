@@ -1,8 +1,6 @@
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "third-parties" user-emacs-directory))
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(defconst *use-helm* nil)
-(defconst *use-ivy* t)
 
 (require 'init-utils)
 (require 'init-performance)
@@ -19,12 +17,8 @@
 (require 'init-recentf)
 (require 'init-projectile)
 
-(if *use-helm*
-    (require 'init-helm))
 
-(if *use-ivy*
-    (require 'init-ivy))
-
+(require 'init-ivy)
 (require 'init-company)
 (require 'init-windows)
 (require 'init-yasnippet)

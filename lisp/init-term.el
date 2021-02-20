@@ -9,11 +9,7 @@
                             (define-key term-raw-map (kbd "C-c C-k") 'term-char-mode)
                             (define-key term-raw-map (kbd "C-c C-j") 'term-line-mode)))
 
-(when *use-helm*
-  (require 'init-mt))
-
-(when *use-ivy*
-  (require 'counsel-term)
-  (global-set-key (kbd "C-x t") 'counsel-term))
+(require 'counsel-term)
+(global-set-key (kbd "C-x t") 'counsel-term)
 
 (provide 'init-term)

@@ -69,8 +69,7 @@
   "Counsel source with candidates for all terminal buffers."
   (cons '("Launch new terminal") (counsel-mt/terminal-buffers)))
 
-;;;###autoload
-(defun counsel-mt ()
+(defun counsel-term ()
   (interactive)
   (ivy-read "Terminal: " (counsel-mt/source-terminals)
             :require-match t
@@ -80,7 +79,7 @@
                         (if buf
                             (switch-to-buffer buf)
                           (counsel-mt/launch-terminal))))
-            :caller 'counsel-mt))
+            :caller 'counsel-term))
 
 (provide 'counsel-term)
 ;;; counsel-term.el ends here
