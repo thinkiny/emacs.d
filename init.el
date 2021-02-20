@@ -58,7 +58,7 @@
   (require 'init-pdf))
 
 ;;other
-(require 'init-mt)
+(require 'init-term)
 (require 'init-eshell)
 (require 'init-rpm)
 (require 'init-git)

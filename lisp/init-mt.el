@@ -1,9 +1,3 @@
-;;Remote Directory Tracking: https://www.emacswiki.org/emacs/AnsiTermHints#h5o-5
-(add-hook 'term-mode-hook (lambda ()
-                            (define-key term-raw-map (kbd "C-c C-y") 'term-paste)
-                            (define-key term-raw-map (kbd "C-c C-k") 'term-char-mode)
-                            (define-key term-raw-map (kbd "C-c C-j") 'term-line-mode)))
-
 ;; support different ssh port
 (use-package multi-term
   :init
@@ -49,9 +43,5 @@ prefix argument.  MODE is either 'term or 'shell."
         (setq name (or multi-term-tramp-default-dir (helm-mt/get-buffer-process-cwd (current-buffer)))))
       (rename-buffer (generate-new-buffer-name (format "*%s<%s>*" name-prefix name)))))
   (global-set-key (kbd "C-x t") 'helm-mt))
-
-(when *use-ivy*
-  (require 'counsel-mt)
-  (global-set-key (kbd "C-x t") 'counsel-mt))
 
 (provide 'init-mt)

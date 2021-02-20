@@ -4,6 +4,7 @@
 (defconst gtags-include-pattern "^[[:space:]]*#\\(?:include\\|import\\)[[:space:]]+[\"<]\\(?:[./]*\\)?\\(.*?\\)[\">]")
 (defconst gtags-type-pattern "^[[:space:]]*\\(?:extern\\|volatile\\|static\\|const\\)?[[:space:]]*\\(struct\\|class\\)[[:space:]]+\\(.*?\\)[[:space:]]+\\(?:.*?\\);")
 
+;; imenu start
 (defun ggtags-forward-to-line (line)
   "Move to line number LINE in current buffer."
   (cl-check-type line (integer 1))
@@ -34,7 +35,6 @@
   (ggtags-forward-to-line line)
   (ggtags-move-to-tag name))
 
-;;;###autoload
 (defun ggtags-build-imenu-index ()
   "A function suitable for `imenu-create-index-function'."
   (let ((file (and buffer-file-name (file-relative-name buffer-file-name))))
@@ -48,6 +48,7 @@
                            collect (list (match-string 1)
                                          (string-to-number (match-string 2))
                                          'ggtags-goto-imenu-index)))))))
+;; imenu end
 
 (defun gtags-match-pattern (reg)
   (save-excursion
