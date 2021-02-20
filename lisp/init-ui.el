@@ -17,7 +17,6 @@
 (setq indicate-empty-lines t)
 (setq-default line-number-display-limit-width 2000)
 (setq-default window-divider-default-right-width 1)
-(setq-default window-divider-default-right-width 1)
 
 ;;scroll
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
@@ -80,6 +79,7 @@
             (set-face-attribute 'fringe nil :background nil)
             (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
             (set-face-attribute 'outline-1 nil :height 1.0)
+            (set-face-attribute 'company-preview-common nil :foreground nil)
             (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
 
 ;;fonts
