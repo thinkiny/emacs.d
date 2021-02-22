@@ -72,9 +72,9 @@
        (seq-filter (lambda (x) (string-match-p pattern (cdr (nth 2 x)))) res)))
     (t (apply origin args)))))
 
-(defun gtags-search-tag()
+(defun gtags-workspace-symbol()
   (interactive)
-  (ivy-read "Goto tag: "
+  (ivy-read "Workspace symbol: "
             (xref-backend-identifier-completion-table (xref-find-backend))
             :require-match t
             :action #'xref-find-definitions))
@@ -86,7 +86,7 @@
 (add-hook 'sh-mode-hook #'global-tags-exclusive-backend-mode)
 (add-hook 'global-tags-exclusive-backend-mode-hook
           (lambda ()
-            (local-set-key (kbd "C-c w s") #'gtags-search-tag)
+            (local-set-key (kbd "C-c w s") #'gtags-workspace-symbol)
             (setq-local imenu-create-index-function #'ggtags-build-imenu-index)))
 
 (provide 'init-gtags)

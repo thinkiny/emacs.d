@@ -11,13 +11,14 @@
                 ivy-use-selectable-prompt t)
   (define-key ivy-minibuffer-map (kbd "<up>") #'ivy-previous-line-or-history)
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)
+  (define-key ivy-minibuffer-map (kbd "C-l") #'ivy-backward-delete-char)
   (bind-key "C-c c" 'ivy-resume))
 
 (use-package counsel
   :after ivy
   :config
   (setq-default counsel-mode-override-describe-bindings t)
-  (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
+  ;;(define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
   (global-set-key (kbd "C-c l") 'counsel-imenu)
   (counsel-mode))
 
