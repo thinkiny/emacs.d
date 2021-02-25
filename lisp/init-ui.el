@@ -18,6 +18,10 @@
 (setq-default line-number-display-limit-width 2000)
 (setq-default window-divider-default-right-width 1)
 
+(global-set-key (kbd "C-x c f") #'customize-face)
+(global-set-key (kbd "C-x c v") #'customize-variable)
+(global-set-key (kbd "C-x c g") #'customize-group)
+
 ;;scroll
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 (setq mouse-wheel-progressive-speed nil)
@@ -78,7 +82,6 @@
             (set-face-attribute 'button nil :background nil)
             (set-face-attribute 'fringe nil :background nil)
             (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
-            (set-face-attribute 'company-preview-common nil :foreground nil)
             (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
 
 ;;fonts
