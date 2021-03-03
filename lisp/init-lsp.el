@@ -124,14 +124,17 @@
 
 ;; lsp-later
 (defvar-local lsp-later-timer nil)
+(defun lsp-later-run ()
+  (setq-local lsp-later-timer nil)
+  (lsp))
+
 (defun lsp-later()
-  (setq-local lsp-later-timer (run-at-time 5 nil #'lsp)))
+  (setq-local lsp-later-timer (run-at-time 5 nil #'lsp-later-run)))
 
 (add-hook 'hack-local-variables-hook
           (lambda ()
             (when lsp-later-timer
               (cancel-timer lsp-later-timer)
-              (setq-local lsp-later-timer nil)
-              (lsp))))
+              (lsp-later-run))))
 
 (provide 'init-lsp)
