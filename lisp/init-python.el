@@ -21,8 +21,13 @@
                                     (with-lsp-workspace workspace
                                       (lsp--set-configuration (lsp-configuration-section "pyls")))))))
 
+(defun lsp-python-set-extra-path (paths)
+  (lsp-register-custom-settings
+   `(("pyls.plugins.jedi.extra_paths" ,paths))))
+
 (add-hook 'python-mode-hook (lambda ()
                               (setq-local lsp-enable-save-format nil)
+                              (require 'lsp)
                               (lsp-later)
                               (indent-guide-mode)))
 (provide 'init-python)
