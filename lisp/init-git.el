@@ -37,6 +37,9 @@
   (interactive)
   (magit-status-setup-buffer (magit-status-get-directory)))
 
+(require-package 'fullframe)
+(fullframe magit-status-open magit-mode-quit-window)
+
 (global-set-key (kbd "C-x g") 'magit-status-open)
 
 (defun sanityinc/magit-or-vc-log-file (&optional prompt)

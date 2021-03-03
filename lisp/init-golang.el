@@ -30,7 +30,8 @@
   (when (and (check-valid-lsp-go-mode) (lsp-workspace-get-metadata 'go-path))
     (clrhash lsp-go-env)
     (puthash "GO111MODULE" "on" lsp-go-env)
-    (call-interactively #'lsp-workspace-restart)
+    (unless lsp-later-timer
+      (call-interactively #'lsp-workspace-restart))
     (lsp-workspace-set-metadata 'go-path nil)))
 
 (defun lsp-go-module-off ()
@@ -39,8 +40,9 @@
       (clrhash lsp-go-env)
       (puthash "GO111MODULE" "off" lsp-go-env)
       (puthash "GOPATH" (get-tramp-local-name (projectile-project-root)) lsp-go-env)
-      (call-interactively #'lsp-workspace-restart)
+      (unless lsp-later-timer
+        (call-interactively #'lsp-workspace-restart))
       (lsp-workspace-set-metadata 'go-path t))))
 
-(add-hook 'go-mode-hook #'lsp)
+(add-hook 'go-mode-hook #'lsp-later)
 (provide 'init-golang)

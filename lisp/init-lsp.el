@@ -122,4 +122,16 @@
 
 (use-package lsp-treemacs)
 
+;; lsp-later
+(defvar-local lsp-later-timer nil)
+(defun lsp-later()
+  (setq-local lsp-later-timer (run-at-time 5 nil #'lsp)))
+
+(add-hook 'hack-local-variables-hook
+          (lambda ()
+            (when lsp-later-timer
+              (cancel-timer lsp-later-timer)
+              (setq-local lsp-later-timer nil)
+              (lsp))))
+
 (provide 'init-lsp)

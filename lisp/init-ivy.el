@@ -25,6 +25,7 @@
 (use-package counsel-projectile
   :init (counsel-projectile-mode))
 
+(use-package ivy-hydra)
 ;; icons
 (when window-system
   (use-package all-the-icons-ivy-rich
