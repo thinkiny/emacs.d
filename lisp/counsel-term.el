@@ -30,13 +30,15 @@
 (defun counsel-get-term-cmd()
   (if (and (featurep 'tramp)
              (tramp-tramp-file-p default-directory))
-    (with-parsed-tramp-file-name default-directory path
-      (let ((method (cadr (assoc `tramp-login-program (assoc path-method tramp-methods)))))
-        (list method "-t"
-              (if path-port
-                  (concat (when path-user (concat path-user "@")) path-host " -p " path-port)
-                (concat (when path-user (concat path-user "@")) path-host))
-              (concat "cd '" path-localname "'; exec $SHELL -l"))))
+    (with-parsed-tramp-file-name default-directory term
+      (flatten-list
+       (list "ssh"
+             (split-string tramp-ssh-without-controlmaster-options)
+             "-t"
+             (concat (when term-user (concat term-user "@")) term-host)
+             (if term-port
+                 (list "-p" term-port))
+            (concat "cd '" term-localname "'; exec $SHELL -l"))))
     (list (or (getenv "SHELL")
               (getenv "ESHELL")
               "/bin/sh") "-l")))

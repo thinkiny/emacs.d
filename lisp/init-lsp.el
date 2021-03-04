@@ -90,7 +90,7 @@
                              (if (file-remote-p name)
                                  (setq-local lsp-log-io t)))))
 
-(ignore-tramp-ssh-control-master 'lsp 'lsp-restart-workspace)
+(ignore-tramp-ssh-control-master 'lsp--start-workspace)
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()
