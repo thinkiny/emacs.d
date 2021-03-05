@@ -280,7 +280,7 @@ With arg N, insert N newlines."
 (defun tab-indent-off()
   (interactive)
   (setq-local indent-tabs-mode nil)
-  (kill-local-variable c-basic-offset))
+  (kill-local-variable 'c-basic-offset))
 
 ;; smex
 (require-package 'smex)

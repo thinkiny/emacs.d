@@ -22,6 +22,7 @@
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil)
+
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
   (define-key lsp-mode-map (kbd "C-c i") 'lsp-organize-imports)
@@ -36,7 +37,6 @@
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
   (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
-
 
 (use-package lsp-ivy
   :demand t
