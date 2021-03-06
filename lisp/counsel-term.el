@@ -4,7 +4,7 @@
 
 (require 'cl-lib)
 
-(defconst counsel-mt-buffer-header "term-")
+(defconst counsel-mt-buffer-header "*term: ")
 (defun counsel-mt/terminal-buffers ()
   "Filter for buffers that are terminals only."
   (cl-loop for buf in (buffer-list)
@@ -52,13 +52,14 @@
                               (kill-buffer (process-buffer proc)))))))
 
 (defun counsel-open-term (name)
-  (let ((cmd (counsel-get-term-cmd)))
-    (setq term-ansi-buffer-name (apply 'make-term name (car cmd) nil (cdr cmd)))
-    (set-buffer term-ansi-buffer-name)
+  (let* ((cmd (counsel-get-term-cmd))
+         (buf (apply 'make-term name (car cmd) nil (cdr cmd))))
+    (set-buffer buf)
     (term-mode)
     (term-char-mode)
     (counsel-term-handle-close)
-    (switch-to-buffer term-ansi-buffer-name)))
+    (switch-to-buffer buf)
+    (rename-buffer name)))
 
 (defun counsel-mt/launch-terminal ()
   "Launch a terminal in a new buffer."

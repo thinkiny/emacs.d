@@ -25,11 +25,10 @@
 ;; use clangd
 (after-load 'lsp-clangd
   (require 'dap-cpptools)
-  (setq lsp-clients-clangd-args '("-header-insertion-decorators=0"))
+  ;;(setq lsp-clients-clangd-args '("-header-insertion-decorators=0"))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection 'lsp-clients--clangd-command)
                     :major-modes '(c-mode c++-mode objc-mode)
-                    :priority -1
                     :server-id 'clangd-remote
                     :remote? t))
 
@@ -75,7 +74,7 @@ returned to avoid that the echo area grows uncomfortably."
   (define-key c-mode-base-map (kbd "C-c x") 'cff-find-other-file)
   (if (global-tags--get-dbpath default-directory)
       (global-tags-exclusive-backend-mode)
-    (lsp)))
+    (lsp-later)))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-mode))
