@@ -26,7 +26,7 @@
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
   (define-key lsp-mode-map (kbd "C-c i") 'lsp-organize-imports)
-  (define-key lsp-mode-map (kbd "C-c w r") 'lsp-workspace-restart)
+  (define-key lsp-mode-map (kbd "C-c w r") 'lsp-workspace-restart-fix)
   (define-key lsp-mode-map (kbd "C-c w a") 'lsp-workspace-folders-add)
   (define-key lsp-mode-map (kbd "C-c w d") 'lsp-workspace-folders-remove)
   (define-key lsp-mode-map (kbd "C-c SPC") 'lsp-signature-activate)
@@ -85,6 +85,13 @@
     (write-region (format "((%s . ((eval . (lsp-save-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
 ;; tramp
+
+;; lsp-restart fix tramp stuck
+(defun lsp-workspace-restart-fix()
+  (interactive)
+  (call-interactively #'lsp-workspace-shutdown)
+  (lsp-deferred))
+
 (advice-add 'lsp :before (lambda (&optional arg)
                            (when-let ((name (buffer-file-name)))
                              (if (file-remote-p name)
