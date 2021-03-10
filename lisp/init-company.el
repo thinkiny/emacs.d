@@ -1,10 +1,22 @@
 (require-package 'company)
 (add-hook 'after-init-hook 'global-company-mode)
 
+(defun company-complete-remove-params(str)
+  (string-trim-right (substring-no-properties str) "[<(].*[>)]"))
+
+(defun company-complete-selection-partial ()
+  "Insert the selected candidate."
+  (interactive)
+  (when (and (company-manual-begin) company-selection)
+    (let* ((result (nth company-selection company-candidates))
+           (text (company-complete-remove-params result)))
+      (company-finish (propertize text 'lsp-completion-item (make-hash-table))))))
+
 (after-load 'company
   (define-key company-active-map (kbd "\C-n") 'company-select-next)
   (define-key company-active-map (kbd "\C-p") 'company-select-previous)
   (define-key company-active-map (kbd "\C-d") 'company-show-doc-buffer)
+  (define-key company-active-map (kbd "TAB") 'company-complete-selection-partial)
   (global-set-key (kbd "M-/") 'company-complete)
   ;;(setq company-begin-commands '(self-insert-command))
   (setq company-require-match nil)
