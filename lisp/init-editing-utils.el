@@ -287,4 +287,7 @@ With arg N, insert N newlines."
 (smex-initialize)
 (global-set-key (kbd "M-x") 'smex)
 
+;; protobuf
+(use-package protobuf-mode :mode (("\\.proto$" . protobuf-mode) ("\\.proto3$" . protobuf-mode)))
+
 (provide 'init-editing-utils)
