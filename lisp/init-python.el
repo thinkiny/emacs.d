@@ -4,7 +4,6 @@
               auto-mode-alist))
 
 (require-package 'pip-requirements)
-(require-package 'indent-guide)
 
 (defvar-local lsp-pyls-extra-paths [])
 (after-load 'lsp-pyls
@@ -45,6 +44,5 @@
 
 (add-hook 'python-mode-hook (lambda ()
                               (setq-local lsp-enable-save-format nil)
-                              (lsp-later)
-                              (indent-guide-mode)))
+                              (lsp-later)))
 (provide 'init-python)
