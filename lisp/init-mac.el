@@ -36,18 +36,6 @@
                       :resourceDir (string-trim (shell-command-to-string "clang -print-resource-dir")))))
 
 
-
-(use-package osx-trash
-  :commands osx-trash-move-file-to-trash
-  :init
-  ;; Delete files to trash on macOS, as an extra layer of precaution against
-  ;; accidentally deleting wanted files.
-  (setq delete-by-moving-to-trash t)
-
-  ;; Lazy load `osx-trash'
-  (unless (fboundp 'system-move-file-to-trash)
-    (defalias #'system-move-file-to-trash #'osx-trash-move-file-to-trash)))
-
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . light))
 ;; (load-theme 'vscode-dark-plus t)
