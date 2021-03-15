@@ -35,7 +35,7 @@
 
 (add-hook 'python-mode-hook
           (lambda ()
-            (setq-local dash-docs-docsets '("Python_2"))))
+            (setq-local dash-docs-docsets '("Python_3" "Python_2"))))
 
 (add-hook 'cmake-mode-hook
           (lambda ()
