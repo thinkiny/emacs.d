@@ -6,12 +6,13 @@
   (setq-default ivy-use-virtual-buffers t
                 ivy-virtual-abbreviate 'abbreviate
                 ivy-count-format ""
-                ivy-magic-tilde nil
+                ivy-wrap t
                 enable-recursive-minibuffers t
                 ivy-use-selectable-prompt t)
   (define-key ivy-minibuffer-map (kbd "<up>") #'ivy-previous-line-or-history)
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)
   (define-key ivy-minibuffer-map (kbd "C-l") #'ivy-backward-delete-char)
+  (define-key ivy-minibuffer-map (kbd "C-o") #'ivy-immediate-done)
   (bind-key "C-c c" 'ivy-resume))
 
 (use-package counsel
