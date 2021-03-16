@@ -7,6 +7,7 @@
 
 (defvar-local lsp-pyls-extra-paths [])
 (after-load 'lsp-pyls
+  (setq lsp-pyls-plugins-yapf-enabled t)
   (lsp-register-custom-settings '(("pyls.plugins.jedi.extra_paths" lsp-pyls-extra-paths)))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection
