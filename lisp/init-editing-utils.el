@@ -249,10 +249,22 @@ With arg N, insert N newlines."
 (global-set-key (kbd "M-,") #'xref-find-references)
 
 (use-package bing-dict
+  :init
+  (defun bing-dict-at-point()
+    (interactive)
+    (let ((word (if (use-region-p)
+                    (buffer-substring-no-properties
+                     (region-beginning) (region-end))
+                  (let ((text (thing-at-point 'word)))
+                    (if text (substring-no-properties text))))))
+      (if word
+          (bing-dict-brief word)
+        (message "can't find word at point"))))
+  :commands bing-dict-brief
   :config
   (setq bing-dict-cache-auto-save t)
   :bind (:map global-map
-              ("C-?"  . 'bing-dict-brief)))
+              ("C-,"  . 'bing-dict-at-point)))
 
 (defun set-proxy()
   (interactive)
