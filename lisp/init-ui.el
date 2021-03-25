@@ -33,8 +33,8 @@
   (add-to-list 'initial-frame-alist no-border))
 
 ;; icons
+(use-package all-the-icons)
 (when window-system
-  (use-package all-the-icons)
   (use-package all-the-icons-dired)
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 

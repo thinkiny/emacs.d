@@ -5,7 +5,14 @@
 (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
 
 (after-load 'yasnippet
-  (diminish 'yas-minor-mode))
+  (diminish 'yas-minor-mode)
+  (defun gen-header-tag()
+    (let* ((root (projectile-project-root))
+           (path (string-trim-left
+                  (file-name-sans-extension (buffer-file-name))
+                  root))
+           (name (replace-regexp-in-string "[./]" "_" path)))
+      (concat (upcase name) "_H_"))))
 
 ;; (add-hook 'yas-minor-mode-hook
 ;;    (lambda ()

@@ -13,7 +13,7 @@
   (setq ls-lisp-dirs-first t)
   (setq ls-lisp-use-insert-directory-program nil)
   (setq dired-recursive-deletes 'top)
-  (setq dired-omit-files "^\\.?#\\|^\\.$")
+  (setq dired-omit-files "^\\.?#\\|^\\.$\\|\\.cmd$\\|\\.d$")
   (setq dired-omit-verbose nil)
   (add-hook 'dired-mode-hook 'dired-omit-mode)
   (put 'dired-find-alternate-file 'disabled nil)

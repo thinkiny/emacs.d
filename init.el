@@ -3,8 +3,8 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
 (require 'init-utils)
-(require 'init-performance)
 (require 'init-package)
+(require 'init-performance)
 (require 'init-exec-path)
 
 (require 'init-editing-utils)

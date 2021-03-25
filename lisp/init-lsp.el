@@ -29,6 +29,7 @@
   (define-key lsp-mode-map (kbd "C-c w r") 'lsp-workspace-restart-fix)
   (define-key lsp-mode-map (kbd "C-c w a") 'lsp-workspace-folders-add)
   (define-key lsp-mode-map (kbd "C-c w d") 'lsp-workspace-folders-remove)
+  (define-key lsp-mode-map (kbd "C-c w c") 'lsp-workspace-shutdown)
   (define-key lsp-mode-map (kbd "C-c SPC") 'lsp-signature-activate)
   (define-key lsp-mode-map (kbd "C-c y") 'dap-hydra)
   ;;(define-key lsp-mode-map (kbd "C-c v") 'lsp-ui-peek-find-implementation)
