@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# key: CLI11
+# --
+
+new_git_repository(
+    name = "CLI11",
+    remote = "https://github.com/CLIUtils/CLI11.git",
+    branch = "master",
+    build_file_content = """
+cc_library(
+    name = "CLI11",
+    hdrs = glob(["include/CLI/*.hpp"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"])
+"""
+)

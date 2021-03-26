@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# key: GSL
+# --
+
+new_git_repository(
+    name = "GSL",
+    remote = "https://github.com/microsoft/GSL.git",
+    branch = "main",
+    build_file_content = """
+cc_library(
+    name = "GSL",
+    hdrs = glob(["include/gsl/*"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"])
+"""
+)

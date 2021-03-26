@@ -1,7 +1,11 @@
 (require-package 'cff)
 (require-package 'cmake-mode)
 
-(use-package bazel-mode :mode "\\.BUILD$")
+(use-package bazel-mode
+  :mode "\\.BUILD$"
+  :config
+  (add-hook 'bazel-mode-hook (lambda ()
+                              (setq-local yas-indent-line 'fixed))))
 ;; use ccls
 ;; (use-package ccls
 ;;   :config
@@ -68,10 +72,16 @@ returned to avoid that the echo area grows uncomfortably."
 ;;gtags
 (require 'init-gtags)
 
+(defun switch-c-header-source()
+  (interactive)
+  (if (bound-and-true-p lsp-mode)
+      (lsp-clangd-find-other-file)
+    (cff-find-other-file)))
+
 (defun my-c-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -
   (c-add-style "Google" google-c-style t)
-  (define-key c-mode-base-map (kbd "C-c x") 'cff-find-other-file)
+  (define-key c-mode-base-map (kbd "C-c x") 'switch-c-header-source)
   (if (global-tags--get-dbpath default-directory)
       (global-tags-exclusive-backend-mode)
     (lsp-later)))
