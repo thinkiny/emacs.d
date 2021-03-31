@@ -65,25 +65,25 @@
   (call-interactively 'dap-debug))
 
 ;; format
-(defvar-local lsp-enable-save-format t)
-(defun lsp-save-format-on ()
+(defvar-local lsp-enable-format t)
+(defun lsp-format-on ()
   (interactive)
   (when (bound-and-true-p lsp-mode)
     (whitespace-cleanup-mode 1)
     (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)
-    (setq-local lsp-enable-save-format t)))
+    (setq-local lsp-enable-format t)))
 
-(defun lsp-save-format-off ()
+(defun lsp-format-off ()
   (interactive)
   (when (bound-and-true-p lsp-mode)
     (whitespace-cleanup-mode 0)
     (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
-    (setq-local lsp-enable-save-format nil)))
+    (setq-local lsp-enable-format nil)))
 
-(defun disable-lsp-format-this-project()
+(defun lsp-format-off-project()
   (interactive)
   (when-let ((project-root (projectile-project-root)))
-    (write-region (format "((%s . ((eval . (lsp-save-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
+    (write-region (format "((%s . ((eval . (lsp-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
 ;; tramp
 
@@ -108,8 +108,8 @@
                            (setq-local flycheck-idle-change-delay 1.0)
                            (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
                            (setq-local global-whitespace-cleanup-mode nil)
-                           (if lsp-enable-save-format
-                               (lsp-save-format-on))))
+                           (if lsp-enable-format
+                               (lsp-format-on))))
 
 ;; lsp-ui
 (use-package lsp-ui
