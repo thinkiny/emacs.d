@@ -90,8 +90,8 @@
 ;; lsp-restart fix tramp stuck
 (defun lsp-workspace-restart-fix()
   (interactive)
-  (call-interactively #'lsp-workspace-shutdown)
-  (lsp-deferred))
+  (call-interactively #'lsp-shutdown-workspace)
+  (lsp-later))
 
 (advice-add 'lsp :before (lambda (&optional arg)
                            (when-let ((name (buffer-file-name)))

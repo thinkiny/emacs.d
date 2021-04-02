@@ -8,6 +8,7 @@
 
 (after-load 'lsp-go
   (setq lsp-go-codelens nil)
+  (setq-local lsp-go-env (make-hash-table))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection "gopls")
                     :major-modes '(go-mode go-dot-mod-mode)
@@ -30,9 +31,13 @@
   (when (and (check-valid-lsp-go-mode) (lsp-workspace-get-metadata 'go-path))
     (clrhash lsp-go-env)
     (puthash "GO111MODULE" "on" lsp-go-env)
-    (unless lsp-later-timer
-      (call-interactively #'lsp-workspace-restart-fix))
-    (lsp-workspace-set-metadata 'go-path nil)))
+    (lsp-workspace-set-metadata 'go-path nil)
+    (if lsp-later-timer
+          (progn
+            (cancel-timer lsp-later-timer)
+            (setq-local lsp-later-timer nil)
+            (lsp))
+      (call-interactively #'lsp-workspace-restart-fix))))
 
 (defun lsp-go-module-off ()
   (interactive)
@@ -40,9 +45,13 @@
       (clrhash lsp-go-env)
       (puthash "GO111MODULE" "off" lsp-go-env)
       (puthash "GOPATH" (get-tramp-local-name (projectile-project-root)) lsp-go-env)
-      (unless lsp-later-timer
-        (call-interactively #'lsp-workspace-restart-fix))
-      (lsp-workspace-set-metadata 'go-path t))))
+      (lsp-workspace-set-metadata 'go-path t)
+      (if lsp-later-timer
+          (progn
+            (cancel-timer lsp-later-timer)
+            (setq-local lsp-later-timer nil)
+            (lsp))
+        (call-interactively #'lsp-workspace-restart-fix)))))
 
 (add-hook 'go-mode-hook #'lsp-later)
 (provide 'init-golang)

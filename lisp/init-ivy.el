@@ -20,6 +20,7 @@
   :config
   (setq-default counsel-mode-override-describe-bindings t)
   ;;(define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
+  (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache" "bazel-.*" ".o" ".elc" ".so")))
   (global-set-key (kbd "C-c l") 'counsel-imenu)
   (counsel-mode))
 

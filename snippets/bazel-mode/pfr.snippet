@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# key:  pfr
+# --
+
+new_git_repository(
+    name = "boost_pfr",
+    remote = "https://github.com/boostorg/pfr.git",
+    branch = "master",
+    build_file_content = """
+cc_library(
+    name = "boost_pfr",
+    hdrs = glob(["include/boost/**/*.hpp"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"])
+"""
+)
