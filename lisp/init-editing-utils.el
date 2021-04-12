@@ -219,13 +219,27 @@ With arg N, insert N newlines."
 
 ;;xref
 (setq xref-prompt-for-identifier nil)
+(defun xref-find-last-match(marker)
+  (let ((idx (- (ring-length xref--marker-ring) 1))
+        (found nil))
+    (while (and (not found) (> idx 1))
+      (if (equal (ring-ref xref--marker-ring idx) marker)
+          (setq found t)
+        (setq idx (- idx 1)))
+      )
+    idx))
+
+(defun print-xref-index()
+  (interactive)
+  (message (format "%d" (xref-find-last-match (mark-marker)))))
+
 (defun xref-pop-curr-marker-stack ()
   "Pop back to where \\[xref-find-definitions] was last invoked."
   (interactive)
   (let ((ring xref--marker-ring))
     (when (ring-empty-p ring)
       (user-error "Marker stack is empty"))
-    (let* ((idx (or (ring-member ring (mark-marker)) (- (ring-length ring) 2)))
+    (let* ((idx (- (xref-find-last-match (mark-marker)) 1))
            (before (ring-remove ring idx))
            (marker (ring-remove ring idx)))
       (set-marker before nil nil)
@@ -313,5 +327,11 @@ With arg N, insert N newlines."
 
 ;; protobuf
 (use-package protobuf-mode :mode (("\\.proto$" . protobuf-mode) ("\\.proto3$" . protobuf-mode)))
+
+
+;; clipetty
+(use-package clipetty
+  :ensure t
+  :hook (after-init . global-clipetty-mode))
 
 (provide 'init-editing-utils)
