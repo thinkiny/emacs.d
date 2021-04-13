@@ -128,7 +128,35 @@
   (cond ((eq 'pdf-view-mode major-mode) (mode-line-pdfview-page-number))
         ((eq 'doc-view-mode major-mode) (mode-line-docview-page-number))
         ((member major-mode '(eshell-mode term-mode xwidget-webkit-mode)) "")
-        (t (format-mode-line " %l:%c"))))
+        (t (format-mode-line " %l"))))
+
+
+;; lsp symbol
+(defvar lsp-modeline-symbol "")
+(defun lsp-modeline-get-symbol ()
+  "Get the symbol under cursor ."
+  (if (lsp-feature? "textDocument/documentSymbol")
+      (-if-let* ((lsp--document-symbols-request-async t)
+                 (symbols (lsp--get-document-symbols))
+                 (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols))
+                 (enumerated-symbols-hierarchy
+                  (-map-indexed (lambda (index elt)
+                                  (cons elt (1+ index)))
+                                symbols-hierarchy)))
+          (concat "=> "
+                  (mapconcat
+                   (-lambda (((symbol &as &DocumentSymbol :name)
+                              . index))
+                     (gethash "name" symbol))
+                   enumerated-symbols-hierarchy "/"))
+        "")
+    ""))
+
+;; update lsp-symbol every second
+(run-at-time 2 2 (lambda ()
+                   (if (bound-and-true-p lsp-mode)
+                       (setq lsp-modeline-symbol (lsp-modeline-get-symbol))
+                     (setq lsp-modeline-symbol ""))))
 
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)
@@ -143,7 +171,9 @@
                 "]"
                 (vc-mode vc-mode)
                 " "
-                global-mode-string))
+                global-mode-string
+                lsp-modeline-symbol
+                ))
 
 ;; (use-package centaur-tabs
 ;;   :demand
