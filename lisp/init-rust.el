@@ -1,8 +1,6 @@
-(maybe-require-package 'racer)
-(maybe-require-package 'company-racer)
+(use-package rust-mode)
+(use-package cargo)
 
-(add-hook 'rust-mode-hook #'racer-mode)
-(add-hook 'racer-mode-hook #'eldoc-mode)
-(add-hook 'racer-mode-hook #'company-mode)
+(add-hook 'rust-mode-hook #'lsp-later)
 
 (provide 'init-rust)

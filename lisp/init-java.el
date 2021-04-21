@@ -23,7 +23,7 @@
 
   (setq lsp-java-vmargs `("-noverify"
                           "-Xss4m"
-                          "-Xmx4G"
+                          "-Xmx3G"
                           "-XX:+UseG1GC"
                           "-XX:+UseStringDeduplication"
                           "-XX:+AggressiveOpts"

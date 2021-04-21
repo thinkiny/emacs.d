@@ -43,6 +43,11 @@
   :group 'pdf-continuous-scroll
   :type 'boolean)
 
+(defcustom pdf-cs-custom-min-height nil
+  "Reverse default scrolling direction"
+  :group 'pdf-continuous-scroll
+  :type 'number)
+
 (defun pdf-cscroll-window-dual-p ()
   "Return t if current scroll window status is dual, else nil."
     (or (equal 'upper (alist-get 'pdf-scroll-window-status (window-parameters)))
@@ -122,9 +127,11 @@ the step size for scrolling use the ARG in
 
 (defun pdf-cs-mouse-scroll-forward ()
   (interactive)
+  (with-selected-window
+      (or (caadr last-input-event) (selected-window))
   (if pdf-cs-reverse-scrolling
       (pdf-continuous-scroll-backward nil)
-    (pdf-continuous-scroll-forward nil)))
+    (pdf-continuous-scroll-forward nil))))
 
 (defun pdf-continuous-scroll-backward-line (&optional arg)
   "Scroll down by ARG lines if possible, else go to the previous page.
@@ -135,7 +142,9 @@ To increase the step size for scrolling use the ARG in
 `pdf-continuous-scroll-backward'"
   (if pdf-continuous-scroll-mode
       (let ((hscroll (window-hscroll))
-            (cur-page (pdf-view-current-page)))
+            (cur-page (pdf-view-current-page))
+            (window-min-height (or pdf-cs-custom-min-height
+                                   window-min-height)))
         (print
          (format
           "%s: window-total-height %s, frame-height %s\nnext line: vscroll value, second next line: output value (image-previous-line)"
@@ -192,9 +201,11 @@ To increase the step size for scrolling use the ARG in
 
 (defun pdf-cs-mouse-scroll-backward ()
   (interactive)
+  (with-selected-window
+      (or (caadr last-input-event) (selected-window))
   (if pdf-cs-reverse-scrolling
       (pdf-continuous-scroll-forward nil)
-    (pdf-continuous-scroll-backward nil)))
+    (pdf-continuous-scroll-backward nil))))
 
 (defun pdf-continuous-next-page (arg)
   (declare (interactive-only pdf-view-previous-page))
