@@ -1,13 +1,12 @@
-(use-package lsp-metals)
-
-(use-package scala-mode
-  :after lsp-mode
-  :hook (scala-mode . my-scala-mode-hook)
-  :mode "\\.s\\(cala\\|bt\\|c\\)$")
+(use-package scala-mode :mode "\\.s\\(cala\\|bt\\|c\\)$")
+(use-package lsp-metals
+  :custom
+  (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off"))
+  :hook (scala-mode . my-scala-mode-hook))
 
 (defun my-scala-mode-hook()
-  (lsp)
-  (lsp-lens-mode 1)
+  (lsp-later)
+  (lsp-lens-mode)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
      ((string= ext "sc")  (setq-local lsp-skip-format-at-save t))
