@@ -20,6 +20,8 @@
         lsp-log-io nil
         lsp-idle-delay 0.500
         lsp-headerline-breadcrumb-enable nil
+        lsp-modeline-code-actions-enable nil
+        lsp-modeline-diagnostics-enable nil
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil)
 
@@ -87,10 +89,20 @@
 
 ;; tramp
 
+;; emacs28
+(defun start-file-process-shell-command@around (start-file-process-shell-command name buffer &rest args)
+      "Start a program in a subprocess.  Return the process object for it.
+Similar to `start-process-shell-command', but calls `start-file-process'."
+      ;; On remote hosts, the local `shell-file-name' might be useless.
+      (let ((command (mapconcat 'identity args " ")))
+        (funcall start-file-process-shell-command name buffer command)))
+
+(advice-add 'start-file-process-shell-command :around #'start-file-process-shell-command@around)
+
 ;; lsp-restart fix tramp stuck
 (defun lsp-workspace-restart-fix()
   (interactive)
-  (call-interactively #'lsp-shutdown-workspace)
+  (call-interactively #'lsp-workspace-shutdown)
   (lsp-later))
 
 (advice-add 'lsp :before (lambda (&optional arg)

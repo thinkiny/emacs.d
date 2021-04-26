@@ -1,5 +1,8 @@
 ;; pdf-tools
 (use-package pdf-tools
+  :init
+  (require 'pdf-macs)
+  (require 'pdf-cache)
   :demand t
   :config
   ;;(pdf-tools-install t t t nil)
