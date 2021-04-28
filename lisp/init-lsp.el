@@ -6,6 +6,7 @@
         lsp-inhibit-message t
         lsp-diagnostics-provider :flycheck
         lsp-modeline-diagnostics-enable nil
+        lsp-modeline-code-actions-enable nil
         lsp-enable-symbol-highlighting nil
         lsp-enable-indentation nil
         lsp-enable-on-type-formatting nil
@@ -20,15 +21,13 @@
         lsp-log-io nil
         lsp-idle-delay 0.500
         lsp-headerline-breadcrumb-enable nil
-        lsp-modeline-code-actions-enable nil
-        lsp-modeline-diagnostics-enable nil
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil)
 
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
   (define-key lsp-mode-map (kbd "C-c i") 'lsp-organize-imports)
-  (define-key lsp-mode-map (kbd "C-c w r") 'lsp-workspace-restart-fix)
+  (define-key lsp-mode-map (kbd "C-c w r") 'my-lsp-workspace-restart)
   (define-key lsp-mode-map (kbd "C-c w a") 'lsp-workspace-folders-add)
   (define-key lsp-mode-map (kbd "C-c w d") 'lsp-workspace-folders-remove)
   (define-key lsp-mode-map (kbd "C-c w c") 'lsp-workspace-shutdown)
@@ -99,12 +98,6 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
 
 (advice-add 'start-file-process-shell-command :around #'start-file-process-shell-command@around)
 
-;; lsp-restart fix tramp stuck
-(defun lsp-workspace-restart-fix()
-  (interactive)
-  (call-interactively #'lsp-workspace-shutdown)
-  (lsp-later))
-
 (advice-add 'lsp :before (lambda (&optional arg)
                            (when-let ((name (buffer-file-name)))
                              (if (file-remote-p name)
@@ -146,6 +139,17 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
 (use-package lsp-treemacs)
 
 ;; lsp-later
+(defun my-lsp-workspace-restart()
+  (interactive)
+  (if lsp-later-timer
+      (progn
+        (cancel-timer lsp-later-timer)
+        (setq-local lsp-later-timer nil)
+        (lsp))
+    (progn
+      (call-interactively #'lsp-workspace-shutdown)
+      (lsp-later))))
+
 (defvar-local lsp-later-timer nil)
 (defun lsp-later-run ()
   (setq-local lsp-later-timer nil)

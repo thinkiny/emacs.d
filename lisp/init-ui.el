@@ -153,7 +153,7 @@
     ""))
 
 ;; update lsp-symbol every second
-(run-at-time 2 2 (lambda ()
+(run-at-time 1 1 (lambda ()
                    (if (bound-and-true-p lsp-mode)
                        (setq lsp-modeline-symbol (lsp-modeline-get-symbol))
                      (setq lsp-modeline-symbol ""))))

@@ -27,30 +27,20 @@
 
 (defun lsp-go-module-on ()
   (interactive)
-  (when (and (check-valid-lsp-go-mode) (lsp-workspace-get-metadata 'go-path))
+  (when (and (check-valid-lsp-go-mode) (lsp-session-get-metadata 'go-path))
     (clrhash lsp-go-env)
     (puthash "GO111MODULE" "on" lsp-go-env)
-    (lsp-workspace-set-metadata 'go-path nil)
-    (if lsp-later-timer
-          (progn
-            (cancel-timer lsp-later-timer)
-            (setq-local lsp-later-timer nil)
-            (lsp))
-      (call-interactively #'lsp-workspace-restart-fix))))
+    (lsp-session-set-metadata 'go-path nil)
+    (my-lsp-workspace-restart)))
 
 (defun lsp-go-module-off ()
   (interactive)
-  (when (and (check-valid-lsp-go-mode) (not (lsp-workspace-get-metadata 'go-path))
+  (when (and (check-valid-lsp-go-mode) (not (lsp-session-get-metadata 'go-path))
       (clrhash lsp-go-env)
       (puthash "GO111MODULE" "off" lsp-go-env)
       (puthash "GOPATH" (get-tramp-local-name (projectile-project-root)) lsp-go-env)
-      (lsp-workspace-set-metadata 'go-path t)
-      (if lsp-later-timer
-          (progn
-            (cancel-timer lsp-later-timer)
-            (setq-local lsp-later-timer nil)
-            (lsp))
-        (call-interactively #'lsp-workspace-restart-fix)))))
+      (lsp-session-set-metadata 'go-path t)
+      (my-lsp-workspace-restart))))
 
 (add-hook 'go-mode-hook #'lsp-later)
 (provide 'init-golang)

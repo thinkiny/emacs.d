@@ -8,6 +8,7 @@
 (require 'init-exec-path)
 
 (require 'init-editing-utils)
+(require 'init-xref)
 (require 'init-treemacs)
 (require 'init-ui)
 (require 'init-platform)

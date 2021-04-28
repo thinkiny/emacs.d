@@ -21,14 +21,8 @@
          lsp-java-format-settings-url (lsp--path-to-uri "~/.emacs.d/java/formatter.xml")
          lsp-java-format-settings-profile "my-java")
 
-  (setq lsp-java-vmargs `("-noverify"
-                          "-Xss4m"
-                          "-Xmx3G"
-                          "-XX:+UseG1GC"
-                          "-XX:+UseStringDeduplication"
-                          "-XX:+AggressiveOpts"
-                          "-DinitializingOptions="
-                          ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar"))))
+  (add-to-list 'lsp-java-vmargs
+    (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
 
   (lsp-register-custom-settings
    '(("java.decompiler.fernflower.ind" lsp-java-decompiler-fernflower-ind)
