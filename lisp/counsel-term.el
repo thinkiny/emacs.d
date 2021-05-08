@@ -3,6 +3,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'tramp)
 
 (defconst counsel-mt-buffer-header "*term: ")
 (defvar counsel-mt-use-eshell nil)
@@ -24,8 +25,7 @@
   (nil))
 
 (defun counsel-get-term-cmd()
-  (if (and (featurep 'tramp)
-             (tramp-tramp-file-p default-directory))
+  (if (tramp-tramp-file-p default-directory)
     (with-parsed-tramp-file-name default-directory term
       (flatten-list
        (list "ssh"

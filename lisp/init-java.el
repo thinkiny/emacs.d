@@ -35,7 +35,7 @@
     (c-offsets-alist . ((statement-cont . (max c-lineup-cascaded-calls
                                                (min c-lineup-multi-inher c-lineup-java-inher)))))))
 (add-hook 'java-mode-hook (lambda ()
-                            (lsp)
+                            (lsp-later)
                             (setq-local lsp-ui-sideline-show-code-actions nil)
                             (c-add-style "java-style" java-style t)
                             (define-key java-mode-map (kbd "C-c a") 'lsp-java-add-import)

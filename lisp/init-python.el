@@ -5,23 +5,26 @@
 
 (require-package 'pip-requirements)
 
-(defvar-local lsp-pyls-extra-paths [])
-(after-load 'lsp-pyls
-  (setq lsp-pyls-plugins-yapf-enabled t)
-  (lsp-register-custom-settings '(("pyls.plugins.jedi.extra_paths" lsp-pyls-extra-paths)))
+(defvar-local lsp-pylsp-extra-paths [])
+(after-load 'lsp-pylsp
+  (setq lsp-pylsp-plugins-yapf-enabled t)
+  (lsp-register-custom-settings '(("pylsp.plugins.jedi.extra_paths" lsp-pylsp-extra-paths)))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection
-                                     (lambda () lsp-clients-python-command))
+                                     (lambda () lsp-pylsp-server-command))
                     :major-modes '(python-mode cython-mode)
                     :priority -1
                     :remote? t
-                    :server-id 'pyls-remote
-                    :library-folders-fn (lambda (_workspace) lsp-clients-python-library-directories)
+                    :server-id 'pylsp-remote
+                    :library-folders-fn (lambda (_workspace) lsp-clients-pylsp-library-directories)
                     :initialized-fn (lambda (workspace)
-                                    (with-lsp-workspace workspace
-                                      (lsp--set-configuration (lsp-configuration-section "pyls")))))))
+                                      (with-lsp-workspace workspace
+                                        (lsp--set-configuration (lsp-configuration-section "pylsp")))))))
 
-(add-hook 'python-mode-hook #'lsp-later)
+(add-hook 'python-mode-hook
+          (lambda ()
+            (require 'lsp-pylsp)
+            (lsp-later)))
 
 ;; (use-package lsp-jedi
 ;;   :hook (python-mode . (lambda ()

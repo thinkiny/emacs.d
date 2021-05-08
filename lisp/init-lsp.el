@@ -69,44 +69,42 @@
 (defvar-local lsp-enable-format t)
 (defun lsp-format-on ()
   (interactive)
-  (when (bound-and-true-p lsp-mode)
-    (whitespace-cleanup-mode 1)
-    (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)
-    (setq-local lsp-enable-format t)))
+  (whitespace-cleanup-mode 1)
+  (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)
+  (setq-local lsp-enable-format t))
 
 (defun lsp-format-off ()
   (interactive)
-  (when (bound-and-true-p lsp-mode)
-    (whitespace-cleanup-mode 0)
-    (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
-    (setq-local lsp-enable-format nil)))
+  (whitespace-cleanup-mode 0)
+  (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
+  (setq-local lsp-enable-format nil))
 
 (defun lsp-format-off-project()
   (interactive)
   (when-let ((project-root (projectile-project-root)))
     (write-region (format "((%s . ((eval . (lsp-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
-;; tramp
-
 ;; emacs28
 (defun start-file-process-shell-command@around (start-file-process-shell-command name buffer &rest args)
-      "Start a program in a subprocess.  Return the process object for it.
+  "Start a program in a subprocess.  Return the process object for it.
 Similar to `start-process-shell-command', but calls `start-file-process'."
-      ;; On remote hosts, the local `shell-file-name' might be useless.
-      (let ((command (mapconcat 'identity args " ")))
-        (funcall start-file-process-shell-command name buffer command)))
-
+  ;; On remote hosts, the local `shell-file-name' might be useless.
+  (let ((command (mapconcat 'identity args " ")))
+    (funcall start-file-process-shell-command name buffer command)))
 (advice-add 'start-file-process-shell-command :around #'start-file-process-shell-command@around)
 
+;; tramp
 (advice-add 'lsp :before (lambda (&optional arg)
-                           (when-let ((name (buffer-file-name)))
-                             (if (file-remote-p name)
-                                 (setq-local lsp-log-io t)))))
+                           (if (file-remote-p (buffer-file-name))
+                               (setq-local lsp-log-io t))))
+
+(advice-add 'lsp :after (lambda (&optional arg)
+                          (if (file-remote-p (buffer-file-name))
+                               (setq-local lsp-log-io nil))))
 
 (ignore-tramp-ssh-control-master 'lsp--start-workspace)
-
-(add-hook 'lsp-log-io-mode-hook (lambda ()
-                                  (run-at-time 10 10 #'lsp--erase-log-buffer)))
+;; (add-hook 'lsp-log-io-mode-hook (lambda ()
+;;                                   (run-at-time 10 10 #'lsp--erase-log-buffer)))
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()
