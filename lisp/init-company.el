@@ -18,7 +18,7 @@
   (define-key company-active-map (kbd "\C-d") 'company-show-doc-buffer)
   (define-key company-active-map (kbd "TAB") 'company-complete-selection-partial)
   (global-set-key (kbd "M-/") 'company-complete)
-  ;;(setq company-begin-commands '(self-insert-command))
+  (setq company-format-margin-function nil)
   (setq company-require-match nil)
   (setq company-dabbrev-downcase nil)
   (setq company-tooltip-align-annotations t)
