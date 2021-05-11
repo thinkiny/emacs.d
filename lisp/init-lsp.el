@@ -84,15 +84,6 @@
   (when-let ((project-root (projectile-project-root)))
     (write-region (format "((%s . ((eval . (lsp-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
-;; emacs28
-(defun start-file-process-shell-command@around (start-file-process-shell-command name buffer &rest args)
-  "Start a program in a subprocess.  Return the process object for it.
-Similar to `start-process-shell-command', but calls `start-file-process'."
-  ;; On remote hosts, the local `shell-file-name' might be useless.
-  (let ((command (mapconcat 'identity args " ")))
-    (funcall start-file-process-shell-command name buffer command)))
-(advice-add 'start-file-process-shell-command :around #'start-file-process-shell-command@around)
-
 ;; tramp
 (advice-add 'lsp :before (lambda (&optional arg)
                            (if (file-remote-p (buffer-file-name))
