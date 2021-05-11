@@ -33,7 +33,7 @@
   (xref--push-markers))
 
 (defun xref-pop-marker-stack-maybe(&rest _)
-  (when (get-buffer xref-buffer-name)
+  (when (get-buffer-window xref-buffer-name)
     (ring-remove xref--marker-ring 0)))
 
 (defun print-xref()
