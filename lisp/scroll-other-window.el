@@ -37,9 +37,7 @@
   "Keymap used for `sow-mode'")
 
 (define-minor-mode sow-mode
-  "FIXME: Not documented."
-  nil nil nil
-  :global t)
+  "FIXME: Not documented.")
 
 (defun sow-scroll-other-window (&optional arg)
   (interactive "P")

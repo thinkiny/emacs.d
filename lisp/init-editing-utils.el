@@ -204,7 +204,7 @@ With arg N, insert N newlines."
 
 ;;hs-minor-mode
 (add-hook 'prog-mode-hook
-          '(lambda()
+          (lambda()
              (hs-minor-mode)
              (diminish 'hs-minor-mode)
              (local-set-key "\C-c-" 'hs-hide-block)
