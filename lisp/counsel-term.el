@@ -16,13 +16,14 @@
 
 (defun counsel-mt-get-buffer-process-cwd ()
   "The current working directory of the process of buffer BUF, or nil (depends on lsof)."
-  (let* ((process (get-buffer-process (current-buffer)))
-         (pid (process-id process))
-         (command (format "lsof -Fn -a -dcwd -p%d" pid))
-         (stdout (shell-command-to-string command)))
-    (string-match "^n\\(.*\\)" stdout)
-    (match-string 1 stdout))
-  (nil))
+  (let ((process (get-buffer-process (current-buffer))))
+    (if process
+        (let* ((pid (process-id process))
+               (command (format "lsof -Fn -a -dcwd -p%d" pid))
+               (stdout (shell-command-to-string command)))
+          (string-match "^n\\(.*\\)" stdout)
+          (match-string 1 stdout))
+      nil)))
 
 (defun counsel-get-term-cmd()
   (if (tramp-tramp-file-p default-directory)

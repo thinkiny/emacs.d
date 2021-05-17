@@ -1,11 +1,13 @@
 (require-package 'cff)
 (require-package 'cmake-mode)
 
-(use-package bazel-mode
-  :mode "\\.BUILD$"
-  :config
-  (add-hook 'bazel-mode-hook (lambda ()
-                              (setq-local yas-indent-line 'fixed))))
+(use-package bazel :demand t)
+;;(use-package bazel-mode
+;;  :mode "\\.BUILD$"
+;;  :config
+;;  (add-hook 'bazel-mode-hook (lambda ()
+;;                              (setq-local yas-indent-line 'fixed))))
+
 ;; use ccls
 ;; (use-package ccls
 ;;   :config

@@ -21,7 +21,7 @@
                                       (with-lsp-workspace workspace
                                         (lsp--set-configuration (lsp-configuration-section "pylsp")))))))
 
-(add-hook 'python-mode-hook #'lsp-laster)
+(add-hook 'python-mode-hook #'lsp-later)
 ;; (use-package lsp-jedi
 ;;   :hook (python-mode . (lambda ()
 ;;                          (require 'lsp-jedi)

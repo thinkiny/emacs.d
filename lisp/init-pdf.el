@@ -1,5 +1,7 @@
 ;; pdf-tools
 (use-package pdf-tools
+  :catch (lambda (keyword err)
+           (message (format "Error: %s" (error-message-string err))))
   :init
   (require 'pdf-macs)
   (require 'pdf-cache)
