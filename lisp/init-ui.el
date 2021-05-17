@@ -38,11 +38,6 @@
   (use-package all-the-icons-dired)
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
-(defun set-frame-transparency (value)
-  "Sets the transparency of the frame window. 0=transparent/100=opaque"
-  (interactive "nTransparency Value 0 - 100 opaque: ")
-  (set-frame-parameter (selected-frame) 'alpha value))
-
 ;; doom-themes
 (require-package 'doom-themes)
 (setq doom-themes-enable-bold t
@@ -54,6 +49,18 @@
 (doom-themes-treemacs-config)
 (after-load 'treemacs
   (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
+
+
+(defcustom frame-transparency 100
+  "The Transparency of frame"
+  :group 'faces
+  :type 'integer)
+
+(defun set-frame-transparency (value)
+  "Sets the transparency of the frame window. 0=transparent/100=opaque"
+  (interactive "nTransparency Value 0 - 100 opaque: ")
+  (if window-system
+      (set-frame-parameter (selected-frame) 'alpha value)))
 
 ;; themes
 (require-package 'spacemacs-theme)
@@ -82,7 +89,9 @@
             (set-face-attribute 'button nil :background nil)
             (set-face-attribute 'fringe nil :background nil)
             (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
-            (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
+            (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
+            (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
+            (set-frame-transparency frame-transparency)))
 
 ;;fonts
 (when window-system
