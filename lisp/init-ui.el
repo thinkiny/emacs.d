@@ -15,7 +15,7 @@
 
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)
-(setq-default line-number-display-limit-width 2000)
+(setq-default line-number-display-limit-width 2000000)
 (setq-default window-divider-default-right-width 1)
 
 (global-set-key (kbd "C-x c f") #'customize-face)

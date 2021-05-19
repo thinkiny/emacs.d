@@ -89,13 +89,9 @@
                            (if (file-remote-p (buffer-file-name))
                                (setq-local lsp-log-io t))))
 
-(advice-add 'lsp :after (lambda (&optional arg)
-                          (if (file-remote-p (buffer-file-name))
-                               (setq-local lsp-log-io nil))))
-
 (ignore-tramp-ssh-control-master 'lsp--start-workspace)
-;; (add-hook 'lsp-log-io-mode-hook (lambda ()
-;;                                   (run-at-time 10 10 #'lsp--erase-log-buffer)))
+(add-hook 'lsp-log-io-mode-hook (lambda ()
+                                  (run-at-time 10 10 #'lsp--erase-log-buffer)))
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()

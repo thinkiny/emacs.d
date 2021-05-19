@@ -26,6 +26,12 @@ transpositions to execute in sequence."
         (select-window (funcall selector)))
       (setq arg (if (cl-plusp arg) (1- arg) (1+ arg))))))
 
+(use-package winner
+  :init (winner-mode t)
+  :config
+  (global-set-key (kbd "C-c 9") #'winner-undo)
+  (global-set-key (kbd "C-c 0") #'winner-redo))
+
 (global-set-key (kbd "C-c TAB") 'crux-transpose-windows)
 (global-set-key (kbd "C-c m m") 'toggle-frame-maximized)
 (global-set-key (kbd "C-c m f") 'toggle-frame-fullscreen)
