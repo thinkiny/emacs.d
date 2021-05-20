@@ -38,7 +38,7 @@
   (when (and (check-valid-lsp-go-mode) (not (lsp-session-get-metadata 'go-path))
              (clrhash lsp-go-env)
              (puthash "GO111MODULE" "off" lsp-go-env)
-             (puthash "GOPATH" (get-tramp-local-name (projectile-project-root)) lsp-go-env)
+             (puthash "GOPATH" (file-local-name (projectile-project-root)) lsp-go-env)
              (lsp-session-set-metadata 'go-path t)
              (my-lsp-workspace-restart))))
 

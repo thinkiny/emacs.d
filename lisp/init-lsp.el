@@ -10,6 +10,7 @@
         lsp-enable-symbol-highlighting nil
         lsp-enable-indentation nil
         lsp-enable-on-type-formatting nil
+        lsp-enable-text-document-color nil
         lsp-file-watch-threshold nil
         lsp-before-save-edits nil
         lsp-eldoc-render-all  nil
@@ -20,6 +21,8 @@
         lsp-keep-workspace-alive nil
         lsp-log-io nil
         lsp-idle-delay 0.500
+        lsp-response-timeout 5
+        ;;lsp-auto-guess-root t
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil)
@@ -49,7 +52,7 @@
 
 ;;dap-mode
 (use-package hydra)
-(use-package posframe)
+;;(use-package posframe)
 (use-package dap-mode
   :after lsp-mode
   :config
@@ -85,13 +88,20 @@
     (write-region (format "((%s . ((eval . (lsp-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
 ;; tramp
-(advice-add 'lsp :before (lambda (&optional arg)
-                           (if (file-remote-p (buffer-file-name))
-                               (setq-local lsp-log-io t))))
+(defvar lsp-erase-log-buffer-timer nil)
+(defun lsp-erase-all-log-buffer ()
+  (call-interactively #'lsp--erase-log-buffer t))
 
-(ignore-tramp-ssh-control-master 'lsp--start-workspace)
-(add-hook 'lsp-log-io-mode-hook (lambda ()
-                                  (run-at-time 10 10 #'lsp--erase-log-buffer)))
+(defun start-lsp-erase-log-buffer-timer()
+  (unless lsp-erase-log-buffer-timer
+      (setq lsp-erase-log-buffer-timer (run-at-time 10 10 #'lsp-erase-all-log-buffer))))
+
+(advice-add 'lsp :before (lambda (&optional arg)
+                           (when (file-remote-p (buffer-file-name))
+                             (setq-local lsp-log-io t)
+                             (start-lsp-erase-log-buffer-timer))))
+
+(ignore-tramp-ssh-control-master 'lsp)
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()
@@ -124,6 +134,7 @@
 (use-package lsp-treemacs)
 
 ;; lsp-later
+(defvar-local lsp-later-timer nil)
 (defun my-lsp-workspace-restart()
   (interactive)
   (if lsp-later-timer
@@ -132,16 +143,15 @@
         (setq-local lsp-later-timer nil)
         (lsp))
     (progn
-      (call-interactively #'lsp-workspace-shutdown)
+      (call-interactively 'lsp-workspace-shutdown)
       (lsp-later))))
 
-(defvar-local lsp-later-timer nil)
 (defun lsp-later-run ()
-  (setq-local lsp-later-timer nil)
+  (setq lsp-later-timer nil)
   (lsp))
 
 (defun lsp-later()
-  (setq-local lsp-later-timer (run-at-time 5 nil #'lsp-later-run)))
+  (setq lsp-later-timer (run-at-time 5 nil 'lsp-later-run)))
 
 (add-hook 'hack-local-variables-hook
           (lambda ()

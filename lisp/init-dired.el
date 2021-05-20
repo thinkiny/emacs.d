@@ -2,8 +2,6 @@
 ;;; Commentary:
 ;;; Code:
 
-(setq-default dired-dwim-target t)
-
 (let ((gls (executable-find "gls")))
   (when gls (setq insert-directory-program gls)))
 

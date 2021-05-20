@@ -113,13 +113,6 @@ DOCSTRING and BODY are as in `defun'.
       ;;(read-only-mode 1)
       )))
 
-
-(defun get-tramp-local-name (path)
-  (let ((remote-path (file-remote-p path)))
-    (if remote-path
-        (file-remote-p path 'localname)
-      path)))
-
 (defun unset-all-keys (keymap)
   (map-keymap (lambda (key binding)
                 (define-key keymap (vector key) nil))
@@ -140,5 +133,12 @@ DOCSTRING and BODY are as in `defun'.
     (with-temp-file file
       (erase-buffer)
       (insert (prin1-to-string to-persist)))))
+
+(defun execute-command(name cmd)
+  (interactive)
+  (let ((process (start-file-process name nil "/bin/sh" "-c" cmd " &")))
+    (set-process-sentinel process
+                          (lambda (process event)
+                            (princ (format "%s: %s" process event))))))
 
 (provide 'init-utils)

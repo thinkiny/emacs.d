@@ -6,7 +6,8 @@
 
 (defun new-emacs ()
   (interactive)
-  (shell-command "open -n -a /Applications/Emacs.app"))
+  (let ((default-directory temporary-file-directory))
+    (shell-command "open -n -a /Applications/Emacs.app")))
 
 (global-set-key (kbd "C-c C-n") #'new-emacs)
 (add-hook 'c-mode-common-hook (lambda ()

@@ -13,6 +13,7 @@
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)
   (define-key ivy-minibuffer-map (kbd "C-l") #'ivy-backward-delete-char)
   (define-key ivy-minibuffer-map (kbd "C-o") #'ivy-immediate-done)
+  (define-key ivy-minibuffer-map (kbd "TAB") #'ivy-insert-current)
   (bind-key "C-c c" 'ivy-resume))
 
 (use-package counsel

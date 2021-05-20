@@ -84,8 +84,8 @@
 (defun cpp-get-execute-command (bin-dir program)
   "Get run command based on PROGRAM."
   (let ((proj-root (projectile-project-root)))
-    (cond ((cpp-dir-has-makefile bin-dir) (concat "make && " (get-tramp-local-name program)))
-          ((cpp-dir-has-workspace proj-root) (format "(cd %s && bazel build ... ) && %s" (get-tramp-local-name proj-root) (get-tramp-local-name program)))
+    (cond ((cpp-dir-has-makefile bin-dir) (concat "make && " (file-local-name program)))
+          ((cpp-dir-has-workspace proj-root) (format "(cd %s && bazel build ... ) && %s" (file-local-name proj-root) (file-local-name program)))
         (t program))))
 
 (register-run-template c++-mode

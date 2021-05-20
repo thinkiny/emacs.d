@@ -1,13 +1,16 @@
 (use-package tramp
   :config
   (setenv "SHELL" "/bin/bash")
+  (setq tramp-allow-unsafe-temporary-files t)
   (setq enable-remote-dir-locals t)
   (setq tramp-verbose 0)
   (setq vc-handled-backends '(Git))
   (setq tramp-default-method "ssh")
   ;;(setq tramp-chunksize 500)
   (setq remote-file-name-inhibit-cache 30)
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+  (add-to-list 'backup-directory-alist
+               (cons tramp-file-name-regexp nil)))
 
 (require 'tramp-sh)
 ;;same as ~/.ssh/config
