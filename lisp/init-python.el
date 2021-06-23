@@ -10,7 +10,7 @@
   (setq lsp-pylsp-plugins-yapf-enabled t)
   (lsp-register-custom-settings '(("pylsp.plugins.jedi.extra_paths" lsp-pylsp-extra-paths)))
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection
+   (make-lsp-client :new-connection (lsp-tramp-connection-new
                                      (lambda () lsp-pylsp-server-command))
                     :major-modes '(python-mode cython-mode)
                     :priority -1

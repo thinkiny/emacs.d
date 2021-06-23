@@ -1,4 +1,5 @@
-;; lsp
+;;; -*- lexical-binding: t; -*-
+
 (use-package lsp-mode
   :config
   (diminish 'lsp-mode)
@@ -34,12 +35,12 @@
   (define-key lsp-mode-map (kbd "C-c w a") 'lsp-workspace-folders-add)
   (define-key lsp-mode-map (kbd "C-c w d") 'lsp-workspace-folders-remove)
   (define-key lsp-mode-map (kbd "C-c w c") 'lsp-workspace-shutdown)
-  (define-key lsp-mode-map (kbd "C-c SPC") 'lsp-signature-activate)
   (define-key lsp-mode-map (kbd "C-c y") 'dap-hydra)
   ;;(define-key lsp-mode-map (kbd "C-c v") 'lsp-ui-peek-find-implementation)
   (define-key lsp-mode-map (kbd "C-c v") 'lsp-find-implementation)
   (define-key lsp-mode-map (kbd "C-c e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
+  (define-key lsp-mode-map (kbd "C-c s") 'lsp-signature-activate)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
   (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
 
@@ -88,20 +89,37 @@
     (write-region (format "((%s . ((eval . (lsp-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
 ;; tramp
-(defvar lsp-erase-log-buffer-timer nil)
-(defun lsp-erase-all-log-buffer ()
-  (call-interactively #'lsp--erase-log-buffer t))
+;;(ignore-tramp-ssh-control-master 'lsp)
 
-(defun start-lsp-erase-log-buffer-timer()
-  (unless lsp-erase-log-buffer-timer
-      (setq lsp-erase-log-buffer-timer (run-at-time 10 10 #'lsp-erase-all-log-buffer))))
-
-(advice-add 'lsp :before (lambda (&optional arg)
-                           (when (file-remote-p (buffer-file-name))
-                             (setq-local lsp-log-io t)
-                             (start-lsp-erase-log-buffer-timer))))
-
-(ignore-tramp-ssh-control-master 'lsp)
+(after-load 'lsp-mode
+  (defun lsp-tramp-connection-new (local-command)
+    "Create LSP stdio connection named name.
+LOCAL-COMMAND is either list of strings, string or function which
+returns the command to execute."
+    (defvar tramp-connection-properties)
+    (add-to-list 'tramp-connection-properties
+                 (list (regexp-quote (file-remote-p default-directory))
+                       "direct-async-process" t))
+    (list :connect (lambda (filter sentinel name environment-fn)
+                     (let* ((final-command (lsp-resolve-final-function
+                                            local-command))
+                            (process-name (generate-new-buffer-name name))
+                            (process-environment
+                             (lsp--compute-process-environment environment-fn))
+                            (proc (make-process
+                                   :name process-name
+                                   :buffer (format "*%s*" process-name)
+                                   :command final-command
+                                   :connection-type 'pipe
+                                   :coding 'no-conversion
+                                   :noquery t
+                                   :filter filter
+                                   :sentinel sentinel
+                                   :stderr (get-buffer-create (format "*%s::stderr*" process-name))
+                                   :file-handler t)))
+                       (cons proc proc)))
+          ;;:test? (lambda() t)))
+          :test? (lambda () (-> local-command lsp-resolve-final-function lsp-server-present?)))))
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()

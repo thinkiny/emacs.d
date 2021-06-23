@@ -8,33 +8,13 @@
 ;;  (add-hook 'bazel-mode-hook (lambda ()
 ;;                              (setq-local yas-indent-line 'fixed))))
 
-;; use ccls
-;; (use-package ccls
-;;   :config
-;;   (setq ccls-sem-highlight-method 'font-lock))
-
-;; (after-load 'ccls
-;;   (require 'dap-cpptools)
-;;   (lsp-register-client
-;;    (make-lsp-client
-;;     :new-connection (lsp-tramp-connection ccls-executable)
-;;     :major-modes '(c-mode c++-mode cuda-mode objc-mode)
-;;     :server-id 'ccls-remote
-;;     :multi-root nil
-;;     :remote? t
-;;     :notification-handlers
-;;     (lsp-ht ("$ccls/publishSkippedRanges" #'ccls--publish-skipped-ranges)
-;;             ("$ccls/publishSemanticHighlight" #'ccls--publish-semantic-highlight))
-;;     :initialization-options nil
-;;     :library-folders-fn nil)))
-
 ;; use clangd
 (after-load 'lsp-clangd
   ;;(require 'dap-cpptools)
   ;;(setq lsp-clients-clangd-args '("-header-insertion-decorators=0"))
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection 'lsp-clients--clangd-command)
-                    :activation-fn (lsp-activate-on "c" "cpp" "objective-c")
+   (make-lsp-client :new-connection (lsp-tramp-connection-new 'lsp-clients--clangd-command)
+                    :major-modes '(c-mode c++-mode objc-mode)
                     :server-id 'clangd-remote
                     :remote? t))
 
