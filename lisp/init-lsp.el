@@ -89,18 +89,16 @@
     (write-region (format "((%s . ((eval . (lsp-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
 ;; tramp
-;;(ignore-tramp-ssh-control-master 'lsp)
-
-(after-load 'lsp-mode
-  (defun lsp-tramp-connection-new (local-command)
+(with-eval-after-load 'lsp-mode
+  (defun lsp-tramp-connection-fast (local-command)
     "Create LSP stdio connection named name.
 LOCAL-COMMAND is either list of strings, string or function which
 returns the command to execute."
     (defvar tramp-connection-properties)
-    (add-to-list 'tramp-connection-properties
-                 (list (regexp-quote (file-remote-p default-directory))
-                       "direct-async-process" t))
     (list :connect (lambda (filter sentinel name environment-fn)
+                     (add-to-list 'tramp-connection-properties
+                                  (list (regexp-quote (file-remote-p default-directory))
+                                        "direct-async-process" t))
                      (let* ((final-command (lsp-resolve-final-function
                                             local-command))
                             (process-name (generate-new-buffer-name name))
@@ -176,5 +174,26 @@ returns the command to execute."
             (when lsp-later-timer
               (cancel-timer lsp-later-timer)
               (lsp-later-run))))
+
+
+;; lsp-modeline
+(defun lsp-modeline-get-symbol ()
+  "Get the symbol under cursor ."
+  (if (lsp-feature? "textDocument/documentSymbol")
+      (-if-let* ((lsp--document-symbols-request-async t)
+                 (symbols (lsp--get-document-symbols))
+                 (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols))
+                 (enumerated-symbols-hierarchy
+                  (-map-indexed (lambda (index elt)
+                                  (cons elt (1+ index)))
+                                symbols-hierarchy)))
+          (concat "=> "
+                  (mapconcat
+                   (-lambda (((symbol &as &DocumentSymbol :name)
+                              . index))
+                     (gethash "name" symbol))
+                   enumerated-symbols-hierarchy "/"))
+        "")
+    ""))
 
 (provide 'init-lsp)

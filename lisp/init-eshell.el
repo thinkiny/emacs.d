@@ -3,7 +3,7 @@
   :config
   (setq eshell-up-ignore-case nil))
 
-(after-load 'eshell
+(with-eval-after-load 'eshell
   (server-start)
   (require 'eshell-company-patch)
   (setq eshell-history-size 10000
@@ -18,7 +18,7 @@
                      (funcall pcomplete-command-completion-function)
                      (pcomplete-arg 'last) t)))))))
 
-(after-load 'em-prompt
+(with-eval-after-load 'em-prompt
   (set-face-attribute 'eshell-prompt nil :foreground "DeepSkyBlue4"))
 
 (defun eshell-maybe-bol ()

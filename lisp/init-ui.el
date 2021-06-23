@@ -47,7 +47,7 @@
 ;;(doom-themes-visual-bell-config)
 (doom-themes-org-config)
 (doom-themes-treemacs-config)
-(after-load 'treemacs
+(with-eval-after-load 'treemacs
   (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
 
 
@@ -84,7 +84,6 @@
             (if window-system
                 (load-theme custom-gui-theme t)
                 (load-theme custom-terminal-theme t))
-
             ;;custom faces
             (set-face-attribute 'button nil :background nil)
             (set-face-attribute 'fringe nil :background nil)
@@ -142,29 +141,11 @@
 
 ;; lsp symbol
 (defvar lsp-modeline-symbol "")
-(defun lsp-modeline-get-symbol ()
-  "Get the symbol under cursor ."
-  (if (lsp-feature? "textDocument/documentSymbol")
-      (-if-let* ((lsp--document-symbols-request-async t)
-                 (symbols (lsp--get-document-symbols))
-                 (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols))
-                 (enumerated-symbols-hierarchy
-                  (-map-indexed (lambda (index elt)
-                                  (cons elt (1+ index)))
-                                symbols-hierarchy)))
-          (concat "=> "
-                  (mapconcat
-                   (-lambda (((symbol &as &DocumentSymbol :name)
-                              . index))
-                     (gethash "name" symbol))
-                   enumerated-symbols-hierarchy "/"))
-        "")
-    ""))
 
-;; update lsp-symbol every second
-(run-at-time 1 1 (lambda ()
+;; update lsp-symbol every two seconds
+(run-at-time 2 2 (lambda ()
                    (if (bound-and-true-p lsp-mode)
-                       (setq lsp-modeline-symbol (lsp-modeline-get-symbol))
+                       (setq lsp-modeline-symbol (funcall 'lsp-modeline-get-symbol))
                      (setq lsp-modeline-symbol ""))))
 
 (setq-default auto-revert-check-vc-info t)
@@ -175,10 +156,9 @@
                 mode-line-buffer-identification
                 " ["
                 mode-name
-                ;;mode-line-process
                 ;;minor-mode-alist
                 "]"
-                (vc-mode vc-mode)
+                ;;(vc-mode vc-mode)
                 " "
                 global-mode-string
                 lsp-modeline-symbol

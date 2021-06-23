@@ -31,6 +31,7 @@
 (require 'init-flycheck)
 (require 'init-lisp)
 (require 'init-lsp)
+(require 'init-gtags)
 (require 'init-cpp)
 (require 'init-python)
 (require 'init-org)

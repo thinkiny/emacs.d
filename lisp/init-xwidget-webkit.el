@@ -24,6 +24,15 @@
         (switch-to-buffer (xwidget-buffer session))
       (xwidget-webkit-browse (read-string "URL: ")))))
 
+;; xwwp-follow-link
+(use-package xwwp-follow-link-ivy
+  :custom
+  (xwwp-follow-link-completion-system 'ivy)
+  :bind (:map xwidget-webkit-mode-map
+              ("C-c l" . xwwp-follow-link))
+  :hook (xwidget-webkit-mode . god-mode))
+
+
 (global-set-key (kbd "C-x /") #'switch-or-create-xwidget-webkit-buffer)
 
 (provide 'init-xwidget-webkit)

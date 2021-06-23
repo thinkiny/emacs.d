@@ -17,7 +17,7 @@
 (require-package 'whitespace-cleanup-mode)
 (add-hook 'after-init-hook 'global-whitespace-cleanup-mode)
 
-(after-load 'whitespace-cleanup-mode
+(with-eval-after-load 'whitespace-cleanup-mode
   (diminish 'whitespace-cleanup-mode))
 
 (setq whitespace-cleanup-mode-only-if-initially-clean nil)

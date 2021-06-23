@@ -32,8 +32,12 @@
         (magit-log-buffer-file t))
     (vc-print-log)))
 
+(setq vc-follow-symlinks nil)
+;;(setq vc-handled-backends nil)
+(remove-hook 'find-file-hooks 'vc-refresh-state)
+
 ;; Convenient binding for vc-git-grep
-(after-load 'vc
+(with-eval-after-load 'vc
   (define-key vc-prefix-map (kbd "l") 'sanityinc/magit-or-vc-log-file)
   (define-key vc-prefix-map (kbd "f") 'vc-git-grep))
 

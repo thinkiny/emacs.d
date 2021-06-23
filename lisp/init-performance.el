@@ -17,7 +17,7 @@
                      (5 right)))))
   (profiler-report-rerender-calltree))
 
-(after-load 'profiler
+(with-eval-after-load 'profiler
   (define-key profiler-report-mode-map (kbd "w") #'increase-profile-cpu-line-width))
 
 (global-set-key (kbd "C-x p r") (lambda ()

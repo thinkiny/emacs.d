@@ -6,11 +6,11 @@
 (require-package 'pip-requirements)
 
 (defvar-local lsp-pylsp-extra-paths [])
-(after-load 'lsp-pylsp
+(with-eval-after-load 'lsp-pylsp
   (setq lsp-pylsp-plugins-yapf-enabled t)
   (lsp-register-custom-settings '(("pylsp.plugins.jedi.extra_paths" lsp-pylsp-extra-paths)))
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection-new
+   (make-lsp-client :new-connection (lsp-tramp-connection-fast
                                      (lambda () lsp-pylsp-server-command))
                     :major-modes '(python-mode cython-mode)
                     :priority -1

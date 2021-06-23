@@ -154,7 +154,7 @@
   (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
   :hook ((pdf-view-mode . pdf-view-restore-mode)))
 
-(after-load 'pdf-annot
+(with-eval-after-load 'pdf-annot
   (defun +pdf-cleanup-windows-h ()
     "Kill left-over annotation buffers when the document is killed."
     (when (buffer-live-p pdf-annot-list-document-buffer)

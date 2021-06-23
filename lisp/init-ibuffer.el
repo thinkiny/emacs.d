@@ -2,7 +2,7 @@
 ;;   See http://www.reddit.com/r/emacs/comments/21fjpn/fontifying_buffer_list_for_emacs_243/
 
 (require-package 'fullframe)
-(after-load 'ibuffer
+(with-eval-after-load 'ibuffer
  (fullframe ibuffer ibuffer-quit))
 
 (require-package 'ibuffer-vc)
@@ -16,7 +16,7 @@
 
 (setq-default ibuffer-show-empty-filter-groups nil)
 
-(after-load 'ibuffer
+(with-eval-after-load 'ibuffer
   ;; Use human readable Size column instead of original one
   (define-ibuffer-column size-h
     (:name "Size" :inline t)
@@ -27,7 +27,7 @@
 
 ;; Explicitly require ibuffer-vc to get its column definitions, which
 ;; can't be autoloaded
-(after-load 'ibuffer
+(with-eval-after-load 'ibuffer
   (require 'ibuffer-vc))
 
 ;; Modify the default ibuffer-formats (toggle with `)

@@ -49,7 +49,7 @@
       org-edit-src-content-indentation 0)
 
 ;; Re-align tags when window shape changes
-(after-load 'org-agenda
+(with-eval-after-load 'org-agenda
   (add-hook 'org-agenda-mode-hook
             (lambda () (add-hook 'window-configuration-change-hook 'org-agenda-align-tags nil t))))
 
@@ -73,7 +73,7 @@
 ;; Targets include this file and any file contributing to the agenda - up to 5 levels deep
 (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
 
-(after-load 'org-agenda
+(with-eval-after-load 'org-agenda
   (add-to-list 'org-agenda-after-show-hook 'org-show-entry))
 
 (advice-add 'org-refile :after (lambda (&rest _) (org-save-all-org-buffers)))
@@ -213,7 +213,7 @@
 ;;; Org clock
 
 ;; Save the running clock and all clock history when exiting Emacs, load it on startup
-(after-load 'org
+(with-eval-after-load 'org
   (org-clock-persistence-insinuate))
 (setq org-clock-persist t)
 (setq org-clock-in-resume t)
@@ -235,13 +235,13 @@
 
 (require-package 'org-pomodoro)
 (setq org-pomodoro-keep-killed-pomodoro-time t)
-(after-load 'org-agenda
+(with-eval-after-load 'org-agenda
   (define-key org-agenda-mode-map (kbd "P") 'org-pomodoro))
 
 (use-package ox-reveal)
 (use-package ob-go)
 
-(after-load 'org
+(with-eval-after-load 'org
   (require 'ox-reveal)
   (org-beamer-mode)
   (unbind-key (kbd "C-c C-m") org-mode-map)

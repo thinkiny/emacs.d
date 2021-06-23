@@ -194,7 +194,7 @@ With arg N, insert N newlines."
   (add-hook hook 'highlight-symbol-mode)
   (add-hook hook 'highlight-symbol-nav-mode))
 (add-hook 'org-mode-hook 'highlight-symbol-nav-mode)
-(after-load 'highlight-symbol
+(with-eval-after-load 'highlight-symbol
   (diminish 'highlight-symbol-mode))
 
 (require 'scroll-other-window)
@@ -247,7 +247,7 @@ With arg N, insert N newlines."
   (setq url-proxy-services nil))
 
 ;; view-mode
-(after-load 'view
+(with-eval-after-load 'view
   (setq view-read-only t)
   (unset-all-keys view-mode-map))
 
@@ -279,5 +279,8 @@ With arg N, insert N newlines."
 (use-package clipetty
   :ensure t
   :hook (after-init . global-clipetty-mode))
+
+;; disable spook
+(fmakunbound 'spook)
 
 (provide 'init-editing-utils)

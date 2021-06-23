@@ -1,5 +1,5 @@
 (use-package global-tags
-  :demand t)
+  :commands (global-tags-exclusive-backend-mode gtags-workspace-symbol))
 
 (defconst gtags-include-pattern "^[[:space:]]*#\\(?:include\\|import\\)[[:space:]]+[\"<]\\(?:[./]*\\)?\\(.*?\\)[\">]")
 (defconst gtags-type-pattern "^[[:space:]]*\\(?:extern\\|volatile\\|static\\|const\\)?[[:space:]]*\\(struct\\|class\\)[[:space:]]+\\(.*?\\)[[:space:]]+\\(?:.*?\\);")

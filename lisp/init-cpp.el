@@ -9,11 +9,11 @@
 ;;                              (setq-local yas-indent-line 'fixed))))
 
 ;; use clangd
-(after-load 'lsp-clangd
+(with-eval-after-load 'lsp-clangd
   ;;(require 'dap-cpptools)
-  ;;(setq lsp-clients-clangd-args '("-header-insertion-decorators=0"))
+  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0" "--log=error"))
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection-new 'lsp-clients--clangd-command)
+   (make-lsp-client :new-connection (lsp-tramp-connection-fast 'lsp-clients--clangd-command)
                     :major-modes '(c-mode c++-mode objc-mode)
                     :server-id 'clangd-remote
                     :remote? t))
@@ -48,18 +48,13 @@ returned to avoid that the echo area grows uncomfortably."
            (lsp-cpp-flycheck-clang-tidy-error-explainer e))
           (t (flycheck-error-message e)))))
 
-;; styles
-(require 'google-c-style)
-
-;;gtags
-(require 'init-gtags)
-
 (defun switch-c-header-source()
   (interactive)
   (if (bound-and-true-p lsp-mode)
       (lsp-clangd-find-other-file)
     (cff-find-other-file)))
 
+;; generate-compdb
 (defun generate-compdb-bazel (root)
   (execute-command "bazel-compdb" (format "cd %s && bazel-compdb -s" root)))
 
@@ -83,14 +78,6 @@ returned to avoid that the echo area grows uncomfortably."
      ((file-exists-p (format "%s/CMakeLists.txt" root)) (generate-compdb-cmake root-local compdb-local))
      (t (generate-compdb-make compdb-local)))))
 
-
-(defun build-bazel-project (root)
-  (async-shell-command (format "cd %s && bazel build ... ; bazel-compdb -s" root)))
-
-(defun build-make-project (compdb)
-  (async-shell-command
-   (format "cd %s && make -j4" (directory-file-name compdb))))
-
 (defun generate-compdb()
   (interactive)
   (when-let* ((root (projectile-project-root))
@@ -102,6 +89,16 @@ returned to avoid that the echo area grows uncomfortably."
      ((file-exists-p (format "%s/CMakeLists.txt" root)) (generate-compdb-cmake root-local compdb-local))
      (t (generate-compdb-make compdb-local)))))
 
+
+;; build
+(defun build-bazel-project (root)
+  (async-shell-command (format "cd %s && bazel build ... ; bazel-compdb -s" root)))
+
+(defun build-make-project (compdb)
+  (async-shell-command
+   (format "cd %s && make -j4" (directory-file-name compdb))))
+
+
 (defun build-c-project()
   (interactive)
   (when-let* ((root (projectile-project-root))
@@ -112,17 +109,17 @@ returned to avoid that the echo area grows uncomfortably."
         (build-bazel-project root-local)
       (build-make-project compdb-local))))
 
-(ignore-tramp-ssh-control-master #'generate-compdb #'build-c-project)
+;; styles
+(require 'google-c-style)
 
+;; hook
 (defun my-c-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -
   (c-add-style "Google" google-c-style t)
   (define-key c-mode-base-map (kbd "C-c x") 'switch-c-header-source)
   (define-key c-mode-base-map (kbd "C-c g") 'generate-compdb)
   (define-key c-mode-base-map (kbd "C-c b") 'build-c-project)
-  (if (global-tags--get-dbpath default-directory)
-      (global-tags-exclusive-backend-mode)
-    (lsp-later)))
+  (lsp-later))
 
 (defun json-to-vector()
   (interactive)

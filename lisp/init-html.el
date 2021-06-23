@@ -1,12 +1,5 @@
-;;(require-package 'tagedit)
 (maybe-require-package 'web-mode)
 (maybe-require-package 'zencoding-mode)
-
-;;(after-load 'web-mode
-;;  (tagedit-add-paredit-like-keybindings)
-;;  (define-key tagedit-mode-map (kbd "M-?") nil)
-;;  (define-key tagedit-mode-map (kbd "M-s") nil)
-;;  (add-hook 'web-mode-hook (lambda () (tagedit-mode 1))))
 
 (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))

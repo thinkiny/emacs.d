@@ -12,7 +12,7 @@
            (text (company-complete-remove-params result)))
       (company-finish (propertize text 'lsp-completion-item (make-hash-table))))))
 
-(after-load 'company
+(with-eval-after-load 'company
   (define-key company-active-map (kbd "\C-n") 'company-select-next)
   (define-key company-active-map (kbd "\C-p") 'company-select-previous)
   (define-key company-active-map (kbd "\C-d") 'company-show-doc-buffer)

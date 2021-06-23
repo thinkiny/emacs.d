@@ -5,11 +5,11 @@
    '(("gopls.completeUnimported" t t)
      ("gopls.staticcheck" t t))))
 
-(after-load 'lsp-go
+(with-eval-after-load 'lsp-go
   (setq lsp-go-codelens nil)
   (setq-local lsp-go-env (make-hash-table))
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection-new (lambda () (cons lsp-go-gopls-server-path lsp-go-gopls-server-args)))
+   (make-lsp-client :new-connection (lsp-tramp-connection-fast (lambda () (cons lsp-go-gopls-server-path lsp-go-gopls-server-args)))
                     :major-modes '(go-mode go-dot-mod-mode)
                     :remote? t
                     :priority 0

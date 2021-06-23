@@ -6,7 +6,7 @@
 (use-package lsp-java
   :after lsp-mode)
 
-(after-load 'lsp-java
+(with-eval-after-load 'lsp-java
   (require 'init-pom)
   (require 'dap-java)
 

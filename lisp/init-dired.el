@@ -5,7 +5,7 @@
 (let ((gls (executable-find "gls")))
   (when gls (setq insert-directory-program gls)))
 
-(after-load 'dired
+(with-eval-after-load 'dired
   (require 'ls-lisp)
   (require 'dired-x)
   (setq ls-lisp-dirs-first t)
