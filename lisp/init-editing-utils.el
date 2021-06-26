@@ -108,6 +108,7 @@
 ;; Expand region
 ;;----------------------------------------------------------------------------
 (require-package 'expand-region)
+(setq expand-region-subword-enabled t)
 (global-set-key (kbd "M-=") 'er/expand-region)
 
 ;;----------------------------------------------------------------------------

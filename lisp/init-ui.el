@@ -69,7 +69,7 @@
 (require-package 'cloud-theme)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'cloud
+(defcustom custom-gui-theme 'doom-nord-light
   "Theme in gui mode"
   :group 'faces
   :type 'string)
@@ -171,5 +171,29 @@
 ;;   :bind
 ;;   ("C-<prior>" . centaur-tabs-backward)
 ;;   ("C-<next>" . centaur-tabs-forward))
+
+(defun counsel--load-theme-action (x)
+  "Disable current themes and load theme X."
+  (condition-case nil
+      (progn
+        (mapc #'disable-theme custom-enabled-themes)
+        (load-theme (intern x) t))
+    (error "Problem loading theme %s" x)))
+
+(defun counsel--update-theme-action ()
+  "Change theme to selected."
+  (counsel--load-theme-action (ivy-state-current ivy-last)))
+
+(defun counsel-load-theme ()
+  "Forward to `load-theme'."
+  (interactive)
+  (let ((orig-theme (when custom-enabled-themes
+                      (car custom-enabled-themes))))
+    (ivy-read "Load custom theme: "
+            (mapcar 'symbol-name
+                    (custom-available-themes))
+            :action #'counsel--load-theme-action
+            :preselect (symbol-name orig-theme)
+            :update-fn #'counsel--update-theme-action)))
 
 (provide 'init-ui)
