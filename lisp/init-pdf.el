@@ -16,47 +16,16 @@
   (setq pdf-links-browse-uri-function #'xwidget-webkit-browse-url)
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
 
-  ;; HACK `pdf-tools-install-noverify' tries to "reset" open pdf-view-mode
-  ;;      buffers, but does so incorrectly, causing errors when pdf-tools is
-  ;;      loaded after opening a pdf file. We've done its job ourselves in
-  ;;      `+pdf--install-epdfinfo-a' instead.
-  (defadvice! +pdf--inhibit-pdf-view-mode-resets-a (orig-fn &rest args)
-    :around #'pdf-tools-install-noverify
-    (letf! ((#'pdf-tools-pdf-buffer-p #'ignore))
-      (apply orig-fn args)))
-
   (defadvice! +pdf--install-epdfinfo-a (orig-fn &rest args)
     "Install epdfinfo after the first PDF file, if needed."
     :around #'pdf-view-mode
-    ;; Prevent "epdfinfo not an executable" error short-circuiting this advice
-    (prog1 (with-demoted-errors "%s" (apply orig-fn args))
-      ;; ...so we can go ahead and install it afterwards.
-      (cond ((file-executable-p pdf-info-epdfinfo-program))
-            ((y-or-n-p "To read PDFs in Emacs the epdfinfo program must be built. Build it now?")
-             (message nil) ; flush lingering prompt in echo-area
-             ;; Make sure this doesn't run more than once
-             (advice-remove #'pdf-view-mode #'+pdf--install-epdfinfo-a)
-             (unless (or (pdf-info-running-p)
-                         (ignore-errors (pdf-info-check-epdfinfo) t))
-               ;; HACK On the first pdf you open (before pdf-tools loaded)
-               ;;      `pdf-tools-install' throws errors because it has hardcoded
-               ;;      opinions about what buffer should be focused when it is run.
-               ;;      These errors cause `compile' to position the compilation
-               ;;      window incorrectly or can interfere with the opening of the
-               ;;      original pdf--sometimes aborting/burying it altogether. A
-               ;;      timer works around this.
-               (run-at-time
-                0.1 nil
-                (lambda ()
-                  (with-current-buffer (pdf-tools-install t)
-                    (add-hook! 'compilation-finish-functions :local
-                               (dolist (buf (buffer-list))
-                                 (with-current-buffer buf
-                                   (and (buffer-file-name)
-                                        (or (pdf-tools-pdf-buffer-p)
-                                            (derived-mode-p 'pdf-view-mode))
-                                        (revert-buffer t t))))))))))
-            ((message "Aborted"))))))
+    (if (file-executable-p pdf-info-epdfinfo-program)
+        (apply orig-fn args)
+      ;; If we remain in pdf-view-mode, it'll spit out cryptic errors. This
+      ;; graceful failure is better UX.
+      (fundamental-mode)
+      (message "Viewing PDFs in Emacs requires epdfinfo. Use `M-x pdf-tools-install' to build it"))))
+
 (pdf-tools-install-noverify)
 
 (defun pdf-view-next-page-start ()
@@ -109,32 +78,21 @@
 (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection)
 
 ;;Add retina support for pdf
-(defun +pdf--supply-width-to-create-image-calls-a (orig-fn &rest args)
-  (cl-letf* ((old-create-image (symbol-function #'create-image))
-             ((symbol-function #'create-image)
-              (lambda (file-or-data &optional type data-p &rest props)
-                (apply old-create-image file-or-data type data-p
-                       :width (car (pdf-view-image-size))
-                       props))))
-    (apply orig-fn args)))
+(defadvice! +pdf--scale-up-on-retina-display-a (orig-fn &rest args)
+  "Scale up the PDF on retina displays."
+  :around #'pdf-util-frame-scale-factor
+  (cond ((not pdf-view-use-scaling) 1)
+        ((and (memq (pdf-view-image-type) '(imagemagick image-io))
+              (fboundp 'frame-monitor-attributes))
+         (funcall orig-fn))
+        ;; Add special support for retina displays on MacOS
+        ((eq (framep-on-display) 'ns) 2)
+        (1)))
 
-(defun +pdf--util-frame-scale-factor-a (orig-fn)
-  (if (and pdf-view-use-scaling
-           (memq (pdf-view-image-type) '(imagemagick image-io))
-           (fboundp 'frame-monitor-attributes))
-      (funcall orig-fn)
-    ;; Add special support for retina displays on MacOS
-    (if (eq (framep-on-display) 'ns)
-        2
-      1)))
+(defadvice! +pdf--use-scaling-on-ns-a ()
+  :before-until #'pdf-view-use-scaling-p
+  (eq (framep-on-display) 'ns))
 
-(defun +pdf--view-use-scaling-p-a ()
-  "Returns t if on ns window-system on Emacs 27+."
-  (and (eq (framep-on-display) 'ns)
-       pdf-view-use-scaling))
-
-(advice-add #'pdf-util-frame-scale-factor :around #'+pdf--util-frame-scale-factor-a)
-(advice-add #'pdf-view-use-scaling-p :before-until #'+pdf--view-use-scaling-p-a)
 (defadvice! +pdf--supply-width-to-create-image-calls-a (orig-fn &rest args)
   :around '(pdf-annot-show-annotation
             pdf-isearch-hl-matches
@@ -144,15 +102,6 @@
                   :width (car (pdf-view-image-size))
                   props))
     (apply orig-fn args)))
-
-(use-package pdf-view-restore
-  :after pdf-tools
-  :ensure t
-  :demand t
-  :commands (pdf-view-restore)
-  :config
-  (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
-  :hook ((pdf-view-mode . pdf-view-restore-mode)))
 
 (with-eval-after-load 'pdf-annot
   (defun +pdf-cleanup-windows-h ()
@@ -187,5 +136,11 @@
                                 (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
                                 (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
                                 (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)))
+
+(use-package pdf-view-restore
+  :commands (pdf-view-restore-mode)
+  :config
+  (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
+  :hook ((pdf-view-mode . pdf-view-restore-mode)))
 
 (provide 'init-pdf)
