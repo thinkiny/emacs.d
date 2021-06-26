@@ -4,6 +4,17 @@
 (defconst gtags-include-pattern "^[[:space:]]*#\\(?:include\\|import\\)[[:space:]]+[\"<]\\(?:[./]*\\)?\\(.*?\\)[\">]")
 (defconst gtags-type-pattern "^[[:space:]]*\\(?:extern\\|volatile\\|static\\|const\\)?[[:space:]]*\\(struct\\|class\\)[[:space:]]+\\(.*?\\)[[:space:]]+\\(?:.*?\\);")
 
+(defun gtags-get-rootpath ()
+  "Find the root path where gtags generate"
+  (let (path buffer)
+    (save-excursion
+      (setq buffer (generate-new-buffer (generate-new-buffer-name "*rootdir*")))
+      (set-buffer buffer)
+      (if (= (process-file "global" nil t nil "-pr") 0)
+          (setq path (file-name-as-directory (buffer-substring (point-min)(1- (point-max))))))
+      (kill-buffer buffer))
+    path))
+
 ;; imenu start
 (defun ggtags-forward-to-line (line)
   "Move to line number LINE in current buffer."

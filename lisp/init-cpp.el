@@ -119,7 +119,9 @@ returned to avoid that the echo area grows uncomfortably."
   (define-key c-mode-base-map (kbd "C-c x") 'switch-c-header-source)
   (define-key c-mode-base-map (kbd "C-c g") 'generate-compdb)
   (define-key c-mode-base-map (kbd "C-c b") 'build-c-project)
-  (lsp-later))
+  (if (gtags-get-rootpath)
+      (global-tags-exclusive-backend-mode)
+    (lsp-later)))
 
 (defun json-to-vector()
   (interactive)
