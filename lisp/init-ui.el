@@ -69,7 +69,7 @@
 (require-package 'cloud-theme)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'doom-nord-light
+(defcustom custom-gui-theme 'cloud
   "Theme in gui mode"
   :group 'faces
   :type 'string)
