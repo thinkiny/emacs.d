@@ -166,8 +166,14 @@ returns the command to execute."
   (setq lsp-later-timer nil)
   (lsp))
 
+(defun lsp-try-reconnect()
+  (if (and (not lsp-later-timer)
+           (not (lsp-workspaces)))
+      (lsp)))
+
 (defun lsp-later()
-  (setq lsp-later-timer (run-at-time 5 nil 'lsp-later-run)))
+  (setq lsp-later-timer (run-at-time 5 nil 'lsp-later-run))
+  (add-hook 'doom-switch-buffer-hook #'lsp-try-reconnect nil 'local))
 
 (add-hook 'hack-local-variables-hook
           (lambda ()

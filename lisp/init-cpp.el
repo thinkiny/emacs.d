@@ -78,18 +78,6 @@ returned to avoid that the echo area grows uncomfortably."
      ((file-exists-p (format "%s/CMakeLists.txt" root)) (generate-compdb-cmake root-local compdb-local))
      (t (generate-compdb-make compdb-local)))))
 
-(defun generate-compdb()
-  (interactive)
-  (when-let* ((root (projectile-project-root))
-              (compdb (file-truename (format "%s/compile_commands.json" root)))
-              (root-local (file-local-name root))
-              (compdb-local (file-local-name compdb)))
-    (cond
-     ((file-exists-p (format "%s/WORKSPACE" root)) (generate-compdb-bazel root-local))
-     ((file-exists-p (format "%s/CMakeLists.txt" root)) (generate-compdb-cmake root-local compdb-local))
-     (t (generate-compdb-make compdb-local)))))
-
-
 ;; build
 (defun build-bazel-project (root)
   (async-shell-command (format "cd %s && bazel build ... ; bazel-compdb -s" root)))
@@ -97,7 +85,6 @@ returned to avoid that the echo area grows uncomfortably."
 (defun build-make-project (compdb)
   (async-shell-command
    (format "cd %s && make -j4" (directory-file-name compdb))))
-
 
 (defun build-c-project()
   (interactive)
