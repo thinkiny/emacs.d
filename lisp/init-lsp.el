@@ -156,8 +156,7 @@ returns the command to execute."
   (if lsp-later-timer
       (progn
         (cancel-timer lsp-later-timer)
-        (setq-local lsp-later-timer nil)
-        (lsp))
+        (lsp-later-run))
     (progn
       (call-interactively 'lsp-workspace-shutdown)
       (lsp-later))))

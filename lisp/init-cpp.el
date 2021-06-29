@@ -122,6 +122,7 @@ returned to avoid that the echo area grows uncomfortably."
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
 (add-hook 'c-mode-hook 'my-c-mode-hook)
 (add-hook 'c++-mode-hook 'my-c-mode-hook)
 
