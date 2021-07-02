@@ -11,6 +11,8 @@
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   (add-to-list 'backup-directory-alist
                (cons tramp-file-name-regexp nil))
+  (setq debug-ignored-errors
+      (cons 'remote-file-error debug-ignored-errors))
 
   (defvar tramp-ssh-controlmaster-options)
   (setq tramp-ssh-controlmaster-options (concat

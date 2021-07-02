@@ -15,7 +15,7 @@
 (with-eval-after-load 'company
   (define-key company-active-map (kbd "\C-n") 'company-select-next)
   (define-key company-active-map (kbd "\C-p") 'company-select-previous)
-  (define-key company-active-map (kbd "\C-d") 'company-show-doc-buffer)
+  (define-key company-active-map (kbd "\C-h") 'company-show-doc-buffer)
   (define-key company-active-map (kbd "TAB") 'company-complete-selection-partial)
   (global-set-key (kbd "M-/") 'company-complete)
   (setq company-format-margin-function nil)

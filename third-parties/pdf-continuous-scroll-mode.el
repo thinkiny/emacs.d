@@ -71,10 +71,12 @@ this function generally works best without ARG is 1. To increase
 the step size for scrolling use the ARG in
 `pdf-continuous-scroll-forward'"
   (if pdf-continuous-scroll-mode
-         (let ((hscroll (window-hscroll))
+         (let ((current-file buffer-file-name)
+               (hscroll (window-hscroll))
                (cur-page (pdf-view-current-page)))
 	         (print (format
-                   "%s: window-total-height %s, frame-height %s\nnext line: vscroll value, second next line: output value (image-next-line)"
+                   "%s: window-total-height %s, frame-height %s\n
+next line: vscroll value, second next line: output value (image-next-line)"
                    (alist-get 'pdf-scroll-window-status (window-parameters))
                    (window-total-height)
                    (frame-height))
@@ -89,6 +91,7 @@ the step size for scrolling use the ARG in
                    (condition-case nil
                        (window-resize (get-buffer-window) -1 nil t)
                      (error (delete-window)
+                            (pop-to-buffer (get-file-buffer current-file))
                             (set-window-parameter nil 'pdf-scroll-window-status 'single)))
                    (image-next-line 1))
                   (t
@@ -114,6 +117,7 @@ the step size for scrolling use the ARG in
                  (window-resize (get-buffer-window) +1 nil t)
                (error (windmove-up)
                       (delete-window)
+                      (pop-to-buffer (get-file-buffer current-file))
                       (set-window-parameter nil 'pdf-scroll-window-status 'single)))
              (windmove-up)
              (image-next-line 1)
@@ -147,7 +151,8 @@ To increase the step size for scrolling use the ARG in
                                    window-min-height)))
         (print
          (format
-          "%s: window-total-height %s, frame-height %s\nnext line: vscroll value, second next line: output value (image-previous-line)"
+          "%s: window-total-height %s, frame-height %s\n
+next line: vscroll value, second next line: output value (image-previous-line)"
           (alist-get 'pdf-scroll-window-status (window-parameters))
           (window-total-height)
           (frame-height))
