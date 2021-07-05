@@ -22,6 +22,7 @@
   (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
 
 (global-set-key (kbd "C-x g") #'magit-status)
+(ignore-tramp-ssh-control-master 'magit-status)
 
 (defun sanityinc/magit-or-vc-log-file (&optional prompt)
   (interactive "P")

@@ -1,3 +1,5 @@
+;;; init-tramp.el  -*- lexical-binding: t -*-
+
 (use-package tramp
   :config
   (setenv "SHELL" "/bin/bash")
@@ -20,5 +22,15 @@
                                        "-o ControlMaster=auto -o ControlPersist=yes")))
 (defconst tramp-ssh-without-controlmaster-options " -o ControlMaster=no -o ControlPath=none -o ControlPersist=no ")
 (use-package docker-tramp :after tramp)
+
+;; fix tramp master-control
+(defun advice/ignore-tramp-ssh-control-master (func &rest args)
+  (defvar tramp-ssh-controlmaster-options)
+  (let ((tramp-ssh-controlmaster-options tramp-ssh-without-controlmaster-options))
+    (apply func args)))
+
+(defun ignore-tramp-ssh-control-master (&rest funcs)
+  (dolist (func funcs)
+    (advice-add func :around #'advice/ignore-tramp-ssh-control-master)))
 
 (provide 'init-tramp)
