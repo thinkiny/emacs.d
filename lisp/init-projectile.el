@@ -8,41 +8,8 @@
   (setq projectile-completion-system 'ivy)
   (projectile-mode)
 
-  ;; remove file-truename
-  (defun projectile-project-root (&optional dir)
-    (let ((dir (or dir default-directory)))
-      (when (and (fboundp 'tramp-archive-file-name-archive)
-                 (tramp-archive-file-name-p dir))
-        (setq dir (file-name-directory (tramp-archive-file-name-archive dir))))
-      (cl-subst nil 'none
-                (or (let ((is-local (not (file-remote-p dir)))      ;; `true' if the file is local
-                          (is-connected (file-remote-p dir nil t))) ;; `true' if the file is remote AND we are connected to the remote
-                      (when (or is-local is-connected)
-                        ;; Here is where all the magic happens.
-                        ;; We run the functions in `projectile-project-root-functions' until we find a project dir.
-                        (cl-some
-                         (lambda (func)
-                           (let* ((cache-key (format "%s-%s" func dir))
-                                  (cache-value (gethash cache-key projectile-project-root-cache)))
-                             (if (and cache-value (file-exists-p cache-value))
-                                 cache-value
-                               (let ((value (funcall func dir)))
-                                 (puthash cache-key value projectile-project-root-cache)
-                                 value))))
-                         projectile-project-root-functions)))
-                    'none))))
-
-  (defun projectile-project-buffer-p (buffer project-root)
-    "Check if BUFFER is under PROJECT-ROOT."
-    (with-current-buffer buffer
-      (and (not (string-prefix-p " " (buffer-name buffer)))
-           (not (projectile-ignored-buffer-p buffer))
-           default-directory
-           (string-equal (file-remote-p default-directory)
-                         (file-remote-p project-root))
-           (not (string-match-p "^http\\(s\\)?://" default-directory))
-           (string-prefix-p project-root default-directory (eq system-type 'windows-nt)))))
-
+  ;; don't use file-truename
+  (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
   (diminish 'projectile-mode))
 
 (defun projectile-kill-not-project-buffers ()

@@ -1,6 +1,4 @@
 (use-package treemacs
-  :ensure t
-  :defer t
   :config
   (progn
     (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
@@ -61,6 +59,12 @@
 (use-package treemacs-magit
   :after treemacs magit
   :ensure t)
+
+(ignore-file-truename 'treemacs--read-first-project-path
+                      'treemacs-do-add-project-to-workspace
+                      'treemacs--current-builtin-project-function
+                      'treemacs--expand-root-node
+                      'treemacs--expand-dir-node)
 
 (add-hook 'treemacs-mode-hook #'treemacs-toggle-fixed-width)
 

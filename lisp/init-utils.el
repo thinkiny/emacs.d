@@ -77,6 +77,14 @@
                           (lambda (process event)
                             (princ (format "%s: %s" process event))))))
 
+(defun advice/ignore-file-truename (old-fn &rest args)
+  (cl-letf (((symbol-function 'file-truename) (lambda (x) x)))
+    (apply old-fn args)))
+
+(defun ignore-file-truename (&rest funcs)
+  (dolist (func funcs)
+    (advice-add func :around #'advice/ignore-file-truename)))
+
 (require 'doom-utils)
 
 (provide 'init-utils)
