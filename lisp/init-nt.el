@@ -3,5 +3,5 @@
 (set-default-coding-systems 'euc-cn)
 (set-clipboard-coding-system 'euc-cn)
 (set-selection-coding-system 'euc-cn)
-(setenv "HOME" (getenv "UserProfile")))
-(provide 'init-win)
+(setenv "HOME" (getenv "UserProfile"))
+(provide 'init-nt)
