@@ -39,7 +39,7 @@
         treemacs-width                         40)
 
   (treemacs-follow-mode t)
-  (treemacs-filewatch-mode t)
+  (treemacs-filewatch-mode nil)
   (treemacs-fringe-indicator-mode 'always)
   (pcase (cons (not (null (executable-find "git")))
                (not (null treemacs-python-executable)))
@@ -66,7 +66,7 @@
                       'treemacs--expand-root-node
                       'treemacs--expand-dir-node)
 
-;;(add-hook 'treemacs-mode-hook #'treemacs-toggle-fixed-width)
+;;(add-hook 'treemacs-mode-hook #'treemacs-filewatch-mode)
 
 (defun treemacs-custom-filter (file _)
   (or (s-ends-with? ".cache" file)

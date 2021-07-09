@@ -1,4 +1,5 @@
-(maybe-require-package 'yasnippet)
+(require-package 'yasnippet)
+(setq yas-inhibit-overlay-modification-protection t)
 (require-package 'yasnippet-snippets)
 (add-hook 'after-init-hook 'yas-global-mode)
 
