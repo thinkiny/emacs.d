@@ -1,5 +1,4 @@
 (require-package 'yasnippet)
-(setq yas-inhibit-overlay-modification-protection t)
 (require-package 'yasnippet-snippets)
 (add-hook 'after-init-hook 'yas-global-mode)
 
@@ -7,13 +6,14 @@
 
 (with-eval-after-load 'yasnippet
   (diminish 'yas-minor-mode)
-  (defun gen-header-tag()
+  (defun gen-cpp-header-tag()
     (let* ((root (projectile-project-root))
            (path (string-trim-left
                   (file-name-sans-extension (buffer-file-name))
                   root))
            (name (replace-regexp-in-string "[./-]" "_" path)))
       (concat (upcase name) "_H_"))))
+
 
 ;; (add-hook 'yas-minor-mode-hook
 ;;    (lambda ()

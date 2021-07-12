@@ -11,7 +11,7 @@
 ;; use clangd
 (with-eval-after-load 'lsp-clangd
   ;;(require 'dap-cpptools)
-  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0" "--log=error"))
+  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0" "--log=error" "--header-insertion=never"))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection-fast 'lsp-clients--clangd-command)
                     :major-modes '(c-mode c++-mode objc-mode)

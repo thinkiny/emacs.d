@@ -69,6 +69,9 @@
   (dap-delete-all-sessions)
   (call-interactively 'dap-debug))
 
+;; multi-root
+(advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
+
 ;; format
 (defvar-local lsp-enable-format t)
 (defun lsp-format-on ()
