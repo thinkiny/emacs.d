@@ -37,6 +37,7 @@
 (add-hook 'java-mode-hook (lambda ()
                             (lsp-later)
                             (setq-local lsp-ui-sideline-show-code-actions nil)
+                            (setq-local lsp-response-timeout 30)
                             (c-add-style "java-style" java-style t)
                             (define-key java-mode-map (kbd "C-c a") 'lsp-java-add-import)
                             (define-key java-mode-map (kbd "C-c t") 'lsp-java-add-throws)

@@ -284,4 +284,12 @@ With arg N, insert N newlines."
 ;; disable spook
 (fmakunbound 'spook)
 
+;; tree-sitter
+(require-package 'tree-sitter)
+(require-package 'tree-sitter-langs)
+
+(require 'tree-sitter-langs)
+(global-tree-sitter-mode)
+(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+
 (provide 'init-editing-utils)
