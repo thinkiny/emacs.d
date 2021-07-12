@@ -122,4 +122,17 @@ and binds some keystroke with `term-raw-map'."
                             (define-key term-raw-map (kbd "C-c C-k") 'term-char-mode)
                             (define-key term-raw-map (kbd "C-c C-j") 'term-line-mode)))
 
+;; vterm
+;; https://github.com/akermu/emacs-libvterm#directory-tracking-and-prompt-tracking
+;; if [ "$TERM" = "xterm-256color" ]; then
+;;     PS1=$PS1'\[$(vterm_prompt_end)\]'
+;; fi
+
+(use-package vterm
+  :commands (vterm-mode vterm)
+  :config
+  (setq vterm-always-compile-module t)
+  (define-key vterm-mode-map (kbd "M-p") 'vterm-send-up)
+  (define-key vterm-mode-map (kbd "M-n") 'vterm-send-down))
+
 (provide 'init-term)

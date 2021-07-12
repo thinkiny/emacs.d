@@ -4,13 +4,14 @@
 
 (require 'cl-lib)
 (require 'tramp)
+(require 's)
 
+(defvar counsel-mt-shell-type 'vterm)
 (defconst counsel-mt-buffer-header "*term: ")
-(defvar counsel-mt-use-eshell nil)
 (defun counsel-mt-get-terminal-buffers ()
   "Filter for buffers that are terminals only."
   (cl-loop for buf in (buffer-list)
-           if (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode))
+           if (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
            collect (cons (string-trim (buffer-name buf) counsel-mt-buffer-header)
                          buf)))
 
@@ -35,7 +36,7 @@
              (concat (when term-user (concat term-user "@")) term-host)
              (if term-port
                  (list "-p" term-port))
-            (concat "cd '" term-localname "'; exec $SHELL -l"))))
+            (concat "\"cd '" term-localname "' && $SHELL -l\""))))
     (list (or (getenv "SHELL")
               (getenv "ESHELL")
               "/bin/sh") "-l")))
@@ -62,10 +63,19 @@
   (call-interactively 'eshell)
   (rename-buffer name))
 
+(defun counsel-open-vterm (name)
+  (defvar vterm-shell)
+  (let ((vterm-shell (s-join " " (counsel-get-term-cmd))))
+    (vterm name)
+    (rename-buffer name)))
+
 (defun counsel-mt-get-terminal-name()
-  (or (projectile-project-name)
-      (counsel-mt-get-buffer-process-cwd)
-      default-directory))
+  (let ((project-root (projectile-project-root)))
+    (if project-root
+        (file-name-nondirectory (directory-file-name project-root))
+      (or
+       (counsel-mt-get-buffer-process-cwd)
+       (expand-file-name default-directory)))))
 
 (defun counsel-mt-generate-name()
   (generate-new-buffer-name
@@ -76,9 +86,11 @@
 (defun counsel-mt-launch-terminal ()
   "Launch a terminal in a new buffer."
   (let ((name (counsel-mt-generate-name)))
-    (if counsel-mt-use-eshell
-        (counsel-open-eshell name)
-      (counsel-open-term name))))
+    (pcase counsel-mt-shell-type
+      ('eshell (counsel-open-eshell name))
+      ('term (counsel-open-term name))
+      ('vterm (counsel-open-vterm name))
+      )))
 
 (defun counsel-mt-list-terminals ()
   "Counsel source with candidates for all terminal buffers."
