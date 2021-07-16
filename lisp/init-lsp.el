@@ -40,7 +40,7 @@
   (define-key lsp-mode-map (kbd "C-c v") 'lsp-find-implementation)
   (define-key lsp-mode-map (kbd "C-c e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
-  (define-key lsp-mode-map (kbd "C-c s") 'lsp-signature-activate)
+  (define-key lsp-mode-map (kbd "C-c s a") 'lsp-signature-activate)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
   (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
 

@@ -104,8 +104,8 @@ returned to avoid that the echo area grows uncomfortably."
   ;; ;;echo "" | g++ -v -x c++ -E -
   (c-add-style "Google" google-c-style t)
   (define-key c-mode-base-map (kbd "C-c x") 'switch-c-header-source)
-  (define-key c-mode-base-map (kbd "C-c g") 'generate-compdb)
-  (define-key c-mode-base-map (kbd "C-c b") 'build-c-project)
+  (define-key c-mode-base-map (kbd "C-c b g") 'generate-compdb)
+  (define-key c-mode-base-map (kbd "C-c b b") 'build-c-project)
   (if (gtags-get-rootpath)
       (global-tags-exclusive-backend-mode)
     (lsp-later)))

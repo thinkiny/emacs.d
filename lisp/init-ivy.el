@@ -25,7 +25,14 @@
   (setq-default counsel-mode-override-describe-bindings t)
   ;;(define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
   (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache" "bazel-.*" ".o" ".elc" ".so")))
+
+  (defun counsel-ag-here()
+    (interactive)
+    (counsel-ag "" default-directory))
+
   (global-set-key (kbd "C-c l") 'counsel-imenu)
+  (global-set-key (kbd "C-c s s") 'counsel-ag)
+  (global-set-key (kbd "C-c s .") 'counsel-ag-here)
   (counsel-mode))
 
 (use-package counsel-projectile
