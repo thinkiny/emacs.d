@@ -108,7 +108,19 @@
 ;; Expand region
 ;;----------------------------------------------------------------------------
 (require-package 'expand-region)
-(setq expand-region-subword-enabled t)
+(defun er/mark-parameter ()
+  (interactive)
+  (when (re-search-backward "[(\\|,]\\([^, )]+\\)" (line-beginning-position) t)
+    (goto-char (match-beginning 1))
+    (set-mark (point))
+    (re-search-forward "[,\\|)]")
+    (goto-char (match-beginning 0))
+    (exchange-point-and-mark)))
+
+(defvar er/try-expand-list nil)
+(add-hook 'c-mode-common-hook
+          (lambda ()
+            (add-to-list 'er/try-expand-list 'er/mark-parameter)))
 (global-set-key (kbd "M-=") 'er/expand-region)
 
 ;;----------------------------------------------------------------------------

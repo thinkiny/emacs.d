@@ -1,5 +1,4 @@
 (use-package god-mode
-  :demand t
   :config
   (setq god-mode-enable-function-key-translation nil)
   (define-key god-local-mode-map (kbd ".") #'xref-find-definitions)
@@ -9,7 +8,7 @@
   (define-key god-local-mode-map (kbd "q") #'kill-current-buffer)
   (define-key god-local-mode-map (kbd "[") #'xref-pop-curr-marker-stack)
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)
-  (delete #'god-view-mode-p god-exempt-predicates))
+  (add-to-list 'god-exempt-major-modes 'ivy-occur-mode))
 
 (defun goto-workspace-symbol()
   (interactive)

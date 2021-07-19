@@ -28,15 +28,18 @@
 
 (defun counsel-get-term-cmd()
   (if (tramp-tramp-file-p default-directory)
-    (with-parsed-tramp-file-name default-directory term
-      (flatten-list
-       (list "ssh"
-             (split-string tramp-ssh-without-controlmaster-options)
-             "-t"
-             (concat (when term-user (concat term-user "@")) term-host)
-             (if term-port
-                 (list "-p" term-port))
-            (concat "\"cd '" term-localname "' && $SHELL -l\""))))
+      (with-parsed-tramp-file-name default-directory term
+        (pcase term-method
+          ("ssh"
+           (flatten-list
+            (list "ssh"
+                  (split-string tramp-ssh-without-controlmaster-options)
+                  "-t"
+                  (concat (when term-user (concat term-user "@")) term-host)
+                  (if term-port
+                      (list "-p" term-port))
+                  (concat "\"cd '" term-localname "' && $SHELL -l\""))))
+          ("mssh" (list "mssh" term-host))))
     (list (or (getenv "SHELL")
               (getenv "ESHELL")
               "/bin/sh") "-l")))

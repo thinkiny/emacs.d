@@ -17,6 +17,15 @@
   (define-key ivy-minibuffer-map (kbd "TAB") #'ivy-insert-current)
   (define-key ivy-occur-mode-map (kbd "n") 'ivy-occur-next-line)
   (define-key ivy-occur-mode-map (kbd "p") 'ivy-occur-previous-line)
+
+  (defun ivy-occur-calling-auto ()
+    (run-at-time 0.1 nil (lambda ()
+                           (ivy-occur-toggle-calling)
+                           (goto-char (point-min))
+                           ;;(ivy-occur-next-line)
+                           )))
+
+  (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
   (bind-key "C-c c" 'ivy-resume))
 
 (use-package counsel

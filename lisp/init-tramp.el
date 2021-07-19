@@ -13,13 +13,21 @@
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   (add-to-list 'backup-directory-alist
                (cons tramp-file-name-regexp nil))
+
   (setq debug-ignored-errors
-      (cons 'remote-file-error debug-ignored-errors))
+        (cons 'remote-file-error debug-ignored-errors))
 
   (defvar tramp-ssh-controlmaster-options)
   (setq tramp-ssh-controlmaster-options (concat
                                        "-o ControlPath=/tmp/ssh-ControlPath-%%r@%%h:%%p "
-                                       "-o ControlMaster=auto -o ControlPersist=yes")))
+                                       "-o ControlMaster=auto -o ControlPersist=yes"))
+  (add-to-list 'tramp-methods
+             `("mssh"
+               (tramp-login-program      "mssh")
+               (tramp-login-args         (("%h")))
+               (tramp-remote-shell       "/bin/bash")
+               (tramp-remote-shell-args  nil))))
+
 (defconst tramp-ssh-without-controlmaster-options " -o ControlMaster=no -o ControlPath=none -o ControlPersist=no ")
 (use-package docker-tramp :after tramp)
 
