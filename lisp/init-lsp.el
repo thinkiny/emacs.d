@@ -70,17 +70,18 @@
   (call-interactively 'dap-debug))
 
 ;; multi-root
-(advice-add 'lsp :before (lambda (&rest _args) (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
+(advice-add 'lsp :before (lambda (&rest _args)
+                           (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
 
 ;; format
 (defvar-local lsp-enable-format t)
-(defun lsp-format-on ()
+(defun lsp-enable-format ()
   (interactive)
   (whitespace-cleanup-mode 1)
   (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)
   (setq-local lsp-enable-format t))
 
-(defun lsp-format-off ()
+(defun lsp-disable-format ()
   (interactive)
   (whitespace-cleanup-mode 0)
   (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
@@ -89,19 +90,32 @@
 (defun lsp-format-off-project()
   (interactive)
   (when-let ((project-root (projectile-project-root)))
-    (write-region (format "((%s . ((eval . (lsp-format-off)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
+    (write-region (format "((%s . ((eval . (lsp-disable-format)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
 ;; tramp
+(defvar lsp-erase-log-buffer-timer nil)
+(defun lsp-erase-all-log-buffer ()
+  (call-interactively #'lsp--erase-log-buffer t))
+
+(defun start-lsp-erase-log-buffer-timer()
+  (unless lsp-erase-log-buffer-timer
+      (setq lsp-erase-log-buffer-timer (run-at-time 10 10 #'lsp-erase-all-log-buffer))))
+
+(advice-add 'lsp :before (lambda (&optional arg)
+                           (when (tramp-jssh-file-name-p (buffer-file-name))
+                             (setq-local lsp-log-io t)
+                             (start-lsp-erase-log-buffer-timer))))
+
 (with-eval-after-load 'lsp-mode
   (defun lsp-tramp-connection-fast (local-command)
     "Create LSP stdio connection named name.
 LOCAL-COMMAND is either list of strings, string or function which
 returns the command to execute."
     (defvar tramp-connection-properties)
+    (add-to-list 'tramp-connection-properties
+                 (list (regexp-quote (file-remote-p default-directory))
+                       "direct-async-process" t))
     (list :connect (lambda (filter sentinel name environment-fn)
-                     (add-to-list 'tramp-connection-properties
-                                  (list (regexp-quote (file-remote-p default-directory))
-                                        "direct-async-process" t))
                      (let* ((final-command (lsp-resolve-final-function
                                             local-command))
                             (process-name (generate-new-buffer-name name))
@@ -119,8 +133,13 @@ returns the command to execute."
                                    :stderr (get-buffer-create (format "*%s::stderr*" process-name))
                                    :file-handler t)))
                        (cons proc proc)))
-          ;;:test? (lambda() t)))
-          :test? (lambda () (-> local-command lsp-resolve-final-function lsp-server-present?)))))
+          ;;:test? (lambda() t)
+          :test? (lambda () (-> local-command lsp-resolve-final-function lsp-server-present?))))
+
+  (defun lsp-tramp-connection-new (local-command)
+    (if (tramp-jssh-file-name-p default-directory)
+        (lsp-tramp-connection local-command)
+      (lsp-tramp-connection-fast local-command))))
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()
@@ -128,7 +147,7 @@ returns the command to execute."
                            (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
                            (setq-local global-whitespace-cleanup-mode nil)
                            (if lsp-enable-format
-                               (lsp-format-on))))
+                               (lsp-enable-format))))
 
 ;; lsp-ui
 (use-package lsp-ui

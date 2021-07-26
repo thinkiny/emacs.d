@@ -6,7 +6,7 @@
 (require 'tramp)
 (require 's)
 
-(defvar counsel-mt-shell-type 'vterm)
+(defvar counsel-mt-shell-type 'term)
 (defconst counsel-mt-buffer-header "*term: ")
 (defun counsel-mt-get-terminal-buffers ()
   "Filter for buffers that are terminals only."
@@ -38,8 +38,9 @@
                   (concat (when term-user (concat term-user "@")) term-host)
                   (if term-port
                       (list "-p" term-port))
-                  (concat "\"cd '" term-localname "' && $SHELL -l\""))))
-          ("mssh" (list "mssh" term-host))))
+                  (concat "cd '" term-localname "' && $SHELL -l"))))
+          ("mssh" (list "mssh" term-user term-host
+                        (concat "cd '" term-localname "'")))))
     (list (or (getenv "SHELL")
               (getenv "ESHELL")
               "/bin/sh") "-l")))

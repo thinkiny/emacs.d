@@ -1,7 +1,6 @@
 (setq inhibit-startup-message t)
 (setq gnus-inhibit-startup-message t)
 
-(menu-bar-mode 0)
 (when (fboundp 'tool-bar-mode)
   (tool-bar-mode -1))
 

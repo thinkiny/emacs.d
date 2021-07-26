@@ -25,7 +25,7 @@
       (message "current file is not in go-mode and lsp-mode"))
     res))
 
-(defun lsp-go-module-on ()
+(defun lsp-enable-module ()
   (interactive)
   (when (and (check-valid-lsp-go-mode) (lsp-session-get-metadata 'go-path))
     (clrhash lsp-go-env)
@@ -33,7 +33,7 @@
     (lsp-session-set-metadata 'go-path nil)
     (my-lsp-workspace-restart)))
 
-(defun lsp-go-module-off ()
+(defun lsp-disable-go-module ()
   (interactive)
   (when (and (check-valid-lsp-go-mode) (not (lsp-session-get-metadata 'go-path))
              (clrhash lsp-go-env)
