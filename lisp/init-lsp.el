@@ -1,5 +1,4 @@
 ;;; -*- lexical-binding: t; -*-
-
 (use-package lsp-mode
   :config
   (diminish 'lsp-mode)
@@ -21,8 +20,7 @@
         lsp-enable-links nil
         lsp-keep-workspace-alive nil
         lsp-log-io nil
-        lsp-idle-delay 0.500
-        lsp-response-timeout 5
+        lsp-idle-delay 0.5
         ;;lsp-auto-guess-root t
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
@@ -93,19 +91,6 @@
     (write-region (format "((%s . ((eval . (lsp-disable-format)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
 
 ;; tramp
-(defvar lsp-erase-log-buffer-timer nil)
-(defun lsp-erase-all-log-buffer ()
-  (call-interactively #'lsp--erase-log-buffer t))
-
-(defun start-lsp-erase-log-buffer-timer()
-  (unless lsp-erase-log-buffer-timer
-      (setq lsp-erase-log-buffer-timer (run-at-time 10 10 #'lsp-erase-all-log-buffer))))
-
-(advice-add 'lsp :before (lambda (&optional arg)
-                           (when (tramp-jssh-file-name-p (buffer-file-name))
-                             (setq-local lsp-log-io t)
-                             (start-lsp-erase-log-buffer-timer))))
-
 (with-eval-after-load 'lsp-mode
   (defun lsp-tramp-connection-fast (local-command)
     "Create LSP stdio connection named name.
@@ -134,12 +119,8 @@ returns the command to execute."
                                    :file-handler t)))
                        (cons proc proc)))
           ;;:test? (lambda() t)
-          :test? (lambda () (-> local-command lsp-resolve-final-function lsp-server-present?))))
-
-  (defun lsp-tramp-connection-new (local-command)
-    (if (tramp-jssh-file-name-p default-directory)
-        (lsp-tramp-connection local-command)
-      (lsp-tramp-connection-fast local-command))))
+          :test? (lambda () (-> local-command lsp-resolve-final-function lsp-server-present?))
+          )))
 
 ;; hook
 (add-hook 'lsp-mode-hook (lambda ()

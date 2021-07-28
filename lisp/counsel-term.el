@@ -6,7 +6,7 @@
 (require 'tramp)
 (require 's)
 
-(defvar counsel-mt-shell-type 'term)
+(defvar counsel-mt-shell-type 'vterm)
 (defconst counsel-mt-buffer-header "*term: ")
 (defun counsel-mt-get-terminal-buffers ()
   "Filter for buffers that are terminals only."
@@ -26,7 +26,17 @@
           (match-string 1 stdout))
       nil)))
 
-(defun counsel-get-term-cmd()
+
+(defun counsel-term-set-default-tramp-method()
+  (if (tramp-tramp-file-p default-directory)
+      (with-parsed-tramp-file-name default-directory term
+        (setq tramp-default-method term-method)
+        (add-hook 'doom-switch-buffer-hook
+                  (lambda ()
+                    (setq tramp-default-method term-method))
+                  nil 'local))))
+
+(defun counsel-term-get-term-cmd()
   (if (tramp-tramp-file-p default-directory)
       (with-parsed-tramp-file-name default-directory term
         (pcase term-method
@@ -38,9 +48,10 @@
                   (concat (when term-user (concat term-user "@")) term-host)
                   (if term-port
                       (list "-p" term-port))
-                  (concat "cd '" term-localname "' && $SHELL -l"))))
-          ("mssh" (list "mssh" term-user term-host
-                        (concat "cd '" term-localname "'")))))
+                  (concat "\"cd '" term-localname "' && $SHELL -l\""))))
+          (tramp-jumper-method
+           (list tramp-jumper-exec term-user term-host
+                 (concat "cd '" term-localname "'")))))
     (list (or (getenv "SHELL")
               (getenv "ESHELL")
               "/bin/sh") "-l")))
@@ -54,10 +65,11 @@
                               (kill-buffer (process-buffer proc)))))))
 
 (defun counsel-open-term (name)
-  (let* ((cmd (counsel-get-term-cmd))
+  (let* ((cmd (counsel-term-get-term-cmd))
          (buf (apply 'make-term name (car cmd) nil (cdr cmd))))
     (set-buffer buf)
     (term-mode)
+    (counsel-term-set-default-tramp-method)
     (term-char-mode)
     (counsel-term-handle-close)
     (switch-to-buffer buf)
@@ -65,12 +77,14 @@
 
 (defun counsel-open-eshell (name)
   (call-interactively 'eshell)
+  (counsel-term-set-default-tramp-method)
   (rename-buffer name))
 
 (defun counsel-open-vterm (name)
   (defvar vterm-shell)
-  (let ((vterm-shell (s-join " " (counsel-get-term-cmd))))
+  (let ((vterm-shell (s-join " " (counsel-term-get-term-cmd))))
     (vterm name)
+    (counsel-term-set-default-tramp-method)
     (rename-buffer name)))
 
 (defun counsel-mt-get-terminal-name()

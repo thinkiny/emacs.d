@@ -29,6 +29,8 @@
               warning-minimum-level :error
               line-number-mode t)
 
+(put 'erase-buffer 'disabled nil)
+
 (delete-selection-mode 1)
 (add-hook 'after-init-hook 'transient-mark-mode)
 (global-set-key "\C-c$" 'toggle-truncate-lines)
