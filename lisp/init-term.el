@@ -1,9 +1,4 @@
-;;Remote Directory Tracking: https://www.emacswiki.org/emacs/AnsiTermHints#h5o-5
-
-;; counsel-term
-(require 'counsel-term)
-(global-set-key (kbd "C-x t") 'counsel-term)
-
+;; Remote Directory Tracking: https://www.emacswiki.org/emacs/AnsiTermHints#h5o-5
 ;; term-mode key-bindings
 (defcustom term-unbind-key-list
   '("C-z" "C-x" "C-c" "C-h" "C-y" "<ESC>")
@@ -138,8 +133,31 @@ and binds some keystroke with `term-raw-map'."
       (kill-ring-save (region-beginning) (region-end))
       (vterm-copy-mode -1)))
 
+  (defun vterm--get-directory (path)
+    "Get normalized directory to PATH."
+    (when path
+      (let (directory)
+        (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
+            (progn
+              (let ((user (match-string 1 path))
+                    (host (match-string 2 path))
+                    (dir (match-string 3 path)))
+                (if (and (string-equal user user-login-name)
+                         (string-equal host (system-name)))
+                    (progn
+                      (when (file-directory-p dir)
+                        (setq directory (file-name-as-directory dir))))
+                  (setq directory (file-name-as-directory (concat "/" tramp-default-method ":" path))))))
+          (when (file-directory-p path)
+            (setq directory (file-name-as-directory path))))
+        directory)))
+
   (define-key vterm-mode-map (kbd "M-p") 'vterm-send-up)
   (define-key vterm-mode-map (kbd "M-n") 'vterm-send-down)
   (define-key vterm-mode-map (kbd "M-w") 'vterm-copy-text))
+
+;; counsel-term
+(require 'counsel-term)
+(global-set-key (kbd "C-x t") 'counsel-term)
 
 (provide 'init-term)

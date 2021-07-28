@@ -26,16 +26,6 @@
           (match-string 1 stdout))
       nil)))
 
-
-(defun counsel-term-set-default-tramp-method()
-  (if (tramp-tramp-file-p default-directory)
-      (with-parsed-tramp-file-name default-directory term
-        (setq tramp-default-method term-method)
-        (add-hook 'doom-switch-buffer-hook
-                  (lambda ()
-                    (setq tramp-default-method term-method))
-                  nil 'local))))
-
 (defun counsel-term-get-term-cmd()
   (if (tramp-tramp-file-p default-directory)
       (with-parsed-tramp-file-name default-directory term
@@ -69,7 +59,6 @@
          (buf (apply 'make-term name (car cmd) nil (cdr cmd))))
     (set-buffer buf)
     (term-mode)
-    (counsel-term-set-default-tramp-method)
     (term-char-mode)
     (counsel-term-handle-close)
     (switch-to-buffer buf)
@@ -77,14 +66,15 @@
 
 (defun counsel-open-eshell (name)
   (call-interactively 'eshell)
-  (counsel-term-set-default-tramp-method)
   (rename-buffer name))
 
 (defun counsel-open-vterm (name)
   (defvar vterm-shell)
   (let ((vterm-shell (s-join " " (counsel-term-get-term-cmd))))
     (vterm name)
-    (counsel-term-set-default-tramp-method)
+    (if (tramp-tramp-file-p default-directory)
+        (with-parsed-tramp-file-name default-directory term
+          (setq-local tramp-default-method term-method)))
     (rename-buffer name)))
 
 (defun counsel-mt-get-terminal-name()
