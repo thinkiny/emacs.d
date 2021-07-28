@@ -127,12 +127,19 @@ and binds some keystroke with `term-raw-map'."
 ;; if [ "$TERM" = "xterm-256color" ]; then
 ;;     PS1=$PS1'\[$(vterm_prompt_end)\]'
 ;; fi
-
 (use-package vterm
   :commands (vterm-mode vterm)
   :config
   (setq vterm-always-compile-module t)
+  (defun vterm-copy-text ()
+    (interactive)
+    (when mark-active
+      (vterm-copy-mode 1)
+      (kill-ring-save (region-beginning) (region-end))
+      (vterm-copy-mode -1)))
+
   (define-key vterm-mode-map (kbd "M-p") 'vterm-send-up)
-  (define-key vterm-mode-map (kbd "M-n") 'vterm-send-down))
+  (define-key vterm-mode-map (kbd "M-n") 'vterm-send-down)
+  (define-key vterm-mode-map (kbd "M-w") 'vterm-copy-text))
 
 (provide 'init-term)
