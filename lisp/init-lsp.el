@@ -2,6 +2,7 @@
 (use-package lsp-mode
   :config
   (diminish 'lsp-mode)
+  (require 'lsp-diagnostics)
   (setq lsp-enable-file-watchers nil
         lsp-inhibit-message t
         lsp-diagnostics-provider :flycheck
@@ -97,9 +98,10 @@
 LOCAL-COMMAND is either list of strings, string or function which
 returns the command to execute."
     (defvar tramp-connection-properties)
-    (add-to-list 'tramp-connection-properties
-                 (list (regexp-quote (file-remote-p default-directory))
-                       "direct-async-process" t))
+    (if (file-remote-p default-directory)
+        (add-to-list 'tramp-connection-properties
+                     (list (regexp-quote (file-remote-p default-directory))
+                           "direct-async-process" t)))
     (list :connect (lambda (filter sentinel name environment-fn)
                      (let* ((final-command (lsp-resolve-final-function
                                             local-command))

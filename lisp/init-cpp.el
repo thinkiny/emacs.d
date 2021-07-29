@@ -9,15 +9,16 @@
 ;;                              (setq-local yas-indent-line 'fixed))))
 
 ;; use clangd
-(with-eval-after-load 'lsp-clangd
+(with-eval-after-load 'lsp-mode
   ;;(require 'dap-cpptools)
-  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0" "--log=verbose" "--header-insertion=never"))
+  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0" "--log=error" "--header-insertion=never"))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection-fast 'lsp-clients--clangd-command)
                     :activation-fn (lsp-activate-on "c" "cpp" "objective-c")
                     :server-id 'clangd-remote
-                    :remote? t))
+                    :remote? t)))
 
+(with-eval-after-load 'lsp-diagnostics
   (cl-defmethod lsp-clients-extract-signature-on-hover (contents (_server-id (eql clangd-remote)))
     "Extract a representative line from clangd's CONTENTS, to show in the echo area.
 This function tries to extract the type signature from CONTENTS,
@@ -48,7 +49,7 @@ returned to avoid that the echo area grows uncomfortably."
            (lsp-cpp-flycheck-clang-tidy-error-explainer e))
           (t (flycheck-error-message e)))))
 
-(defun switch-c-header-source()
+(defun switch-cpp-header-source()
   (interactive)
   (if (bound-and-true-p lsp-mode)
       (lsp-clangd-find-other-file)
@@ -86,7 +87,7 @@ returned to avoid that the echo area grows uncomfortably."
   (async-shell-command
    (format "cd %s && make -j4" (directory-file-name compdb))))
 
-(defun build-c-project()
+(defun build-cpp-project()
   (interactive)
   (when-let* ((root (projectile-project-root))
               (compdb (file-truename (format "%s/compile_commands.json" root)))
@@ -100,12 +101,12 @@ returned to avoid that the echo area grows uncomfortably."
 (require 'google-c-style)
 
 ;; hook
-(defun my-c-mode-hook ()
+(defun my-cpp-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -
   (c-add-style "Google" google-c-style t)
-  (define-key c-mode-base-map (kbd "C-c x") 'switch-c-header-source)
+  (define-key c-mode-base-map (kbd "C-c x") 'switch-cpp-header-source)
   (define-key c-mode-base-map (kbd "C-c b g") 'generate-compdb)
-  (define-key c-mode-base-map (kbd "C-c b b") 'build-c-project)
+  (define-key c-mode-base-map (kbd "C-c b b") 'build-cpp-project)
   (if (gtags-get-rootpath)
       (global-tags-exclusive-backend-mode)
     (lsp-later)))
@@ -123,7 +124,7 @@ returned to avoid that the echo area grows uncomfortably."
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
-(add-hook 'c-mode-hook 'my-c-mode-hook)
-(add-hook 'c++-mode-hook 'my-c-mode-hook)
+(add-hook 'c-mode-hook 'my-cpp-mode-hook)
+(add-hook 'c++-mode-hook 'my-cpp-mode-hook)
 
 (provide 'init-cpp)

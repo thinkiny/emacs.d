@@ -10,16 +10,16 @@
   (require 'init-pom)
   (require 'dap-java)
 
-  (setq  lsp-java-import-maven-enabled t
-         lsp-java-maven-download-sources t
-         lsp-java-inhibit-message t
-         lsp-java-decompiler-fernflower-ind "    "
-         lsp-java-decompiler-fernflower-ren t
-         lsp-java-format-on-type-enabled nil
-         lsp-java-decompiler-fernflower-dgs t
-         lsp-java-content-provider-preferred "fernflower"
-         lsp-java-format-settings-url (lsp--path-to-uri "~/.emacs.d/java/formatter.xml")
-         lsp-java-format-settings-profile "my-java")
+  (setq lsp-java-import-maven-enabled t
+        lsp-java-maven-download-sources t
+        lsp-java-inhibit-message t
+        lsp-java-decompiler-fernflower-ind "    "
+        lsp-java-decompiler-fernflower-ren t
+        lsp-java-format-on-type-enabled nil
+        lsp-java-decompiler-fernflower-dgs t
+        lsp-java-content-provider-preferred "fernflower"
+        lsp-java-format-settings-url (lsp--path-to-uri "~/.emacs.d/java/formatter.xml")
+        lsp-java-format-settings-profile "my-java")
 
   (add-to-list 'lsp-java-vmargs
     (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
