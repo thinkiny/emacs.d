@@ -98,7 +98,7 @@
 LOCAL-COMMAND is either list of strings, string or function which
 returns the command to execute."
     (defvar tramp-connection-properties)
-    (if (file-remote-p default-directory)
+    (if (tramp-tramp-file-p default-directory)
         (add-to-list 'tramp-connection-properties
                      (list (regexp-quote (file-remote-p default-directory))
                            "direct-async-process" t)))

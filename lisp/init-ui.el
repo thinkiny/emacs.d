@@ -4,6 +4,7 @@
 (when (fboundp 'tool-bar-mode)
   (tool-bar-mode -1))
 
+(menu-bar-mode 0)
 (when (fboundp 'tab-bar-mode)
   (tab-bar-mode -1)
   (define-key ctl-x-map "t" nil))
@@ -62,9 +63,7 @@
       (set-frame-parameter (selected-frame) 'alpha value)))
 
 ;; themes
-(require-package 'spacemacs-theme)
 (require-package 'leuven-theme)
-(require-package 'flucui-themes)
 (require-package 'cloud-theme)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 

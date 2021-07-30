@@ -59,12 +59,12 @@
                         (setq env (cons elt env)))))
                (env (setenv-internal
                      env "INSIDE_EMACS" (tramp-inside-emacs) 'keep))
-               (env (delq nil env))
+               (env (mapcar #'tramp-shell-quote-argument (delq nil env)))
                ;; Quote command.
                (command (mapconcat #'tramp-shell-quote-argument command " "))
                ;; Set cwd and environment variables.
                (command
-                (append `("cd" ,localname "&&" "stty raw -echo" ";" "env") env `(,command))))
+                (append `("cd" ,localname "&&" "stty raw -echo" ";env") env `(,command))))
 
           (let* ((login-program (tramp-get-method-parameter v 'tramp-login-program))
                  login-args p)

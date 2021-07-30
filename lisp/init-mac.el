@@ -30,13 +30,6 @@
 (if window-system
     (menu-bar-mode t))
 
-(setq ccls-initialization-options
-      `(:clang ,(list :extraArgs ["-isystem/Library/Developer/CommandLineTools/usr/include/c++/v1"
-                                  "-isystem/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include"
-                                  "-isystem/usr/local/include"]
-                      :resourceDir (string-trim (shell-command-to-string "clang -print-resource-dir")))))
-
-
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . light))
 ;; (load-theme 'vscode-dark-plus t)
