@@ -71,7 +71,7 @@
 (defun counsel-open-vterm (name)
   (defvar vterm-shell)
   (let ((vterm-shell (s-join " " (counsel-term-get-term-cmd))))
-    (vterm name)
+    (switch-to-buffer (vterm name))
     (if (tramp-tramp-file-p default-directory)
         (with-parsed-tramp-file-name default-directory term
           (setq-local tramp-default-method term-method)))

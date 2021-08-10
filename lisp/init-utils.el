@@ -87,8 +87,6 @@
   (dolist (func funcs)
     (advice-add func :around #'advice/ignore-file-truename)))
 
-(defun empty-func (&rest _) nil)
-
 (require 'doom-utils)
 
 (provide 'init-utils)

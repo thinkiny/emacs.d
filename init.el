@@ -10,7 +10,6 @@
 (require 'init-editing-utils)
 (require 'init-xref)
 (require 'init-treemacs)
-(require 'init-platform)
 (require 'init-uniquify)
 (require 'init-ibuffer)
 (require 'init-recentf)
@@ -23,6 +22,7 @@
 (require 'init-dired)
 (require 'init-whitespace)
 (require 'init-tramp)
+(require 'init-platform)
 
 ;;language
 (require 'init-flycheck)

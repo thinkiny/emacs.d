@@ -17,6 +17,7 @@
 (setq indicate-empty-lines t)
 (setq-default line-number-display-limit-width 2000000)
 (setq-default window-divider-default-right-width 1)
+(setq ring-bell-function 'ignore)
 
 (global-set-key (kbd "C-x c f") #'customize-face)
 (global-set-key (kbd "C-x c v") #'customize-variable)
