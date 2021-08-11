@@ -8,25 +8,24 @@
   :demand t
   :config
   ;;(pdf-tools-install t t t nil)
+  (defadvice! +pdf--install-epdfinfo-a (orig-fn &rest args)
+  "Install epdfinfo after the first PDF file, if needed."
+  :around #'pdf-info-check-epdfinfo
+  (if (file-executable-p pdf-info-epdfinfo-program)
+      (apply orig-fn args)
+    ;; If we remain in pdf-view-mode, it'll spit out cryptic errors. This
+    ;; graceful failure is better UX.
+    (fundamental-mode)
+    (message "Viewing PDFs in Emacs requires epdfinfo. Use `M-x pdf-tools-install' to build it"))
+
+  (pdf-tools-install-noverify)
   (require 'pdf-continuous-scroll-mode)
   (setq pdf-view-use-unicode-ligther nil)
   (setq pdf-view-use-scaling t)
   (setq pdf-view-use-imagemagick nil)
   (setq pdf-tools-enabled-modes (remove 'pdf-sync-minor-mode pdf-tools-enabled-modes))
   (setq pdf-links-browse-uri-function #'xwidget-webkit-browse-url)
-  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
-
-  (defadvice! +pdf--install-epdfinfo-a (orig-fn &rest args)
-    "Install epdfinfo after the first PDF file, if needed."
-    :around #'pdf-view-mode
-    (if (file-executable-p pdf-info-epdfinfo-program)
-        (apply orig-fn args)
-      ;; If we remain in pdf-view-mode, it'll spit out cryptic errors. This
-      ;; graceful failure is better UX.
-      (fundamental-mode)
-      (message "Viewing PDFs in Emacs requires epdfinfo. Use `M-x pdf-tools-install' to build it"))))
-
-(pdf-tools-install-noverify)
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)))
 
 (defun pdf-view-next-page-start ()
   "View the next page in the PDF."
