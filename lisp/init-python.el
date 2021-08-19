@@ -21,10 +21,8 @@
                                       (with-lsp-workspace workspace
                                         (lsp--set-configuration (lsp-configuration-section "pylsp")))))))
 
-(add-hook 'python-mode-hook #'lsp-later)
-;; (use-package lsp-jedi
-;;   :hook (python-mode . (lambda ()
-;;                          (require 'lsp-jedi)
-;;                          (lsp-later))))
+(add-hook 'python-mode-hook (lambda ()
+                              (setq-local lsp-enable-format-at-save nil)
+                              (lsp-later)))
 
 (provide 'init-python)

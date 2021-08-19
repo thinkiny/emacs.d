@@ -73,18 +73,18 @@
                            (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
 
 ;; format
-(defvar-local lsp-enable-format t)
+(defvar-local lsp-enable-format-at-save t)
 (defun lsp-enable-format ()
   (interactive)
   (whitespace-cleanup-mode 1)
   (add-hook 'before-save-hook 'lsp-format-buffer nil 'lsp-format)
-  (setq-local lsp-enable-format t))
+  (setq-local lsp-enable-format-at-save t))
 
 (defun lsp-disable-format ()
   (interactive)
   (whitespace-cleanup-mode 0)
   (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
-  (setq-local lsp-enable-format nil))
+  (setq-local lsp-enable-format-at-save nil))
 
 (defun lsp-format-off-project()
   (interactive)
@@ -129,7 +129,7 @@ returns the command to execute."
                            (setq-local flycheck-idle-change-delay 1.0)
                            (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
                            (setq-local global-whitespace-cleanup-mode nil)
-                           (if lsp-enable-format
+                           (if lsp-enable-format-at-save
                                (lsp-enable-format))))
 
 ;; lsp-ui
