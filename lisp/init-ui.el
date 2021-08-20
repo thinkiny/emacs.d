@@ -88,6 +88,7 @@
             ;;(set-face-attribute 'fringe nil :background nil)
             (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
             (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)
+            (set-face-attribute 'swiper-line-face nil :background "#DCDCDC")
             (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
             (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
             (set-frame-transparency frame-transparency)))

@@ -26,9 +26,8 @@
                            )))
 
   (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
-  (set-face-attribute 'swiper-line-face nil :inherit 'hl-line-face)
-  (bind-key "C-c c" 'ivy-resume)
-  (bind-key "C-s" 'swiper))
+  (global-set-key (kbd "C-c c") 'ivy-resume)
+  (global-set-key (kbd "C-s") 'swiper))
 
 (use-package counsel
   :after ivy
