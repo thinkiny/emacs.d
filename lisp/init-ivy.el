@@ -12,7 +12,7 @@
   (define-key ivy-minibuffer-map (kbd "<up>") #'ivy-previous-line-or-history)
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)
   (define-key ivy-minibuffer-map (kbd "C-l") #'ivy-backward-delete-char)
-  (define-key ivy-minibuffer-map (kbd "C-o") #'ivy-immediate-done)
+  ;;(define-key ivy-minibuffer-map (kbd "C-o") #'ivy-immediate-done)
   (define-key ivy-minibuffer-map (kbd "C-c C-f") #'ivy-toggle-calling) ;; follow mode
   (define-key ivy-minibuffer-map (kbd "TAB") #'ivy-insert-current)
   (define-key ivy-occur-mode-map (kbd "n") 'ivy-occur-next-line)
@@ -26,19 +26,22 @@
                            )))
 
   (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
-  (bind-key "C-c c" 'ivy-resume))
+  (set-face-attribute 'swiper-line-face nil :inherit 'hl-line-face)
+  (bind-key "C-c c" 'ivy-resume)
+  (bind-key "C-s" 'swiper))
 
 (use-package counsel
   :after ivy
   :config
   (setq-default counsel-mode-override-describe-bindings t)
-  ;;(define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
+  (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
   (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache" "bazel-.*" ".o" ".elc" ".so")))
 
   (defun counsel-ag-here()
     (interactive)
     (counsel-ag "" default-directory))
 
+  (setq ivy-extra-directories '("../"))
   (global-set-key (kbd "C-c l") 'counsel-imenu)
   (global-set-key (kbd "C-c s s") 'counsel-ag)
   (global-set-key (kbd "C-c s d") 'counsel-ag-here)
