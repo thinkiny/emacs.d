@@ -15,8 +15,6 @@
   ;;(define-key ivy-minibuffer-map (kbd "C-o") #'ivy-immediate-done)
   (define-key ivy-minibuffer-map (kbd "C-c C-f") #'ivy-toggle-calling) ;; follow mode
   (define-key ivy-minibuffer-map (kbd "TAB") #'ivy-insert-current)
-  (define-key ivy-occur-mode-map (kbd "n") 'ivy-occur-next-line)
-  (define-key ivy-occur-mode-map (kbd "p") 'ivy-occur-previous-line)
 
   (defun ivy-occur-calling-auto ()
     (run-at-time 0.1 nil (lambda ()
@@ -25,7 +23,7 @@
                            ;;(ivy-occur-next-line)
                            )))
 
-  (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
+  ;; (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
   (global-set-key (kbd "C-c c") 'ivy-resume)
   (global-set-key (kbd "C-s") 'swiper))
 
@@ -40,7 +38,6 @@
     (interactive)
     (counsel-ag "" default-directory))
 
-  (setq ivy-extra-directories '("../"))
   (global-set-key (kbd "C-c l") 'counsel-imenu)
   (global-set-key (kbd "C-c s s") 'counsel-ag)
   (global-set-key (kbd "C-c s d") 'counsel-ag-here)

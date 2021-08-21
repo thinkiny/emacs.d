@@ -9,7 +9,8 @@
   (define-key god-local-mode-map (kbd "[") #'xref-pop-curr-marker-stack)
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)
   (add-to-list 'god-exempt-major-modes 'ivy-occur-mode)
-  (remove-hook 'after-change-major-mode-hook 'god-mode-maybe-activate))
+  ;;(remove-hook 'after-change-major-mode-hook 'god-mode-maybe-activate)
+)
 
 (defun goto-workspace-symbol()
   (interactive)
@@ -19,9 +20,9 @@
 
 (when window-system
   (defun my-god-mode-update-cursor ()
-  (setq cursor-type (if (or god-local-mode buffer-read-only)
-                        'hollow
-                      'box)))
+    (setq cursor-type (if god-local-mode
+                          'hollow
+                        'box)))
   (add-hook 'god-mode-enabled-hook #'my-god-mode-update-cursor)
   (add-hook 'god-mode-disabled-hook #'my-god-mode-update-cursor))
 

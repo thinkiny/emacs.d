@@ -12,7 +12,7 @@
 (defun counsel-mt-get-terminal-name()
   (if (tramp-tramp-file-p default-directory)
       (with-parsed-tramp-file-name default-directory term
-        (concat (or term-domain term-host) ":" term-localname))
+        (concat (or term-domain term-host) " :: " term-localname))
     (expand-file-name default-directory)))
 
 (defun counsel-mt-generate-name()
