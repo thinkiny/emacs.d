@@ -41,6 +41,7 @@
 (require 'init-rust)
 (require 'init-sql)
 (require 'init-asm)
+(require 'init-erlang)
 (require 'init-run)
 
 ;;file

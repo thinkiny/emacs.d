@@ -31,9 +31,9 @@
     (menu-bar-mode t))
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-(add-to-list 'default-frame-alist '(ns-appearance . light))
+(add-to-list 'default-frame-alist '(ns-appearance . dark))
 (setq ns-use-proxy-icon nil)
 ;; (load-theme 'vscode-dark-plus t)
-;; (set-frame-transparency 96)
+(setq frame-transparency 96)
 
 (provide 'init-mac)

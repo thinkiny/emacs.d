@@ -68,7 +68,7 @@
 (require-package 'cloud-theme)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'cloud
+(defcustom custom-gui-theme 'doom-opera
   "Theme in gui mode"
   :group 'faces
   :type 'string)
@@ -84,11 +84,12 @@
                 (load-theme custom-gui-theme t)
                 (load-theme custom-terminal-theme t))
             ;;custom faces
+            (set-face-attribute 'default nil :foreground "#C0C0C0")
             (set-face-attribute 'button nil :background nil)
             ;;(set-face-attribute 'fringe nil :background nil)
             (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
             (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)
-            (set-face-attribute 'swiper-line-face nil :background "#DCDCDC")
+            (set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
             (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
             (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
             (set-frame-transparency frame-transparency)))

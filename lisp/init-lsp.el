@@ -176,7 +176,7 @@ returns the command to execute."
       (lsp)))
 
 (defun lsp-later()
-  (setq lsp-later-timer (run-at-time 5 nil 'lsp-later-run))
+  (setq lsp-later-timer (run-with-idle-timer 5 nil 'lsp-later-run))
   (add-hook 'doom-switch-buffer-hook #'lsp-try-reconnect nil 'local))
 
 (add-hook 'hack-local-variables-hook
