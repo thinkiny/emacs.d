@@ -15,8 +15,7 @@
   "Use term-send-raw-string \"\C-m\" instead term-send-input.
 Because term-send-input have bug that will duplicate input when you C-a and C-m in terminal."
   (interactive)
-  (term-send-raw-string "\C-m")
-  )
+  (term-send-raw-string "\C-m"))
 
 (defun term-send-backward-kill-word ()
   "Backward kill word in term mode."
