@@ -26,7 +26,6 @@
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)))
 
 (pdf-tools-install-noverify)
-(require 'pdf-continuous-scroll-mode)
 
 (defun pdf-view-next-page-start ()
   "View the next page in the PDF."
@@ -125,6 +124,7 @@
                                 (font-lock-mode -1)
                                 (yas-minor-mode -1)
                                 (setq-local left-fringe-width 1)
+                                (require 'pdf-continuous-scroll-mode)
                                 (pdf-view-midnight-minor-mode)
                                 (pdf-continuous-scroll-mode)
                                 (pdf-cscroll-toggle-mode-line)
