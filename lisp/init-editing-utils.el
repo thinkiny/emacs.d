@@ -202,6 +202,7 @@ With arg N, insert N newlines."
                    (lambda (s1 s2) (eq (random 2) 0)))))))
 
 (require-package 'json-mode)
+(add-to-list 'auto-mode-alist '("\\.json\\'"  . json-mode))
 
 (require-package 'highlight-symbol)
 (setq highlight-symbol-idle-delay 1)

@@ -1,9 +1,12 @@
-(setq package-archives '(;;("gnu" . "https://elpa.gnu.org/packages/")
-                         ("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+(setq package-archives '(
+                         ;;("gnu" . "https://elpa.gnu.org/packages/")
+                         ("gnu"   . "http://elpa.emacs-china.org/gnu/")
+                         ;;("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
                          ;;("melpa" . "https://melpa.org/packages/")
-                         ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-                         ;;("melpa-stable" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa-stable/")
-                         ("org"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/org/")))
+                         ("melpa" . "http://elpa.emacs-china.org/melpa/")
+                         ("org"   . "http://elpa.emacs-china.org/org/")
+                         ;;("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+                         ))
 
 
 (when (and (version< emacs-version "26.3") (boundp 'libgnutls-version) (>= libgnutls-version 30604))
