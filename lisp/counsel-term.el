@@ -21,18 +21,28 @@
            counsel-mt-buffer-header
            (counsel-mt-get-terminal-name))))
 
+(defun counsel-mt-get-terminal-name-with-idx(name-count)
+  (let* ((name (counsel-mt-get-terminal-name))
+         (idx (gethash name name-count 1)))
+    (puthash name (+ idx 1) name-count)
+    (if (= idx 1)
+        name
+      (format "%s<%d>" name idx))))
+
 (defun counsel-mt-list-opened-terminals ()
   "List opened directory"
   (let ((name-count (make-hash-table :test 'equal)))
     (cl-loop for buf in (buffer-list)
              when (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
              collect (with-current-buffer buf
-                       (let* ((name (counsel-mt-get-terminal-name))
-                              (idx (gethash name name-count 1)))
-                         (puthash name (+ idx 1) name-count)
-                         (if (= idx 1)
-                             (cons name buf)
-                           (cons (format "%s<%d>" name idx) buf)))))))
+                       (let* ((name (counsel-mt-get-terminal-name-with-idx name-count))
+                              (buf-name (format "%s%s" counsel-mt-buffer-header name))
+                              (buf-name-buf (get-buffer buf-name)))
+                         (if buf-name-buf
+                             (with-current-buffer buf-name-buf
+                               (rename-buffer "counsel-mt-list-temp")))
+                         (rename-buffer buf-name)
+                         (cons name buf))))))
 
 (defun counsel-mt-list-terminal-names()
   (mapcar 'car (counsel-mt-list-opened-terminals)))
