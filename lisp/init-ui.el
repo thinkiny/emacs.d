@@ -84,7 +84,7 @@
                 (load-theme custom-gui-theme t)
                 (load-theme custom-terminal-theme t))
             ;;custom faces
-            (set-face-attribute 'default nil :foreground "#C0C0C0")
+            (set-face-attribute 'default nil :foreground "#CECECE")
             (set-face-attribute 'button nil :background nil)
             ;;(set-face-attribute 'fringe nil :background nil)
             (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")

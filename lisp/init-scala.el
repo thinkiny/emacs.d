@@ -1,7 +1,9 @@
 (use-package scala-mode :mode "\\.s\\(cala\\|bt\\|c\\)$")
 (use-package lsp-metals
+  :config
+  (setq lsp-metals-sbt-script (expand-file-name "~/.emacs.d/third-parties/sbt"))
   :custom
-  (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off"))
+  (lsp-metals-server-args '("-J-Dmetals.showInferredType=on" "-J-Dmetals.showImplicitArguments=on" "-J-Dmetals.showImplicitConversionsAndClasses=on" "-J-Dmetals.fallbackScalaVersion=2.13.6"))
   :hook (scala-mode . my-scala-mode-hook))
 
 (defun my-scala-mode-hook()
@@ -30,5 +32,4 @@
    minibuffer-local-completion-map)
   (setq sbt:program-options '("-Dsbt.supershell=false")))
 
-(setq lsp-metals-sbt-script (expand-file-name "~/.emacs.d/scala/sbt"))
 (provide 'init-scala)
