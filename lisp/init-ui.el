@@ -23,7 +23,7 @@
 (global-set-key (kbd "C-x c v") #'customize-variable)
 (global-set-key (kbd "C-x c g") #'customize-group)
 
-;;scroll
+;; scroll
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 (setq mouse-wheel-progressive-speed nil)
 (setq mouse-wheel-follow-mouse 't)
@@ -51,24 +51,27 @@
 (with-eval-after-load 'treemacs
   (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
 
+;; frame transparency
+(defun set-frame-transparency (value)
+  "Sets the transparency of the frame window. 0=transparent/100=opaque"
+  (interactive "n0-100 opaque: ")
+  (when window-system
+    (set-frame-parameter (selected-frame) 'alpha value)))
 
 (defcustom frame-transparency 100
   "The Transparency of frame"
   :group 'faces
-  :type 'integer)
-
-(defun set-frame-transparency (value)
-  "Sets the transparency of the frame window. 0=transparent/100=opaque"
-  (interactive "nTransparency Value 0 - 100 opaque: ")
-  (if window-system
-      (set-frame-parameter (selected-frame) 'alpha value)))
+  :type 'integer
+  :set (lambda (var val)
+         (set-default var val)
+         (set-frame-transparency val)))
 
 ;; themes
 (require-package 'leuven-theme)
 (require-package 'cloud-theme)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'doom-opera
+(defcustom custom-gui-theme 'cloud
   "Theme in gui mode"
   :group 'faces
   :type 'string)
@@ -84,7 +87,7 @@
                 (load-theme custom-gui-theme t)
                 (load-theme custom-terminal-theme t))
             ;;custom faces
-            (set-face-attribute 'default nil :foreground "#CECECE")
+            ;;(set-face-attribute 'default nil :foreground "#CECECE")
             (set-face-attribute 'button nil :background nil)
             ;;(set-face-attribute 'fringe nil :background nil)
             (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")

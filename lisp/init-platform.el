@@ -1,7 +1,3 @@
-(defconst *is-a-mac* (eq system-type 'darwin))
-(defconst *is-a-linux* (eq system-type 'gnu/linux))
-(defconst *is-a-nt* (eq system-type 'windows-nt))
-
 (if *is-a-mac*
     (require 'init-mac))
 

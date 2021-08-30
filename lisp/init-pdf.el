@@ -18,6 +18,19 @@
     (fundamental-mode)
     (message "Viewing PDFs in Emacs requires epdfinfo. Use `M-x pdf-tools-install' to build it"))
 
+
+  (add-to-list 'display-buffer-alist
+        '("\\*Outline .*pdf\\*"
+          (display-buffer-in-side-window)
+          (side . right)
+          (window-width . 0.25)))
+
+  (add-hook 'pdf-outline-minor-mode-hook
+            (lambda ()
+              (dolist (face '(outline-1 outline-2 outline-3))
+                (make-local-variable face)
+                (set-face-attribute face nil :height 1.0))))
+
   (setq pdf-view-use-unicode-ligther nil)
   (setq pdf-view-use-scaling t)
   (setq pdf-view-use-imagemagick nil)
@@ -123,9 +136,10 @@
                                 (electric-indent-local-mode -1)
                                 (font-lock-mode -1)
                                 (yas-minor-mode -1)
+                                (cua-mode -1)
                                 (setq-local left-fringe-width 1)
-                                (require 'pdf-continuous-scroll-mode)
                                 (pdf-view-midnight-minor-mode)
+                                (require 'pdf-continuous-scroll-mode)
                                 (pdf-continuous-scroll-mode)
                                 (pdf-cscroll-toggle-mode-line)
                                 (local-set-key (kbd "q") #'kill-current-buffer)

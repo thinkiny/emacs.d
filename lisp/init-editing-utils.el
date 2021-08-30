@@ -35,7 +35,7 @@
 (add-hook 'after-init-hook 'transient-mark-mode)
 (global-set-key "\C-c$" 'toggle-truncate-lines)
 
-;; optimize
+;;; Optimizations
 (setq read-process-output-max (* 2048 1024))
 ;; A second, case-insensitive pass over `auto-mode-alist' is time wasted, and
 ;; indicates misconfiguration (don't rely on case insensitivity for file names).
@@ -84,8 +84,17 @@
 ;; receiving input, which should help with performance while scrolling.
 (setq redisplay-skip-fontification-on-input t)
 
-(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
+;; Performance on Windows is considerably worse than elsewhere. We'll need
+;; everything we can get.
+(when *is-a-nt*
+  (setq w32-get-true-file-attributes nil   ; decrease file IO workload
+        w32-pipe-read-delay 0              ; faster IPC
+        w32-pipe-buffer-size (* 128 1024))) ; read more at a time (was 4K)
 
+;; Remove command line options that aren't relevant to our current OS; means
+;; slightly less to process at startup.
+(unless *is-a-mac*   (setq command-line-ns-option-alist nil))
+(unless *is-a-linux* (setq command-line-x-option-alist nil))
 
 ;; Huge files
 (require-package 'vlf)
@@ -267,8 +276,41 @@ With arg N, insert N newlines."
   (unset-all-keys view-mode-map))
 
 ;; long line mode
-(unless (fboundp 'global-so-long-mode)
-  (require-package 'so-long))
+(use-package so-long
+  :demand t
+  :config
+  (setq so-long-threshold 800)
+  (delq! 'font-lock-mode so-long-minor-modes)
+  (delq! 'buffer-read-only so-long-variable-overrides 'assq)
+  ;; ...but at least reduce the level of syntax highlighting
+  (add-to-list 'so-long-variable-overrides '(font-lock-maximum-decoration . 1))
+  ;; ...and insist that save-place not operate in large/long files
+  (add-to-list 'so-long-target-modes 'text-mode)
+  (add-to-list 'so-long-variable-overrides '(save-place-alist . nil))
+  ;; But disable everything else that may be unnecessary/expensive for large or
+  ;; wide buffers.
+  (appendq! so-long-minor-modes
+            '(flycheck-mode
+              spell-fu-mode
+              eldoc-mode
+              smartparens-mode
+              highlight-numbers-mode
+              better-jumper-local-mode
+              ws-butler-mode
+              auto-composition-mode
+              undo-tree-mode
+              highlight-indent-guides-mode
+              hl-fill-column-mode))
+  (defun doom-buffer-has-long-lines-p ()
+    (unless (bound-and-true-p visual-line-mode)
+      (let ((so-long-skip-leading-comments
+             ;; HACK Fix #2183: `so-long-detected-long-line-p' tries to parse
+             ;;      comment syntax, but comment state may not be initialized,
+             ;;      leading to a wrong-type-argument: stringp error.
+             (bound-and-true-p comment-use-syntax)))
+        (so-long-detected-long-line-p))))
+  (setq so-long-predicate #'doom-buffer-has-long-lines-p)
+  (global-so-long-mode 1))
 
 ;; tab indent
 (defun tab-indent-on()

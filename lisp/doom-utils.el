@@ -83,4 +83,40 @@ DOCSTRING and BODY are as in `defun'.
 (dolist (fn '(switch-to-buffer display-buffer))
   (advice-add fn :around #'doom-run-switch-buffer-hooks-a))
 
+
+;;; Mutation
+(defmacro appendq! (sym &rest lists)
+  "Append LISTS to SYM in place."
+  `(setq ,sym (append ,sym ,@lists)))
+
+(defmacro setq! (&rest settings)
+  "A stripped-down `customize-set-variable' with the syntax of `setq'.
+This can be used as a drop-in replacement for `setq'. Particularly when you know
+a variable has a custom setter (a :set property in its `defcustom' declaration).
+This triggers setters. `setq' does not."
+  (macroexp-progn
+   (cl-loop for (var val) on settings by 'cddr
+            collect `(funcall (or (get ',var 'custom-set) #'set)
+                              ',var ,val))))
+
+(defmacro delq! (elt list &optional fetcher)
+  "`delq' ELT from LIST in-place.
+If FETCHER is a function, ELT is used as the key in LIST (an alist)."
+  `(setq ,list
+         (delq ,(if fetcher
+                    `(funcall ,fetcher ,elt ,list)
+                  elt)
+               ,list)))
+
+(defmacro pushnew! (place &rest values)
+  "Push VALUES sequentially into PLACE, if they aren't already present.
+This is a variadic `cl-pushnew'."
+  (let ((var (make-symbol "result")))
+    `(dolist (,var (list ,@values) (with-no-warnings ,place))
+       (cl-pushnew ,var ,place :test #'equal))))
+
+(defmacro prependq! (sym &rest lists)
+  "Prepend LISTS to SYM in place."
+  `(setq ,sym (append ,@lists ,sym)))
+
 (provide 'doom-utils)
