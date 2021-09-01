@@ -279,7 +279,7 @@ With arg N, insert N newlines."
 (use-package so-long
   :demand t
   :config
-  (setq so-long-threshold 800)
+  (setq so-long-threshold 1024)
   (delq! 'font-lock-mode so-long-minor-modes)
   (delq! 'buffer-read-only so-long-variable-overrides 'assq)
   ;; ...but at least reduce the level of syntax highlighting

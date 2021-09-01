@@ -1,13 +1,6 @@
-(setq package-archives '(
-                         ;;("gnu" . "https://elpa.gnu.org/packages/")
-                         ("gnu"   . "http://elpa.emacs-china.org/gnu/")
-                         ;;("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                         ;;("melpa" . "https://melpa.org/packages/")
-                         ("melpa" . "http://elpa.emacs-china.org/melpa/")
-                         ("org"   . "http://elpa.emacs-china.org/org/")
-                         ;;("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-                         ))
-
+(setq package-archives '(("gnu" . "http://mirrors.ustc.edu.cn/elpa/gnu/")
+                         ("melpa" . "http://mirrors.ustc.edu.cn/elpa/melpa/")
+                         ("org" . "http://mirrors.ustc.edu.cn/elpa/org/")))
 
 (when (and (version< emacs-version "26.3") (boundp 'libgnutls-version) (>= libgnutls-version 30604))
   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
