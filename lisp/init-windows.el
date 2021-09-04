@@ -1,15 +1,11 @@
-;; Make "C-x o" prompt for a target window when there are more than 2
-(require-package 'switch-window)
-(setq-default switch-window-shortcut-style 'alphabet)
-(setq-default switch-window-timeout nil)
+(require-package 'ace-window)
 
-(global-set-key (kbd "C-x o") 'switch-window)
+(global-set-key (kbd "C-x o") 'ace-window)
 (global-set-key (kbd "C-x x")  'ace-swap-window)
 (global-set-key (kbd "C-c [")  'windmove-left)
 (global-set-key (kbd "C-c ]") 'windmove-right)
 (global-set-key (kbd "C-c k")    'windmove-up)
 (global-set-key (kbd "C-c j")  'windmove-down)
-
 
 (defun crux-transpose-windows (arg)
   "Transpose the buffers shown in two windows.
