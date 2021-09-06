@@ -264,7 +264,8 @@ With arg N, insert N newlines."
   (interactive)
   (setq url-proxy-services
         '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
-          ("http" . "127.0.0.1:1087"))))
+          ("http" . "127.0.0.1:1087")
+          ("https" . "127.0.0.1:1087"))))
 
 (defun unset-proxy()
   (interactive)

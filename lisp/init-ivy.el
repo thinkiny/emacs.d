@@ -12,7 +12,8 @@
   (define-key ivy-minibuffer-map (kbd "<up>") #'ivy-previous-line-or-history)
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)
   (define-key ivy-minibuffer-map (kbd "C-l") #'ivy-backward-delete-char)
-  ;;(define-key ivy-minibuffer-map (kbd "C-o") #'ivy-immediate-done)
+  (define-key ivy-minibuffer-map (kbd "C-o") #'ivy-immediate-done)
+  (define-key ivy-minibuffer-map (kbd "C-h") #'hydra-ivy/body)
   (define-key ivy-minibuffer-map (kbd "C-c C-f") #'ivy-toggle-calling) ;; follow mode
   (define-key ivy-minibuffer-map (kbd "TAB") #'ivy-insert-current)
 
