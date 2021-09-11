@@ -9,8 +9,7 @@
   (define-key god-local-mode-map (kbd "[") #'xref-pop-curr-marker-stack)
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)
   (add-to-list 'god-exempt-major-modes 'ivy-occur-mode)
-  ;;(remove-hook 'after-change-major-mode-hook 'god-mode-maybe-activate)
-)
+  (delete #'god-view-mode-p god-exempt-predicates))
 
 (defun goto-workspace-symbol()
   (interactive)

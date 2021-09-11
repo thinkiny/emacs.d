@@ -50,4 +50,8 @@
           (lambda ()
             (setq-local dash-docs-docsets '("Bash" "Linux"))))
 
+(add-hook 'erlang-mode-hook
+          (lambda ()
+            (setq-local dash-docs-docsets '("Erlang"))))
+
 (provide 'init-dash)
