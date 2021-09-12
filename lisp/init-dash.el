@@ -6,8 +6,20 @@
   (setq dash-docs-candidate-format "%d %n (%t)")
   (setq dash-docs-min-length 3)
   :bind (:map global-map
-              ("C-c d"  . counsel-dash)
-              ("C-." . counsel-dash-at-point)))
+              ("C-c d"  . #'counsel-dash)
+              ("C-." . #'counsel-dash-at-current-point)))
+
+(defun counsel-dash-at-current-point ()
+  "Bring up a `counsel-dash' search interface with symbol at point."
+  (interactive)
+  (counsel-dash
+   (save-excursion
+     (if (re-search-backward "[{( ]" nil t)
+         (let ((start (+ (match-beginning 0) 1)))
+           (goto-char start)
+           (re-search-forward "[ ()]" nil t)
+           (buffer-substring start (match-beginning 0)))
+       (substring-no-properties (or (thing-at-point 'symbol) ""))))))
 
 (add-hook 'c++-mode-hook
           (lambda ()

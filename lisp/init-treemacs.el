@@ -79,6 +79,6 @@
   (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action))
 
 (add-hook 'treemacs-mode-hook (lambda ()
-                                (toggle-truncate-lines t)))
+                                (setq-local toggle-truncate-lines nil)))
 
 (provide 'init-treemacs)

@@ -141,7 +141,7 @@
                                 (pdf-view-midnight-minor-mode)
                                 (require 'pdf-continuous-scroll-mode)
                                 (pdf-continuous-scroll-mode)
-                                (pdf-cscroll-toggle-mode-line)
+                                ;;(pdf-cscroll-toggle-mode-line)
                                 (local-set-key (kbd "q") #'kill-current-buffer)
                                 (local-set-key (kbd "0") #'pdf-view-goto-page-start)
                                 (local-set-key (kbd "C-v") #'pdf-view-next-page-start)

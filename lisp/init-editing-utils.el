@@ -15,6 +15,7 @@
               create-lockfiles nil
               bookmark-save-flag 1
               save-abbrevs nil
+              truncate-lines t
               large-file-warning-threshold nil
               ediff-split-window-function 'split-window-horizontally
               ediff-window-setup-function 'ediff-setup-windows-plain
@@ -23,7 +24,6 @@
               scroll-preserve-screen-position 'always
               set-mark-command-repeat-pop t
               tooltip-delay 1.5
-              truncate-lines nil
               truncate-partial-width-windows nil
               nxml-slash-auto-complete-flag t
               warning-minimum-level :error
@@ -121,7 +121,7 @@
 (require-package 'expand-region)
 (defun er/mark-parameter ()
   (interactive)
-  (when (re-search-backward "[(\\|,]\\([^, )]+\\)" (line-beginning-position) t)
+  (when (re-search-backward "[(\\|,]\\([^, )]+\\)" nil t)
     (goto-char (match-beginning 1))
     (set-mark (point))
     (re-search-forward "[,\\|)]")
