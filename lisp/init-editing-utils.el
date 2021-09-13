@@ -15,7 +15,7 @@
               create-lockfiles nil
               bookmark-save-flag 1
               save-abbrevs nil
-              truncate-lines t
+              truncate-lines nil
               large-file-warning-threshold nil
               ediff-split-window-function 'split-window-horizontally
               ediff-window-setup-function 'ediff-setup-windows-plain

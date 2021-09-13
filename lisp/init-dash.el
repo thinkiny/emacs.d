@@ -17,7 +17,7 @@
      (if (re-search-backward "[{( ]" nil t)
          (let ((start (+ (match-beginning 0) 1)))
            (goto-char start)
-           (re-search-forward "[ ()]" nil t)
+           (re-search-forward "[ (),]" nil t)
            (buffer-substring start (match-beginning 0)))
        (substring-no-properties (or (thing-at-point 'symbol) ""))))))
 
