@@ -9,20 +9,14 @@
 
 (defun advice/after-xwidget-plus-webkit-browse-url (&rest _)
   "Advice to add switch to window when calling `xwidget-webkit-browse-url'."
-  (switch-to-buffer (xwidget-buffer (xwidget-webkit-current-session))))
+  (display-buffer (xwidget-buffer (xwidget-webkit-current-session))))
 (advice-add #'xwidget-webkit-browse-url :after #'advice/after-xwidget-plus-webkit-browse-url)
 
 (defun xwidget-webkit-browse (url)
+  (interactive "sURL: ")
   (if (cl-search "://" url)
       (xwidget-webkit-browse-url url)
     (xwidget-webkit-browse-url (concat "http://" url))))
-
-(defun switch-or-create-xwidget-webkit-buffer()
-  (interactive)
-  (let ((session (xwidget-webkit-current-session)))
-    (if session
-        (switch-to-buffer (xwidget-buffer session))
-      (xwidget-webkit-browse (read-string "URL: ")))))
 
 ;; xwwp-follow-link
 (use-package xwwp-follow-link-ivy
@@ -32,6 +26,6 @@
               ("C-c l" . xwwp-follow-link)))
 
 
-(global-set-key (kbd "C-x /") #'switch-or-create-xwidget-webkit-buffer)
+(global-set-key (kbd "C-x /") #'xwidget-webkit-browse)
 
 (provide 'init-xwidget-webkit)

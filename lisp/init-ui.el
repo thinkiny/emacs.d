@@ -52,19 +52,20 @@
   (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
 
 ;; frame transparency
-(defun set-frame-transparency (value)
-  "Sets the transparency of the frame window. 0=transparent/100=opaque"
-  (interactive "n0-100 opaque: ")
-  (when window-system
-    (set-frame-parameter (selected-frame) 'alpha value)))
-
 (defcustom frame-transparency 100
   "The Transparency of frame"
   :group 'faces
   :type 'integer
   :set (lambda (var val)
          (set-default var val)
-         (set-frame-transparency val)))
+         (set-frame-parameter (selected-frame) 'alpha val)))
+
+(defun update-frame-transparency ()
+  "Sets the transparency of the frame window. 0=transparent/100=opaque"
+  (interactive)
+  (when window-system
+    (let* ((value (read-number "change frame transparency: " frame-transparency)))
+      (customize-save-variable 'frame-transparency value))))
 
 ;; themes
 (require-package 'leuven-theme)
@@ -94,8 +95,7 @@
             (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)
             (set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
             (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
-            (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
-            (set-frame-transparency frame-transparency)))
+            (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
 
 ;;fonts
 (when window-system

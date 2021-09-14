@@ -41,11 +41,10 @@
              when (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
              collect (with-current-buffer buf
                        (let* ((name (counsel-mt-get-terminal-name-with-idx name-count))
-                              (buf-name (format "%s%s" counsel-mt-buffer-header name))
-                              (buf-name-buf (get-buffer buf-name)))
-                         (if buf-name-buf
-                             (with-current-buffer buf-name-buf
-                               (rename-buffer "counsel-mt-list-temp")))
+                              (buf-name (format "%s%s" counsel-mt-buffer-header name)))
+                         ;; (if buf-name-buf
+                         ;;     (with-current-buffer buf-name-buf
+                         ;;       (rename-buffer "counsel-mt-list-temp")))
                          (rename-buffer buf-name)
                          (cons name buf))))))
 

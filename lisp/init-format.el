@@ -1,5 +1,6 @@
 (require-package 'format-all)
 
+(require 'format-all)
 (setcdr (assoc "SQL" format-all-default-formatters) 'pgformatter)
 
 (add-hook 'sql-mode-hook #'format-all-mode)
