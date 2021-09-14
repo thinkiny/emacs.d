@@ -14,12 +14,14 @@
   (interactive)
   (counsel-dash
    (save-excursion
-     (if (re-search-backward "[{( ]" nil t)
-         (let ((start (+ (match-beginning 0) 1)))
-           (goto-char start)
-           (re-search-forward "[ (),]" nil t)
-           (buffer-substring start (match-beginning 0)))
-       (substring-no-properties (or (thing-at-point 'symbol) ""))))))
+     (if (region-active-p)
+         (buffer-substring-no-properties (region-beginning) (region-end))
+       (if (re-search-backward "[^-_:[:alnum:]]" nil t)
+           (let ((start (+ (match-beginning 0) 1)))
+             (goto-char start)
+             (re-search-forward "[^-_:[:alnum:]]" nil t)
+             (buffer-substring start (match-beginning 0)))
+         (substring-no-properties (or (thing-at-point 'symbol) "")))))))
 
 (add-hook 'c++-mode-hook
           (lambda ()
@@ -65,5 +67,9 @@
 (add-hook 'erlang-mode-hook
           (lambda ()
             (setq-local dash-docs-docsets '("Erlang"))))
+
+(add-hook 'sql-mode-hook
+          (lambda ()
+            (setq-local dash-docs-docsets '("MySQL"))))
 
 (provide 'init-dash)

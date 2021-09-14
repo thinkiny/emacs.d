@@ -60,6 +60,7 @@
 (require 'init-xwidget-webkit)
 (require 'init-dash)
 (require 'init-god)
+(require 'init-format)
 
 (when (file-exists-p custom-file)
   (load custom-file))

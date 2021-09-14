@@ -29,10 +29,15 @@
         name
       (format "%s<%d>" name idx))))
 
+(defun counsel-mt-get-sorted-buffer-list ()
+  (sort (buffer-list)
+        (lambda (a b)
+          (string< (buffer-name a) (buffer-name b)))))
+
 (defun counsel-mt-list-opened-terminals ()
   "List opened directory"
   (let ((name-count (make-hash-table :test 'equal)))
-    (cl-loop for buf in (buffer-list)
+    (cl-loop for buf in (counsel-mt-get-sorted-buffer-list)
              when (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
              collect (with-current-buffer buf
                        (let* ((name (counsel-mt-get-terminal-name-with-idx name-count))

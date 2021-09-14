@@ -26,17 +26,6 @@ Fix for the above hasn't been released as of Emacs 25.2."
     (when sql-buffer
       (sanityinc/pop-to-sqli-buffer))))
 
-(with-eval-after-load 'sql
-  (define-key sql-mode-map (kbd "C-c C-z") 'sanityinc/pop-to-sqli-buffer)
-  (when (package-installed-p 'dash-at-point)
-    (defun sanityinc/maybe-set-dash-db-docset (&rest _)
-      (when (eq sql-product 'postgres)
-        (setq-local dash-at-point-docset "psql")))
-
-    (add-hook 'sql-mode-hook 'sanityinc/maybe-set-dash-db-docset)
-    (add-hook 'sql-interactive-mode-hook 'sanityinc/maybe-set-dash-db-docset)
-    (advice-add 'sql-set-product :after 'sanityinc/maybe-set-dash-db-docset)))
-
 (setq-default sql-input-ring-file-name
               (expand-file-name ".sqli_history" user-emacs-directory))
 
@@ -45,11 +34,6 @@ Fix for the above hasn't been released as of Emacs 25.2."
   (unless (eq 'oracle sql-product)
     (sql-product-font-lock nil nil)))
 (add-hook 'sql-interactive-mode-hook 'sanityinc/font-lock-everything-in-sql-interactive-mode)
-
-
-(require-package 'sqlformat)
-(with-eval-after-load 'sql
-  (define-key sql-mode-map (kbd "C-c C-f") 'sqlformat))
 
 ;; Package ideas:
 ;;   - PEV
@@ -109,16 +93,6 @@ This command currently blocks the UI, sorry."
                   (insert-file-contents err-file nil nil nil t))
                 (display-buffer (current-buffer))
                 (user-error "EXPLAIN failed")))))))))
-
-
-;; Submitted upstream as https://github.com/stanaka/dash-at-point/pull/28
-(with-eval-after-load 'sql
-  (with-eval-after-load 'dash-at-point
-    (add-to-list 'dash-at-point-mode-alist '(sql-mode . "psql,mysql,sqlite,postgis"))))
-
-
-(with-eval-after-load 'page-break-lines
-  (push 'sql-mode page-break-lines-modes))
 
 (provide 'init-sql)
 ;;; init-sql.el ends here
