@@ -70,17 +70,18 @@
 ;; themes
 (require-package 'leuven-theme)
 (require-package 'cloud-theme)
+(require-package 'modus-themes)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'cloud
+(defcustom custom-gui-theme 'modus-operandi
   "Theme in gui mode"
   :group 'faces
-  :type 'string)
+  :type 'symbol)
 
 (defcustom custom-terminal-theme 'doom-one
   "Theme in terminal mode"
   :group 'faces
-  :type 'string)
+  :type 'symbol)
 
 (add-hook 'after-init-hook
           (lambda ()
@@ -200,5 +201,8 @@
             :action #'counsel--load-theme-action
             :preselect (symbol-name orig-theme)
             :update-fn #'counsel--update-theme-action)))
+
+;; hide-mode-line
+(require-package 'hide-mode-line)
 
 (provide 'init-ui)

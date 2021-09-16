@@ -94,5 +94,15 @@ This command currently blocks the UI, sorry."
                 (display-buffer (current-buffer))
                 (user-error "EXPLAIN failed")))))))))
 
+;; mysql-to-org
+(require-package 'mysql-to-org)
+(add-hook 'mysql-to-org-mode-hook
+          (lambda ()
+            (define-key mysql-to-org-mode-map (kbd "C-c e") 'mysql-to-org-eval)
+            (define-key mysql-to-org-mode-map (kbd "C-c p") 'mysql-to-org-eval-string-at-point)
+            (define-key mysql-to-org-mode-map (kbd "C-c s") 'mysql-to-org-scratch)
+            (define-key mysql-to-org-mode-map (kbd "C-c 1") 'mysql-to-org-only-show-output-window)
+            (define-key mysql-to-org-mode-map (kbd "C-c r") 'mysql-to-org-reload-completion-candidates)))
+
 (provide 'init-sql)
 ;;; init-sql.el ends here
