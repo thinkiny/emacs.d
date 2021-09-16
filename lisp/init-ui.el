@@ -68,12 +68,12 @@
       (customize-save-variable 'frame-transparency value))))
 
 ;; themes
-(require-package 'leuven-theme)
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
+(require-package 'spacemacs-theme)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'modus-operandi
+(defcustom custom-gui-theme 'spacemacs-light
   "Theme in gui mode"
   :group 'faces
   :type 'symbol)

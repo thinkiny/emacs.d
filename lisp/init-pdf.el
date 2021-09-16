@@ -32,12 +32,6 @@
                  (side . right)
                  (window-width . 0.25)))
 
-  (add-hook 'pdf-outline-minor-mode-hook
-            (lambda ()
-              (dolist (face '(outline-1 outline-2 outline-3))
-                (make-local-variable face)
-                (set-face-attribute face nil :height 1.0))))
-
   (defun pdf-view-next-page-start ()
     "View the next page in the PDF."
     (interactive)
@@ -99,6 +93,13 @@
           (kill-buffer contents-buffer))))
     (add-hook 'kill-buffer-hook #'+pdf-cleanup-windows-h nil t)))
 
+(add-hook 'pdf-outline-minor-mode-hook
+          (lambda ()
+            (dolist (face '(outline-1 outline-2 outline-3 org-level-1 org-level-2 org-level-3))
+              (make-local-variable face)
+              (set-face-attribute face nil :height 1.0))))
+
+
 (add-hook 'pdf-view-mode-hook (lambda ()
                                 (company-mode -1)
                                 (blink-cursor-mode -1)
@@ -113,7 +114,7 @@
                                 (pdf-view-midnight-minor-mode)
                                 (require 'pdf-continuous-scroll-mode)
                                 (pdf-continuous-scroll-mode)
-                                ;;(pdf-cscroll-toggle-mode-line)
+                                (pdf-cscroll-toggle-mode-line)
                                 (local-set-key (kbd "q") #'kill-current-buffer)
                                 (local-set-key (kbd "0") #'pdf-view-goto-page-start)
                                 (local-set-key (kbd "C-v") #'pdf-view-next-page-start)
