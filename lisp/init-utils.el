@@ -51,7 +51,7 @@
       ;;(read-only-mode 1)
       )))
 
-(defun unset-all-keys (keymap)
+(defun unbind-all-keys (keymap)
   (map-keymap (lambda (key binding)
                 (define-key keymap (vector key) nil))
               keymap))

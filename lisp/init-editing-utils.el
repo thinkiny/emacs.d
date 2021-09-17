@@ -274,7 +274,7 @@ With arg N, insert N newlines."
 ;; view-mode
 (with-eval-after-load 'view
   (setq view-read-only t)
-  (unset-all-keys view-mode-map))
+  (unbind-all-keys view-mode-map))
 
 ;; long line mode
 (use-package so-long

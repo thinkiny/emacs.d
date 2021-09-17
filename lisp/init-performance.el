@@ -5,9 +5,14 @@
         gcmh-high-cons-threshold (* 256 1024 1024))
   (gcmh-mode 1))
 
-(global-set-key (kbd "C-x p s") (lambda ()
-                                  (interactive)
-                                  (profiler-start 'cpu)))
+(defun profile-cpu-start ()
+  (interactive)
+  (profiler-start 'cpu))
+
+(defun profile-cpu-stop()
+  (interactive)
+  (profiler-report)
+  (profiler-stop))
 
 (defun increase-profile-cpu-line-width (&optional arg)
   (interactive "ncpu format width: ")
@@ -19,10 +24,5 @@
 
 (with-eval-after-load 'profiler
   (define-key profiler-report-mode-map (kbd "w") #'increase-profile-cpu-line-width))
-
-(global-set-key (kbd "C-x p r") (lambda ()
-                                  (interactive)
-                                  (profiler-report)
-                                  (profiler-stop)))
 
 (provide 'init-performance)
