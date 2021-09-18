@@ -30,10 +30,10 @@
               line-number-mode t)
 
 (put 'erase-buffer 'disabled nil)
-
 (delete-selection-mode 1)
 (add-hook 'after-init-hook 'transient-mark-mode)
-(global-set-key "\C-c$" 'toggle-truncate-lines)
+(make-local-variable 'truncate-lines)
+(global-set-key (kbd "C-c C-$") 'toggle-truncate-lines)
 
 ;;; Optimizations
 (setq read-process-output-max (* 2048 1024))

@@ -22,7 +22,6 @@
 (require 'init-dired)
 (require 'init-whitespace)
 (require 'init-tramp)
-(require 'init-platform)
 
 ;;language
 (require 'init-flycheck)
@@ -61,6 +60,7 @@
 (require 'init-dash)
 (require 'init-god)
 (require 'init-format)
+(require 'init-platform)
 
 (when (file-exists-p custom-file)
   (load custom-file))

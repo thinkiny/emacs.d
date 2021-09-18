@@ -35,4 +35,10 @@
 (setq ns-use-proxy-icon nil)
 ;;(setq frame-transparency 96)
 
+(with-eval-after-load 'org2ctex
+  (setq org2ctex-latex-fonts
+        (mapcar (lambda (x)
+                  (append (list (car x) "PingFang SC") (cdr x)))
+                org2ctex-latex-fonts)))
+
 (provide 'init-mac)

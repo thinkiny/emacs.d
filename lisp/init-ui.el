@@ -96,7 +96,9 @@
             (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)
             (set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
             (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
-            (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
+            (set-face-attribute 'table-cell nil :background "Skyblue4")
+            (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
+            (window-configuration-to-register ?h)))
 
 ;;fonts
 (when window-system

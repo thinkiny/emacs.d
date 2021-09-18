@@ -78,7 +78,4 @@
   (add-to-list 'treemacs-pre-file-insert-predicates #'treemacs-is-file-git-ignored?)
   (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action))
 
-(add-hook 'treemacs-mode-hook (lambda ()
-                                (setq-local toggle-truncate-lines nil)))
-
 (provide 'init-treemacs)

@@ -241,10 +241,27 @@
 (use-package ox-reveal)
 (use-package ob-go)
 
+(defhydra hydra-org-table (:color blue :hint nil)
+  "
+^Rows^            ^Columns^           ^size^
+-----------------------------------------------------------------
+_j_: insert row   _h_: insert column  _w_: widen
+_k_: delete row   _l_: delete column  _s_: shorten
+"
+  ("j" #'table-insert-row)
+  ("k" #'table-delete-row)
+  ("h" #'table-insert-column)
+  ("l" #'table-delete-column)
+  ("w" #'table-widen-cell)
+  ("s" #'table-shorten-cell))
+
 (with-eval-after-load 'org
   (require 'ox-reveal)
   (org-beamer-mode)
   (unbind-key (kbd "C-c C-m") org-mode-map)
+  (unbind-key (kbd "C-c [") org-mode-map)
+  (unbind-key (kbd "C-c ]") org-mode-map)
+  (define-key org-mode-map (kbd "C-c t") #'hydra-org-table/body)
   (define-key org-mode-map (kbd "C-M-<up>") 'org-up-element)
   (when *is-a-mac*
     (define-key org-mode-map (kbd "M-h") nil)
