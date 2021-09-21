@@ -5,6 +5,7 @@
   (setq pdf-view-use-unicode-ligther nil)
   (setq pdf-view-use-scaling t)
   (setq pdf-view-use-imagemagick nil)
+  (setq pdf-continuous-scroll-step 15)
   (setq pdf-tools-enabled-modes (remove 'pdf-sync-minor-mode pdf-tools-enabled-modes))
   (setq pdf-links-browse-uri-function #'xwidget-webkit-browse-url)
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
@@ -49,6 +50,18 @@
     (interactive)
     (image-set-window-vscroll 0)
     (pdf-view-redisplay t))
+
+  (defun pdf-view-scroll-up ()
+    "Scroll up"
+    (interactive)
+    (let ((current-prefix-arg pdf-continuous-scroll-step))
+      (call-interactively #'pdf-continuous-scroll-backward)))
+
+  (defun pdf-view-scroll-down ()
+    "Scroll down"
+    (interactive)
+    (let ((current-prefix-arg pdf-continuous-scroll-step))
+      (call-interactively #'pdf-continuous-scroll-forward)))
 
   (defun pdf-traslate-under-mouse (ev)
     "Select word at mouse event EV and translate it"
@@ -115,10 +128,13 @@
                                 (require 'pdf-continuous-scroll-mode)
                                 (pdf-continuous-scroll-mode)
                                 (pdf-cscroll-toggle-mode-line)
+                                (unbind-key (kbd "N") 'pdf-history-minor-mode-map)
                                 (local-set-key (kbd "q") #'kill-current-buffer)
                                 (local-set-key (kbd "0") #'pdf-view-goto-page-start)
-                                (local-set-key (kbd "C-v") #'pdf-view-next-page-start)
-                                (local-set-key (kbd "M-v") #'pdf-view-prev-page-start)
+                                (local-set-key (kbd "N") #'pdf-view-next-page-start)
+                                (local-set-key (kbd "P") #'pdf-view-prev-page-start)
+                                (local-set-key (kbd "C-v") #'pdf-view-scroll-down)
+                                (local-set-key (kbd "M-v") #'pdf-view-scroll-up)
                                 (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
                                 (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
                                 (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)

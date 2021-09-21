@@ -129,6 +129,8 @@ returns the command to execute."
                            (setq-local flycheck-idle-change-delay 1.0)
                            (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
                            (setq-local global-whitespace-cleanup-mode nil)
+                           (make-local-variable 'markdown-header-face-2)
+                           (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
                            (if lsp-enable-format-at-save
                                (lsp-enable-format))))
 

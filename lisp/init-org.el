@@ -309,5 +309,20 @@ _k_: delete row   _l_: delete column  _s_: shorten
 (require 'org-tempo nil 'noerror)
 (require-package 'org-preview-html)
 
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode))
+
+(use-package org-sidebar)
+
+(with-eval-after-load 'org-mode
+  (require 'org-sidebar)
+  (advice-add 'org-sidebar-tree :after #'advice/after-org-sidebar-tree))
+
+(defun advice/after-org-sidebar-tree()
+  (dolist (face '(org-level-1 org-level-2 org-level-3))
+    (make-local-variable face)
+    (set-face-attribute face nil :height 1.0)))
+
+
 (provide 'init-org)
 ;;; init-org.el ends here
