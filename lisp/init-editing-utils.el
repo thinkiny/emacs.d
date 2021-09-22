@@ -33,7 +33,7 @@
 (delete-selection-mode 1)
 (add-hook 'after-init-hook 'transient-mark-mode)
 (make-local-variable 'truncate-lines)
-(global-set-key (kbd "C-c C-$") 'toggle-truncate-lines)
+(global-set-key (kbd "C-c $") 'toggle-truncate-lines)
 
 ;;; Optimizations
 (setq read-process-output-max (* 2048 1024))

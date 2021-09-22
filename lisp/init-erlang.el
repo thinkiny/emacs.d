@@ -14,6 +14,23 @@
 (add-hook 'erlang-mode-hook
           (lambda ()
             (setq-local lsp-enable-format-at-save nil)
+            (whitespace-cleanup-mode 1)
             (lsp-later)))
+
+(defun init-erlang-ls()
+  (interactive)
+  (when-let ((project-root (projectile-project-root)))
+    (write-region
+"apps_dirs:
+  - \"apps/*\"
+deps_dirs:
+  - \"_build/default/lib/*\"
+include_dirs:
+  - \"apps\"
+  - \"apps/*/include\"
+  - \"_build/default/lib/\"
+  - \"_build/default/lib/*/include\""
+     nil
+     (format "%s/erlang_ls.config" project-root))))
 
 (provide 'init-erlang)

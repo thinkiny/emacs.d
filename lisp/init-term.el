@@ -125,6 +125,7 @@ and binds some keystroke with `term-raw-map'."
   :commands (vterm-mode vterm)
   :config
   (setq vterm-always-compile-module t)
+  (setq vterm-min-window-width 60)
   (defun vterm-copy-text ()
     (interactive)
     (when mark-active
