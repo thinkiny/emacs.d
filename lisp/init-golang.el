@@ -49,5 +49,7 @@
   (puthash "GOPACKAGESDRIVER" (concat (projectile-project-root) "/gopackagesdriver.sh") lsp-go-env)
   (my-lsp-workspace-restart))
 
-(add-hook 'go-mode-hook #'lsp-later)
+(add-hook 'go-mode-hook (lambda ()
+                          (subword-mode)
+                          (lsp-later)))
 (provide 'init-golang)

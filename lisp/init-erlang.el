@@ -9,12 +9,14 @@
      ("\\.hrl?$" . erlang-mode)
      ("\\.app?$" . erlang-mode)
      ("\\.app.src?$" . erlang-mode)
-     ("\\Emakefile" . erlang-mode)))
+     ("\\Emakefile" . erlang-mode))
+  :config
+  (setq erlang-max-files-to-visit-for-refining-xrefs 256)
+  (unbind-key (kbd "RET") 'erlang-mode-map))
 
 (add-hook 'erlang-mode-hook
           (lambda ()
             (setq-local lsp-enable-format-at-save nil)
-            (whitespace-cleanup-mode 1)
             (lsp-later)))
 
 (defun init-erlang-ls()

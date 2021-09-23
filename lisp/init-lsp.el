@@ -128,7 +128,6 @@ returns the command to execute."
 (add-hook 'lsp-mode-hook (lambda ()
                            (setq-local flycheck-idle-change-delay 1.0)
                            (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
-                           (setq-local global-whitespace-cleanup-mode nil)
                            (make-local-variable 'markdown-header-face-2)
                            (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
                            (if lsp-enable-format-at-save
@@ -207,5 +206,15 @@ returns the command to execute."
                    enumerated-symbols-hierarchy "/"))
         "")
     ""))
+
+(defun lsp-enable-log-io()
+  (interactive)
+  (setq lsp-log-io t)
+  (my-lsp-workspace-restart))
+
+(defun lsp-disable-log-io()
+  (interactive)
+  (setq lsp-log-io nil)
+  (my-lsp-workspace-restart))
 
 (provide 'init-lsp)

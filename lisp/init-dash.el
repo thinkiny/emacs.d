@@ -25,7 +25,7 @@
 
 (add-hook 'c++-mode-hook
           (lambda ()
-            (setq-local dash-docs-docsets '("C++" "C" "Boost" "Man_Pages" "Linux" "x86_64_asm"))))
+            (setq-local dash-docs-docsets '("C++" "C" "Boost" "Man_Pages"))))
 
 (add-hook 'c-mode-hook
           (lambda ()
