@@ -70,10 +70,9 @@
 ;; themes
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
-(require-package 'spacemacs-theme)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'spacemacs-light
+(defcustom custom-gui-theme 'modus-operandi
   "Theme in gui mode"
   :group 'faces
   :type 'symbol)
@@ -96,7 +95,7 @@
             (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)
             (set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
             (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
-            (set-face-attribute 'table-cell nil :background "Skyblue4")
+            ;;(set-face-attribute 'table-cell nil :background "Skyblue4")
             (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
             (window-configuration-to-register ?h)))
 
