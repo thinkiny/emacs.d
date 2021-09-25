@@ -348,4 +348,16 @@ With arg N, insert N newlines."
 (global-tree-sitter-mode)
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
+(defun copy-filename ()
+  "Copy the current buffer file name to the clipboard."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message filename))))
+
+(global-set-key (kbd "C-x w") #'copy-filename)
+
 (provide 'init-editing-utils)

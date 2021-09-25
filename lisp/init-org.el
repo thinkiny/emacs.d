@@ -1,4 +1,4 @@
-﻿;;; init-org.el --- Org-mode config -*- lexical-binding: t -*-
+﻿;; init-org.el --- Org-mode config -*- lexical-binding: t -*-
 ;;; Commentary:
 
 ;; Among settings for many aspects of `org-mode', this code includes
@@ -22,14 +22,16 @@
 
 ;;; Code:
 
-(defvar sanityinc/org-global-prefix-map (make-sparse-keymap)
+(require-package 'org-cliplink)
+
+(defvar org-global-prefix-map (make-sparse-keymap)
   "A keymap for handy global access to org helpers, particularly clocking.")
 
-(define-key sanityinc/org-global-prefix-map (kbd "j") 'org-clock-jump-to-current-clock)
-(define-key sanityinc/org-global-prefix-map (kbd "l") 'org-clock-in-last)
-(define-key sanityinc/org-global-prefix-map (kbd "i") 'org-clock-in)
-(define-key sanityinc/org-global-prefix-map (kbd "o") 'org-clock-out)
-(define-key global-map (kbd "C-c o") sanityinc/org-global-prefix-map)
+(define-key org-global-prefix-map (kbd "j") 'org-clock-jump-to-current-clock)
+(define-key org-global-prefix-map (kbd "i") 'org-clock-in)
+(define-key org-global-prefix-map (kbd "o") 'org-clock-out)
+(define-key org-global-prefix-map (kbd "s") 'org-sidebar-tree)
+(define-key global-map (kbd "C-c o") org-global-prefix-map)
 
 
 ;; Various preferences
@@ -40,7 +42,6 @@
       org-export-coding-system 'utf-8
       org-fast-tag-selection-single-key 'expert
       org-html-validation-link nil
-      org-export-kill-product-buffer-when-displayed t
       org-tags-column 100
       org-src-fontify-natively t
       org-src-tab-acts-natively t
@@ -57,7 +58,7 @@
 
 ;;; Capturing
 
-;;(global-set-key (kbd "C-c c") 'org-capture)
+(global-set-key (kbd "C-c c") 'org-capture)
 
 (setq org-capture-templates
       `(("t" "todo" entry (file "")  ; "" => `org-default-notes-file'
@@ -255,13 +256,26 @@ _k_: delete row   _l_: delete column  _s_: shorten
   ("w" #'table-widen-cell)
   ("s" #'table-shorten-cell))
 
+
+(defun org-link-complete-docview (&optional _)
+  "Create a file link using completion."
+  (interactive)
+  (concat "docview:"
+          (read-file-name "DocFile: " "~/Documents" "./")))
+
 (with-eval-after-load 'org
+  ;; open file in the same window
+  (setf (cdr (assoc 'file org-link-frame-setup)) 'find-file)
+  (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
+
   (require 'ox-reveal)
   (org-beamer-mode)
   (unbind-key (kbd "C-c C-m") org-mode-map)
   (unbind-key (kbd "C-c [") org-mode-map)
   (unbind-key (kbd "C-c ]") org-mode-map)
-  (define-key org-mode-map (kbd "C-c t") #'hydra-org-table/body)
+  (define-key org-mode-map (kbd "C-c t t") #'hydra-org-table/body)
+  (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
+  (define-key org-mode-map (kbd "C-c C-p") #'org-cliplink)
   (define-key org-mode-map (kbd "C-M-<up>") 'org-up-element)
   (when *is-a-mac*
     (define-key org-mode-map (kbd "M-h") nil)
@@ -312,8 +326,8 @@ _k_: delete row   _l_: delete column  _s_: shorten
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
 
+;; sidebar
 (use-package org-sidebar)
-
 (with-eval-after-load 'org-mode
   (require 'org-sidebar)
   (advice-add 'org-sidebar-tree :after #'advice/after-org-sidebar-tree))
@@ -322,7 +336,6 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (dolist (face '(org-level-1 org-level-2 org-level-3))
     (make-local-variable face)
     (set-face-attribute face nil :height 1.0)))
-
 
 (provide 'init-org)
 ;;; init-org.el ends here

@@ -73,12 +73,12 @@
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
 (defcustom custom-gui-theme 'modus-operandi
-  "Theme in gui mode"
+  "Theme used in gui mode"
   :group 'faces
   :type 'symbol)
 
 (defcustom custom-terminal-theme 'doom-one
-  "Theme in terminal mode"
+  "Theme used in terminal mode"
   :group 'faces
   :type 'symbol)
 
