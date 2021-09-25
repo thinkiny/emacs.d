@@ -332,7 +332,6 @@ With arg N, insert N newlines."
 ;; protobuf
 (use-package protobuf-mode :mode (("\\.proto$" . protobuf-mode) ("\\.proto3$" . protobuf-mode)))
 
-
 ;; clipetty
 (use-package clipetty
   :ensure t

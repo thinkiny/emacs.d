@@ -41,5 +41,6 @@ transpositions to execute in sequence."
 (setf (cdr project-prefix-map) nil)
 
 ;;(require 'init-workgroups)
+(require 'init-persp)
 
 (provide 'init-windows)

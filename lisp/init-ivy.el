@@ -26,6 +26,7 @@
 
   ;; (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
   (global-set-key (kbd "C-c c") 'ivy-resume)
+  (global-set-key (kbd "C-x b") 'persp-ivy-switch-buffer)
   (global-set-key (kbd "C-s") 'swiper))
 
 (use-package counsel
