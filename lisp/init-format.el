@@ -1,9 +1,13 @@
 (require-package 'format-all)
 
 (require 'format-all)
-(setcdr (assoc "SQL" format-all-default-formatters) 'pgformatter)
+(setcdr (assoc "SQL" format-all-default-formatters) '(pgformatter))
 
-(add-hook 'sql-mode-hook #'format-all-mode)
-(add-hook 'protobuf-mode-hook #'format-all-mode)
+(defun enable-format-all ()
+  (format-all-mode)
+  (format-all-ensure-formatter))
+
+(add-hook 'sql-mode-hook #'enable-format-all)
+(add-hook 'protobuf-mode-hook #'enable-format-all)
 
 (provide 'init-format)
