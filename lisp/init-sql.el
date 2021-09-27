@@ -6,6 +6,9 @@
   ;; sql-mode pretty much requires your psql to be uncustomised from stock settings
   (push "--no-psqlrc" sql-postgres-options))
 
+(require-package 'sql-indent)
+(add-hook 'sql-mode-hook 'sql-indent-enable)
+
 (defun sanityinc/fix-postgres-prompt-regexp ()
   "Work around https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22596.
 Fix for the above hasn't been released as of Emacs 25.2."
@@ -103,6 +106,20 @@ This command currently blocks the UI, sorry."
             (define-key mysql-to-org-mode-map (kbd "C-c s") 'mysql-to-org-scratch)
             (define-key mysql-to-org-mode-map (kbd "C-c 1") 'mysql-to-org-only-show-output-window)
             (define-key mysql-to-org-mode-map (kbd "C-c r") 'mysql-to-org-reload-completion-candidates)))
+
+(defun make-sql-align-column (n &optional str)
+  (setq str (or str ""))
+  (if (= n 0)
+      (concat str "\\(\\s-+\\)")
+    (make-sql-align-column (- n 1) (concat str "\\s-+\\S-+\\(?:\\s-+unsigned\\|UNSIGNED\\)?"))))
+
+(defun indent-create-table()
+  (interactive)
+  (save-excursion
+    (let ((start (re-search-backward "($" nil t))
+          (end (re-search-forward "^)" nil t)))
+      (align-regexp start end (make-sql-align-column 1) 1 2 nil)
+      (align-regexp start end (make-sql-align-column 2) 1 2 nil))))
 
 (provide 'init-sql)
 ;;; init-sql.el ends here

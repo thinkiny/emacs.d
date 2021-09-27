@@ -31,9 +31,8 @@ there is no current file, eval the current buffer."
       (message "Evaluated %s" (current-buffer)))))
 
 (with-eval-after-load 'lisp-mode
-  (define-key emacs-lisp-mode-map (kbd "C-c C-l") 'sanityinc/load-this-file))
-
-
+  (define-key emacs-lisp-mode-map (kbd "C-c C-l") 'sanityinc/load-this-file)
+  (define-key emacs-lisp-mode-map (kbd "C-j") 'eval-print-last-sexp))
 
 (defun sanityinc/maybe-set-bundled-elisp-readonly ()
   "If this elisp appears to be part of Emacs, then disallow editing."
@@ -44,7 +43,6 @@ there is no current file, eval the current buffer."
 
 (add-hook 'emacs-lisp-mode-hook 'sanityinc/maybe-set-bundled-elisp-readonly)
 
-
 ;; Use C-c C-z to toggle between elisp files and an ielm session
 ;; I might generalise this to ruby etc., or even just adopt the repl-toggle package.
 
