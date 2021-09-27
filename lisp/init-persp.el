@@ -1,5 +1,6 @@
 (use-package perspective
   :bind (("C-x p k" . persp-kill-buffer*)
+         ("C-x p b" . persp-ivy-switch-buffer)
          ("C-x p d" . persp-remove-buffer))
   :custom
   (persp-mode-prefix-key (kbd "C-x p"))
