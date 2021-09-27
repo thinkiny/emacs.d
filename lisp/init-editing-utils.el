@@ -360,4 +360,13 @@ With arg N, insert N newlines."
 
 (global-set-key (kbd "C-x w") #'copy-filename)
 
+;; goto start-page
+(defconst start-file (expand-file-name "start.org" user-emacs-directory))
+(defun goto-start-page ()
+  (interactive)
+  (if (file-exists-p start-file)
+      (find-file start-file)
+    (switch-to-buffer (get-buffer-create "*scratch*"))))
+(global-set-key (kbd "C-h h") #'goto-start-page)
+
 (provide 'init-editing-utils)

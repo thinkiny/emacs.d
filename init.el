@@ -1,7 +1,6 @@
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "third-parties" user-emacs-directory))
 (defconst custom-file (expand-file-name "custom.el" user-emacs-directory))
-(defconst start-file (expand-file-name "start.org" user-emacs-directory))
 
 (require 'init-utils)
 (require 'init-package)
@@ -66,7 +65,6 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
-(when (file-exists-p start-file)
-  (find-file start-file))
+(goto-start-page)
 
 (provide 'init)
