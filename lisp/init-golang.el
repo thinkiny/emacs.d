@@ -49,7 +49,28 @@
   (puthash "GOPACKAGESDRIVER" (concat (projectile-project-root) "/gopackagesdriver.sh") lsp-go-env)
   (my-lsp-workspace-restart))
 
-(add-hook 'go-mode-hook (lambda ()
-                          (subword-mode)
-                          (lsp-later)))
+(defun generate-json-tag-line ()
+  (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
+    (if (string-match "^\\s-+\\(\\S-+\\)\\s-+\\S-+$" line)
+        (let ((json-tag (format "  `json:\"%s%s\"`"
+                                (downcase (substring (match-string 1 line) 0 1))
+                                (substring (match-string 1 line) 1))))
+          (end-of-line)
+          (insert json-tag)))))
+
+(defun generate-json-tag ()
+  (interactive)
+  (save-excursion
+    (let ((start (re-search-backward "{$" nil t)))
+      (forward-line 1)
+      (while (not (= (char-after (line-beginning-position)) ?}))
+        (generate-json-tag-line)
+        (forward-line 1)))))
+
+(defun my-go-mode-hook()
+  (subword-mode)
+  (lsp-later)
+  (define-key go-mode-map (kbd "C-c g j") #'generate-json-tag))
+(add-hook 'go-mode-hook #'my-go-mode-hook)
+
 (provide 'init-golang)
