@@ -291,7 +291,6 @@ _k_: delete row   _l_: delete column  _s_: shorten
      (gnuplot . t)
      (haskell . nil)
      (latex . t)
-     (ledger . t)
      (ocaml . nil)
      (octave . t)
      (plantuml . t)
