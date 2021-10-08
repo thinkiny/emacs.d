@@ -83,26 +83,27 @@
     "Transform XREFS into a collection for display via `ivy-read'."
     (let ((collection nil))
       (dolist (xref xrefs)
-        (with-slots (summary location) xref
-          (let* ((line (xref-location-line location))
-                 (file (xref-location-group location))
-                 (candidate
+        (let* ((summary (xref-item-summary xref))
+               (location (xref-item-location xref))
+               (line (xref-file-location-line location))
+               (file (xref-file-location-file location))
+               (candidate
+                (concat
+                 (propertize
                   (concat
-                   (propertize
-                    (concat
-                     (if ivy-xref-use-file-path
-                         ;; strip path
-                         (string-trim-left file "\\(\\.\\./\\)*")
-                       (file-name-nondirectory file))
-                     (if (integerp line)
-                         (format ":%d: " line)
-                       ": "))
-                    'face 'compilation-info)
-                   (progn
-                     (when ivy-xref-remove-text-properties
-                       (set-text-properties 0 (length summary) nil summary))
-                     summary))))
-            (push `(,candidate . ,location) collection))))
+                   (if ivy-xref-use-file-path
+                       ;; strip path
+                       (string-trim-left file "\\(\\.\\./\\)*")
+                     (file-name-nondirectory file))
+                   (if (integerp line)
+                       (format ":%d: " line)
+                     ": "))
+                  'face 'compilation-info)
+                 (progn
+                   (when ivy-xref-remove-text-properties
+                     (set-text-properties 0 (length summary) nil summary))
+                   summary))))
+          (push `(,candidate . ,location) collection)))
       (nreverse collection))))
 
 (provide 'init-ivy)

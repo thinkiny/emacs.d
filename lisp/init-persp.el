@@ -9,6 +9,5 @@
 
 (require 'perspective)
 (persp-mode)
-(add-hook 'kill-emacs-hook #'persp-state-save)
 
 (provide 'init-persp)
