@@ -318,7 +318,6 @@ _k_: delete row   _l_: delete column  _s_: shorten
           "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
   :hook (org-mode . org2ctex-mode))
 
-
 (require 'org-tempo nil 'noerror)
 (require-package 'org-preview-html)
 
@@ -335,6 +334,11 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (dolist (face '(org-level-1 org-level-2 org-level-3))
     (make-local-variable face)
     (set-face-attribute face nil :height 1.0)))
+
+(add-hook 'org-mode-hook (lambda ()
+                           (setq-local electric-pair-inhibit-predicate
+                                       `(lambda (c)
+                                          (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
 
 (provide 'init-org)
 ;;; init-org.el ends here

@@ -69,8 +69,14 @@
 
 ;; themes
 (require-package 'cloud-theme)
+
 (require-package 'modus-themes)
+(with-eval-after-load 'modus-themes
+  (setq modus-themes-tabs-accented t
+        modus-themes-paren-match '(bold intense)))
+
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+
 
 (defcustom custom-gui-theme 'modus-operandi
   "Theme used in gui mode"

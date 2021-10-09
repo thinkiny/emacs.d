@@ -5,6 +5,8 @@
    '(("gopls.completeUnimported" t t)
      ("gopls.staticcheck" t t))))
 
+(require-package 'go-snippets)
+
 (with-eval-after-load 'lsp-mode
   (setq lsp-go-codelens nil)
   ;;(setq lsp-go-env (make-hash-table))
