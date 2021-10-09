@@ -320,6 +320,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
 
 (require 'org-tempo nil 'noerror)
 (require-package 'org-preview-html)
+(setq org-preview-html-viewer 'xwidget)
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
