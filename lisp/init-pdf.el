@@ -33,35 +33,11 @@
                  (side . right)
                  (window-width . 0.25)))
 
-  (defun pdf-view-next-page-start ()
-    "View the next page in the PDF."
-    (interactive)
-    (pdf-view-goto-page (+ (pdf-view-current-page) 1))
-    (pdf-view-goto-page-start))
-
-  (defun pdf-view-prev-page-start ()
-    "View the pre page in the PDF."
-    (interactive)
-    (pdf-view-goto-page (- (pdf-view-current-page) 1))
-    (pdf-view-goto-page-start))
-
   (defun pdf-view-goto-page-start ()
     "Goto page start"
     (interactive)
     (image-set-window-vscroll 0)
     (pdf-view-redisplay t))
-
-  (defun pdf-view-scroll-up ()
-    "Scroll up"
-    (interactive)
-    (let ((current-prefix-arg pdf-continuous-scroll-step))
-      (call-interactively #'pdf-continuous-scroll-backward)))
-
-  (defun pdf-view-scroll-down ()
-    "Scroll down"
-    (interactive)
-    (let ((current-prefix-arg pdf-continuous-scroll-step))
-      (call-interactively #'pdf-continuous-scroll-forward)))
 
   (defun pdf-traslate-under-mouse (ev)
     "Select word at mouse event EV and translate it"
@@ -93,6 +69,12 @@
           (bing-dict-brief text))))
 
   (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection)
+
+  (defun advice/after-pdf-outline-follow-link(&rest _)
+    (pdf-cscroll-close-window-when-dual)
+    (delete-other-windows-vertically))
+
+  (advice-add #'pdf-outline-follow-link :after #'advice/after-pdf-outline-follow-link)
 
   (with-eval-after-load 'pdf-annot
     (defun +pdf-cleanup-windows-h ()
@@ -131,10 +113,10 @@
                                 (unbind-key (kbd "N") 'pdf-history-minor-mode-map)
                                 (local-set-key (kbd "q") #'kill-current-buffer)
                                 (local-set-key (kbd "0") #'pdf-view-goto-page-start)
-                                (local-set-key (kbd "N") #'pdf-view-next-page-start)
-                                (local-set-key (kbd "P") #'pdf-view-prev-page-start)
-                                (local-set-key (kbd "C-v") #'pdf-view-scroll-down)
-                                (local-set-key (kbd "M-v") #'pdf-view-scroll-up)
+                                (local-set-key (kbd "N") #'pdf-continuous-next-page)
+                                (local-set-key (kbd "P") #'pdf-continuous-previous-page)
+                                (local-set-key (kbd "C-v") #'pdf-view-scroll-up-or-next-page)
+                                (local-set-key (kbd "M-v") #'pdf-view-scroll-down-or-previous-page)
                                 (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
                                 (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
                                 (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
