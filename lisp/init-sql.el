@@ -111,15 +111,22 @@ This command currently blocks the UI, sorry."
   (setq str (or str ""))
   (if (= n 0)
       (concat str "\\(\\s-+\\)")
-    (make-sql-align-column (- n 1) (concat str "\\s-+\\S-+\\(?:\\s-+unsigned\\|UNSIGNED\\)?"))))
+    (make-sql-align-column
+     (- n 1)
+     (concat str "\\s-+[^( ]+\\(?:(.*)\\)?\\(?:\\s-+unsigned\\|UNSIGNED\\)?"))))
 
-(defun indent-create-table()
+(defun align-create-table()
   (interactive)
   (save-excursion
     (let ((start (re-search-backward "($" nil t))
           (end (re-search-forward "^)" nil t)))
+      (align-regexp start end (make-sql-align-column 0) 1 2 nil)
       (align-regexp start end (make-sql-align-column 1) 1 2 nil)
       (align-regexp start end (make-sql-align-column 2) 1 2 nil))))
+
+(add-hook 'sql-mode-hook (lambda ()
+                           (local-set-key (kbd "C-c C-t") #'align-create-table)
+                           (local-set-key (kbd "C-c C-f") #'format-current-buffer)))
 
 (provide 'init-sql)
 ;;; init-sql.el ends here
