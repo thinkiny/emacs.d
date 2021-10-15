@@ -1,5 +1,6 @@
 (require-package 'cff)
 (require-package 'cmake-mode)
+(require-package 'disaster)
 
 (use-package bazel :demand t)
 ;;(use-package bazel-mode
@@ -107,9 +108,12 @@ returned to avoid that the echo area grows uncomfortably."
   (define-key c-mode-base-map (kbd "C-c x") 'switch-cpp-header-source)
   (define-key c-mode-base-map (kbd "C-c b g") 'generate-compdb)
   (define-key c-mode-base-map (kbd "C-c b b") 'build-cpp-project)
+  (local-set-key (kbd "C-c a") 'disaster)
   (if (gtags-get-rootpath)
       (global-tags-exclusive-backend-mode)
-    (lsp-later)))
+    (lsp-later))
+  (add-hook 'lsp-mode-hook (lambda ()
+                             (define-key lsp-mode-map (kbd "C-c a") nil)) nil t))
 
 (defun json-to-vector()
   (interactive)

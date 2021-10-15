@@ -369,4 +369,6 @@ With arg N, insert N newlines."
     (switch-to-buffer (get-buffer-create "*scratch*"))))
 (global-set-key (kbd "C-h h") #'goto-start-page)
 
+(use-package dockerfile-mode)
+
 (provide 'init-editing-utils)

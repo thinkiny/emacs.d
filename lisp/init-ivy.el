@@ -85,8 +85,8 @@
       (dolist (xref xrefs)
         (let* ((summary (xref-item-summary xref))
                (location (xref-item-location xref))
-               (line (xref-file-location-line location))
-               (file (xref-file-location-file location))
+               (line (xref-location-line location))
+               (file (xref-location-group location))
                (candidate
                 (concat
                  (propertize
