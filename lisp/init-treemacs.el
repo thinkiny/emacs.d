@@ -66,11 +66,9 @@
                       'treemacs--expand-root-node
                       'treemacs--expand-dir-node)
 
-;;(add-hook 'treemacs-mode-hook #'treemacs-filewatch-mode)
-
 (defun treemacs-custom-filter (file _)
-  (or (s-ends-with? ".cache" file)
-      (s-ends-with? "bazel-out" file)))
+  (or (string-equal ".cache" file)
+      (string-equal "bazel-out" file)))
 
 (with-eval-after-load 'treemacs
   (set-face-attribute 'treemacs-root-face nil :height 1.0)

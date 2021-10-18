@@ -126,12 +126,25 @@ and binds some keystroke with `term-raw-map'."
   :config
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 60)
+  (setq vterm-max-scrollback 4000)
+
   (defun vterm-copy-text ()
     (interactive)
     (when mark-active
-      (vterm-copy-mode 1)
-      (kill-ring-save (region-beginning) (region-end))
-      (vterm-copy-mode -1)))
+      (save-excursion
+        (vterm-copy-mode 1)
+        (kill-ring-save (region-beginning) (region-end))
+        (vterm-copy-mode -1))))
+
+  (defun vterm-move-up()
+    (interactive)
+    (let ((current-prefix-arg (/ (window-height) 2)))
+      (call-interactively #'previous-line)))
+
+  (defun vterm-move-down()
+    (interactive)
+    (let ((current-prefix-arg (/ (window-height) 2)))
+      (call-interactively #'next-line)))
 
   (defun vterm--get-directory (path)
     "Get normalized directory to PATH."
@@ -154,7 +167,11 @@ and binds some keystroke with `term-raw-map'."
 
   (define-key vterm-mode-map (kbd "M-p") 'vterm-send-up)
   (define-key vterm-mode-map (kbd "M-n") 'vterm-send-down)
-  (define-key vterm-mode-map (kbd "M-w") 'vterm-copy-text))
+  (define-key vterm-mode-map (kbd "M-w") 'vterm-copy-text)
+  (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
+  (define-key vterm-mode-map (kbd "C-v") 'vterm-move-down)
+  (define-key vterm-mode-map (kbd "M-v") 'vterm-move-up)
+  (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode))
 
 ;; counsel-term
 (require 'counsel-term)
