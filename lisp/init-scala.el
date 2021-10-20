@@ -1,7 +1,8 @@
 (use-package scala-mode :mode "\\.s\\(cala\\|bt\\|c\\)$")
 (use-package lsp-metals
   :config
-  (setq lsp-metals-sbt-script (expand-file-name "~/.emacs.d/third-parties/sbt"))
+  (setq lsp-metals-sbt-script (expand-file-name "~/.emacs.d/third-parties/sbt")
+        lsp-metals-super-method-lenses-enabled t)
   :custom
   (lsp-metals-server-args '("-J-Dmetals.showInferredType=on" "-J-Dmetals.showImplicitArguments=on" "-J-Dmetals.showImplicitConversionsAndClasses=on"))
   :hook (scala-mode . my-scala-mode-hook))

@@ -38,7 +38,7 @@
   (sort (buffer-list)
         (lambda (a b)
           (time-less-p (counsel-mt/get-create-time a)
-                                 (counsel-mt/get-create-time b)))))
+                       (counsel-mt/get-create-time b)))))
 
 (defun counsel-mt/list-opened ()
   "List opened directory"
@@ -49,7 +49,9 @@
                        (let* ((name-idx (counsel-mt/create-name-with-idx name-count))
                               (new-buf-name (format "%s%s" counsel-mt-name-header name-idx)))
                          (unless (string-equal new-buf-name (buffer-name))
-                           (message (format "%s:%s" new-buf-name (buffer-name)))
+                           (if-let ((curr-buf (get-buffer new-buf-name)))
+                               (with-current-buffer curr-buf
+                                 (rename-buffer (format "%s-old" new-buf-name))))
                            (rename-buffer new-buf-name))
                          (cons name-idx buf))))))
 
