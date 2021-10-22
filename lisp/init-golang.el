@@ -51,28 +51,37 @@
   (puthash "GOPACKAGESDRIVER" (concat (projectile-project-root) "/gopackagesdriver.sh") lsp-go-env)
   (my-lsp-workspace-restart))
 
-(defun generate-json-tag-line ()
+(defun go-insert-generate-tag (name)
   (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
     (if (string-match "^\\s-+\\(\\S-+\\)\\s-+\\S-+$" line)
-        (let ((json-tag (format "  `json:\"%s%s\"`"
+        (let ((json-tag (format "  `%s:\"%s%s\"`"
+                                name
                                 (downcase (substring (match-string 1 line) 0 1))
                                 (substring (match-string 1 line) 1))))
           (end-of-line)
           (insert json-tag)))))
 
-(defun generate-json-tag ()
-  (interactive)
+(defun go-generate-tag (name)
   (save-excursion
     (let ((start (re-search-backward "{$" nil t)))
       (forward-line 1)
       (while (not (= (char-after (line-beginning-position)) ?}))
-        (generate-json-tag-line)
+        (go-insert-generate-tag name)
         (forward-line 1)))))
+
+(defun go-generate-tag-json()
+  (interactive)
+  (go-generate-tag "json"))
+
+(defun go-generate-tag-form()
+  (interactive)
+  (go-generate-tag "form"))
 
 (defun my-go-mode-hook()
   (subword-mode)
   (lsp-later)
-  (define-key go-mode-map (kbd "C-c g j") #'generate-json-tag))
+  (define-key go-mode-map (kbd "C-c g j") #'go-generate-tag-json)
+  (define-key go-mode-map (kbd "C-c g f") #'go-generate-tag-form))
 (add-hook 'go-mode-hook #'my-go-mode-hook)
 
 (provide 'init-golang)

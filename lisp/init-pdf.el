@@ -94,7 +94,6 @@
               (make-local-variable face)
               (set-face-attribute face nil :height 1.0))))
 
-
 (add-hook 'pdf-view-mode-hook (lambda ()
                                 (company-mode -1)
                                 (blink-cursor-mode -1)
