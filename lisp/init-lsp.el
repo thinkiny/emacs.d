@@ -25,7 +25,15 @@
         ;;lsp-auto-guess-root t
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
-        lsp-enable-dap-auto-configure nil)
+        lsp-enable-dap-auto-configure nil
+        lsp-signature-function #'my-lsp-lv-message)
+
+  (defun my-lsp-lv-message (message)
+    (if message
+        (let ((pos (string-search "\n" message)))
+          (if pos
+              (message (substring message 0 pos))
+            (message message)))))
 
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
