@@ -42,7 +42,8 @@
 ;; doom-themes
 (require-package 'doom-themes)
 (setq doom-themes-enable-bold t
-      doom-themes-enable-italic t
+      doom-themes-enable-italic nil
+      doom-opera-brighter-modeline t
       doom-themes-treemacs-theme "doom-colors"
       doom-themes-treemacs-enable-variable-pitch nil)
 ;;(doom-themes-visual-bell-config)
@@ -60,7 +61,7 @@
          (set-default var val)
          (set-frame-parameter (selected-frame) 'alpha val)))
 
-(defun update-frame-transparency ()
+(defun set-transparency ()
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
   (interactive)
   (when window-system
@@ -69,14 +70,12 @@
 
 ;; themes
 (require-package 'cloud-theme)
-
 (require-package 'modus-themes)
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-
 
 (defcustom custom-gui-theme 'modus-operandi
   "Theme used in gui mode"
@@ -101,6 +100,7 @@
             (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)
             (set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
             (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
+            (set-face-attribute 'ivy-virtual nil :inherit nil)
             ;;(set-face-attribute 'table-cell nil :background "Skyblue4")
             (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
             (window-configuration-to-register ?h)))

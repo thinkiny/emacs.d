@@ -86,6 +86,7 @@ there is no current file, eval the current buffer."
 ;; Automatic byte compilation
 ;; ----------------------------------------------------------------------------
 (when (maybe-require-package 'auto-compile)
+  (setq auto-compile-check-parens nil)
   (add-hook 'after-init-hook 'auto-compile-on-save-mode)
   (add-hook 'after-init-hook 'auto-compile-on-load-mode))
 

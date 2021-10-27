@@ -30,10 +30,8 @@
 
   (defun my-lsp-lv-message (message)
     (if message
-        (let ((pos (string-search "\n" message)))
-          (if pos
-              (message (substring message 0 pos))
-            (message message)))))
+        (let ((pos (or (string-search "\n" message) (length message))))
+          (message (substring-no-properties message 0 pos)))))
 
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)

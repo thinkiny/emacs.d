@@ -10,8 +10,9 @@
     (shell-command "open -n -a /Applications/Emacs.app")))
 
 (global-set-key (kbd "C-c C-n") #'new-emacs)
-(add-hook 'c-mode-common-hook (lambda ()
-                                (local-unset-key (kbd "C-c C-n"))))
+(add-hook 'c-mode-common-hook
+          (lambda ()
+            (local-unset-key (kbd "C-c C-n"))))
 
 ;; Curse Lion and its sudden but inevitable fullscreen mode!
 ;; NOTE Meaningless to railwaycat's emacs-mac build
