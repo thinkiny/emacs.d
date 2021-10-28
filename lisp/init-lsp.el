@@ -30,7 +30,8 @@
 
   (defun my-lsp-lv-message (message)
     (if message
-        (let ((pos (or (string-search "\n" message) (length message))))
+        (let ((pos (min (or (string-search "\n" message) (length message))
+                        (window-width))))
           (message (substring-no-properties message 0 pos)))))
 
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)

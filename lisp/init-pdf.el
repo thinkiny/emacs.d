@@ -119,8 +119,7 @@
                                 (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
                                 (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
                                 (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
-                                (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
-                                (add-hook 'focus-out-hook 'pdf-cscroll-close-window-when-dual nil t)))
+                                (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)))
 
 (use-package pdf-view-restore
   :commands (pdf-view-restore-mode)
