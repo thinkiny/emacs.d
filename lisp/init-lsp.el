@@ -191,7 +191,7 @@ returns the command to execute."
                          (when-let ((buf (get-buffer buf-name)))
                            (with-current-buffer buf
                              (lsp-later-run))))))))
-(add-hook 'doom-switch-buffer-hook #'lsp-try-reconnect nil 'local)
+(add-hook 'focus-in-hook #'lsp-try-reconnect nil 'local)
 
 (add-hook 'hack-local-variables-hook
           (lambda ()
