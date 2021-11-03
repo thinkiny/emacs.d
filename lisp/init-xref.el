@@ -27,14 +27,21 @@
       (run-hooks 'xref-after-return-hook))))
 
 (setq xref-marker-ring-length 10240)
-(defun xref-push-marker-stack-once(&rest _) (xref--push-markers))
+(defun xref-pop-marker-stack-maybe(&rest _)
+  (when (get-buffer-window xref-buffer-name)
+    (ring-remove xref--marker-ring 0)
+    (ring-remove xref--marker-ring 0)))
+
+(defun xref-push-check()
+  (or (ring-empty-p xref--marker-ring)
+      (not (equal (point-marker) (ring-ref xref--marker-ring 0)))))
+
+(defun xref-push-marker-stack-once(&rest _)
+  (xref--push-markers))
+
 (defun xref-push-marker-stack-twice(&rest _)
   (xref--push-markers)
   (xref--push-markers))
-
-(defun xref-pop-marker-stack-maybe(&rest _)
-  (when (get-buffer-window xref-buffer-name)
-    (ring-remove xref--marker-ring 0)))
 
 (defun print-xref()
   (interactive)
@@ -44,13 +51,14 @@
       (prin1 (ring-ref xref--marker-ring i))
       (setq i (+ i 1)))))
 
-(advice-add 'xref--goto-char :before #'xref-push-marker-stack-once)
-(advice-add 'xref--goto-char :after #'xref-push-marker-stack-once)
-(advice-add 'counsel-imenu-action :before #'xref-push-marker-stack-twice)
-(advice-add 'counsel-imenu-action :after #'xref-push-marker-stack-once)
-(advice-add 'minibuffer-keyboard-quit :before #'xref-pop-marker-stack-maybe)
+(defun cleanup-xref()
+  (interactive)
+  (setq xref--marker-ring (make-ring xref-marker-ring-length)))
 
-(global-set-key (kbd "M-[") #'xref-pop-curr-marker-stack)
+;;(advice-add 'counsel-imenu-action :before #'xref-push-marker-stack-once)
+;;(advice-add 'minibuffer-keyboard-quit :before #'xref-pop-marker-stack-maybe)
+
+(global-set-key (kbd "M-[") #'xref-pop-marker-stack)
 (global-set-key (kbd "M-,") #'xref-find-references)
 
 (provide 'init-xref)

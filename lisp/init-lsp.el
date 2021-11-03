@@ -32,7 +32,7 @@
     (if message
         (let ((pos (min (or (string-search "\n" message) (length message))
                         (window-width))))
-          (message (substring-no-properties message 0 pos)))))
+          (message (substring message 0 pos)))))
 
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
