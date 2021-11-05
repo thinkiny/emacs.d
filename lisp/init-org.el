@@ -23,6 +23,7 @@
 ;;; Code:
 
 (require-package 'org-cliplink)
+(require-package 'org-plus-contrib)
 
 (defvar org-global-prefix-map (make-sparse-keymap)
   "A keymap for handy global access to org helpers, particularly clocking.")
@@ -47,7 +48,10 @@
       org-src-tab-acts-natively t
       org-src-preserve-indentation nil
       org-fontify-whole-heading-line t
-      org-edit-src-content-indentation 0)
+      org-edit-src-content-indentation 0
+      org-export-time-stamp-file nil
+      org-html-html5-fancy t
+      org-html-doctype "html5")
 
 ;; Re-align tags when window shape changes
 (with-eval-after-load 'org-agenda
@@ -269,7 +273,9 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
 
   (require 'ox-reveal)
+  (require 'ox-confluence)
   (org-beamer-mode)
+  (unbind-key (kbd "C-,") org-mode-map)
   (unbind-key (kbd "C-c C-m") org-mode-map)
   (unbind-key (kbd "C-c [") org-mode-map)
   (unbind-key (kbd "C-c ]") org-mode-map)
