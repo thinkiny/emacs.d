@@ -79,6 +79,13 @@
   (setq xref-show-xrefs-function 'ivy-xref-show-xrefs)
   (setq ivy-xref-use-file-path t)
   :config
+  (defun ivy-xref-trim-path (file)
+    ;; (let ((root (projectile-project-root)))
+    ;;   (if (and root (s-starts-with? "/" file))
+    ;;       (string-trim-left file root)
+    ;;     (string-trim-left file "\\(\\.\\./\\)*")))
+    (file-relative-name file default-directory))
+
   (defun ivy-xref-make-collection (xrefs)
     "Transform XREFS into a collection for display via `ivy-read'."
     (let ((collection nil))
@@ -93,7 +100,7 @@
                   (concat
                    (if ivy-xref-use-file-path
                        ;; strip path
-                       (string-trim-left file "\\(\\.\\./\\)*")
+                       (ivy-xref-trim-path file)
                      (file-name-nondirectory file))
                    (if (integerp line)
                        (format ":%d: " line)

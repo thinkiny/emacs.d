@@ -26,7 +26,7 @@
         lsp-java-format-settings-profile "my-java")
 
   (add-to-list 'lsp-java-vmargs
-    (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
+               (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
 
   (lsp-register-custom-settings
    '(("java.decompiler.fernflower.ind" lsp-java-decompiler-fernflower-ind)

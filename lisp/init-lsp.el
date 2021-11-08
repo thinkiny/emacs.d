@@ -31,7 +31,7 @@
   (defun my-lsp-lv-message (message)
     (if message
         (let ((pos (min (or (string-search "\n" message) (length message))
-                        (window-width))))
+                        (frame-width))))
           (message (substring message 0 pos)))))
 
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
@@ -47,6 +47,7 @@
   (define-key lsp-mode-map (kbd "C-c e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
   (define-key lsp-mode-map (kbd "C-c s a") 'lsp-signature-activate)
+  (define-key lsp-mode-map (kbd "C-c C-f") 'lsp-format-region)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
   (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
 
@@ -76,8 +77,8 @@
   (call-interactively 'dap-debug))
 
 ;; multi-root
-(advice-add 'lsp :before (lambda (&rest _args)
-                           (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
+;; (advice-add 'lsp :before (lambda (&rest _args)
+;;                            (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
 
 ;; format
 (defvar-local lsp-enable-format-at-save t)
@@ -93,10 +94,12 @@
   (remove-hook 'before-save-hook 'lsp-format-buffer 'lsp-format)
   (setq-local lsp-enable-format-at-save nil))
 
-(defun lsp-format-off-project()
+(defun lsp-disable-format-project()
   (interactive)
-  (when-let ((project-root (projectile-project-root)))
-    (write-region (format "((%s . ((eval . (lsp-disable-format)))))" major-mode) nil (format "%s/.dir-locals.el" project-root))))
+  (when-let ((project-root (projectile-project-root))
+             (file (format "%s.dir-locals.el" project-root)))
+    (write-region (format "((%s . ((eval . (lsp-disable-format)))))" major-mode) nil file)
+    (message (format "write %s" file))))
 
 ;; tramp
 (with-eval-after-load 'lsp-mode
@@ -191,7 +194,8 @@ returns the command to execute."
                          (when-let ((buf (get-buffer buf-name)))
                            (with-current-buffer buf
                              (lsp-later-run))))))))
-(add-hook 'focus-in-hook #'lsp-try-reconnect nil 'local)
+
+(add-hook 'doom-switch-buffer-hook #'lsp-try-reconnect nil 'local)
 
 (add-hook 'hack-local-variables-hook
           (lambda ()
