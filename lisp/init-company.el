@@ -27,6 +27,8 @@
   ;;(set-face-attribute 'company-preview nil :inherit 'company-tooltip)
   (diminish 'company-mode))
 
+(after-load-theme (set-face-attribute 'company-preview nil :inherit 'company-tooltip))
+
 ;; company-theme
 (defun light-company()
   (custom-set-faces

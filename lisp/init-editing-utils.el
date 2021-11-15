@@ -347,6 +347,7 @@ With arg N, insert N newlines."
 (require 'tree-sitter-langs)
 (global-tree-sitter-mode)
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+(after-load-theme (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal))
 
 (defun copy-filename ()
   "Copy the current buffer file name to the clipboard."

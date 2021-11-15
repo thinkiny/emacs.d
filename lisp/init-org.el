@@ -245,6 +245,8 @@
 
 (use-package ox-reveal)
 (use-package ob-go)
+(use-package ox-gfm)
+(use-package org-sidebar)
 
 (defhydra hydra-org-table (:color blue :hint nil)
   "
@@ -274,6 +276,8 @@ _k_: delete row   _l_: delete column  _s_: shorten
 
   (require 'ox-reveal)
   (require 'ox-confluence)
+  (require 'ox-gfm)
+  (require 'org-sidebar)
   (org-beamer-mode)
   (unbind-key (kbd "C-,") org-mode-map)
   (unbind-key (kbd "C-c C-m") org-mode-map)
@@ -331,17 +335,12 @@ _k_: delete row   _l_: delete column  _s_: shorten
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
 
-;; sidebar
-(use-package org-sidebar)
-(with-eval-after-load 'org-mode
-  (require 'org-sidebar)
-  (advice-add 'org-sidebar-tree :after #'advice/after-org-sidebar-tree))
-
-(defun advice/after-org-sidebar-tree()
-  (dolist (face '(org-level-1 org-level-2 org-level-3))
-    (make-local-variable face)
+(defun org-level-reset-height()
+  (dolist (face '(outline-1 outline-2 outline-3 org-level-1 org-level-2 org-level-3))
+    ;;(make-local-variable face)
     (set-face-attribute face nil :height 1.0)))
 
+(after-load-theme (org-level-reset-height))
 (add-hook 'org-mode-hook (lambda ()
                            (setq-local electric-pair-inhibit-predicate
                                        `(lambda (c)

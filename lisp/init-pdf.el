@@ -89,11 +89,9 @@
           (kill-buffer contents-buffer))))
     (add-hook 'kill-buffer-hook #'+pdf-cleanup-windows-h nil t)))
 
-(add-hook 'pdf-outline-minor-mode-hook
-          (lambda ()
-            (dolist (face '(outline-1 outline-2 outline-3 org-level-1 org-level-2 org-level-3))
-              (make-local-variable face)
-              (set-face-attribute face nil :height 1.0))))
+(after-load-theme
+ (setq pdf-view-midnight-colors
+       `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background))))
 
 (defun my-pdf-view-mode-hook()
   (company-mode -1)

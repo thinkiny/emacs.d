@@ -27,7 +27,10 @@
   ;; (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
   (global-set-key (kbd "C-c z") 'ivy-resume)
   (global-set-key (kbd "C-x b") 'persp-ivy-switch-buffer)
-  (global-set-key (kbd "C-s") 'swiper))
+  (global-set-key (kbd "C-s") 'swiper)
+  (after-load-theme
+   (set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
+   (set-face-attribute 'ivy-virtual nil :inherit nil)))
 
 (use-package counsel
   :after ivy

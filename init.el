@@ -6,7 +6,7 @@
 (require 'init-package)
 (require 'init-performance)
 (require 'init-exec-path)
-
+(require 'init-ui)
 (require 'init-editing-utils)
 (require 'init-xref)
 (require 'init-treemacs)
@@ -15,7 +15,6 @@
 (require 'init-recentf)
 (require 'init-projectile)
 (require 'init-ivy)
-(require 'init-ui)
 (require 'init-company)
 (require 'init-windows)
 (require 'init-yasnippet)

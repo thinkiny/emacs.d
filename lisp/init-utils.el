@@ -94,4 +94,9 @@
 (defconst *is-a-linux* (eq system-type 'gnu/linux))
 (defconst *is-a-nt* (eq system-type 'windows-nt))
 
+;; themes
+(defvar load-theme-hook nil)
+(defmacro after-load-theme (&rest body)
+  `(add-hook 'load-theme-hook (lambda () ,@body)))
+
 (provide 'init-utils)

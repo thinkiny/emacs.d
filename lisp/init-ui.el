@@ -77,7 +77,7 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'modus-operandi
+(defcustom custom-gui-theme 'cloud
   "Theme used in gui mode"
   :group 'faces
   :type 'symbol)
@@ -87,23 +87,17 @@
   :group 'faces
   :type 'symbol)
 
+(after-load-theme
+ ;;(set-face-attribute 'fringe nil :background nil)
+ (set-face-attribute 'button nil :background nil)
+ (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4"))
+
 (add-hook 'after-init-hook
           (lambda ()
             (if window-system
                 (load-theme custom-gui-theme t)
-                (load-theme custom-terminal-theme t))
-            ;;custom faces
-            ;;(set-face-attribute 'default nil :foreground "#CECECE")
-            (set-face-attribute 'button nil :background nil)
-            ;;(set-face-attribute 'fringe nil :background nil)
-            (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
-            (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)
-            (set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
-            (set-face-attribute 'company-preview nil :inherit 'company-tooltip)
-            (set-face-attribute 'ivy-virtual nil :inherit nil)
-            ;;(set-face-attribute 'table-cell nil :background "Skyblue4")
-            (setq pdf-view-midnight-colors `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))
-            (window-configuration-to-register ?h)))
+              (load-theme custom-terminal-theme t))
+            (run-hooks 'load-theme-hook)))
 
 ;;fonts
 (when window-system
@@ -190,7 +184,8 @@
   (condition-case nil
       (progn
         (mapc #'disable-theme custom-enabled-themes)
-        (load-theme (intern x) t))
+        (load-theme (intern x) t)
+        (run-hooks 'load-theme-hook))
     (error "Problem loading theme %s" x)))
 
 (defun counsel--update-theme-action ()
