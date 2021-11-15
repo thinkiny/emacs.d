@@ -6,9 +6,10 @@
   (define-key god-local-mode-map (kbd "g") #'goto-workspace-symbol)
   (define-key god-local-mode-map (kbd "l") #'counsel-imenu)
   (define-key god-local-mode-map (kbd "q") #'kill-current-buffer)
-  (define-key god-local-mode-map (kbd "[") #'xref-pop-curr-marker-stack)
+  (define-key god-local-mode-map (kbd "[") #'xref-pop-marker-stack)
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)
   (add-to-list 'god-exempt-major-modes 'ivy-occur-mode)
+  (add-to-list 'god-exempt-major-modes 'vterm-mode)
   (delete #'god-view-mode-p god-exempt-predicates))
 
 (defun goto-workspace-symbol()
