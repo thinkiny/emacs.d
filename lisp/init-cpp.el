@@ -16,6 +16,7 @@
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection-fast 'lsp-clients--clangd-command)
                     :activation-fn (lsp-activate-on "c" "cpp" "objective-c")
+                    :library-folders-fn (lambda (_workspace) lsp-clients-clangd-library-directories)
                     :server-id 'clangd-remote
                     :remote? t)))
 

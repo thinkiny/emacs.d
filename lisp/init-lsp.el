@@ -34,6 +34,12 @@
                         (frame-width))))
           (message (substring message 0 pos)))))
 
+  (defun my-lsp-format()
+    (interactive)
+    (if (region-active-p)
+        (call-interactively #'lsp-format-region)
+      (lsp-format-buffer)))
+
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
   (define-key lsp-mode-map (kbd "C-c i") 'lsp-organize-imports)
@@ -47,7 +53,7 @@
   (define-key lsp-mode-map (kbd "C-c e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
   (define-key lsp-mode-map (kbd "C-c s a") 'lsp-signature-activate)
-  (define-key lsp-mode-map (kbd "C-c C-f") 'lsp-format-region)
+  (define-key lsp-mode-map (kbd "C-c C-f") 'my-lsp-format)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
   (define-key lsp-signature-mode-map (kbd "M-k") #'lsp-signature-previous))
 
@@ -160,7 +166,7 @@ returns the command to execute."
         lsp-ui-peek-fontify 'always
         lsp-ui-sideline-delay 0.2)
   (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple4"))
-;;(define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+;; (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
 ;;(define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
 
 (use-package lsp-treemacs)

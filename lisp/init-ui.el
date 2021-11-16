@@ -77,7 +77,7 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'cloud
+(defcustom custom-gui-theme 'modus-operandi
   "Theme used in gui mode"
   :group 'faces
   :type 'symbol)
@@ -198,11 +198,11 @@
   (let ((orig-theme (when custom-enabled-themes
                       (car custom-enabled-themes))))
     (ivy-read "Load custom theme: "
-            (mapcar 'symbol-name
-                    (custom-available-themes))
+            (mapcar 'symbol-name (custom-available-themes))
             :action #'counsel--load-theme-action
             :preselect (symbol-name orig-theme)
-            :update-fn #'counsel--update-theme-action)))
+            ;;:update-fn #'counsel--update-theme-action
+            )))
 
 ;; hide-mode-line
 (require-package 'hide-mode-line)
