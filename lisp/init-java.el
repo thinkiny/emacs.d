@@ -21,7 +21,7 @@
         lsp-java-decompiler-fernflower-ren t
         lsp-java-format-on-type-enabled nil
         lsp-java-decompiler-fernflower-dgs t
-        lsp-java-content-provider-preferred "fernflower"
+        lsp-java-content-provider-preferred "cfr"
         lsp-java-format-settings-url (lsp--path-to-uri "~/.emacs.d/java/formatter.xml")
         lsp-java-format-settings-profile "my-java")
 
