@@ -7,9 +7,6 @@
 
 ;; TODO: link commits from vc-log to magit-show-commit
 ;; TODO: smerge-mode
-(require-package 'gitignore-mode)
-(require-package 'gitconfig-mode)
-
 (use-package magit
   :demand t
   :config

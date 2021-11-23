@@ -372,4 +372,7 @@ With arg N, insert N newlines."
 
 (use-package dockerfile-mode)
 
+(with-eval-after-load 'nxml-mode
+  (unbind-key (kbd "C-c ]") 'nxml-mode-map))
+
 (provide 'init-editing-utils)
