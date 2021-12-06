@@ -5,6 +5,8 @@
   :group 'xwidget-webkit)
 
 (require 'xwidget)
+(with-eval-after-load 'xwidget
+  (defun xwidget-webkit--update-progress-timer-function (_)))
 (setq browse-url-browser-function 'xwidget-webkit-browse-url)
 
 (defun advice/after-xwidget-plus-webkit-browse-url (&rest _)
@@ -86,6 +88,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
           (lambda ()
             (setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
             (setq-local isearch-lazy-highlight nil)
+            (setq-local header-line-format nil)
             (local-set-key (kbd "C-s") #'isearch-forward)))
 
 (provide 'init-xwidget-webkit)

@@ -141,13 +141,15 @@ returns the command to execute."
           )))
 
 ;; hook
-(add-hook 'lsp-mode-hook (lambda ()
-                           (setq-local flycheck-idle-change-delay 1.0)
-                           (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
-                           (make-local-variable 'markdown-header-face-2)
-                           (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
-                           (if lsp-enable-format-at-save
-                               (lsp-enable-format))))
+(defun my-lsp-mode-hook ()
+  (setq-local flycheck-idle-change-delay 1.0)
+  (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+  (make-local-variable 'markdown-header-face-2)
+  (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
+  (if lsp-enable-format-at-save
+      (lsp-enable-format)))
+
+(add-hook 'lsp-mode-hook #'my-lsp-mode-hook)
 
 ;; lsp-ui
 (use-package lsp-ui
@@ -179,29 +181,21 @@ returns the command to execute."
       (progn
         (cancel-timer lsp-later-timer)
         (lsp-later-run))
-    (progn
-      (call-interactively 'lsp-workspace-shutdown)
-      (lsp-later))))
+    (call-interactively 'lsp-workspace-restart)))
 
 (defun lsp-later-run ()
   (setq lsp-later-timer nil)
   (lsp))
 
-(defun lsp-try-reconnect()
-  (if (and (not lsp-later-timer)
-           (not (lsp-workspaces)))
-      (lsp)))
-
 (defun lsp-later()
-  (let ((buf-name (buffer-name)))
+  (let ((buf (current-buffer)))
     (setq lsp-later-timer
           (run-at-time 3 nil
                        (lambda ()
-                         (when-let ((buf (get-buffer buf-name)))
-                           (with-current-buffer buf
-                             (lsp-later-run))))))))
+                         (with-current-buffer buf
+                             (lsp-later-run)))))))
 
-(add-hook 'doom-switch-buffer-hook #'lsp-try-reconnect nil 'local)
+;;(add-hook 'doom-switch-buffer-hook #'lsp-try-reconnect nil 'local)
 
 (add-hook 'hack-local-variables-hook
           (lambda ()
@@ -213,7 +207,7 @@ returns the command to execute."
 ;; lsp-modeline
 (defun lsp-modeline-get-symbol ()
   "Get the symbol under cursor ."
-  (if (lsp-feature? "textDocument/documentSymbol")
+  (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/documentSymbol"))
       (-if-let* ((lsp--document-symbols-request-async t)
                  (symbols (lsp--get-document-symbols))
                  (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols))
@@ -221,7 +215,7 @@ returns the command to execute."
                   (-map-indexed (lambda (index elt)
                                   (cons elt (1+ index)))
                                 symbols-hierarchy)))
-          (concat "=> "
+          (concat " => "
                   (mapconcat
                    (-lambda (((symbol &as &DocumentSymbol :name)
                               . index))

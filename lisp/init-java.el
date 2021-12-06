@@ -38,18 +38,21 @@
     (tab-width . 4)
     (c-offsets-alist . ((statement-cont . (max c-lineup-cascaded-calls
                                                (min c-lineup-multi-inher c-lineup-java-inher)))))))
-(add-hook 'java-mode-hook (lambda ()
-                            (lsp-later)
-                            (setq-local lsp-ui-sideline-show-code-actions nil)
-                            (setq-local lsp-response-timeout 30)
-                            (c-add-style "java-style" java-style t)
-                            (define-key java-mode-map (kbd "C-c a") 'lsp-java-add-import)
-                            (define-key java-mode-map (kbd "C-c t") 'lsp-java-add-throws)
-                            (define-key java-mode-map (kbd "C-c u") 'lsp-java-add-unimplemented-methods)
-                            (define-key java-mode-map (kbd "C-c o") 'lsp-java-generate-overrides)
-                            (define-key java-mode-map (kbd "C-c g") 'lsp-java-generate-getters-and-setters)
-                            (c-toggle-auto-newline -1)
-                            (setq fill-column 100)))
+
+(defun my-java-hook()
+  (setq-local lsp-response-timeout 30)
+  ;;(setq-local lsp-ui-sideline-show-code-actions nil)
+  (lsp-later)
+  (google-set-c-style-with-offset 4)
+  (define-key java-mode-map (kbd "C-c a") 'lsp-java-add-import)
+  (define-key java-mode-map (kbd "C-c t") 'lsp-java-add-throws)
+  (define-key java-mode-map (kbd "C-c u") 'lsp-java-add-unimplemented-methods)
+  (define-key java-mode-map (kbd "C-c o") 'lsp-java-generate-overrides)
+  (define-key java-mode-map (kbd "C-c g") 'lsp-java-generate-getters-and-setters)
+  (c-toggle-auto-newline -1)
+  (setq fill-column 100))
+
+(add-hook 'java-mode-hook #'my-java-hook)
 
 (provide 'init-java)
 ;;; init-java ends here

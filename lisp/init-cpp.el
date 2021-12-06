@@ -101,6 +101,16 @@ returned to avoid that the echo area grows uncomfortably."
 
 ;; styles
 (require 'google-c-style)
+(defun google-set-c-style-with-offset (n)
+  (interactive "noffset: ")
+  (let* ((copy (copy-tree google-c-style))
+         (new-style (mapcar (lambda (x)
+              (if (eq (car x) 'c-basic-offset)
+                  `(c-basic-offset . ,n)
+                x)) copy)))
+    (make-local-variable 'c-tab-always-indent)
+    (setq c-tab-always-indent t)
+    (c-add-style "Google" new-style t)))
 
 ;; hook
 (defun my-cpp-mode-hook ()
