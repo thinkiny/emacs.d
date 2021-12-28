@@ -58,7 +58,8 @@
 ;;(advice-add 'counsel-imenu-action :before #'xref-push-marker-stack-once)
 ;;(advice-add 'minibuffer-keyboard-quit :before #'xref-pop-marker-stack-maybe)
 
-(global-set-key (kbd "M-[") #'xref-pop-marker-stack)
+(global-set-key (kbd "M-[") #'xref-go-back)
+(global-set-key (kbd "M-]") #'xref-go-forward)
 (global-set-key (kbd "M-,") #'xref-find-references)
 
 (provide 'init-xref)
