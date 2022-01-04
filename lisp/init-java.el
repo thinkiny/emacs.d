@@ -14,6 +14,7 @@
   (require 'init-pom)
   (require 'dap-java)
 
+  (set-face-attribute 'lsp-java-progress-face nil :inherit nil)
   (setq lsp-java-import-maven-enabled t
         lsp-java-maven-download-sources t
         lsp-java-inhibit-message t
@@ -25,8 +26,13 @@
         lsp-java-format-settings-url (lsp--path-to-uri "~/.emacs.d/java/formatter.xml")
         lsp-java-format-settings-profile "my-java")
 
-  (add-to-list 'lsp-java-vmargs
-               (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
+  ;; (add-to-list 'lsp-java-vmargs
+  ;;              (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
+  (setq lsp-java-vmargs `("-XX:+UseG1GC"
+                          "-XX:MaxGCPauseMillis=150"
+                          "-Dsun.zip.disableMemoryMapping=true"
+                          "-Xms100m"
+                          ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar"))))
 
   (lsp-register-custom-settings
    '(("java.decompiler.fernflower.ind" lsp-java-decompiler-fernflower-ind)

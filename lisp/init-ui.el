@@ -77,7 +77,7 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'modus-operandi
+(defcustom custom-gui-theme 'cloud
   "Theme used in gui mode"
   :group 'faces
   :type 'symbol)
@@ -88,9 +88,12 @@
   :type 'symbol)
 
 (after-load-theme
- ;;(set-face-attribute 'fringe nil :background nil)
  (set-face-attribute 'button nil :background nil)
- (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4"))
+ (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
+ ;;(set-face-attribute 'fringe nil :background nil)
+ ;;(set-face-attribute 'default nil :foreground "#CECECE")
+ ;;(set-face-attribute 'ivy-virtual nil :foreground nil)
+ )
 
 (add-hook 'after-init-hook
           (lambda ()

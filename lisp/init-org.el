@@ -23,7 +23,10 @@
 ;;; Code:
 
 (require-package 'org-cliplink)
-(require-package 'org-plus-contrib)
+(require-package 'org-contrib)
+
+(use-package org-pdftools
+  :hook (org-mode . org-pdftools-setup-link))
 
 (defvar org-global-prefix-map (make-sparse-keymap)
   "A keymap for handy global access to org helpers, particularly clocking.")
@@ -275,11 +278,11 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
 
   (require 'ox-reveal)
-  (require 'ox-confluence)
   (require 'ox-gfm)
   (require 'org-sidebar)
   (org-beamer-mode)
   (unbind-key (kbd "C-,") org-mode-map)
+  (unbind-key (kbd "C-c $") org-mode-map)
   (unbind-key (kbd "C-c C-m") org-mode-map)
   (unbind-key (kbd "C-c [") org-mode-map)
   (unbind-key (kbd "C-c ]") org-mode-map)
