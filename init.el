@@ -41,6 +41,7 @@
 (require 'init-asm)
 (require 'init-erlang)
 (require 'init-run)
+(require 'init-js)
 
 ;;file
 (require 'init-markdown)

@@ -29,7 +29,7 @@
   ;; (add-to-list 'lsp-java-vmargs
   ;;              (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
   (setq lsp-java-vmargs `("-XX:+UseG1GC"
-                          "-XX:MaxGCPauseMillis=150"
+                          "-XX:MaxGCPauseMillis=100"
                           "-Dsun.zip.disableMemoryMapping=true"
                           "-Xms100m"
                           ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar"))))
