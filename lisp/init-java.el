@@ -46,7 +46,7 @@
                                                (min c-lineup-multi-inher c-lineup-java-inher)))))))
 
 (defun my-java-hook()
-  (setq-local lsp-response-timeout 30)
+  (setq-local lsp-response-timeout nil)
   ;;(setq-local lsp-ui-sideline-show-code-actions nil)
   (lsp-later)
   (google-set-c-style-with-offset 4)
