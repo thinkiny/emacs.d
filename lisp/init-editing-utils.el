@@ -375,4 +375,6 @@ With arg N, insert N newlines."
 (with-eval-after-load 'nxml-mode
   (unbind-key (kbd "C-c ]") 'nxml-mode-map))
 
+(setq haiku-use-system-tooltips nil)
+
 (provide 'init-editing-utils)
