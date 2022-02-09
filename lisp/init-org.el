@@ -273,6 +273,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
           (read-file-name "DocFile: " "~/Documents" "./")))
 
 (with-eval-after-load 'org
+  (require 'ob-sql-mode)
   ;; open file in the same window
   (setf (cdr (assoc 'file org-link-frame-setup)) 'find-file)
   (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
@@ -313,6 +314,12 @@ _k_: delete row   _l_: delete column  _s_: shorten
      (,(if (locate-library "ob-sh") 'sh 'shell) . t)
      (sql . t)
      (sqlite . t))))
+
+(use-package ob-sql-mode
+  :config
+  (setq org-confirm-babel-evaluate
+        (lambda (lang body)
+          (not (string= lang "sql-mode")))))
 
 (use-package org2ctex
   :config

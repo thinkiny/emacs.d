@@ -26,7 +26,9 @@
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil
-        lsp-signature-function #'my-lsp-lv-message)
+        lsp-signature-doc-lines 1
+        ;; lsp-signature-function #'my-lsp-lv-message
+        )
 
   (defun my-lsp-lv-message (message)
     (if message

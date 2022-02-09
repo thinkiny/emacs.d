@@ -98,14 +98,14 @@ This command currently blocks the UI, sorry."
                 (user-error "EXPLAIN failed")))))))))
 
 ;; mysql-to-org
-(require-package 'mysql-to-org)
-(add-hook 'mysql-to-org-mode-hook
-          (lambda ()
-            (define-key mysql-to-org-mode-map (kbd "C-c e") 'mysql-to-org-eval)
-            (define-key mysql-to-org-mode-map (kbd "C-c p") 'mysql-to-org-eval-string-at-point)
-            (define-key mysql-to-org-mode-map (kbd "C-c s") 'mysql-to-org-scratch)
-            (define-key mysql-to-org-mode-map (kbd "C-c 1") 'mysql-to-org-only-show-output-window)
-            (define-key mysql-to-org-mode-map (kbd "C-c r") 'mysql-to-org-reload-completion-candidates)))
+;; (require-package 'mysql-to-org)
+;; (add-hook 'mysql-to-org-mode-hook
+;;           (lambda ()
+;;             (define-key mysql-to-org-mode-map (kbd "C-c e") 'mysql-to-org-eval)
+;;             (define-key mysql-to-org-mode-map (kbd "C-c p") 'mysql-to-org-eval-string-at-point)
+;;             (define-key mysql-to-org-mode-map (kbd "C-c s") 'mysql-to-org-scratch)
+;;             (define-key mysql-to-org-mode-map (kbd "C-c 1") 'mysql-to-org-only-show-output-window)
+;;             (define-key mysql-to-org-mode-map (kbd "C-c r") 'mysql-to-org-reload-completion-candidates)))
 
 (defun make-sql-align-column (n &optional str)
   (setq str (or str ""))
@@ -124,9 +124,15 @@ This command currently blocks the UI, sorry."
       (align-regexp start end (make-sql-align-column 1) 1 2 nil)
       (align-regexp start end (make-sql-align-column 2) 1 2 nil))))
 
+
+(require-package 'sqlformat)
 (add-hook 'sql-mode-hook (lambda ()
                            (local-set-key (kbd "C-c C-t") #'align-create-table)
-                           (local-set-key (kbd "C-c C-f") #'format-current-buffer)))
+                           (local-set-key (kbd "C-c C-f") #'sqlformat)))
+
+
+(add-hook 'sql-mode-hook 'lsp-later)
+(setq lsp-sqls-workspace-config-path nil)
 
 (provide 'init-sql)
 ;;; init-sql.el ends here
