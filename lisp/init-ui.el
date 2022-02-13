@@ -41,6 +41,9 @@
   (use-package all-the-icons-dired)
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
+(use-package all-the-icons-ibuffer
+  :init (all-the-icons-ibuffer-mode 1))
+
 ;; doom-themes
 (require-package 'doom-themes)
 (setq doom-themes-enable-bold t
