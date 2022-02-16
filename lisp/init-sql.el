@@ -126,13 +126,29 @@ This command currently blocks the UI, sorry."
 
 
 (require-package 'sqlformat)
-(add-hook 'sql-mode-hook (lambda ()
-                           (local-set-key (kbd "C-c C-t") #'align-create-table)
-                           (local-set-key (kbd "C-c C-f") #'sqlformat)))
 
+(with-eval-after-load 'lsp-sqls
+  (defun lsp-sql-execute-current (&optional command)
+  "Execute COMMAND on paragraph against current database."
+  (interactive)
+  (let ((start (or (save-excursion (re-search-backward "\n\\|;" nil t)) 0))
+        (end (or (save-excursion (search-forward ";" nil t)) (point-max))))
+    (lsp-sql-execute-query command start end)))
 
-(add-hook 'sql-mode-hook 'lsp-later)
-(setq lsp-sqls-workspace-config-path nil)
+  (defun lsp-sql-execute-file (&optional command)
+    "Execute COMMAND on file against current database."
+    (interactive)
+    (lsp-sql-execute-query command (point-min) (point-max))))
+
+(defun my-sql-hook()
+  (lsp)
+  (local-set-key (kbd "C-c C-t") #'align-create-table)
+  (local-set-key (kbd "C-c C-f") #'sqlformat)
+  (local-set-key (kbd "C-x C-e") #'lsp-sql-execute-current)
+  (local-set-key (kbd "C-x C-p") #'lsp-sql-execute-paragraph)
+  (local-set-key (kbd "C-x C-l") #'lsp-sql-execute-file))
+
+(add-hook 'sql-mode-hook #'my-sql-hook)
 
 (provide 'init-sql)
 ;;; init-sql.el ends here
