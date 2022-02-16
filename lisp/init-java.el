@@ -29,7 +29,7 @@
   ;; (add-to-list 'lsp-java-vmargs
   ;;              (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
   (setq lsp-java-vmargs `("-XX:+UseG1GC"
-                          "-XX:MaxGCPauseMillis=100"
+                          "-XX:MaxGCPauseMillis=200"
                           "-Dsun.zip.disableMemoryMapping=true"
                           "-Xms100m"
                           ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar"))))
@@ -48,6 +48,7 @@
 (defun my-java-hook()
   (setq-local lsp-response-timeout nil)
   ;;(setq-local lsp-ui-sideline-show-code-actions nil)
+  (setq-local lsp-enable-format-at-save nil)
   (lsp-later)
   (google-set-c-style-with-offset 4)
   (define-key java-mode-map (kbd "C-c a") 'lsp-java-add-import)

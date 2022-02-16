@@ -27,7 +27,7 @@
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil
         lsp-signature-doc-lines 1
-        ;; lsp-signature-function #'my-lsp-lv-message
+        lsp-signature-function #'my-lsp-lv-message
         )
 
   (defun my-lsp-lv-message (message)
@@ -42,6 +42,29 @@
         (call-interactively #'lsp-format-region)
       (lsp-format-buffer)))
 
+  (defun lsp--text-document-code-action-params-line (&optional kind)
+    "Code action params."
+    (list :textDocument (lsp--text-document-identifier)
+          :range  (lsp--region-to-range (line-beginning-position) (line-end-position))
+          :context `( :diagnostics ,(lsp-cur-line-diagnostics)
+                      ,@(when kind (list :only (vector kind))))))
+
+  (defun lsp-code-actions-this-line (&optional kind)
+    "Retrieve the code actions for the active region or the current line.
+It will filter by KIND if non nil."
+    (lsp-request "textDocument/codeAction" (lsp--text-document-code-action-params-line kind)))
+
+  (lsp-defun lsp-execute-code-action-this-line ((action &as &CodeAction :command? :edit?))
+    "Execute code action ACTION.
+If ACTION is not set it will be selected from `lsp-code-actions-at-point'.
+Request codeAction/resolve for more info if server supports."
+  (interactive (list (lsp--select-action (lsp-code-actions-this-line))))
+  (if (and (lsp-feature? "codeAction/resolve")
+           (not command?)
+           (not edit?))
+      (lsp--execute-code-action (lsp-request "codeAction/resolve" action))
+    (lsp--execute-code-action action)))
+
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
   (define-key lsp-mode-map (kbd "C-c i") 'lsp-organize-imports)
@@ -53,7 +76,7 @@
   ;;(define-key lsp-mode-map (kbd "C-c v") 'lsp-ui-peek-find-implementation)
   (define-key lsp-mode-map (kbd "C-c v") 'lsp-find-implementation)
   (define-key lsp-mode-map (kbd "C-c e") 'lsp-ui-flycheck-list)
-  (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action)
+  (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action-this-line)
   (define-key lsp-mode-map (kbd "C-c s a") 'lsp-signature-activate)
   (define-key lsp-mode-map (kbd "C-c C-f") 'my-lsp-format)
   (define-key lsp-signature-mode-map (kbd "M-j") #'lsp-signature-next)
