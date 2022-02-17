@@ -71,11 +71,11 @@
 
   (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection)
 
-  ;; (defun advice/after-pdf-outline-follow-link(&rest _)
-  ;;   (pdf-cscroll-close-window-when-dual)
-  ;;   (delete-other-windows-vertically))
+  (defun advice/after-pdf-outline-follow-link(&rest _)
+    (pdf-cscroll-close-window-when-dual)
+    (delete-other-windows-vertically))
 
-  ;; (advice-add #'pdf-outline-follow-link :after #'advice/after-pdf-outline-follow-link)
+  (advice-add #'pdf-outline-follow-link :after #'advice/after-pdf-outline-follow-link)
 
   (with-eval-after-load 'pdf-annot
     (defun +pdf-cleanup-windows-h ()
@@ -87,9 +87,7 @@
       (let ((contents-buffer (get-buffer "*Contents*")))
         (when (and contents-buffer (buffer-live-p contents-buffer))
           (kill-buffer contents-buffer))))
-    (add-hook 'kill-buffer-hook #'+pdf-cleanup-windows-h nil t))
-  (require 'pdf-continuous-scroll-mode)
-  (setq pdf-continuous-suppress-introduction t))
+    (add-hook 'kill-buffer-hook #'+pdf-cleanup-windows-h nil t)))
 
 (after-load-theme
  (setq pdf-view-midnight-colors
@@ -107,15 +105,21 @@
   (cua-mode -1)
   (setq-local left-fringe-width 1)
   (pdf-view-midnight-minor-mode)
+  (require 'pdf-continuous-scroll-mode)
+  (pdf-continuous-scroll-mode)
+  (pdf-cscroll-toggle-mode-line)
   (unbind-key (kbd "N") 'pdf-history-minor-mode-map)
   (local-set-key (kbd "q") #'kill-current-buffer)
   (local-set-key (kbd "0") #'pdf-view-goto-page-start)
   (local-set-key (kbd "N") #'pdf-view-scroll-up-or-next-page)
   (local-set-key (kbd "P") #'pdf-view-scroll-down-or-previous-page)
-  (define-key pdf-view-mode-map (kbd "C-v") #'pdf-continuous-next-page)
-  (define-key pdf-view-mode-map (kbd "M-v")  #'pdf-continuous-previous-page)
+  (local-set-key (kbd "C-v") #'pdf-continuous-next-page)
+  (local-set-key (kbd "M-v") #'pdf-continuous-previous-page)
+  (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
+  (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
   (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
-  (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse))
+  (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
+  (add-function :after after-focus-change-function 'pdf-cscroll-close-window-when-dual))
 
 (use-package pdf-view-restore
   :commands (pdf-view-restore-mode)
@@ -124,3 +128,4 @@
   :hook ((pdf-view-mode . pdf-view-restore-mode)))
 
 (provide 'init-pdf)
+

@@ -141,6 +141,7 @@ This command currently blocks the UI, sorry."
     (lsp-sql-execute-query command (point-min) (point-max))))
 
 (defun my-sql-hook()
+  (setq-local lsp-enable-format-at-save nil)
   (lsp)
   (local-set-key (kbd "C-c C-t") #'align-create-table)
   (local-set-key (kbd "C-c C-f") #'sqlformat)
