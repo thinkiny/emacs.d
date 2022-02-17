@@ -24,12 +24,12 @@
 (global-set-key (kbd "C-x c g") #'customize-group)
 
 ;; scroll
-(if (fboundp 'pixel-scroll-precision-mode)
-    (pixel-scroll-precision-mode)
-  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
-  (setq mouse-wheel-progressive-speed nil)
-  (setq mouse-wheel-follow-mouse 't)
-  (setq scroll-step 1))
+;; (if (fboundp 'pixel-scroll-precision-mode)
+;;     (pixel-scroll-precision-mode)
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+(setq mouse-wheel-progressive-speed nil)
+(setq mouse-wheel-follow-mouse 't)
+(setq scroll-step 1)
 
 (let ((no-border '(internal-border-width . 0)))
   (add-to-list 'default-frame-alist no-border)
