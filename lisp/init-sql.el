@@ -6,9 +6,6 @@
   ;; sql-mode pretty much requires your psql to be uncustomised from stock settings
   (push "--no-psqlrc" sql-postgres-options))
 
-(require-package 'sql-indent)
-(add-hook 'sql-mode-hook 'sql-indent-enable)
-
 (defun sanityinc/fix-postgres-prompt-regexp ()
   "Work around https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22596.
 Fix for the above hasn't been released as of Emacs 25.2."
@@ -123,9 +120,6 @@ This command currently blocks the UI, sorry."
       (align-regexp start end (make-sql-align-column 0) 1 2 nil)
       (align-regexp start end (make-sql-align-column 1) 1 2 nil)
       (align-regexp start end (make-sql-align-column 2) 1 2 nil))))
-
-
-(require-package 'sqlformat)
 
 (with-eval-after-load 'lsp-sqls
   (defun lsp-sql-execute-current (&optional command)
