@@ -81,6 +81,8 @@
                   (if term-port
                       (list "-p" term-port))
                   (concat "\"cd '" term-localname "' && $SHELL -l\""))))
+          ("docker"
+           (list "docker" "exec" "-it" term-host "/bin/bash"))
           (tramp-jumper-method
            (list tramp-jumper-exec term-user term-host
                  (concat "cd '" term-localname "'")))))
@@ -116,6 +118,8 @@
     (switch-to-buffer (vterm name))
     (if (tramp-tramp-file-p default-directory)
         (with-parsed-tramp-file-name default-directory term
+          (vterm--flush-output (format "cd '%s'\n" term-localname))
+          (vterm--flush-output "clear\n")
           (setq-local tramp-default-method term-method)))
     (rename-buffer name)))
 

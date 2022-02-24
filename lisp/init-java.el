@@ -56,6 +56,7 @@
   (define-key java-mode-map (kbd "C-c u") 'lsp-java-add-unimplemented-methods)
   (define-key java-mode-map (kbd "C-c o") 'lsp-java-generate-overrides)
   (define-key java-mode-map (kbd "C-c g") 'lsp-java-generate-getters-and-setters)
+  (define-key java-mode-map (kbd "C-c w u") 'lsp-java-update-project-configuration )
   (c-toggle-auto-newline -1)
   (setq fill-column 100))
 

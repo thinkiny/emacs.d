@@ -127,6 +127,7 @@ and binds some keystroke with `term-raw-map'."
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 60)
   (setq vterm-max-scrollback 4000)
+  (setq vterm-tramp-shells nil)
 
   (defun vterm-copy-text ()
     (interactive)
