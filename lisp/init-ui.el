@@ -82,7 +82,7 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'modus-operandi
+(defcustom custom-gui-theme 'cloud
   "Theme used in gui mode"
   :group 'faces
   :type 'symbol)
