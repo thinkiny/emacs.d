@@ -129,6 +129,14 @@ This command currently blocks the UI, sorry."
         (end (or (save-excursion (search-forward ";" nil t)) (point-max))))
     (lsp-sql-execute-query command start end)))
 
+  (defun lsp-sqls--show-results (result)
+    (with-current-buffer (get-buffer-create "*sqls results*")
+      (goto-char (point-max))
+      (insert result)
+      (display-buffer (current-buffer))
+      (set-window-point (get-buffer-window) (point-max))))
+
+
   (defun lsp-sql-execute-file (&optional command)
     "Execute COMMAND on file against current database."
     (interactive)

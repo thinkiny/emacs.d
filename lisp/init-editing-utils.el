@@ -330,7 +330,12 @@ With arg N, insert N newlines."
 (global-set-key (kbd "M-x") 'smex)
 
 ;; protobuf
-(use-package protobuf-mode :mode (("\\.proto$" . protobuf-mode) ("\\.proto3$" . protobuf-mode)))
+(use-package protobuf-mode
+  :mode (("\\.proto$" . protobuf-mode) ("\\.proto3$" . protobuf-mode))
+  :config
+  (add-hook 'protobuf-mode
+            (lambda ()
+              (add-hook 'xref-backend-functions #'dumb-jump-xref-activate nil t))))
 
 ;; clipetty
 (use-package clipetty
@@ -376,5 +381,7 @@ With arg N, insert N newlines."
   (unbind-key (kbd "C-c ]") 'nxml-mode-map))
 
 (setq haiku-use-system-tooltips nil)
+
+(use-package dumb-jump)
 
 (provide 'init-editing-utils)
