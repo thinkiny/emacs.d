@@ -125,9 +125,9 @@ This command currently blocks the UI, sorry."
   (defun lsp-sql-execute-current (&optional command)
   "Execute COMMAND on paragraph against current database."
   (interactive)
-  (let ((start (or (save-excursion (re-search-backward "\n\\|;" nil t)) 0))
+  (let ((start (or (save-excursion (re-search-backward ";" nil t)) -1))
         (end (or (save-excursion (search-forward ";" nil t)) (point-max))))
-    (lsp-sql-execute-query command start end)))
+    (lsp-sql-execute-query command (+ start 1) end)))
 
   (defun lsp-sqls--show-results (result)
     (with-current-buffer (get-buffer-create "*sqls results*")
