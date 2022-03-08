@@ -3,8 +3,7 @@
   :config
   (diminish 'lsp-mode)
   (require 'lsp-diagnostics)
-  (setq lsp-enable-file-watchers nil
-        lsp-inhibit-message t
+  (setq lsp-inhibit-message t
         lsp-diagnostics-provider :flycheck
         lsp-modeline-diagnostics-enable nil
         lsp-modeline-code-actions-enable nil
@@ -15,6 +14,7 @@
         lsp-file-watch-threshold nil
         lsp-before-save-edits nil
         lsp-eldoc-render-all  nil
+        ;; lsp-enable-file-watchers nil
         lsp-lens-enable nil
         lsp-signature-render-documentation nil
         lsp-enable-folding nil

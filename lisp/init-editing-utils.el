@@ -333,7 +333,7 @@ With arg N, insert N newlines."
 (use-package protobuf-mode
   :mode (("\\.proto$" . protobuf-mode) ("\\.proto3$" . protobuf-mode))
   :config
-  (add-hook 'protobuf-mode
+  (add-hook 'protobuf-mode-hook
             (lambda ()
               (add-hook 'xref-backend-functions #'dumb-jump-xref-activate nil t))))
 

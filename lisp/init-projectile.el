@@ -6,7 +6,10 @@
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
   (define-key projectile-command-map (kbd "0") #'projectile-kill-no-files)
+  (define-key projectile-command-map (kbd "u") #'projectile-revert-project-buffers)
   (setq projectile-completion-system 'ivy)
+  (setq projectile-enable-caching t)
+  (setq projectile-indexing-method 'native)
   (projectile-mode)
 
   ;; don't use file-truename
@@ -28,6 +31,22 @@
         (if (not (string-match "^\*" (string-trim-left (buffer-name buffer))))
             (kill-buffer buffer))))
     (message (format "Killed buffers not belongs to %s" project-name))))
+
+
+(defun projectile-revert-project-buffers ()
+  "Revert buffers belongs to this project"
+  (interactive)
+  (let* ((project (projectile-ensure-project (projectile-project-root)))
+         (project-name (projectile-project-name project))
+         (buffers (cl-remove-if
+                   (lambda (buffer)
+                     (not (projectile-project-buffer-p buffer project)))
+                   (buffer-list))))
+    (progn
+      (dolist (buffer buffers)
+        (with-current-buffer buffer
+          (revert-buffer nil t))))
+    (message (format "Revert buffers for %s" project-name))))
 
 (defun projectile-kill-no-files ()
   "Kill buffers not belongs to this project including dired-mode buffer"
