@@ -45,7 +45,8 @@
     (progn
       (dolist (buffer buffers)
         (with-current-buffer buffer
-          (revert-buffer nil t))))
+          (if (buffer-file-name)
+              (revert-buffer nil t)))))
     (message (format "Revert buffers for %s" project-name))))
 
 (defun projectile-kill-no-files ()
@@ -60,9 +61,9 @@
                    (buffer-list))))
     (progn
       (dolist (buffer buffers)
-        (if (not (string-match "^\*" (string-trim-left (buffer-name buffer))))
-            (kill-buffer buffer))))
-    (message "Killed buffers not having files associcated")))
+        (unless (buffer-file-name buffer)
+            (kill-buffer buffer)))))
+    (message "Killed buffers not having files associcated"))
 
 
 (use-package ag

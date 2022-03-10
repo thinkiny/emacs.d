@@ -39,10 +39,11 @@
 (use-package all-the-icons)
 (when window-system
   (use-package all-the-icons-dired)
+  (window-divider-mode)
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
 (use-package all-the-icons-ibuffer
-  :init (all-the-icons-ibuffer-mode 1))
+  :init (all-the-icons-ibuffer-mode))
 
 ;; doom-themes
 (require-package 'doom-themes)
@@ -76,6 +77,7 @@
 ;; themes
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
+(require-package 'inkpot-theme)
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
@@ -95,10 +97,13 @@
 (after-load-theme
  (set-face-attribute 'button nil :background nil)
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
- ;;(set-face-attribute 'fringe nil :background nil)
- ;;(set-face-attribute 'default nil :foreground "#CECECE")
- ;;(set-face-attribute 'ivy-virtual nil :foreground nil)
- )
+ (set-face-attribute 'fringe nil :background nil)
+ (when (s-starts-with? "doom-" (symbol-name  (car custom-enabled-themes)))
+   (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
+   (set-face-attribute 'all-the-icons-ibuffer-size-face nil :inherit nil)
+   (set-face-attribute 'all-the-icons-ivy-rich-size-face nil :inherit nil)
+   (set-face-attribute 'default nil :foreground "#C4C4C4")
+   (set-face-attribute 'ivy-virtual nil :foreground nil)))
 
 (add-hook 'after-init-hook
           (lambda ()
