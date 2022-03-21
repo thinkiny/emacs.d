@@ -84,21 +84,19 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-gui-theme 'cloud
+(defcustom custom-theme (cons 'doom-opera 'dark)
   "Theme used in gui mode"
   :group 'faces
-  :type 'symbol)
+  :type 'cons)
 
-(defcustom custom-terminal-theme 'doom-one
-  "Theme used in terminal mode"
-  :group 'faces
-  :type 'symbol)
+(defun is-custom-theme-dark ()
+  (eq 'dark (cdr custom-theme)))
 
 (after-load-theme
  (set-face-attribute 'button nil :background nil)
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
  (set-face-attribute 'fringe nil :background nil)
- (when (s-starts-with? "doom-" (symbol-name  (car custom-enabled-themes)))
+ (when (is-custom-theme-dark)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
    (set-face-attribute 'all-the-icons-ibuffer-size-face nil :inherit nil)
    (set-face-attribute 'all-the-icons-ivy-rich-size-face nil :inherit nil)
@@ -107,9 +105,7 @@
 
 (add-hook 'after-init-hook
           (lambda ()
-            (if window-system
-                (load-theme custom-gui-theme t)
-              (load-theme custom-terminal-theme t))
+            (load-theme (car custom-theme) t)
             (run-hooks 'load-theme-hook)))
 
 ;;fonts
