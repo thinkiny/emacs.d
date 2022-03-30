@@ -89,9 +89,10 @@
           (kill-buffer contents-buffer))))
     (add-hook 'kill-buffer-hook #'+pdf-cleanup-windows-h nil t)))
 
-(after-load-theme
- (setq pdf-view-midnight-colors
-       `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background))))
+(add-hook 'pdf-view-midnight-minor-mode-hook
+          (lambda ()
+            (setq pdf-view-midnight-colors
+                  `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
 
 (defun my-pdf-view-mode-hook()
   (company-mode -1)
@@ -128,4 +129,3 @@
   :hook ((pdf-view-mode . pdf-view-restore-mode)))
 
 (provide 'init-pdf)
-

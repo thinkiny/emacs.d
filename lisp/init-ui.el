@@ -84,7 +84,7 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-theme (cons 'doom-opera 'dark)
+(defcustom custom-theme (cons 'cloud 'light)
   "Theme used in gui mode"
   :group 'faces
   :type 'cons)

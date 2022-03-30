@@ -101,7 +101,7 @@
                        (lambda (file)
                          (let* ((dir (file-name-directory file))
                                 (file-name (file-name-nondirectory file))
-                                (command (concat "amm --color false " file-name)))
+                                (command (concat "scala-cli " file-name)))
                            (run-command-with-output (format "*ScalaRun-%s*" file-name) dir command))))
 
 

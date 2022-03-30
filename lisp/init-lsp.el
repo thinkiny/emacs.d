@@ -193,7 +193,7 @@ returns the command to execute."
         lsp-ui-peek-enable t
         lsp-ui-peek-fontify 'always
         lsp-ui-sideline-delay 0.2)
-  (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1")
+  (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple3")
   )
 ;; (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
 ;;(define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
