@@ -46,7 +46,6 @@
                                                (min c-lineup-multi-inher c-lineup-java-inher)))))))
 
 (defun my-java-hook()
-  (setq-local lsp-response-timeout nil)
   ;;(setq-local lsp-ui-sideline-show-code-actions nil)
   (setq-local lsp-enable-format-at-save nil)
   (lsp-later)

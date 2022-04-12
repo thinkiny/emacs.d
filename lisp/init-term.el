@@ -124,8 +124,10 @@ and binds some keystroke with `term-raw-map'."
 (use-package vterm
   :commands (vterm-mode vterm)
   :config
-  (if (is-custom-theme-dark)
-      (set-face-attribute 'vterm-color-black nil :background "#9099AB"))
+  (when (is-custom-theme-dark)
+    ;;(set-face-attribute 'ansi-color-black nil :background "#9099AB")
+    (set-face-foreground 'ansi-color-blue "skyblue3")
+    (set-face-foreground 'ansi-color-red "IndianRed1"))
 
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 60)

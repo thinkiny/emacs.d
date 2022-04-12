@@ -27,8 +27,7 @@
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil
         lsp-signature-doc-lines 1
-        lsp-signature-function #'my-lsp-lv-message
-        )
+        lsp-signature-function #'my-lsp-lv-message)
 
   (defun my-lsp-lv-message (message)
     (if message
@@ -58,12 +57,12 @@ It will filter by KIND if non nil."
     "Execute code action ACTION.
 If ACTION is not set it will be selected from `lsp-code-actions-at-point'.
 Request codeAction/resolve for more info if server supports."
-  (interactive (list (lsp--select-action (lsp-code-actions-this-line))))
-  (if (and (lsp-feature? "codeAction/resolve")
-           (not command?)
-           (not edit?))
-      (lsp--execute-code-action (lsp-request "codeAction/resolve" action))
-    (lsp--execute-code-action action)))
+    (interactive (list (lsp--select-action (lsp-code-actions-this-line))))
+    (if (and (lsp-feature? "codeAction/resolve")
+             (not command?)
+             (not edit?))
+        (lsp--execute-code-action (lsp-request "codeAction/resolve" action))
+      (lsp--execute-code-action action)))
 
   (define-key lsp-mode-map (kbd "C-c r") 'lsp-rename)
   (define-key lsp-mode-map (kbd "C-c a") 'lsp-avy-lens)
@@ -193,7 +192,7 @@ returns the command to execute."
         lsp-ui-peek-enable t
         lsp-ui-peek-fontify 'always
         lsp-ui-sideline-delay 0.2)
-  (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple3")
+  (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1")
   )
 ;; (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
 ;;(define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
@@ -220,7 +219,7 @@ returns the command to execute."
           (run-at-time 3 nil
                        (lambda ()
                          (with-current-buffer buf
-                             (lsp-later-run)))))))
+                           (lsp-later-run)))))))
 
 ;;(add-hook 'doom-switch-buffer-hook #'lsp-try-reconnect nil 'local)
 
