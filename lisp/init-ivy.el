@@ -51,7 +51,7 @@
 
   (global-set-key (kbd "C-c l") 'counsel-imenu)
   (global-set-key (kbd "C-c s s") 'counsel-ag)
-  (global-set-key (kbd "C-c s .") 'counsel-ag-here)
+  (global-set-key (kbd "C-c s d") 'counsel-ag-here)
   (global-set-key (kbd "C-c s t") 'counsel-ag-filetype)
   (counsel-mode))
 
