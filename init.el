@@ -42,6 +42,7 @@
 (require 'init-erlang)
 (require 'init-run)
 (require 'init-js)
+(require 'init-kotlin)
 
 ;;file
 (require 'init-markdown)
