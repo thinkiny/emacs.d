@@ -27,6 +27,7 @@
               truncate-partial-width-windows nil
               nxml-slash-auto-complete-flag t
               warning-minimum-level :error
+              select-safe-coding-system-function nil
               line-number-mode t)
 
 (put 'erase-buffer 'disabled nil)

@@ -11,6 +11,7 @@
   (setq ls-lisp-dirs-first t)
   (setq ls-lisp-use-insert-directory-program nil)
   (setq dired-recursive-deletes 'top)
+  (setq dired-free-space nil)
   (setq dired-omit-files "^\\.?#\\|^\\.$\\|\\.cmd$\\|\\.d$")
   (setq dired-omit-verbose nil)
   (setq dired-listing-switches "-aBhl --group-directories-first")
@@ -19,7 +20,8 @@
   (define-key dired-mode-map (kbd "RET") 'dired-find-alternate-file)
   (define-key dired-mode-map (kbd "^") (lambda () (interactive) (find-alternate-file "..")))
   (define-key dired-mode-map [mouse-2] 'dired-find-file)
-  (define-key dired-mode-map (kbd "C-c C-q") 'wdired-change-to-wdired-mode))
+  (define-key dired-mode-map (kbd "C-c C-q") 'wdired-change-to-wdired-mode)
+  (add-hook 'dired-mode 'dired-async-mode))
 
 (use-package ztree)
 

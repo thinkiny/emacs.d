@@ -1,6 +1,5 @@
 ;; (setq mac-option-modifier 'super)
 ;; (setq mac-command-modifier 'meta)
-(setq dired-use-ls-dired nil)
 
 (setq-default locate-command "mdfind")
 
