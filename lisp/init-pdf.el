@@ -65,9 +65,11 @@
   (defun pdf-translate-selection (&rest _)
     "Translate the selected word"
     (interactive)
-    (let ((text (car (pdf-view-active-region-text))))
-      (if (> (length text) 0)
-          (bing-dict-brief text))))
+    (run-with-idle-timer 0.1 nil (lambda ()
+                                   (let ((text (car (pdf-view-active-region-text))))
+                                     (if (> (length text) 0)
+                                         (bing-dict-brief text))))))
+
 
   (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection)
 

@@ -121,7 +121,7 @@ returned to avoid that the echo area grows uncomfortably."
   (define-key c-mode-base-map (kbd "C-c b b") 'build-cpp-project)
   (local-set-key (kbd "C-c a") 'disaster)
   (if (gtags-get-rootpath)
-      (global-tags-exclusive-backend-mode)
+      (gtags-mode)
     (lsp-later))
   (add-hook 'lsp-mode-hook (lambda ()
                              (define-key lsp-mode-map (kbd "C-c a") nil)) nil t))
