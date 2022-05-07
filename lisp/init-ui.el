@@ -43,7 +43,7 @@
   (add-hook 'dired-mode-hook
             (lambda ()
               (all-the-icons-dired-mode)
-              (if (tramp-tramp-file-p default-directory)
+              (if (file-remote-p default-directory)
                   (font-lock-mode -1)))))
 
 (use-package all-the-icons-ibuffer

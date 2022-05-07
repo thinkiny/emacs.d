@@ -6,9 +6,11 @@
 (require-package 'pip-requirements)
 
 (defvar-local lsp-pylsp-extra-paths [])
+(defvar-local lsp-pylsp-cache-for [])
 (with-eval-after-load 'lsp-mode
   ;;(setq lsp-pylsp-plugins-yapf-enabled t)
-  (lsp-register-custom-settings '(("pylsp.plugins.jedi.extra_paths" lsp-pylsp-extra-paths)))
+  (lsp-register-custom-settings '(("pylsp.plugins.jedi.extra_paths" lsp-pylsp-extra-paths)
+                                  ("pylsp.plugins.jedi_completion.cache_for" lsp-pylsp-cache-for)))
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-tramp-connection-fast
                                      (lambda () lsp-pylsp-server-command))
