@@ -13,21 +13,22 @@
         lsp-enable-text-document-color nil
         lsp-file-watch-threshold nil
         lsp-before-save-edits nil
-        lsp-eldoc-render-all  nil
-        ;; lsp-enable-file-watchers nil
+        lsp-eldoc-render-all nil
+        lsp-enable-file-watchers nil
         lsp-lens-enable nil
         lsp-signature-render-documentation nil
         lsp-enable-folding nil
         lsp-enable-links nil
         lsp-keep-workspace-alive nil
         lsp-log-io nil
-        lsp-idle-delay 0.5
+        lsp-idle-delay 1
         ;;lsp-auto-guess-root t
         lsp-headerline-breadcrumb-enable nil
         lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil
-        lsp-signature-doc-lines 1
-        lsp-signature-function #'my-lsp-lv-message)
+        ;; lsp-signature-doc-lines 1
+        ;; lsp-signature-function #'my-lsp-lv-message
+        )
 
   (defun my-lsp-lv-message (message)
     (if message
@@ -183,6 +184,7 @@ returns the command to execute."
   (setq lsp-ui-sideline-update-mode 'line
         lsp-ui-doc-enable nil
         lsp-ui-doc-position 'at-point
+        lsp-ui-doc-show-with-cursor t
         lsp-ui-sideline-enable t
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-show-symbol nil
@@ -190,10 +192,8 @@ returns the command to execute."
         lsp-ui-sideline-show-diagnostics t
         lsp-ui-imenu-enable nil
         lsp-ui-peek-enable t
-        lsp-ui-peek-fontify 'always
         lsp-ui-sideline-delay 0.2)
-  (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1")
-  )
+  (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1"))
 ;; (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
 ;;(define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
 
