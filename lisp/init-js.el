@@ -21,6 +21,10 @@
 ;; (with-eval-after-load 'js-mode
 ;;   (unbind-key (kbd "M-.") 'js-mode-map))
 
-(add-hook 'js-mode-hook (lambda ()
-                          (lsp-later)))
+(defun my-js-mode-hook ()
+  (unless (string= "json" (file-name-extension (buffer-file-name)))
+    (lsp-later)))
+
+(add-hook 'js-mode-hook #'my-js-mode-hook)
+
 (provide 'init-js)
