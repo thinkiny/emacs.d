@@ -383,6 +383,12 @@ With arg N, insert N newlines."
 
 (setq haiku-use-system-tooltips nil)
 
-(use-package dumb-jump)
+;; dumb-jump
+(use-package dumb-jump
+  :demand t
+  :config
+  (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
+  (setq xref-backend-functions (remq 'etags--xref-backend xref-backend-functions))
+  (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate t))
 
 (provide 'init-editing-utils)

@@ -9,6 +9,7 @@
         lsp-modeline-code-actions-enable nil
         lsp-enable-symbol-highlighting nil
         lsp-enable-indentation nil
+        lsp-enable-xref nil
         lsp-enable-on-type-formatting nil
         lsp-enable-text-document-color nil
         lsp-file-watch-threshold nil
@@ -171,6 +172,7 @@ returns the command to execute."
   (setq-local flycheck-idle-change-delay 1.0)
   (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
   (make-local-variable 'markdown-header-face-2)
+  (add-hook 'xref-backend-functions #'lsp--xref-backend)
   (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
   (if lsp-enable-format-at-save
       (lsp-enable-format)))
@@ -193,7 +195,9 @@ returns the command to execute."
         lsp-ui-imenu-enable nil
         lsp-ui-peek-enable t
         lsp-ui-sideline-delay 0.2)
-  (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1"))
+  (if (is-custom-theme-dark)
+      (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1")
+    (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple4")))
 ;; (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
 ;;(define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
 
@@ -230,25 +234,20 @@ returns the command to execute."
               (lsp-later-run))))
 
 
-;; lsp-modeline
-(defun lsp-modeline-get-symbol ()
-  "Get the symbol under cursor ."
-  (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/documentSymbol"))
-      (-if-let* ((lsp--document-symbols-request-async t)
-                 (symbols (lsp--get-document-symbols))
-                 (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols))
-                 (enumerated-symbols-hierarchy
-                  (-map-indexed (lambda (index elt)
-                                  (cons elt (1+ index)))
-                                symbols-hierarchy)))
-          (concat " => "
-                  (mapconcat
-                   (-lambda (((symbol &as &DocumentSymbol :name)
-                              . index))
-                     (gethash "name" symbol))
-                   enumerated-symbols-hierarchy "/"))
-        "")
-    ""))
+(with-eval-after-load 'lsp-mode
+  (defun lsp-modeline-get-symbol-name ()
+    "Get the symbol under cursor ."
+    (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/documentSymbol"))
+        (-if-let* ((lsp--document-symbols-request-async t)
+                   (symbols (lsp--get-document-symbols))
+                   (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols)))
+            (concat " => "
+                    (mapconcat
+                     (lambda (symbol)
+                       (gethash "name" symbol))
+                     symbols-hierarchy "/"))
+          "")
+      "")))
 
 (defun lsp-enable-log-io()
   (interactive)

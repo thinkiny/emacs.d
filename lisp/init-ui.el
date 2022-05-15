@@ -164,8 +164,8 @@
 
 ;; update lsp-symbol every two seconds
 (run-at-time 2 2 (lambda ()
-                   (if (bound-and-true-p lsp-mode)
-                       (setq lsp-modeline-symbol (funcall 'lsp-modeline-get-symbol))
+                   (if (fboundp 'lsp-modeline-get-symbol-name)
+                       (setq lsp-modeline-symbol (lsp-modeline-get-symbol-name))
                      (setq lsp-modeline-symbol ""))))
 
 (setq-default auto-revert-check-vc-info t)
@@ -174,6 +174,7 @@
               '((:eval (mode-line-linum))
                 " "
                 mode-line-buffer-identification
+                lsp-modeline-symbol
                 " ["
                 mode-name
                 ;;minor-mode-alist
@@ -181,7 +182,6 @@
                 ;;(vc-mode vc-mode)
                 " "
                 global-mode-string
-                lsp-modeline-symbol
                 ))
 
 ;; (use-package centaur-tabs
