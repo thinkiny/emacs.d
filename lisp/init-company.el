@@ -20,11 +20,8 @@
   (global-set-key (kbd "M-/") 'company-complete)
   (setq company-format-margin-function nil)
   (setq company-require-match nil)
-  (setq company-dabbrev-downcase nil)
-  (setq company-tooltip-align-annotations t)
   (setq company-backends (delete 'company-semantic company-backends))
   (setq company-backends (delete 'company-clang company-backends))
-  (setq company-backends (delete 'company-gtags company-backends))
   ;;(set-face-attribute 'company-preview nil :inherit 'company-tooltip)
   (diminish 'company-mode))
 
@@ -60,5 +57,10 @@
      `(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
      `(company-tooltip-common-selection ((t (:inherit company-tooltip-selection :foreground "gray75"))))
      `(company-tooltip-common ((t (:inherit font-lock-constant-face)))))))
+
+(use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev))
 
 (provide 'init-company)

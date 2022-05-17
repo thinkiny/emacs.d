@@ -25,7 +25,6 @@
         lsp-idle-delay 1
         ;;lsp-auto-guess-root t
         lsp-headerline-breadcrumb-enable nil
-        lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil
         ;; lsp-signature-doc-lines 1
         ;; lsp-signature-function #'my-lsp-lv-message
@@ -172,12 +171,25 @@ returns the command to execute."
   (setq-local flycheck-idle-change-delay 1.0)
   (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
   (make-local-variable 'markdown-header-face-2)
-  (add-hook 'xref-backend-functions #'lsp--xref-backend)
   (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
+
+  (add-hook 'xref-backend-functions #'lsp--xref-backend)
   (if lsp-enable-format-at-save
       (lsp-enable-format)))
 
+(defun my-lsp-completion-mode-hook()
+  (setq-local completion-category-defaults nil)
+  (setq-local completion-at-point-functions
+              (list
+               (cape-capf-buster
+                (cape-super-capf
+                 #'cape-file
+                 #'lsp-completion-at-point
+                 )
+                'equal))))
+
 (add-hook 'lsp-mode-hook #'my-lsp-mode-hook)
+(add-hook 'lsp-completion-mode-hook 'my-lsp-completion-mode-hook)
 
 ;; lsp-ui
 (use-package lsp-ui
