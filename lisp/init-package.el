@@ -51,4 +51,6 @@ locate PACKAGE."
 (setq use-package-always-defer t
       use-package-always-ensure t)
 
+(setq package-native-compile t)
+
 (provide 'init-package)

@@ -391,4 +391,16 @@ With arg N, insert N newlines."
   (setq xref-backend-functions (remq 'etags--xref-backend xref-backend-functions))
   (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate t))
 
+
+;; native-compile
+(defun native-compile-dir()
+  (interactive)
+  (let* ((counsel--find-file-predicate #'file-directory-p)
+         (selected-directory
+          (ivy-read
+           "Choose directory: "
+           #'read-file-name-internal
+           :matcher #'counsel--find-file-matcher)))
+    (native-compile-async selected-directory 'recursively)))
+
 (provide 'init-editing-utils)
