@@ -183,7 +183,7 @@ returns the command to execute."
               (list
                (cape-capf-buster
                 (cape-super-capf
-                 #'cape-file
+                 (cape-company-to-capf #'company-files)
                  #'lsp-completion-at-point
                  )
                 'equal))))

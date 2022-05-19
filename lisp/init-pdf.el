@@ -9,8 +9,10 @@
   (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
 
   (defun calc-image-roll-size-mouse(arg)
-    (if (= arg 1) 1
-      (* arg 5)))
+    (cond
+     ((= arg 1) 5)
+     ((< arg 4) 20)
+     (t 50)))
 
   (defun pdf-image-roll-forward-mouse(&optional arg)
     (interactive "P")
