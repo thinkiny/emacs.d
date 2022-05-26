@@ -25,8 +25,8 @@
 (require-package 'org-cliplink)
 (require-package 'org-contrib)
 
-(use-package org-pdftools
-  :hook (org-mode . org-pdftools-setup-link))
+;; (use-package org-pdftools
+;;   :hook (org-mode . org-pdftools-setup-link))
 
 (defvar org-global-prefix-map (make-sparse-keymap)
   "A keymap for handy global access to org helpers, particularly clocking.")
@@ -241,15 +241,15 @@
 (setq org-archive-mark-done nil)
 (setq org-archive-location "%s_archive::* Archive")
 
-(require-package 'org-pomodoro)
-(setq org-pomodoro-keep-killed-pomodoro-time t)
-(with-eval-after-load 'org-agenda
-  (define-key org-agenda-mode-map (kbd "P") 'org-pomodoro))
+;; (require-package 'org-pomodoro)
+;; (setq org-pomodoro-keep-killed-pomodoro-time t)
+;; (with-eval-after-load 'org-agenda
+;;   (define-key org-agenda-mode-map (kbd "P") 'org-pomodoro))
 
 (use-package ox-reveal)
 (use-package ob-go)
 (use-package ox-gfm)
-(use-package org-sidebar)
+;;(use-package org-sidebar)
 
 (defhydra hydra-org-table (:color blue :hint nil)
   "
@@ -280,7 +280,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
 
   (require 'ox-reveal)
   (require 'ox-gfm)
-  (require 'org-sidebar)
+  ;;(require 'org-sidebar)
   (org-beamer-mode)
   (unbind-key (kbd "C-,") org-mode-map)
   (unbind-key (kbd "C-c $") org-mode-map)
