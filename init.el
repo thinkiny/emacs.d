@@ -21,6 +21,7 @@
 (require 'init-dired)
 (require 'init-whitespace)
 (require 'init-tramp)
+(require 'init-doxymacs)
 
 ;;language
 (require 'init-flycheck)

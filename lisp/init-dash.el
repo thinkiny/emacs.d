@@ -6,7 +6,7 @@
   (setq dash-docs-candidate-format "%d %n (%t)")
   (setq dash-docs-min-length 3)
   :bind (:map global-map
-              ("C-c d"  . #'counsel-dash)
+              ("C-c d d"  . #'counsel-dash)
               ("C-." . #'counsel-dash-at-current-point)))
 
 (defun counsel-dash-at-current-point ()
