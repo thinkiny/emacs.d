@@ -82,13 +82,14 @@
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
 (require-package 'inkpot-theme)
+(require-package 'vscode-dark-plus-theme)
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-theme (cons 'cloud 'light)
+(defcustom custom-theme (cons 'vscode-dark-plus 'dark)
   "The current theme"
   :group 'faces
   :type 'cons)

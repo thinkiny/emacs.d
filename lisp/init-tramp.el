@@ -16,7 +16,6 @@
 (setq tramp-auto-save-directory temporary-file-directory)
 
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-(add-to-list 'tramp-remote-path "~/.local/bin")
 (add-to-list 'backup-directory-alist
              (cons tramp-file-name-regexp nil))
 
