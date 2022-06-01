@@ -221,4 +221,23 @@
 ;; hide-mode-line
 (require-package 'hide-mode-line)
 
+;; dashboard
+(use-package dashboard
+  :demand t
+  :config
+  (setq dashboard-set-init-info nil)
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons nil)
+  (setq dashboard-set-footer nil)
+  (setq dashboard-startup-banner nil)
+  (setq dashboard-bookmarks-show-base 'align)
+  (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
+  (setq dashboard-items '((projects . 10)
+                          (bookmarks . 10)
+                          (recents  . 5)
+                          (agenda . 5)))
+  (dashboard-setup-startup-hook)
+
+  (global-set-key (kbd "C-h h") #'dashboard-refresh-buffer))
+
 (provide 'init-ui)

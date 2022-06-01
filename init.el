@@ -67,6 +67,4 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
-(goto-start-page)
-
 (provide 'init)
