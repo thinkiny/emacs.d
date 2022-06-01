@@ -237,7 +237,17 @@
                           (recents  . 5)
                           (agenda . 5)))
   (dashboard-setup-startup-hook)
-
   (global-set-key (kbd "C-h h") #'dashboard-refresh-buffer))
+
+;; term-color
+(defun justify-term-theme()
+  (when (and (is-custom-theme-dark) (fboundp 'term))
+    (set-face-background 'term-color-black (face-attribute 'default :foreground))
+    (set-face-foreground 'term-color-blue "skyblue3")
+    (set-face-foreground 'term-color-red "IndianRed1")))
+
+(after-load-theme (justify-term-theme))
+(with-eval-after-load 'term
+  (justify-term-theme))
 
 (provide 'init-ui)

@@ -125,18 +125,9 @@ and binds some keystroke with `term-raw-map'."
   :commands (vterm-mode vterm)
   :config
 
-  (defun justify-term-theme()
-    (when (is-custom-theme-dark)
-    (set-face-attribute 'ansi-color-black nil :background "#9099AB")
-    (set-face-foreground 'ansi-color-blue "skyblue3")
-    (set-face-foreground 'ansi-color-red "IndianRed1")))
-
-  (after-load-theme 'justify-term-theme)
-  (justify-term-theme)
-
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 60)
-  (setq vterm-max-scrollback 4000)
+  (setq vterm-max-scrollback 5000)
   (setq vterm-tramp-shells nil)
 
   (defun vterm-copy-text ()
