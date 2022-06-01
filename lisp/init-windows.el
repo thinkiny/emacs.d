@@ -28,13 +28,41 @@ transpositions to execute in sequence."
   (global-set-key (kbd "C-c 9") #'winner-undo)
   (global-set-key (kbd "C-c 0") #'winner-redo))
 
+
+;; change window size
+(require 'windmove)
+(defun change-window-size-up()
+  (interactive)
+  (if (windmove-find-other-window 'up)
+      (call-interactively 'enlarge-window)
+    (call-interactively 'shrink-window)))
+
+(defun change-window-size-down()
+  (interactive)
+  (let ((down-wind (windmove-find-other-window 'down)))
+    (if (and down-wind (not (eq down-wind (minibuffer-window))))
+        (call-interactively 'enlarge-window)
+      (call-interactively 'shrink-window))))
+
+(defun change-window-size-left()
+  (interactive)
+  (if (windmove-find-other-window 'left)
+      (call-interactively 'enlarge-window-horizontally)
+    (call-interactively 'shrink-window-horizontally)))
+
+(defun change-window-size-right()
+  (interactive)
+  (if (windmove-find-other-window 'right)
+      (call-interactively 'enlarge-window-horizontally)
+    (call-interactively 'shrink-window-horizontally)))
+
 (global-set-key (kbd "C-c TAB") 'crux-transpose-windows)
 (global-set-key (kbd "C-c m m") 'toggle-frame-maximized)
 (global-set-key (kbd "C-c m f") 'toggle-frame-fullscreen)
-(global-set-key (kbd "C-M-<left>") 'shrink-window-horizontally)
-(global-set-key (kbd "C-M-<right>") 'enlarge-window-horizontally)
-(global-set-key (kbd "C-M-<down>") 'shrink-window)
-(global-set-key (kbd "C-M-<up>") 'enlarge-window)
+(global-set-key (kbd "C-M-<left>") 'change-window-size-left)
+(global-set-key (kbd "C-M-<right>") 'change-window-size-right)
+(global-set-key (kbd "C-M-<down>") 'change-window-size-down)
+(global-set-key (kbd "C-M-<up>") 'change-window-size-up)
 
 (require 'project)
 ;; unset allkeys
