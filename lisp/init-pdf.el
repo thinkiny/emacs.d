@@ -4,7 +4,10 @@
 
 (when (file-directory-p pdf-tools-lisp-dir)
   (add-to-list 'load-path pdf-tools-lisp-dir)
+  (require 'pdf-outline)
+  (require 'pdf-history)
   (require 'pdf-roll)
+
   (require 'pdf-view-restore)
   (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
 
@@ -28,9 +31,6 @@
 
   (add-auto-mode 'pdf-view-mode "\\.pdf")
   (add-hook 'pdf-view-mode-hook 'my-pdf-view-mode-hook))
-
-(with-eval-after-load 'pdf-tools
-  (setq pdf-tools-enabled-modes (remove 'pdf-sync-minor-mode pdf-tools-enabled-modes)))
 
 (with-eval-after-load 'pdf-view
   (add-hook 'pdf-view-midnight-minor-mode-hook
@@ -117,6 +117,8 @@
 (defun my-pdf-view-mode-hook()
   (pdf-view-restore-mode)
   (company-mode -1)
+  (pdf-outline-minor-mode)
+  (pdf-history-minor-mode)
   (blink-cursor-mode -1)
   (eldoc-mode -1)
   (whitespace-cleanup-mode -1)
@@ -127,7 +129,6 @@
   (cua-mode -1)
   (setq-local left-fringe-width 1)
   ;;(pdf-view-midnight-minor-mode)
-  (pdf-outline-minor-mode)
   (pdf-view-roll-minor-mode)
 
   (if (boundp 'mwheel-scroll-up-function)
@@ -145,11 +146,11 @@
   (local-set-key (kbd "M-v") #'pdf-view-previous-page)
   ;; (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
   ;; (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
+  ;; (local-set-key (kbd "<wheel-down>") #'image-roll-scroll-screen-forward)
+  ;; (local-set-key (kbd "<wheel-up>") #'image-roll-scroll-screen-backward)
   (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
   (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
 ;;(add-function :after after-focus-change-function 'pdf-cscroll-close-window-when-dual)
 )
-
-
 
 (provide 'init-pdf)

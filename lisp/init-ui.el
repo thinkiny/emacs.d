@@ -241,7 +241,7 @@
 
 ;; term-color
 (defun justify-term-theme()
-  (when (and (is-custom-theme-dark) (fboundp 'term))
+  (when (and (is-custom-theme-dark) (featurep 'term-color))
     (set-face-background 'term-color-black (face-attribute 'default :foreground))
     (set-face-foreground 'term-color-blue "skyblue3")
     (set-face-foreground 'term-color-red "IndianRed1")))
