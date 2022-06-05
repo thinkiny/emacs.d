@@ -281,37 +281,33 @@ With arg N, insert N newlines."
 (use-package so-long
   :demand t
   :config
-  (setq so-long-threshold 2048)
+  ;; Don't disable syntax highlighting and line numbers, or make the buffer
+  ;; read-only, in `so-long-minor-mode', so we can have a basic editing
+  ;; experience in them, at least. It will remain off in `so-long-mode',
+  ;; however, because long files have a far bigger impact on Emacs performance.
   (delq! 'font-lock-mode so-long-minor-modes)
+  (delq! 'display-line-numbers-mode so-long-minor-modes)
   (delq! 'buffer-read-only so-long-variable-overrides 'assq)
   ;; ...but at least reduce the level of syntax highlighting
   (add-to-list 'so-long-variable-overrides '(font-lock-maximum-decoration . 1))
   ;; ...and insist that save-place not operate in large/long files
-  (add-to-list 'so-long-target-modes 'text-mode)
   (add-to-list 'so-long-variable-overrides '(save-place-alist . nil))
   ;; But disable everything else that may be unnecessary/expensive for large or
   ;; wide buffers.
   (appendq! so-long-minor-modes
-            '(flycheck-mode
-              spell-fu-mode
+            '(spell-fu-mode
               eldoc-mode
-              smartparens-mode
               highlight-numbers-mode
               better-jumper-local-mode
               ws-butler-mode
               auto-composition-mode
               undo-tree-mode
               highlight-indent-guides-mode
-              hl-fill-column-mode))
-  (defun doom-buffer-has-long-lines-p ()
-    (unless (bound-and-true-p visual-line-mode)
-      (let ((so-long-skip-leading-comments
-             ;; HACK Fix #2183: `so-long-detected-long-line-p' tries to parse
-             ;;      comment syntax, but comment state may not be initialized,
-             ;;      leading to a wrong-type-argument: stringp error.
-             (bound-and-true-p comment-use-syntax)))
-        (so-long-detected-long-line-p))))
-  (setq so-long-predicate #'doom-buffer-has-long-lines-p)
+              hl-fill-column-mode
+              ;; These are redundant on Emacs 29+
+              flycheck-mode
+              smartparens-mode
+              smartparens-strict-mode))
   (global-so-long-mode 1))
 
 ;; tab indent
