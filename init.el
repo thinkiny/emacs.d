@@ -50,7 +50,8 @@
 (require 'init-toml)
 (require 'init-yaml)
 (when window-system
-  (require 'init-pdf))
+  (require 'init-pdf)
+  (require 'init-epub))
 
 ;;other
 (require 'init-term)

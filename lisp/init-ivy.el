@@ -24,6 +24,33 @@
                            ;;(ivy-occur-next-line)
                            )))
 
+  ;; don't hide the buffer which name starts with *
+  (defun ivy--switch-buffer-matcher (regexp candidates)
+    "Return REGEXP matching CANDIDATES.
+Skip buffers that match `ivy-ignore-buffers'."
+    (if (string-match-p "^:" ivy-text)
+        (delete-dups
+         (cl-remove-if-not
+          (lambda (s)
+            (let ((b (get-buffer s)))
+              (string-match-p regexp (buffer-local-value 'default-directory b))))
+          candidates))
+      (let ((res (ivy--re-filter regexp candidates)))
+        (if (or (null ivy-use-ignore)
+                (null ivy-ignore-buffers))
+            res
+          (or (cl-remove-if
+               (lambda (buf)
+                 (cl-find-if
+                  (lambda (f-or-r)
+                    (if (functionp f-or-r)
+                        (funcall f-or-r buf)
+                      (string-match-p f-or-r buf)))
+                  ivy-ignore-buffers))
+               res)
+              (and (eq ivy-use-ignore t)
+                   res))))))
+
   ;; (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
   (global-set-key (kbd "C-c z") 'ivy-resume)
   (global-set-key (kbd "C-x b") 'persp-ivy-switch-buffer)

@@ -5,8 +5,10 @@
 (when (file-directory-p pdf-tools-lisp-dir)
   (add-to-list 'load-path pdf-tools-lisp-dir)
   (require 'pdf-outline)
-  (require 'pdf-history)
   (require 'pdf-roll)
+
+  (require 'pdf-history)
+  (unbind-key (kbd "N") 'pdf-history-minor-mode-map)
 
   (require 'pdf-view-restore)
   (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
@@ -138,18 +140,18 @@
       (setq-local mwheel-scroll-down-function
                   #'pdf-image-roll-backward-mouse))
 
-  (local-set-key (kbd "q") #'kill-current-buffer)
-  (local-set-key (kbd "0") #'pdf-view-goto-page-start)
-  (local-set-key (kbd "N") #'image-roll-scroll-screen-forward)
-  (local-set-key (kbd "P") #'image-roll-scroll-screen-backward)
-  (local-set-key (kbd "C-v") #'pdf-view-next-page)
-  (local-set-key (kbd "M-v") #'pdf-view-previous-page)
+  (define-key pdf-view-mode-map (kbd "q") #'kill-current-buffer)
+  (define-key pdf-view-mode-map (kbd "0") #'pdf-view-goto-page-start)
+  (define-key pdf-view-mode-map (kbd "n") #'pdf-view-next-line-or-next-page)
+  (define-key pdf-view-mode-map (kbd "p") #'pdf-view-previous-line-or-previous-page)
+  (define-key pdf-view-mode-map (kbd "N") #'pdf-view-next-page)
+  (define-key pdf-view-mode-map (kbd "P") #'pdf-view-previous-page)
   ;; (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
   ;; (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
   ;; (local-set-key (kbd "<wheel-down>") #'image-roll-scroll-screen-forward)
   ;; (local-set-key (kbd "<wheel-up>") #'image-roll-scroll-screen-backward)
-  (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
-  (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
+  (define-key pdf-view-mode-map (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
+  (define-key pdf-view-mode-map (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
 ;;(add-function :after after-focus-change-function 'pdf-cscroll-close-window-when-dual)
 )
 

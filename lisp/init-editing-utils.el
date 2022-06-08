@@ -342,6 +342,10 @@ With arg N, insert N newlines."
 ;; disable spook
 (fmakunbound 'spook)
 
+;; disable text scale with mouse
+(unbind-key (kbd "C-<wheel-down>") 'global-map)
+(unbind-key (kbd "C-<wheel-up>") 'global-map)
+
 ;; tree-sitter
 (require-package 'tree-sitter)
 (require-package 'tree-sitter-langs)
@@ -366,10 +370,9 @@ With arg N, insert N newlines."
 ;; dockerfile
 (use-package dockerfile-mode)
 
+;; nxml-mode
 (with-eval-after-load 'nxml-mode
   (unbind-key (kbd "C-c ]") 'nxml-mode-map))
-
-(setq haiku-use-system-tooltips nil)
 
 ;; dumb-jump
 (use-package dumb-jump
