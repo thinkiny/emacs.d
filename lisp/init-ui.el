@@ -40,11 +40,7 @@
 (when window-system
   (use-package all-the-icons-dired)
   (window-divider-mode)
-  (add-hook 'dired-mode-hook
-            (lambda ()
-              (all-the-icons-dired-mode)
-              (if (file-remote-p default-directory)
-                  (font-lock-mode -1)))))
+  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
 (use-package all-the-icons-ibuffer
   :init (all-the-icons-ibuffer-mode))
