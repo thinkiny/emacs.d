@@ -85,7 +85,7 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-theme (cons 'vscode-dark-plus 'dark)
+(defcustom custom-theme (cons 'inkpot 'dark)
   "The current theme"
   :group 'faces
   :type 'cons)
@@ -221,19 +221,21 @@
 (use-package dashboard
   :demand t
   :config
+  (setq dashboard-startup-banner nil)
   (setq dashboard-set-init-info nil)
+  (setq dashboard-set-navigator nil)
   (setq dashboard-set-heading-icons t)
   (setq dashboard-set-file-icons nil)
   (setq dashboard-set-footer nil)
-  (setq dashboard-startup-banner nil)
   (setq dashboard-bookmarks-show-base 'align)
+  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
   (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
-  (setq dashboard-items '((projects . 10)
+  (setq dashboard-items '((recents  . 10)
                           (bookmarks . 10)
-                          (recents  . 5)
                           (agenda . 5)))
   (dashboard-setup-startup-hook)
-  (global-set-key (kbd "C-h h") #'dashboard-refresh-buffer))
+  (global-set-key (kbd "C-h h") #'dashboard-refresh-buffer)
+  )
 
 ;; term-color
 (defun justify-term-theme()
