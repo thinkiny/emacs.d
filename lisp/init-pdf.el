@@ -95,14 +95,7 @@
                                      (if (> (length text) 0)
                                          (bing-dict-brief text))))))
 
-
-  (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection)
-
-  (defun advice/after-pdf-outline-follow-link(&rest _)
-    (pdf-cscroll-close-window-when-dual)
-    (delete-other-windows-vertically))
-
-  (advice-add #'pdf-outline-follow-link :after #'advice/after-pdf-outline-follow-link))
+  (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection))
 
 (with-eval-after-load 'pdf-annot
   (defun +pdf-cleanup-windows-h ()
@@ -129,6 +122,7 @@
   (font-lock-mode -1)
   (yas-minor-mode -1)
   (cua-mode -1)
+  (tree-sitter-mode -1)
   (setq-local left-fringe-width 1)
   ;;(pdf-view-midnight-minor-mode)
   (pdf-view-roll-minor-mode)
@@ -146,8 +140,8 @@
   (define-key pdf-view-mode-map (kbd "p") #'pdf-view-previous-line-or-previous-page)
   (define-key pdf-view-mode-map (kbd "N") #'pdf-view-next-page)
   (define-key pdf-view-mode-map (kbd "P") #'pdf-view-previous-page)
-  ;; (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
-  ;; (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
+  (define-key pdf-view-mode-map (kbd "M-v") #'image-roll-scroll-screen-backward)
+  (define-key pdf-view-mode-map (kbd "C-v") #'image-roll-scroll-screen-forward)
   ;; (local-set-key (kbd "<wheel-down>") #'image-roll-scroll-screen-forward)
   ;; (local-set-key (kbd "<wheel-up>") #'image-roll-scroll-screen-backward)
   (define-key pdf-view-mode-map (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)

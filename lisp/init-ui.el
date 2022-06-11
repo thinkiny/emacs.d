@@ -230,7 +230,7 @@
   (setq dashboard-bookmarks-show-base 'align)
   (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
   (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
-  (setq dashboard-items '((recents  . 10)
+  (setq dashboard-items '((recents  . 15)
                           (bookmarks . 10)
                           (agenda . 5)))
   (dashboard-setup-startup-hook)
