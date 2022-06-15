@@ -228,14 +228,21 @@
   (setq dashboard-set-file-icons nil)
   (setq dashboard-set-footer nil)
   (setq dashboard-bookmarks-show-base 'align)
-  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+  (setq initial-buffer-choice (lambda () (get-buffer dashboard-buffer-name)))
   (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
   (setq dashboard-items '((recents  . 15)
                           (bookmarks . 10)
                           (agenda . 5)))
   (dashboard-setup-startup-hook)
-  (global-set-key (kbd "C-h h") #'dashboard-refresh-buffer)
-  )
+
+  (defun switch-to-dashboard()
+    (interactive)
+    (let ((buf (get-buffer-create dashboard-buffer-name))
+          (dashboard-force-refresh t))
+      (dashboard-insert-startupify-lists)
+      (switch-to-buffer buf)))
+
+  (global-set-key (kbd "C-h h") #'switch-to-dashboard))
 
 ;; term-color
 (defun justify-term-theme()

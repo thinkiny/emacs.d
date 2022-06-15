@@ -11,8 +11,11 @@
 
 (defun profile-cpu-stop()
   (interactive)
-  (profiler-report)
-  (profiler-stop))
+  (profiler-stop)
+  (profiler-report))
+
+(global-set-key (kbd "C-x c s") #'profile-cpu-start)
+(global-set-key (kbd "C-x c r") #'profile-cpu-stop)
 
 (defun increase-profile-cpu-line-width (&optional arg)
   (interactive "ncpu format width: ")

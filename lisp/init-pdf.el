@@ -31,7 +31,7 @@
     (let ((image-roll-step-size (calc-image-roll-size-mouse arg)))
       (image-roll-scroll-backward)))
 
-  (add-auto-mode 'pdf-view-mode "\\.pdf")
+  (add-auto-mode 'pdf-view-mode "\\.pdf$")
   (add-hook 'pdf-view-mode-hook 'my-pdf-view-mode-hook))
 
 (with-eval-after-load 'pdf-view

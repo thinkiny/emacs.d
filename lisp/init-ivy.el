@@ -66,7 +66,7 @@ Skip buffers that match `ivy-ignore-buffers'."
   (setq counsel-preselect-current-file t)
   (add-to-list 'ivy-more-chars-alist '(counsel-ag . 2))
   (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
-  (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache" ".metals" "bazel-.*" ".o" ".elc" ".so")))
+  (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache$" ".metals$" "bazel-.*" ".o$" ".elc$" ".so$")))
 
   (defun counsel-ag-here()
     (interactive)
