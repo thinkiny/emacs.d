@@ -65,7 +65,7 @@
   :type 'integer
   :set (lambda (var val)
          (set-default var val)
-         (set-frame-parameter (selected-frame) 'alpha val)))
+         (set-frame-parameter nil 'alpha val)))
 
 (defun set-transparency ()
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
@@ -85,7 +85,7 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-theme (cons 'inkpot 'dark)
+(defcustom custom-theme (cons 'cloud 'light)
   "The current theme"
   :group 'faces
   :type 'cons)

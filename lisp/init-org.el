@@ -66,7 +66,7 @@
         ("w" "work" entry (file "work.org")
          "* %?")
         ("m" "meeting" entry (file "meeting.org")
-         "* %T %?")))
+         "* %? %T")))
 
 ;;; Refiling
 (setq org-refile-use-cache nil)
