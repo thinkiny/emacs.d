@@ -1,5 +1,10 @@
 ;; Remote Directory Tracking: https://www.emacswiki.org/emacs/AnsiTermHints#h5o-5
 ;; term-mode key-bindings
+
+(with-eval-after-load 'x-win
+  (defun emacs-session-save ()
+    ()))
+
 (defcustom term-unbind-key-list
   '("C-z" "C-x" "C-c" "C-h" "C-y" "<ESC>")
   "The key list that will need to be unbind."
