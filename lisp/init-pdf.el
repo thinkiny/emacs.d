@@ -129,10 +129,10 @@
 
   (if (boundp 'mwheel-scroll-up-function)
       (setq-local mwheel-scroll-up-function
-                  #'pdf-image-roll-forward-mouse))
+                  #'pdf-view-next-line-or-next-page))
   (if (boundp 'mwheel-scroll-down-function)
       (setq-local mwheel-scroll-down-function
-                  #'pdf-image-roll-backward-mouse))
+                  #'pdf-view-previous-line-or-previous-page))
 
   (define-key pdf-view-mode-map (kbd "q") #'kill-current-buffer)
   (define-key pdf-view-mode-map (kbd "0") #'pdf-view-goto-page-start)
