@@ -90,11 +90,10 @@
   (defun pdf-translate-selection (&rest _)
     "Translate the selected word"
     (interactive)
-    (run-with-idle-timer 0.1 nil (lambda ()
+    (run-with-idle-timer 0.2 nil (lambda ()
                                    (let ((text (car (pdf-view-active-region-text))))
                                      (if (> (length text) 0)
                                          (bing-dict-brief text))))))
-
   (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection))
 
 (with-eval-after-load 'pdf-annot
@@ -144,7 +143,7 @@
   (define-key pdf-view-mode-map (kbd "C-v") #'image-roll-scroll-screen-forward)
   ;; (local-set-key (kbd "<wheel-down>") #'image-roll-scroll-screen-forward)
   ;; (local-set-key (kbd "<wheel-up>") #'image-roll-scroll-screen-backward)
-  (define-key pdf-view-mode-map (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
+  ;;(define-key pdf-view-mode-map (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
   (define-key pdf-view-mode-map (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
 ;;(add-function :after after-focus-change-function 'pdf-cscroll-close-window-when-dual)
 )
