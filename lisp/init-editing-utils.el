@@ -255,7 +255,7 @@ With arg N, insert N newlines."
       (if word
           (bing-dict-brief word)
         (message "can't find word at point"))))
-  :commands bing-dict-brief
+  :commands (bing-dict-brief)
   :config
   (setq bing-dict-cache-auto-save t)
   :bind (:map global-map
