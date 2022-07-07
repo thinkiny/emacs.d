@@ -253,11 +253,12 @@ returns the command to execute."
         (-if-let* ((lsp--document-symbols-request-async t)
                    (symbols (lsp--get-document-symbols))
                    (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols)))
-            (concat " => "
-                    (mapconcat
-                     (lambda (symbol)
-                       (gethash "name" symbol))
-                     symbols-hierarchy "/"))
+            (concat " => " (gethash "name" (car (last symbols-hierarchy))))
+            ;; (concat " => "
+            ;;         (mapconcat
+            ;;          (lambda (symbol)
+            ;;            (gethash "name" symbol))
+            ;;          symbols-hierarchy "/"))
           "")
       "")))
 

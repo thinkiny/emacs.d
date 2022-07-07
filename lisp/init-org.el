@@ -141,10 +141,7 @@
           (search category-up))
         org-agenda-window-setup 'current-window
         org-agenda-custom-commands
-        `(("N" "Notes" tags "NOTE"
-           ((org-agenda-overriding-header "Notes")
-            (org-tags-match-list-sublevels t)))
-          ("g" "GTD"
+        `(("g" "GTD"
            ((agenda "" nil)
             (tags "INBOX"
                   ((org-agenda-overriding-header "Inbox")

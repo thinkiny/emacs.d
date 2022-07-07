@@ -157,13 +157,13 @@
 
 
 ;; lsp symbol
-(defvar lsp-modeline-symbol "")
+;; (defvar lsp-modeline-symbol "")
 
-;; update lsp-symbol every two seconds
-(run-at-time 2 2 (lambda ()
-                   (if (fboundp 'lsp-modeline-get-symbol-name)
-                       (setq lsp-modeline-symbol (lsp-modeline-get-symbol-name))
-                     (setq lsp-modeline-symbol ""))))
+;; ;; update lsp-symbol every two seconds
+;; (run-at-time 2 2 (lambda ()
+;;                    (if (fboundp 'lsp-modeline-get-symbol-name)
+;;                        (setq lsp-modeline-symbol (lsp-modeline-get-symbol-name))
+;;                      (setq lsp-modeline-symbol ""))))
 
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)
@@ -171,7 +171,7 @@
               '((:eval (mode-line-linum))
                 " "
                 mode-line-buffer-identification
-                lsp-modeline-symbol
+                ;; lsp-modeline-symbol
                 " ["
                 mode-name
                 ;;minor-mode-alist
