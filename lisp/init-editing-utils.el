@@ -261,17 +261,6 @@ With arg N, insert N newlines."
   :bind (:map global-map
               ("C-,"  . 'bing-dict-at-point)))
 
-(defun set-proxy()
-  (interactive)
-  (setq url-proxy-services
-        '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
-          ("http" . "127.0.0.1:1087")
-          ("https" . "127.0.0.1:1087"))))
-
-(defun unset-proxy()
-  (interactive)
-  (setq url-proxy-services nil))
-
 ;; view-mode
 (with-eval-after-load 'view
   (setq view-read-only t)

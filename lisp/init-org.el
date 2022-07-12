@@ -263,8 +263,6 @@ _k_: delete row   _l_: delete column  _s_: shorten
           (read-file-name "DocFile: " "~/Documents" "./")))
 
 (with-eval-after-load 'org
-  (require 'ob-sql-mode)
-
   ;; Various preferences
   (setq org-log-done t
         org-edit-timestamp-down-means-later t
