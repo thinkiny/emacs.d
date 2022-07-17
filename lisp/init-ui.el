@@ -65,7 +65,9 @@
   :type 'integer
   :set (lambda (var val)
          (set-default var val)
-         (set-frame-parameter nil 'alpha val)))
+         (if *is-a-linux*
+             (set-frame-parameter nil 'alpha-background val)
+           (set-frame-parameter nil 'alpha val))))
 
 (defun set-transparency ()
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
