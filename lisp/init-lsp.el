@@ -199,7 +199,7 @@ returns the command to execute."
         lsp-ui-doc-enable nil
         lsp-ui-doc-position 'at-point
         lsp-ui-doc-show-with-cursor t
-        lsp-ui-sideline-enable t
+        lsp-ui-sideline-enable nil
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-show-symbol nil
         lsp-ui-sideline-show-hover nil
