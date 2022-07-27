@@ -80,6 +80,7 @@
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
 (require-package 'inkpot-theme)
+(require-package 'lab-themes)
 (require-package 'vscode-dark-plus-theme)
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
