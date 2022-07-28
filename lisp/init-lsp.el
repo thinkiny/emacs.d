@@ -134,6 +134,7 @@ Request codeAction/resolve for more info if server supports."
     (message (format "write %s" file))))
 
 ;; tramp
+(ignore-tramp-ssh-control-master 'lsp)
 (with-eval-after-load 'lsp-mode
   (defun lsp-tramp-connection-fast (local-command)
     "Create LSP stdio connection named name.

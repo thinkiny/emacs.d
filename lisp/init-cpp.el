@@ -99,6 +99,8 @@ returned to avoid that the echo area grows uncomfortably."
         (build-bazel-project root-local)
       (build-make-project compdb-local))))
 
+(ignore-tramp-ssh-control-master #'generate-compdb #'build-c-project)
+
 ;; styles
 (require 'google-c-style)
 (defun google-set-c-style-with-offset (n)
