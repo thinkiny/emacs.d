@@ -1,9 +1,9 @@
 (use-package sideline
-  :init
-  ;;(setq sideline-backends-left '((sideline-blame . down)))
-  (setq sideline-backends-right '((sideline-lsp  . up)
-                                  (sideline-flycheck . down)))
-  (global-sideline-mode 1))
+  ;;:init
+  ;; (setq sideline-backends-left '((sideline-blame . down)))
+  ;; (setq sideline-backends-right '(sideline-lsp  sideline-flycheck))
+  ;; (global-sideline-mode 1)
+  )
 
 (use-package sideline-lsp
   :after sideline
@@ -18,7 +18,10 @@
 
 
 (use-package sideline-flycheck
-  :after sideline)
+  :after sideline
+  :config
+  (add-hook 'flycheck-mode-hook 'sideline-flycheck-setup)
+  )
 
 (use-package sideline-blame
   :after sideline)

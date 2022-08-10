@@ -169,8 +169,8 @@ returns the command to execute."
 
 ;; hook
 (defun my-lsp-mode-hook ()
-  (setq-local flycheck-idle-change-delay 1.0)
-  (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+  ;; (setq-local flycheck-idle-change-delay 1.0)
+  ;; (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
   (make-local-variable 'markdown-header-face-2)
   (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
 
@@ -200,7 +200,7 @@ returns the command to execute."
         lsp-ui-doc-enable nil
         lsp-ui-doc-position 'at-point
         lsp-ui-doc-show-with-cursor t
-        lsp-ui-sideline-enable nil
+        lsp-ui-sideline-enable t
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-show-symbol nil
         lsp-ui-sideline-show-hover nil
