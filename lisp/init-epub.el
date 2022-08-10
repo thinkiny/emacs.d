@@ -6,15 +6,15 @@
 
 (defun nov-goto-next-line-or-page(&optional arg)
   (interactive)
-  (if (eq (line-end-position) (point-max))
-      (nov-next-document)
-    (forward-line 1)))
+  (when (eq (forward-line 1) 1)
+    (nov-next-document)))
 
 (defun nov-goto-previous-line-or-page(&optional arg)
   (interactive)
-  (if (eq (line-beginning-position) (point-min))
-      (nov-previous-document)
-    (forward-line -1)))
+  (when (eq (forward-line -1) -1)
+    (nov-previous-document)
+    (goto-char (point-max))
+    (beginning-of-line)))
 
 (defun my-nov-mode-hook()
   (if (boundp 'mwheel-scroll-up-function)
