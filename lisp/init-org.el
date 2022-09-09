@@ -41,9 +41,6 @@
 (with-eval-after-load 'org-agenda
   (unless (file-directory-p org-directory)
     (mkdir org-directory))
-  (dolist (f org-agenda-files)
-    (unless (file-exists-p f)
-      (with-temp-buffer (write-file f))))
   (add-hook 'org-agenda-mode-hook
             (lambda () (add-hook 'window-configuration-change-hook 'org-agenda-align-tags nil t))))
 
@@ -52,10 +49,7 @@
 (global-set-key (kbd "C-c c") 'org-capture)
 (global-set-key (kbd "C-c a") 'org-agenda)
 
-;; files
-(setq org-agenda-files (list "todo.org"
-                             "work.org"
-                             "study.org"))
+
 (setq org-capture-templates
       `(("t" "todo" entry (file "todo.org")  ; "" => `org-default-notes-file'
          "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n")

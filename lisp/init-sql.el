@@ -118,8 +118,8 @@ This command currently blocks the UI, sorry."
     (let ((start (re-search-backward "($" nil t))
           (end (re-search-forward "^)" nil t)))
       (align-regexp start end (make-sql-align-column 0) 1 2 nil)
-      (align-regexp start end (make-sql-align-column 1) 1 2 nil)
-      (align-regexp start end (make-sql-align-column 2) 1 2 nil))))
+      (align-regexp start end (make-sql-align-column 1) 1 2 nil))))
+      ;;(align-regexp start end (make-sql-align-column 2) 1 2 nil))))
 
 (with-eval-after-load 'lsp-sqls
   (defun lsp-sql-execute-current (&optional command)

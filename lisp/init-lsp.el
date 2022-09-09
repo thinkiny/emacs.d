@@ -15,7 +15,7 @@
         lsp-file-watch-threshold nil
         lsp-before-save-edits nil
         lsp-eldoc-render-all nil
-        lsp-enable-file-watchers nil
+        lsp-enable-file-watchers t
         lsp-lens-enable nil
         lsp-signature-render-documentation nil
         lsp-enable-folding nil
