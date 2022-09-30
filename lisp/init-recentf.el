@@ -8,6 +8,7 @@
                    ,(expand-file-name "~/\\.emacs\\.d/workspace/")
                    "/Applications/"
                    ".*/.metals/"
+                   ".*/.cache/"
                    "/usr/include"
                    "/usr/local/include"))
 
