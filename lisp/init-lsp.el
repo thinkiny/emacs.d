@@ -197,9 +197,10 @@ returns the command to execute."
   :after lsp-mode
   :config
   (setq lsp-ui-sideline-update-mode 'line
-        lsp-ui-doc-enable nil
+        lsp-ui-doc-enable t
         lsp-ui-doc-position 'at-point
-        lsp-ui-doc-show-with-cursor t
+        lsp-ui-doc-show-with-cursor nil
+        lsp-ui-doc-use-webkit nil
         lsp-ui-sideline-enable t
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-show-symbol nil
