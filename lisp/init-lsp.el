@@ -75,6 +75,7 @@ Request codeAction/resolve for more info if server supports."
   (define-key lsp-mode-map (kbd "C-c y") 'dap-hydra)
   ;;(define-key lsp-mode-map (kbd "C-c v") 'lsp-ui-peek-find-implementation)
   (define-key lsp-mode-map (kbd "C-c v") 'lsp-find-implementation)
+  (define-key lsp-mode-map (kbd "C-c h") 'lsp-ui-doc-glance)
   (define-key lsp-mode-map (kbd "C-c w e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c e") 'flycheck-list-errors)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action-this-line)
@@ -197,7 +198,7 @@ returns the command to execute."
   :after lsp-mode
   :config
   (setq lsp-ui-sideline-update-mode 'line
-        lsp-ui-doc-enable t
+        lsp-ui-doc-enable nil
         lsp-ui-doc-position 'at-point
         lsp-ui-doc-show-with-cursor nil
         lsp-ui-doc-use-webkit nil
