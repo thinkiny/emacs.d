@@ -1,8 +1,8 @@
 (use-package sideline
-  ;;:init
-  ;; (setq sideline-backends-left '((sideline-blame . down)))
-  ;; (setq sideline-backends-right '(sideline-lsp  sideline-flycheck))
-  ;; (global-sideline-mode 1)
+  :init
+  ;;(setq sideline-backends-left '((sideline-blame . down)))
+  (setq sideline-backends-right '(sideline-lsp  sideline-flycheck))
+  (global-sideline-mode 1)
   )
 
 (use-package sideline-lsp
