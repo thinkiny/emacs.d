@@ -47,7 +47,7 @@
 
 (defun my-java-hook()
   ;;(setq-local lsp-ui-sideline-show-code-actions nil)
-  (setq-local lsp-enable-format-at-save nil)
+  ;;(setq-local lsp-enable-format-at-save nil)
   (lsp-later)
   (google-set-c-style-with-offset 4)
   (define-key java-mode-map (kbd "C-c a") 'lsp-java-add-import)

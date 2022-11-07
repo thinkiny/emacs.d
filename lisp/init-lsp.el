@@ -9,25 +9,26 @@
         lsp-modeline-code-actions-enable nil
         lsp-enable-symbol-highlighting nil
         lsp-enable-indentation nil
+        lsp-enable-xref nil
         lsp-enable-on-type-formatting nil
         lsp-enable-text-document-color nil
         lsp-file-watch-threshold nil
         lsp-before-save-edits nil
-        lsp-eldoc-render-all  nil
-        ;; lsp-enable-file-watchers nil
+        lsp-eldoc-render-all nil
+        lsp-enable-file-watchers t
         lsp-lens-enable nil
         lsp-signature-render-documentation nil
         lsp-enable-folding nil
         lsp-enable-links nil
         lsp-keep-workspace-alive nil
         lsp-log-io nil
-        lsp-idle-delay 0.5
+        lsp-idle-delay 1
         ;;lsp-auto-guess-root t
         lsp-headerline-breadcrumb-enable nil
-        lsp-diagnostic-clean-after-change t
         lsp-enable-dap-auto-configure nil
-        lsp-signature-doc-lines 1
-        lsp-signature-function #'my-lsp-lv-message)
+        ;; lsp-signature-doc-lines 1
+        ;; lsp-signature-function #'my-lsp-lv-message
+        )
 
   (defun my-lsp-lv-message (message)
     (if message
@@ -133,6 +134,7 @@ Request codeAction/resolve for more info if server supports."
     (message (format "write %s" file))))
 
 ;; tramp
+(ignore-tramp-ssh-control-master 'lsp)
 (with-eval-after-load 'lsp-mode
   (defun lsp-tramp-connection-fast (local-command)
     "Create LSP stdio connection named name.
@@ -167,14 +169,28 @@ returns the command to execute."
 
 ;; hook
 (defun my-lsp-mode-hook ()
-  (setq-local flycheck-idle-change-delay 1.0)
-  (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+  ;; (setq-local flycheck-idle-change-delay 1.0)
+  ;; (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
   (make-local-variable 'markdown-header-face-2)
   (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
+
+  (add-hook 'xref-backend-functions #'lsp--xref-backend)
   (if lsp-enable-format-at-save
       (lsp-enable-format)))
 
+(defun my-lsp-completion-mode-hook()
+  (setq-local completion-category-defaults nil)
+  (setq-local completion-at-point-functions
+              (list
+               (cape-capf-buster
+                (cape-super-capf
+                 (cape-company-to-capf #'company-files)
+                 #'lsp-completion-at-point
+                 )
+                'equal))))
+
 (add-hook 'lsp-mode-hook #'my-lsp-mode-hook)
+(add-hook 'lsp-completion-mode-hook 'my-lsp-completion-mode-hook)
 
 ;; lsp-ui
 (use-package lsp-ui
@@ -183,6 +199,7 @@ returns the command to execute."
   (setq lsp-ui-sideline-update-mode 'line
         lsp-ui-doc-enable nil
         lsp-ui-doc-position 'at-point
+        lsp-ui-doc-show-with-cursor t
         lsp-ui-sideline-enable t
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-show-symbol nil
@@ -190,10 +207,10 @@ returns the command to execute."
         lsp-ui-sideline-show-diagnostics t
         lsp-ui-imenu-enable nil
         lsp-ui-peek-enable t
-        lsp-ui-peek-fontify 'always
         lsp-ui-sideline-delay 0.2)
-  (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1")
-  )
+  (if (is-custom-theme-dark)
+      (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1")
+    (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple4")))
 ;; (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
 ;;(define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
 
@@ -230,25 +247,21 @@ returns the command to execute."
               (lsp-later-run))))
 
 
-;; lsp-modeline
-(defun lsp-modeline-get-symbol ()
-  "Get the symbol under cursor ."
-  (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/documentSymbol"))
-      (-if-let* ((lsp--document-symbols-request-async t)
-                 (symbols (lsp--get-document-symbols))
-                 (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols))
-                 (enumerated-symbols-hierarchy
-                  (-map-indexed (lambda (index elt)
-                                  (cons elt (1+ index)))
-                                symbols-hierarchy)))
-          (concat " => "
-                  (mapconcat
-                   (-lambda (((symbol &as &DocumentSymbol :name)
-                              . index))
-                     (gethash "name" symbol))
-                   enumerated-symbols-hierarchy "/"))
-        "")
-    ""))
+(with-eval-after-load 'lsp-mode
+  (defun lsp-modeline-get-symbol-name ()
+    "Get the symbol under cursor ."
+    (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/documentSymbol"))
+        (-if-let* ((lsp--document-symbols-request-async t)
+                   (symbols (lsp--get-document-symbols))
+                   (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols)))
+            (concat " => " (gethash "name" (car (last symbols-hierarchy))))
+            ;; (concat " => "
+            ;;         (mapconcat
+            ;;          (lambda (symbol)
+            ;;            (gethash "name" symbol))
+            ;;          symbols-hierarchy "/"))
+          "")
+      "")))
 
 (defun lsp-enable-log-io()
   (interactive)

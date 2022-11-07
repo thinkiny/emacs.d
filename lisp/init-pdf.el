@@ -1,26 +1,51 @@
-;; pdf-tools
-(use-package pdf-tools
-  :mode ("\\.pdf$" . pdf-view-mode)
-  :hook (pdf-view-mode . my-pdf-view-mode-hook)
-  :config
+;; init-pdf.el -*- lexical-binding: t; -*-
+
+(defconst pdf-tools-lisp-dir (expand-file-name "third-parties/pdf-tools/lisp" user-emacs-directory))
+
+(when (file-directory-p pdf-tools-lisp-dir)
+  (add-to-list 'load-path pdf-tools-lisp-dir)
+  (require 'pdf-outline)
+  (require 'pdf-roll)
+
+  (require 'pdf-history)
+  (unbind-key (kbd "N") 'pdf-history-minor-mode-map)
+
+  (require 'pdf-view-restore)
+  (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
+
+  (defun calc-image-roll-size-mouse(arg)
+    (cond
+     ((= arg 1) 5)
+     ((< arg 4) 20)
+     (t 50)))
+
+  (defun pdf-image-roll-forward-mouse(&optional arg)
+    (interactive "P")
+    (defvar image-roll-step-size)
+    (let ((image-roll-step-size (calc-image-roll-size-mouse arg)))
+      (image-roll-scroll-forward)))
+
+  (defun pdf-image-roll-backward-mouse(&optional arg)
+    (interactive "P")
+    (defvar image-roll-step-size)
+    (let ((image-roll-step-size (calc-image-roll-size-mouse arg)))
+      (image-roll-scroll-backward)))
+
+  (add-auto-mode 'pdf-view-mode "\\.pdf$")
+  (add-hook 'pdf-view-mode-hook 'my-pdf-view-mode-hook))
+
+(with-eval-after-load 'pdf-view
+  (add-hook 'pdf-view-midnight-minor-mode-hook
+            (lambda ()
+              (setq pdf-view-midnight-colors
+                    `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
+
   (setq pdf-view-use-unicode-ligther nil)
   (setq pdf-view-use-scaling t)
   (setq pdf-view-use-imagemagick nil)
   (setq pdf-continuous-scroll-step 15)
-  (setq pdf-tools-enabled-modes (remove 'pdf-sync-minor-mode pdf-tools-enabled-modes))
   (setq pdf-links-browse-uri-function #'xwidget-webkit-browse-url)
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
-
-  (defadvice! +pdf--install-epdfinfo-a (orig-fn &rest args)
-    "Install epdfinfo after the first PDF file, if needed."
-    :around #'pdf-info-check-epdfinfo
-    (if (file-executable-p pdf-info-epdfinfo-program)
-        (apply orig-fn args)
-      ;; If we remain in pdf-view-mode, it'll spit out cryptic errors. This
-      ;; graceful failure is better UX.
-      (fundamental-mode)
-      (message "Viewing PDFs in Emacs requires epdfinfo. Use `M-x pdf-tools-install' to build it")))
-  (pdf-tools-install-noverify)
 
   ;; Silence "File *.pdf is large (X MiB), really open?" prompts for pdfs
   (defadvice! +pdf-suppress-large-file-prompts-a (fn size op-type filename &optional offer-raw)
@@ -70,34 +95,25 @@
                                      (if (> (length text) 0)
                                          (bing-dict-brief text))))))
 
+  (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection))
 
-  (advice-add #'pdf-view--push-mark :after #'pdf-translate-selection)
-
-  (defun advice/after-pdf-outline-follow-link(&rest _)
-    (pdf-cscroll-close-window-when-dual)
-    (delete-other-windows-vertically))
-
-  (advice-add #'pdf-outline-follow-link :after #'advice/after-pdf-outline-follow-link)
-
-  (with-eval-after-load 'pdf-annot
-    (defun +pdf-cleanup-windows-h ()
-      "Kill left-over annotation buffers when the document is killed."
-      (when (buffer-live-p pdf-annot-list-document-buffer)
-        (pdf-info-close pdf-annot-list-document-buffer))
-      (when (buffer-live-p pdf-annot-list-buffer)
-        (kill-buffer pdf-annot-list-buffer))
-      (let ((contents-buffer (get-buffer "*Contents*")))
-        (when (and contents-buffer (buffer-live-p contents-buffer))
-          (kill-buffer contents-buffer))))
-    (add-hook 'kill-buffer-hook #'+pdf-cleanup-windows-h nil t)))
-
-(add-hook 'pdf-view-midnight-minor-mode-hook
-          (lambda ()
-            (setq pdf-view-midnight-colors
-                  `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
+(with-eval-after-load 'pdf-annot
+  (defun +pdf-cleanup-windows-h ()
+    "Kill left-over annotation buffers when the document is killed."
+    (when (buffer-live-p pdf-annot-list-document-buffer)
+      (pdf-info-close pdf-annot-list-document-buffer))
+    (when (buffer-live-p pdf-annot-list-buffer)
+      (kill-buffer pdf-annot-list-buffer))
+    (let ((contents-buffer (get-buffer "*Contents*")))
+      (when (and contents-buffer (buffer-live-p contents-buffer))
+        (kill-buffer contents-buffer))))
+  (add-hook 'kill-buffer-hook #'+pdf-cleanup-windows-h nil t))
 
 (defun my-pdf-view-mode-hook()
+  (pdf-view-restore-mode)
   (company-mode -1)
+  (pdf-outline-minor-mode)
+  (pdf-history-minor-mode)
   (blink-cursor-mode -1)
   (eldoc-mode -1)
   (whitespace-cleanup-mode -1)
@@ -106,28 +122,31 @@
   (font-lock-mode -1)
   (yas-minor-mode -1)
   (cua-mode -1)
+  (tree-sitter-mode -1)
   (setq-local left-fringe-width 1)
-  (pdf-view-midnight-minor-mode)
-  (require 'pdf-continuous-scroll-mode)
-  (pdf-continuous-scroll-mode)
-  (pdf-cscroll-toggle-mode-line)
-  (unbind-key (kbd "N") 'pdf-history-minor-mode-map)
-  (local-set-key (kbd "q") #'kill-current-buffer)
-  (local-set-key (kbd "0") #'pdf-view-goto-page-start)
-  (local-set-key (kbd "N") #'pdf-view-scroll-up-or-next-page)
-  (local-set-key (kbd "P") #'pdf-view-scroll-down-or-previous-page)
-  (local-set-key (kbd "C-v") #'pdf-continuous-next-page)
-  (local-set-key (kbd "M-v") #'pdf-continuous-previous-page)
-  (define-key pdf-continuous-scroll-mode-map (kbd "n") #'pdf-continuous-scroll-forward)
-  (define-key pdf-continuous-scroll-mode-map (kbd "p") #'pdf-continuous-scroll-backward)
-  (local-set-key (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
-  (local-set-key (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
-  (add-function :after after-focus-change-function 'pdf-cscroll-close-window-when-dual))
+  ;;(pdf-view-midnight-minor-mode)
+  (pdf-view-roll-minor-mode)
 
-(use-package pdf-view-restore
-  :commands (pdf-view-restore-mode)
-  :config
-  (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
-  :hook ((pdf-view-mode . pdf-view-restore-mode)))
+  (if (boundp 'mwheel-scroll-up-function)
+      (setq-local mwheel-scroll-up-function
+                  #'pdf-view-next-line-or-next-page))
+  (if (boundp 'mwheel-scroll-down-function)
+      (setq-local mwheel-scroll-down-function
+                  #'pdf-view-previous-line-or-previous-page))
+
+  (define-key pdf-view-mode-map (kbd "q") #'kill-current-buffer)
+  (define-key pdf-view-mode-map (kbd "0") #'pdf-view-goto-page-start)
+  (define-key pdf-view-mode-map (kbd "n") #'pdf-view-next-line-or-next-page)
+  (define-key pdf-view-mode-map (kbd "p") #'pdf-view-previous-line-or-previous-page)
+  (define-key pdf-view-mode-map (kbd "N") #'pdf-view-next-page)
+  (define-key pdf-view-mode-map (kbd "P") #'pdf-view-previous-page)
+  (define-key pdf-view-mode-map (kbd "M-v") #'image-roll-scroll-screen-backward)
+  (define-key pdf-view-mode-map (kbd "C-v") #'image-roll-scroll-screen-forward)
+  ;; (local-set-key (kbd "<wheel-down>") #'image-roll-scroll-screen-forward)
+  ;; (local-set-key (kbd "<wheel-up>") #'image-roll-scroll-screen-backward)
+  ;;(define-key pdf-view-mode-map (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
+  (define-key pdf-view-mode-map (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
+;;(add-function :after after-focus-change-function 'pdf-cscroll-close-window-when-dual)
+)
 
 (provide 'init-pdf)

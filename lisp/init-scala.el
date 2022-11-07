@@ -9,9 +9,19 @@
   (lsp-metals-server-args '("-J-Dmetals.showInferredType=on" "-J-Dmetals.showImplicitArguments=on" "-J-Dmetals.showImplicitConversionsAndClasses=on"))
   :hook (scala-mode . my-scala-mode-hook))
 
+;; scala3
+(defun is-scala3-project ()
+  (projectile-with-default-dir (projectile-project-root)
+    (file-exists-p ".scala3")))
+
+(defun disable-scala-indent ()
+  (when (is-scala3-project)
+    (setq-local indent-line-function 'indent-relative-maybe)))
+
 (defun my-scala-mode-hook()
   (lsp-later)
   (lsp-lens-mode)
+  (disable-scala-indent)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
      ;;((string= ext "sc")  (setq-local lsp-enable-format-at-save nil))
@@ -25,6 +35,7 @@
       (select-window target-window)
       (set-window-buffer target-window (sbt-start)))))
 
+;; sbt-mode
 (use-package sbt-mode
   :commands sbt-start sbt-command
   :config

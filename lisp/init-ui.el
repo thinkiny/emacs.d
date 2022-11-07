@@ -40,11 +40,7 @@
 (when window-system
   (use-package all-the-icons-dired)
   (window-divider-mode)
-  (add-hook 'dired-mode-hook
-            (lambda ()
-              (all-the-icons-dired-mode)
-              (if (file-remote-p default-directory)
-                  (font-lock-mode -1)))))
+  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
 (use-package all-the-icons-ibuffer
   :init (all-the-icons-ibuffer-mode))
@@ -69,7 +65,9 @@
   :type 'integer
   :set (lambda (var val)
          (set-default var val)
-         (set-frame-parameter (selected-frame) 'alpha val)))
+         (if *is-a-linux*
+             (set-frame-parameter nil 'alpha-background val)
+           (set-frame-parameter nil 'alpha val))))
 
 (defun set-transparency ()
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
@@ -82,10 +80,11 @@
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
 (require-package 'inkpot-theme)
+(require-package 'ef-themes)
+(require-package 'vscode-dark-plus-theme)
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
-
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
 (defcustom custom-theme (cons 'cloud 'light)
@@ -126,7 +125,7 @@
   (if window-system
       (progn
         (if (> (x-display-pixel-width) 1280)
-            (add-to-list 'default-frame-alist '(width . 120))
+            (add-to-list 'default-frame-alist '(width . 140))
           (add-to-list 'default-frame-alist '(width . 80)))
         (add-to-list 'default-frame-alist
                      (cons 'height (/ (- (x-display-pixel-height) 250)
@@ -160,13 +159,13 @@
 
 
 ;; lsp symbol
-(defvar lsp-modeline-symbol "")
+;; (defvar lsp-modeline-symbol "")
 
-;; update lsp-symbol every two seconds
-(run-at-time 2 2 (lambda ()
-                   (if (bound-and-true-p lsp-mode)
-                       (setq lsp-modeline-symbol (funcall 'lsp-modeline-get-symbol))
-                     (setq lsp-modeline-symbol ""))))
+;; ;; update lsp-symbol every two seconds
+;; (run-at-time 2 2 (lambda ()
+;;                    (if (fboundp 'lsp-modeline-get-symbol-name)
+;;                        (setq lsp-modeline-symbol (lsp-modeline-get-symbol-name))
+;;                      (setq lsp-modeline-symbol ""))))
 
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)
@@ -174,6 +173,7 @@
               '((:eval (mode-line-linum))
                 " "
                 mode-line-buffer-identification
+                ;; lsp-modeline-symbol
                 " ["
                 mode-name
                 ;;minor-mode-alist
@@ -181,7 +181,6 @@
                 ;;(vc-mode vc-mode)
                 " "
                 global-mode-string
-                lsp-modeline-symbol
                 ))
 
 ;; (use-package centaur-tabs
@@ -219,5 +218,43 @@
 
 ;; hide-mode-line
 (require-package 'hide-mode-line)
+
+;; dashboard
+(use-package dashboard
+  :demand t
+  :config
+  (setq dashboard-startup-banner nil)
+  (setq dashboard-set-init-info nil)
+  (setq dashboard-set-navigator nil)
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons nil)
+  (setq dashboard-set-footer nil)
+  (setq dashboard-bookmarks-show-base 'align)
+  (setq initial-buffer-choice (lambda () (get-buffer dashboard-buffer-name)))
+  (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
+  (setq dashboard-items '((recents  . 15)
+                          (bookmarks . 10)
+                          (agenda . 5)))
+  (dashboard-setup-startup-hook)
+
+  (defun switch-to-dashboard()
+    (interactive)
+    (let ((buf (get-buffer-create dashboard-buffer-name))
+          (dashboard-force-refresh t))
+      (dashboard-insert-startupify-lists)
+      (switch-to-buffer buf)))
+
+  (global-set-key (kbd "C-h h") #'switch-to-dashboard))
+
+;; term-color
+(defun justify-term-theme()
+  (when (and (is-custom-theme-dark) (featurep 'term))
+    (set-face-background 'term-color-black (face-attribute 'default :foreground))
+    (set-face-foreground 'term-color-blue "skyblue3")
+    (set-face-foreground 'term-color-red "IndianRed1")))
+
+(after-load-theme (justify-term-theme))
+(with-eval-after-load 'term
+  (justify-term-theme))
 
 (provide 'init-ui)

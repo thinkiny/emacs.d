@@ -255,22 +255,11 @@ With arg N, insert N newlines."
       (if word
           (bing-dict-brief word)
         (message "can't find word at point"))))
-  :commands bing-dict-brief
+  :commands (bing-dict-brief)
   :config
   (setq bing-dict-cache-auto-save t)
   :bind (:map global-map
               ("C-,"  . 'bing-dict-at-point)))
-
-(defun set-proxy()
-  (interactive)
-  (setq url-proxy-services
-        '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
-          ("http" . "127.0.0.1:1087")
-          ("https" . "127.0.0.1:1087"))))
-
-(defun unset-proxy()
-  (interactive)
-  (setq url-proxy-services nil))
 
 ;; view-mode
 (with-eval-after-load 'view
@@ -281,37 +270,33 @@ With arg N, insert N newlines."
 (use-package so-long
   :demand t
   :config
-  (setq so-long-threshold 2048)
+  ;; Don't disable syntax highlighting and line numbers, or make the buffer
+  ;; read-only, in `so-long-minor-mode', so we can have a basic editing
+  ;; experience in them, at least. It will remain off in `so-long-mode',
+  ;; however, because long files have a far bigger impact on Emacs performance.
   (delq! 'font-lock-mode so-long-minor-modes)
+  (delq! 'display-line-numbers-mode so-long-minor-modes)
   (delq! 'buffer-read-only so-long-variable-overrides 'assq)
   ;; ...but at least reduce the level of syntax highlighting
   (add-to-list 'so-long-variable-overrides '(font-lock-maximum-decoration . 1))
   ;; ...and insist that save-place not operate in large/long files
-  (add-to-list 'so-long-target-modes 'text-mode)
   (add-to-list 'so-long-variable-overrides '(save-place-alist . nil))
   ;; But disable everything else that may be unnecessary/expensive for large or
   ;; wide buffers.
   (appendq! so-long-minor-modes
-            '(flycheck-mode
-              spell-fu-mode
+            '(spell-fu-mode
               eldoc-mode
-              smartparens-mode
               highlight-numbers-mode
               better-jumper-local-mode
               ws-butler-mode
               auto-composition-mode
               undo-tree-mode
               highlight-indent-guides-mode
-              hl-fill-column-mode))
-  (defun doom-buffer-has-long-lines-p ()
-    (unless (bound-and-true-p visual-line-mode)
-      (let ((so-long-skip-leading-comments
-             ;; HACK Fix #2183: `so-long-detected-long-line-p' tries to parse
-             ;;      comment syntax, but comment state may not be initialized,
-             ;;      leading to a wrong-type-argument: stringp error.
-             (bound-and-true-p comment-use-syntax)))
-        (so-long-detected-long-line-p))))
-  (setq so-long-predicate #'doom-buffer-has-long-lines-p)
+              hl-fill-column-mode
+              ;; These are redundant on Emacs 29+
+              flycheck-mode
+              smartparens-mode
+              smartparens-strict-mode))
   (global-so-long-mode 1))
 
 ;; tab indent
@@ -346,6 +331,10 @@ With arg N, insert N newlines."
 ;; disable spook
 (fmakunbound 'spook)
 
+;; disable text scale with mouse
+(unbind-key (kbd "C-<wheel-down>") 'global-map)
+(unbind-key (kbd "C-<wheel-up>") 'global-map)
+
 ;; tree-sitter
 (require-package 'tree-sitter)
 (require-package 'tree-sitter-langs)
@@ -367,22 +356,31 @@ With arg N, insert N newlines."
 
 (global-set-key (kbd "C-x w") #'copy-filename)
 
-;; goto start-page
-(defconst start-file (expand-file-name "start.org" user-emacs-directory))
-(defun goto-start-page ()
-  (interactive)
-  (if (file-exists-p start-file)
-      (find-file start-file)
-    (switch-to-buffer (get-buffer-create "*scratch*"))))
-(global-set-key (kbd "C-h h") #'goto-start-page)
-
+;; dockerfile
 (use-package dockerfile-mode)
 
+;; nxml-mode
 (with-eval-after-load 'nxml-mode
   (unbind-key (kbd "C-c ]") 'nxml-mode-map))
 
-(setq haiku-use-system-tooltips nil)
+;; dumb-jump
+(use-package dumb-jump
+  :demand t
+  :config
+  (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
+  (setq xref-backend-functions (remq 'etags--xref-backend xref-backend-functions))
+  (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate t))
 
-(use-package dumb-jump)
+
+;; native-compile
+(defun native-compile-dir()
+  (interactive)
+  (let* ((counsel--find-file-predicate #'file-directory-p)
+         (selected-directory
+          (ivy-read
+           "Choose directory: "
+           #'read-file-name-internal
+           :matcher #'counsel--find-file-matcher)))
+    (native-compile-async selected-directory 'recursively)))
 
 (provide 'init-editing-utils)

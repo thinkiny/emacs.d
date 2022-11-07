@@ -1,5 +1,10 @@
 ;; Remote Directory Tracking: https://www.emacswiki.org/emacs/AnsiTermHints#h5o-5
 ;; term-mode key-bindings
+
+(with-eval-after-load 'x-win
+  (defun emacs-session-save ()
+    ()))
+
 (defcustom term-unbind-key-list
   '("C-z" "C-x" "C-c" "C-h" "C-y" "<ESC>")
   "The key list that will need to be unbind."
@@ -124,14 +129,10 @@ and binds some keystroke with `term-raw-map'."
 (use-package vterm
   :commands (vterm-mode vterm)
   :config
-  (when (is-custom-theme-dark)
-    ;;(set-face-attribute 'ansi-color-black nil :background "#9099AB")
-    (set-face-foreground 'ansi-color-blue "skyblue3")
-    (set-face-foreground 'ansi-color-red "IndianRed1"))
 
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 60)
-  (setq vterm-max-scrollback 4000)
+  (setq vterm-max-scrollback 5000)
   (setq vterm-tramp-shells nil)
 
   (defun vterm-copy-text ()

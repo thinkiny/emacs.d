@@ -60,12 +60,11 @@
 
 (defun counsel-mt/ivy-pselect()
   (let* ((name (counsel-mt/get-name))
-         (names (counsel-mt/list-names))
-         (matches (seq-filter (lambda (x)
-                                (string-prefix-p x name)) names)))
-    (if matches
+         (names (counsel-mt/list-names)))
+    (if (length> names 0)
         (-max-by (lambda (a b)
-                   (> (length a) (length b))) matches)
+                   (> (common-string-length a name)
+                      (common-string-length b name))) names)
       name)))
 
 (defun counsel-term-get-term-cmd()

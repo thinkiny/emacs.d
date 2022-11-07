@@ -5,6 +5,7 @@
   :custom
   (persp-mode-prefix-key (kbd "C-x p"))
   :config
+  (setq persp-modestring-short t)
   (setq persp-state-default-file (expand-file-name "persp.state" user-emacs-directory))
   (after-load-theme
    (set-face-attribute 'persp-selected-face nil :foreground (face-attribute 'mode-line :foreground))))

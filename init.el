@@ -21,12 +21,14 @@
 (require 'init-dired)
 (require 'init-whitespace)
 (require 'init-tramp)
+(require 'init-doxymacs)
 
 ;;language
 (require 'init-flycheck)
 (require 'init-lisp)
-(require 'init-lsp)
+;;(require 'init-lsp)
 (require 'init-eglot)
+(require 'init-sideline)
 (require 'init-gtags)
 (require 'init-cpp)
 (require 'init-python)
@@ -50,7 +52,8 @@
 (require 'init-toml)
 (require 'init-yaml)
 (when window-system
-  (require 'init-pdf))
+  (require 'init-pdf)
+  (require 'init-epub))
 
 ;;other
 (require 'init-term)
@@ -66,7 +69,5 @@
 
 (when (file-exists-p custom-file)
   (load custom-file))
-
-(goto-start-page)
 
 (provide 'init)

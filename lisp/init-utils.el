@@ -1,5 +1,5 @@
 (require 'subr-x)
-(require 'jka-compr)
+;;(require 'jka-compr)
 
 ;;----------------------------------------------------------------------------
 ;; Handier way to add modes to auto-mode-alist
@@ -98,5 +98,26 @@
 (defvar load-theme-hook nil)
 (defmacro after-load-theme (&rest body)
   `(add-hook 'load-theme-hook (lambda () ,@body)))
+
+;; proxy
+(defun set-proxy()
+  (interactive)
+  (setq url-proxy-services
+        '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
+          ("http" . "127.0.0.1:1087")
+          ("https" . "127.0.0.1:1087"))))
+
+(defun unset-proxy()
+  (interactive)
+  (setq url-proxy-services nil))
+
+;; common string
+(defun common-string-length (a b &optional idx)
+  (setq idx (or idx 0))
+  (if (and (< idx (length a))
+           (< idx (length b))
+           (char-equal (aref a idx) (aref b idx)))
+      (common-string-length a b (+ idx 1))
+    idx))
 
 (provide 'init-utils)

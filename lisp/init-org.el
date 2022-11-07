@@ -25,8 +25,8 @@
 (require-package 'org-cliplink)
 (require-package 'org-contrib)
 
-(use-package org-pdftools
-  :hook (org-mode . org-pdftools-setup-link))
+;; (use-package org-pdftools
+;;   :hook (org-mode . org-pdftools-setup-link))
 
 (defvar org-global-prefix-map (make-sparse-keymap)
   "A keymap for handy global access to org helpers, particularly clocking.")
@@ -37,45 +37,32 @@
 (define-key org-global-prefix-map (kbd "s") 'org-sidebar-tree)
 (define-key global-map (kbd "C-c o") org-global-prefix-map)
 
-
-;; Various preferences
-(setq org-log-done t
-      org-edit-timestamp-down-means-later t
-      org-hide-emphasis-markers t
-      org-catch-invisible-edits 'show
-      org-export-coding-system 'utf-8
-      org-fast-tag-selection-single-key 'expert
-      org-html-validation-link nil
-      org-tags-column 100
-      org-src-fontify-natively t
-      org-src-tab-acts-natively t
-      org-src-preserve-indentation nil
-      org-fontify-whole-heading-line t
-      org-edit-src-content-indentation 0
-      org-export-time-stamp-file nil
-      org-html-html5-fancy t
-      org-html-doctype "html5")
-
 ;; Re-align tags when window shape changes
 (with-eval-after-load 'org-agenda
+  (unless (file-directory-p org-directory)
+    (mkdir org-directory))
   (add-hook 'org-agenda-mode-hook
             (lambda () (add-hook 'window-configuration-change-hook 'org-agenda-align-tags nil t))))
 
-(setq org-support-shift-select t)
 
 ;;; Capturing
-
 (global-set-key (kbd "C-c c") 'org-capture)
+(global-set-key (kbd "C-c a") 'org-agenda)
+
 
 (setq org-capture-templates
-      `(("t" "todo" entry (file "")  ; "" => `org-default-notes-file'
-         "* NEXT %?\n%U\n" :clock-resume t)
-        ("n" "note" entry (file "")
+      `(("t" "todo" entry (file "todo.org")  ; "" => `org-default-notes-file'
+         "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n")
+        ("n" "note" entry (file "note.org")
          "* %? :NOTE:\n%U\n%a\n" :clock-resume t)
-        ))
+        ("i" "interview" entry (file "interview.org")
+         "* %? %T\n** pros\n** cons\n")
+        ("w" "work" entry (file "work.org")
+         "* %?")
+        ("m" "meeting" entry (file "meeting.org")
+         "* %? %T")))
 
 ;;; Refiling
-
 (setq org-refile-use-cache nil)
 
 ;; Targets include this file and any file contributing to the agenda - up to 5 levels deep
@@ -148,10 +135,7 @@
           (search category-up))
         org-agenda-window-setup 'current-window
         org-agenda-custom-commands
-        `(("N" "Notes" tags "NOTE"
-           ((org-agenda-overriding-header "Notes")
-            (org-tags-match-list-sublevels t)))
-          ("g" "GTD"
+        `(("g" "GTD"
            ((agenda "" nil)
             (tags "INBOX"
                   ((org-agenda-overriding-header "Inbox")
@@ -241,15 +225,15 @@
 (setq org-archive-mark-done nil)
 (setq org-archive-location "%s_archive::* Archive")
 
-(require-package 'org-pomodoro)
-(setq org-pomodoro-keep-killed-pomodoro-time t)
-(with-eval-after-load 'org-agenda
-  (define-key org-agenda-mode-map (kbd "P") 'org-pomodoro))
+;; (require-package 'org-pomodoro)
+;; (setq org-pomodoro-keep-killed-pomodoro-time t)
+;; (with-eval-after-load 'org-agenda
+;;   (define-key org-agenda-mode-map (kbd "P") 'org-pomodoro))
 
 (use-package ox-reveal)
 (use-package ob-go)
 (use-package ox-gfm)
-(use-package org-sidebar)
+;;(use-package org-sidebar)
 
 (defhydra hydra-org-table (:color blue :hint nil)
   "
@@ -273,14 +257,32 @@ _k_: delete row   _l_: delete column  _s_: shorten
           (read-file-name "DocFile: " "~/Documents" "./")))
 
 (with-eval-after-load 'org
-  (require 'ob-sql-mode)
+  ;; Various preferences
+  (setq org-log-done t
+        org-edit-timestamp-down-means-later t
+        org-hide-emphasis-markers t
+        org-catch-invisible-edits 'show
+        org-export-coding-system 'utf-8
+        org-fast-tag-selection-single-key 'expert
+        org-html-validation-link nil
+        org-tags-column 100
+        org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-src-preserve-indentation nil
+        org-fontify-whole-heading-line t
+        org-edit-src-content-indentation 0
+        org-export-time-stamp-file nil
+        org-html-html5-fancy t
+        org-html-doctype "html5"
+        org-support-shift-select t)
+
   ;; open file in the same window
   (setf (cdr (assoc 'file org-link-frame-setup)) 'find-file)
   (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
 
   (require 'ox-reveal)
   (require 'ox-gfm)
-  (require 'org-sidebar)
+  ;;(require 'org-sidebar)
   (org-beamer-mode)
   (unbind-key (kbd "C-,") org-mode-map)
   (unbind-key (kbd "C-c $") org-mode-map)
@@ -291,10 +293,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
   (define-key org-mode-map (kbd "C-c C-p") #'org-cliplink)
   (define-key org-mode-map (kbd "C-M-<up>") 'org-up-element)
-  (when *is-a-mac*
-    (define-key org-mode-map (kbd "M-h") nil)
-    (define-key org-mode-map (kbd "C-c g") 'org-mac-grab-link))
-  (electric-pair-local-mode)
+  ;;(electric-pair-local-mode)
   (org-babel-do-load-languages
    'org-babel-load-languages
    `((R . t)
@@ -336,21 +335,20 @@ _k_: delete row   _l_: delete column  _s_: shorten
           "bibtex %b"
           "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
           "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-  :hook (org-mode . org2ctex-mode))
+  ;;:hook (org-mode . org2ctex-mode)
+  )
 
 (require 'org-tempo nil 'noerror)
 (require-package 'org-preview-html)
 (setq org-preview-html-viewer 'xwidget)
-
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode))
 
 (defun org-level-reset-height()
   (dolist (face '(outline-1 outline-2 outline-3 org-level-1 org-level-2 org-level-3))
     ;;(make-local-variable face)
     (set-face-attribute face nil :height 1.0)))
 
-(after-load-theme (org-level-reset-height))
+;;(after-load-theme (org-level-reset-height))
+
 (add-hook 'org-mode-hook (lambda ()
                            (setq-local electric-pair-inhibit-predicate
                                        `(lambda (c)
