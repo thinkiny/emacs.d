@@ -35,7 +35,6 @@
                                        "-o ControlMaster=auto -o ControlPersist=yes"))
 
 (defconst tramp-ssh-without-controlmaster-options " -o ControlMaster=no -o ControlPath=none -o ControlPersist=no ")
-(use-package docker-tramp :after tramp)
 
 ;; fix tramp master-control
 (defun advice/ignore-tramp-ssh-control-master (func &rest args)
