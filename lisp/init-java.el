@@ -7,37 +7,17 @@
 
 (use-package android-mode)
 
-(use-package lsp-java
-  :after lsp-mode)
-
-(with-eval-after-load 'lsp-java
-  (require 'init-pom)
-  (require 'dap-java)
-
-  (set-face-attribute 'lsp-java-progress-face nil :inherit nil)
-  (setq lsp-java-import-maven-enabled t
-        lsp-java-maven-download-sources t
-        lsp-java-inhibit-message t
-        lsp-java-decompiler-fernflower-ind "    "
-        lsp-java-decompiler-fernflower-ren t
-        lsp-java-format-on-type-enabled nil
-        lsp-java-decompiler-fernflower-dgs t
-        lsp-java-content-provider-preferred "fernflower"
-        lsp-java-format-settings-url (lsp--path-to-uri "~/.emacs.d/java/formatter.xml")
-        lsp-java-format-settings-profile "my-java")
-
-  ;; (add-to-list 'lsp-java-vmargs
-  ;;              (concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))
-  (setq lsp-java-vmargs `("-XX:+UseG1GC"
-                          "-XX:MaxGCPauseMillis=200"
-                          "-Dsun.zip.disableMemoryMapping=true"
-                          "-Xms100m"
-                          ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar"))))
-
-  (lsp-register-custom-settings
-   '(("java.decompiler.fernflower.ind" lsp-java-decompiler-fernflower-ind)
-     ("java.decompiler.fernflower.ren" lsp-java-decompiler-fernflower-ren t)
-     ("java.decompiler.fernflower.dgs" lsp-java-decompiler-fernflower-dgs t))))
+(use-package eglot-java
+  :after eglot
+  :config
+  (setq eglot-java-server-install-dir (concat user-emacs-directory "java/eclipse.jdt.ls"))
+  (setq eglot-java-eclipse-jdt-args
+        `("-XX:+UseG1GC"
+          "-XX:MaxGCPauseMillis=50"
+          "-Dsun.zip.disableMemoryMapping=true"
+          "-Xms100m"
+          ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar"))))
+  )
 
 (defconst java-style
   '((c-basic-offset . 4)
@@ -46,16 +26,14 @@
                                                (min c-lineup-multi-inher c-lineup-java-inher)))))))
 
 (defun my-java-hook()
-  ;;(setq-local lsp-ui-sideline-show-code-actions nil)
-  ;;(setq-local lsp-enable-format-at-save nil)
-  (lsp-later)
+  (eglot-ensure)
   (google-set-c-style-with-offset 4)
-  (define-key java-mode-map (kbd "C-c a") 'lsp-java-add-import)
-  (define-key java-mode-map (kbd "C-c t") 'lsp-java-add-throws)
-  (define-key java-mode-map (kbd "C-c u") 'lsp-java-add-unimplemented-methods)
-  (define-key java-mode-map (kbd "C-c o") 'lsp-java-generate-overrides)
-  (define-key java-mode-map (kbd "C-c g") 'lsp-java-generate-getters-and-setters)
-  (define-key java-mode-map (kbd "C-c w u") 'lsp-java-update-project-configuration )
+  (define-key eglot-java-mode-map (kbd "C-c j n") #'eglot-java-file-new)
+  (define-key eglot-java-mode-map (kbd "C-c j r") #'eglot-java-run-main)
+  (define-key eglot-java-mode-map (kbd "C-c j t") #'eglot-java-run-test)
+  (define-key eglot-java-mode-map (kbd "C-c j N") #'eglot-java-project-new)
+  (define-key eglot-java-mode-map (kbd "C-c j T") #'eglot-java-project-build-task)
+  (define-key eglot-java-mode-map (kbd "C-c j R") #'eglot-java-project-build-refresh)
   (c-toggle-auto-newline -1)
   (setq fill-column 100))
 
