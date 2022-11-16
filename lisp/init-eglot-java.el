@@ -89,16 +89,28 @@ If INTERACTIVE, prompt user for details."
 
 (cl-defmethod eglot-initialization-options ((server eglot-eclipse-jdt))
   "Passes through required JDT initialization options."
-  `(:extendedClientCapabilities (:classFileContentsSupport t)
+  `(:workspaceFolders
+    [,@(cl-delete-duplicates
+        (mapcar #'eglot--path-to-uri
+                (let* ((root (project-root (eglot--project server))))
+                  (cons root
+                        (mapcar
+                         #'file-name-directory
+                         (append
+                          (file-expand-wildcards (concat root "*/pom.xml"))
+                          (file-expand-wildcards (concat root "*/build.gradle"))
+                          (file-expand-wildcards (concat root "*/.project")))))))
+        :test #'string=)]
+    :settings (:import (:gradle (:enabled t)))
+    :extendedClientCapabilities (:classFileContentsSupport t)
     :format (:settings (:url ,(expand-file-name "~/.emacs.d/java/formatter.xml")
-                             :profile "my-java"))
+                        :profile "my-java"))
     :maven (:downloadSources t)
     ;; :autobuild (:enabled t)
     ;; https://github.com/dgileadi/vscode-java-decompiler
     :contentProvider (:preferred "fernflower")
     :decompiler (:fernflower
-                 (:ind "    ")
-                 (:ren t)
-                 (:dgs t))
-    ))
+                 (:ind "    "
+                  :ren t
+                  :dgs t))))
 (provide 'init-eglot-java)
