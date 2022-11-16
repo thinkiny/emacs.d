@@ -15,6 +15,9 @@
   ;; (defadvice projectile-project-root (around ignore-remote first activate)
   ;;   (unless (file-remote-p default-directory) ad-do-it))
 
+  (require 'project-projectile)
+  (add-hook 'project-find-functions #'project-projectile 'append)
+
   ;; don't use file-truename
   (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
   (unbind-key (kbd "C-c p t") 'projectile-mode-map)

@@ -1,12 +1,4 @@
-(use-package scala-mode :mode "\\.s\\(cala\\|bt\\|c\\)$")
-(use-package lsp-metals
-  :config
-  (setq lsp-metals-sbt-script (expand-file-name "~/.emacs.d/third-parties/sbt")
-        lsp-metals-show-implicit-arguments t
-        lsp-metals-show-inferred-type t
-        lsp-metals-show-implicit-conversions-and-classes t)
-  :custom
-  (lsp-metals-server-args '("-J-Dmetals.showInferredType=on" "-J-Dmetals.showImplicitArguments=on" "-J-Dmetals.showImplicitConversionsAndClasses=on"))
+(use-package scala-mode :mode "\\.s\\(cala\\|bt\\|c\\)$"
   :hook (scala-mode . my-scala-mode-hook))
 
 ;; scala3
@@ -19,12 +11,10 @@
     (setq-local indent-line-function 'indent-relative-maybe)))
 
 (defun my-scala-mode-hook()
-  (lsp-later)
-  (lsp-lens-mode)
+  (eglot-ensure)
   (disable-scala-indent)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
-     ;;((string= ext "sc")  (setq-local lsp-enable-format-at-save nil))
      ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode)))))
 
 (defun sbt-shell()
