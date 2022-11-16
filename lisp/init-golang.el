@@ -48,16 +48,14 @@
   (go-generate-tag "form"))
 
 
-
 (defun my-go-mode-hook()
   (setq-default eglot-workspace-configuration
                 '((:gopls .
                           ((staticcheck . t)
                            (analyses .
-                                     (unusedparams . t)
-                                     (unusedvariable . t)
-                                     (nilness . t))
-                           ))))
+                                     ((unusedparams . t)
+                                      (unusedvariable . t)
+                                      (nilness . t)))))))
   (eglot-ensure)
   (eglot-format-buffer-on-save)
   (subword-mode)
