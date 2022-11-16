@@ -9,7 +9,6 @@
     (tab-width . 4)
     (c-offsets-alist . ((statement-cont . (max c-lineup-cascaded-calls
                                                (min c-lineup-multi-inher c-lineup-java-inher)))))))
-
 (with-eval-after-load 'eglot
   (require 'init-eglot-java))
 
