@@ -13,7 +13,7 @@
                 ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))))
 
 (defun eglot-java-handle-uri (fn url)
-  (if (string-match "jdt://contents/\\(.*?\\)/\\(.*\\)\.class\\?" url)
+  (if (and (stringp url) (string-match "jdt://contents/\\(.*?\\)/\\(.*\\)\.class\\?" url))
       (eglot-java--resolve-uri url)
     (funcall fn url)))
 
