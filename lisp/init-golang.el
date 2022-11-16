@@ -1,55 +1,25 @@
-(use-package go-mode
-  :after lsp-mode
-  :config
-  (lsp-register-custom-settings
-   '(("gopls.completeUnimported" t t)
-     ("gopls.staticcheck" t t))))
-
+(use-package go-mode)
 (require-package 'go-snippets)
 
-(with-eval-after-load 'lsp-mode
-  (setq lsp-go-codelens nil)
-  ;;(setq lsp-go-env (make-hash-table))
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection-fast (lambda () (cons lsp-go-gopls-server-path lsp-go-gopls-server-args)))
-                    :major-modes '(go-mode go-dot-mod-mode)
-                    :remote? t
-                    :server-id 'gopls-remote
-                    :completion-in-comments? t
-                    :library-folders-fn #'lsp-go--library-default-directories
-                    :after-open-fn (lambda ()
-                                     (setq-local lsp-completion-filter-on-incomplete nil)))))
+;; project
+(require 'project)
 
-(defun check-valid-lsp-go-mode()
-  (let ((res (and (bound-and-true-p lsp-mode) (derived-mode-p 'go-mode))))
-    (unless res
-      (message "current file is not in go-mode and lsp-mode"))
-    res))
+(defun project-find-go-module (dir)
+  (when-let ((root (locate-dominating-file dir "go.mod")))
+    (cons 'go-module root)))
 
-(defun lsp-enable-go-module ()
-  (interactive)
-  (when (and (check-valid-lsp-go-mode) (lsp-session-get-metadata 'go-path))
-    (setq-local lsp-go-env (make-hash-table))
-    (puthash "GO111MODULE" "on" lsp-go-env)
-    (lsp-session-set-metadata 'go-path nil)
-    (my-lsp-workspace-restart)))
+(cl-defmethod project-root ((project (head go-module)))
+  (cdr project))
 
-(defun lsp-disable-go-module ()
-  (interactive)
-  (when (and (check-valid-lsp-go-mode) (not (lsp-session-get-metadata 'go-path))
-             (setq-local lsp-go-env (make-hash-table))
-             (puthash "GO111MODULE" "off" lsp-go-env)
-             (puthash "GOPATH" (file-local-name (projectile-project-root)) lsp-go-env)
-             (lsp-session-set-metadata 'go-path t)
-             (my-lsp-workspace-restart))))
+(add-hook 'project-find-functions #'project-find-go-module)
 
-(defun lsp-enable-go-bazel()
-  (interactive)
-  (setq-local lsp-go-env (make-hash-table))
-  ;; (puthash "GOPACKAGESDRIVER_BAZEL_TARGETS" "//app/..." lsp-go-env)
-  ;; (puthash "GOPACKAGESDRIVER_BAZEL_QUERY" "kind(go_library, //app/...)" lsp-go-env)
-  (puthash "GOPACKAGESDRIVER" (concat (projectile-project-root) "/gopackagesdriver.sh") lsp-go-env)
-  (my-lsp-workspace-restart))
+;; (defun lsp-enable-go-bazel()
+;;   (interactive)
+;;   (setq-local lsp-go-env (make-hash-table))
+;;   ;; (puthash "GOPACKAGESDRIVER_BAZEL_TARGETS" "//app/..." lsp-go-env)
+;;   ;; (puthash "GOPACKAGESDRIVER_BAZEL_QUERY" "kind(go_library, //app/...)" lsp-go-env)
+;;   (puthash "GOPACKAGESDRIVER" (concat (projectile-project-root) "/gopackagesdriver.sh") lsp-go-env)
+;;   (my-lsp-workspace-restart))
 
 (defun go-insert-generate-tag (name)
   (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
@@ -77,11 +47,24 @@
   (interactive)
   (go-generate-tag "form"))
 
+
+
 (defun my-go-mode-hook()
+  (setq-default eglot-workspace-configuration
+                '((:gopls .
+                          ((staticcheck . t)
+                           (analyses .
+                                     (unusedparams . t)
+                                     (unusedvariable . t)
+                                     (nilness . t))
+                           ))))
+  (eglot-ensure)
+  (eglot-format-buffer-on-save)
   (subword-mode)
-  (lsp-later)
+
   (define-key go-mode-map (kbd "C-c g j") #'go-generate-tag-json)
   (define-key go-mode-map (kbd "C-c g f") #'go-generate-tag-form))
+
 (add-hook 'go-mode-hook #'my-go-mode-hook)
 
 (provide 'init-golang)

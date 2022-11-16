@@ -16,7 +16,7 @@
   (run-mode-hooks 'maven-pom-mode-hook)
   (local-unset-key (kbd "C-c ]"))
   (local-unset-key (kbd "C-c C-n"))
-  (local-set-key (kbd "C-c u") 'lsp-java-update-project-configuration))
+  (local-set-key (kbd "C-c u") 'eglot-java-project-build-refresh))
 
 (provide 'init-pom)
 ;;; init-pom ends here

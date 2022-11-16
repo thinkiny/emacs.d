@@ -26,7 +26,6 @@
 ;;language
 ;;(require 'init-flycheck)
 (require 'init-lisp)
-;;(require 'init-lsp)
 (require 'init-sideline)
 (require 'init-eglot)
 (require 'init-gtags)

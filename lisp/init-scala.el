@@ -15,7 +15,6 @@
   (disable-scala-indent)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
-     ;;((string= ext "sc")  (setq-local lsp-enable-format-at-save nil))
      ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode)))))
 
 (defun sbt-shell()

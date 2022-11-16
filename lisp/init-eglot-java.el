@@ -1,3 +1,6 @@
+(require-package 'eglot-java)
+(require 'eglot-java)
+
 (defun eglot-java-jdt-make-jvm-arg (arg)
   (concat "--jvm-arg=" arg))
 
@@ -98,5 +101,4 @@ If INTERACTIVE, prompt user for details."
                  (:ren t)
                  (:dgs t))
     ))
-(require-package 'eglot-java)
 (provide 'init-eglot-java)

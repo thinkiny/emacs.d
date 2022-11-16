@@ -1,6 +1,3 @@
-;;(require 'lsp-java-boot)
-;;(add-hook 'java-mode-hook #'lsp-java-boot-lens-mode)
-
 (require-package 'java-snippets)
 (require-package 'groovy-mode)
 (add-to-list 'auto-mode-alist '("\\.gradle\\'" . groovy-mode))

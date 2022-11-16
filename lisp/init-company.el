@@ -10,7 +10,7 @@
   (when (and (company-manual-begin) company-selection)
     (let* ((result (nth company-selection company-candidates))
            (text (company-complete-remove-params result)))
-      (company-finish (propertize text 'lsp-completion-item (make-hash-table))))))
+      (company-finish text))))
 
 (with-eval-after-load 'company
   (define-key company-active-map (kbd "\C-n") 'company-select-next)
