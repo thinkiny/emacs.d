@@ -1,5 +1,9 @@
 (use-package eglot
-  :hook (eglot-managed-mode . my-eglot-mode-hook))
+  :hook (eglot-managed-mode . my-eglot-mode-hook)
+  :config
+  (setq eldoc-documentation-functions
+        (cons #'flymake-eldoc-function
+              (remove #'flymake-eldoc-function eldoc-documentation-functions))))
 
 (use-package consult-eglot)
 
