@@ -217,6 +217,7 @@
   (setq dashboard-set-init-info nil)
   (setq dashboard-set-navigator nil)
   (setq dashboard-set-heading-icons t)
+  (setq dashboard-banner-logo-title nil)
   (setq dashboard-set-file-icons nil)
   (setq dashboard-set-footer nil)
   (setq dashboard-bookmarks-show-base 'align)
