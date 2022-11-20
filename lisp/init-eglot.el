@@ -3,7 +3,13 @@
   :config
   (setq eldoc-documentation-functions
         (cons #'flymake-eldoc-function
-              (remove #'flymake-eldoc-function eldoc-documentation-functions))))
+              (remove #'flymake-eldoc-function eldoc-documentation-functions)))
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
+  (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
+  (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
+  (define-key eglot-mode-map (kbd "C-c h") 'eldoc-doc-buffer)
+  (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
+  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-action))
 
 (use-package consult-eglot)
 
@@ -22,14 +28,6 @@
   (setq-local eglot-enable-format-at-save nil))
 
 (defun my-eglot-mode-hook()
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
-  (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
-  (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
-  (define-key eglot-mode-map (kbd "C-c h") 'eldoc-doc-buffer)
-  (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
-  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-action-quickfix)
-  (eglot--setq-saving eldoc-documentation-functions
-                      '(eglot-signature-eldoc-function))
   (if eglot-enable-format-at-save
       (eglot-enable-format)))
 

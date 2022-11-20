@@ -23,7 +23,7 @@
 
 (defun my-js-mode-hook ()
   (unless (string= "json" (file-name-extension (buffer-file-name)))
-    (lsp-later)))
+    (eglot-ensure)))
 
 (add-hook 'js-mode-hook #'my-js-mode-hook)
 

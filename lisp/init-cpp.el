@@ -88,9 +88,9 @@
 (defun my-cpp-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -
   (c-add-style "Google" google-c-style t)
-  (define-key c-mode-base-map (kbd "C-c x") 'switch-cpp-header-source)
-  (define-key c-mode-base-map (kbd "C-c b g") 'generate-compdb)
-  (define-key c-mode-base-map (kbd "C-c b b") 'build-cpp-project)
+  (local-set-key (kbd "C-c x") 'switch-cpp-header-source)
+  (local-set-key (kbd "C-c b g") 'generate-compdb)
+  (local-set-key (kbd "C-c b b") 'build-cpp-project)
   (local-set-key (kbd "C-c a") 'disaster)
   (if (gtags-get-rootpath)
       (gtags-mode)
