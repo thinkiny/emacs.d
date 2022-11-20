@@ -1,6 +1,7 @@
 (use-package eglot
   :hook (eglot-managed-mode . my-eglot-mode-hook)
   :config
+  (setq eglot-events-buffer-size 0)
   (defun eglot-rename-with-current (newname)
     "Rename the current symbol to NEWNAME."
     (interactive
@@ -19,29 +20,18 @@
                                              :newName ,newname))
      current-prefix-arg))
 
+  (eglot--code-action eglot-code-action-override "source.overrideMethods")
+  (defun eglot-code-actions-current-line()
+    (interactive)
+    (eglot-code-actions (line-beginning-position) (line-end-position) nil t))
+
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
+  (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-eglot-help-at-point)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
-  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions))
-
-(with-eval-after-load 'eglot
-  (defvar eglot-log-event-p nil)
-
-  (defun jsonrpc--log-event$toggle-event-log (f &rest args)
-    (when (and eglot-log-event-p
-               (ignore-errors
-                 (eq (type-of (car args)) 'eglot-lsp-server)))
-      (apply f args)))
-
-  (advice-add #'jsonrpc--log-event :around #'jsonrpc--log-event$toggle-event-log)
-
-  (defun toggle-eglot-event-log()
-    (interactive)
-    (setq eglot-log-event-p (not eglot-log-event-p))
-    (message "EGLOG event log is current: %s"
-             (if eglot-log-event-p "ON" "OFF"))))
+  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line))
 
 (use-package consult-eglot)
 

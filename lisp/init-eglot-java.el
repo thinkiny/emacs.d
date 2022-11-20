@@ -103,7 +103,14 @@ If INTERACTIVE, prompt user for details."
                           (file-expand-wildcards (concat root "*/.project")))))))
         :test #'string=)]
     :settings (:import (:gradle (:enabled t)))
-    :extendedClientCapabilities (:classFileContentsSupport t)
+    :extendedClientCapabilities ( :classFileContentsSupport t
+                                  :overrideMethodsPromptSupport t
+                                  :advancedOrganizeImportsSupport t
+                                  :generateConstructorsPromptSupport t
+                                  :advancedGenerateAccessorsSupport t
+                                  :advancedExtractRefactoringSupport t
+                                  :moveRefactoringSupport t
+                                  :resolveAdditionalTextEditsSupport t )
     :format (:settings (:url ,(expand-file-name "~/.emacs.d/java/formatter.xml")
                         :profile "my-java"))
     :maven (:downloadSources t)
@@ -120,4 +127,5 @@ If INTERACTIVE, prompt user for details."
                  (:ind "    "
                   :ren t
                   :dgs t))))
+
 (provide 'init-eglot-java)
