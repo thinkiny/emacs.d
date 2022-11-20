@@ -1,7 +1,25 @@
 (use-package eglot
   :hook (eglot-managed-mode . my-eglot-mode-hook)
   :config
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
+  (defun eglot-rename-with-current (newname)
+    "Rename the current symbol to NEWNAME."
+    (interactive
+     (let ((curr (thing-at-point 'symbol t)))
+       (list (read-from-minibuffer
+              (format "Rename `%s' to: " (or curr
+                                             "unknown symbol"))
+              curr nil nil nil
+              (symbol-name (symbol-at-point))))))
+
+    (unless (eglot--server-capable :renameProvider)
+      (eglot--error "Server can't rename!"))
+    (eglot--apply-workspace-edit
+     (jsonrpc-request (eglot--current-server-or-lose)
+                      :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
+                                             :newName ,newname))
+     current-prefix-arg))
+
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-eglot-help-at-point)
