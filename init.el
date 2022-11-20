@@ -28,6 +28,7 @@
 (require 'init-lisp)
 (require 'init-sideline)
 (require 'init-eglot)
+(require 'init-eldoc)
 (require 'init-gtags)
 (require 'init-cpp)
 (require 'init-python)

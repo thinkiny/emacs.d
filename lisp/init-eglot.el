@@ -6,7 +6,7 @@
   (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-eglot-help-at-point)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
-  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-action))
+  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
   (defvar eglot-log-event-p nil)
@@ -26,9 +26,6 @@
              (if eglot-log-event-p "ON" "OFF"))))
 
 (use-package consult-eglot)
-(use-package eldoc-box
-  :config
-  (setq eldoc-box-clear-with-C-g t))
 
 ;; format
 (defvar-local eglot-enable-format-at-save t)
