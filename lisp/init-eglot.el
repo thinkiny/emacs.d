@@ -1,17 +1,34 @@
 (use-package eglot
   :hook (eglot-managed-mode . my-eglot-mode-hook)
   :config
-  (setq eldoc-documentation-functions
-        (cons #'flymake-eldoc-function
-              (remove #'flymake-eldoc-function eldoc-documentation-functions)))
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
-  (define-key eglot-mode-map (kbd "C-c h") 'eldoc-doc-buffer)
+  (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-eglot-help-at-point)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-action))
 
+(with-eval-after-load 'eglot
+  (defvar eglot-log-event-p nil)
+
+  (defun jsonrpc--log-event$toggle-event-log (f &rest args)
+    (when (and eglot-log-event-p
+               (ignore-errors
+                 (eq (type-of (car args)) 'eglot-lsp-server)))
+      (apply f args)))
+
+  (advice-add #'jsonrpc--log-event :around #'jsonrpc--log-event$toggle-event-log)
+
+  (defun toggle-eglot-event-log()
+    (interactive)
+    (setq eglot-log-event-p (not eglot-log-event-p))
+    (message "EGLOG event log is current: %s"
+             (if eglot-log-event-p "ON" "OFF"))))
+
 (use-package consult-eglot)
+(use-package eldoc-box
+  :config
+  (setq eldoc-box-clear-with-C-g t))
 
 ;; format
 (defvar-local eglot-enable-format-at-save t)
@@ -28,6 +45,7 @@
   (setq-local eglot-enable-format-at-save nil))
 
 (defun my-eglot-mode-hook()
+  (eldoc-box-hover-at-point-mode)
   (if eglot-enable-format-at-save
       (eglot-enable-format)))
 
