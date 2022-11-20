@@ -1,5 +1,6 @@
 (require-package 'eglot-java)
 (require 'eglot-java)
+(setq eglot-java-server-install-dir (concat user-emacs-directory "java/eclipse.jdt.ls"))
 
 (defun eglot-java-jdt-make-jvm-arg (arg)
   (concat "--jvm-arg=" arg))
@@ -108,6 +109,12 @@ If INTERACTIVE, prompt user for details."
     :maven (:downloadSources t)
     ;; :autobuild (:enabled t)
     ;; https://github.com/dgileadi/vscode-java-decompiler
+    :bundles ,(let ((bundles-dir (concat eglot-java-server-install-dir "/bundles" ))
+                             jdtls-bundles)
+                         (->> (when (file-directory-p bundles-dir)
+                                (directory-files bundles-dir t "\\.jar$"))
+                              (append jdtls-bundles)
+                              (apply #'vector)))
     :contentProvider (:preferred "fernflower")
     :decompiler (:fernflower
                  (:ind "    "
