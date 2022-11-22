@@ -229,6 +229,7 @@
   (setq dashboard-set-heading-icons t)
   (setq dashboard-set-file-icons nil)
   (setq dashboard-set-footer nil)
+  (setq dashboard-banner-logo-title nil)
   (setq dashboard-bookmarks-show-base 'align)
   (setq initial-buffer-choice (lambda () (get-buffer dashboard-buffer-name)))
   (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
