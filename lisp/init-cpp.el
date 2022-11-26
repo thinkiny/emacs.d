@@ -14,8 +14,8 @@
   ;;(require 'dap-cpptools)
   (setq lsp-clients-clangd-args '("--header-insertion-decorators=0" "--log=error" "--header-insertion=never"))
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection-fast 'lsp-clients--clangd-command)
-                    :activation-fn (lsp-activate-on "c" "cpp" "objective-c")
+   (make-lsp-client :new-connection (lsp-tramp-connection-fast "clangd")
+                    :activation-fn (lsp-activate-on "c" "cpp" "objective-c" "cuda")
                     :library-folders-fn (lambda (_workspace) lsp-clients-clangd-library-directories)
                     :server-id 'clangd-remote
                     :remote? t)))

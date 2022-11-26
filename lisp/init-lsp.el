@@ -135,7 +135,7 @@ Request codeAction/resolve for more info if server supports."
     (message (format "write %s" file))))
 
 ;; tramp
-(ignore-tramp-ssh-control-master 'lsp)
+;;(ignore-tramp-ssh-control-master 'lsp)
 (with-eval-after-load 'lsp-mode
   (defun lsp-tramp-connection-fast (local-command)
     "Create LSP stdio connection named name.
@@ -146,7 +146,7 @@ returns the command to execute."
         (add-to-list 'tramp-connection-properties
                      (list (regexp-quote (file-remote-p default-directory))
                            "direct-async-process" t)))
-    (list :connect (lambda (filter sentinel name environment-fn)
+    (list :connect (lambda (filter sentinel name environment-fn _workspace)
                      (let* ((final-command (lsp-resolve-final-function
                                             local-command))
                             (process-name (generate-new-buffer-name name))
@@ -168,14 +168,19 @@ returns the command to execute."
           :test? (lambda () (-> local-command lsp-resolve-final-function lsp-server-present?))
           )))
 
+
+;; ;; update lsp-symbol every two seconds
+(setq lsp-modeline-symbol-running nil)
+(defun lsp-enable-modeline-symbol()
+  (unless lsp-modeline-symbol-running
+    (setq lsp-modeline-symbol-running t)
+    (run-at-time 2 2 (lambda ()
+                       (setq lsp-modeline-symbol (lsp-modeline-get-symbol-name))))))
 ;; hook
 (defun my-lsp-mode-hook ()
-  ;; (setq-local flycheck-idle-change-delay 1.0)
-  ;; (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+  (lsp-enable-modeline-symbol)
   (make-local-variable 'markdown-header-face-2)
   (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
-
-  (add-hook 'xref-backend-functions #'lsp--xref-backend)
   (if lsp-enable-format-at-save
       (lsp-enable-format)))
 
@@ -256,12 +261,12 @@ returns the command to execute."
         (-if-let* ((lsp--document-symbols-request-async t)
                    (symbols (lsp--get-document-symbols))
                    (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols)))
-            (concat " => " (gethash "name" (car (last symbols-hierarchy))))
-            ;; (concat " => "
-            ;;         (mapconcat
-            ;;          (lambda (symbol)
-            ;;            (gethash "name" symbol))
-            ;;          symbols-hierarchy "/"))
+            ;;(concat " => " (gethash "name" (car (last symbols-hierarchy))))
+            (concat " => "
+                    (mapconcat
+                     (lambda (symbol)
+                       (gethash "name" symbol))
+                     symbols-hierarchy "/"))
           "")
       "")))
 
