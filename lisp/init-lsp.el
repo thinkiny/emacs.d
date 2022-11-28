@@ -9,7 +9,9 @@
         lsp-modeline-code-actions-enable nil
         lsp-enable-symbol-highlighting nil
         lsp-enable-indentation nil
-        lsp-enable-xref nil
+        lsp-references-exclude-definition t
+        ;;lsp-enable-xref t
+        lsp-auto-configure t
         lsp-enable-on-type-formatting nil
         lsp-enable-text-document-color nil
         lsp-file-watch-threshold nil
