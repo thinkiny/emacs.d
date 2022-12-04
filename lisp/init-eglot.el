@@ -2,6 +2,16 @@
   :hook (eglot-managed-mode . my-eglot-mode-hook)
   :config
   (setq eglot-events-buffer-size 0)
+  (setq eglot-extend-to-xref t)
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
+  (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
+  (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
+  (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
+  (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-eglot-help-at-point)
+  (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
+  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line))
+
+(with-eval-after-load 'eglot
   (defun eglot-rename-with-current (newname)
     "Rename the current symbol to NEWNAME."
     (interactive
@@ -25,13 +35,24 @@
     (interactive)
     (eglot-code-actions (line-beginning-position) (line-end-position) nil t))
 
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
-  (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
-  (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
-  (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
-  (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-eglot-help-at-point)
-  (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
-  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line))
+  (defun eglot--format-markup (markup)
+    "Format MARKUP according to LSP's spec."
+    (pcase-let ((`(,string ,mode)
+                 (if (stringp markup) (list markup 'gfm-view-mode)
+                   (list (plist-get markup :value)
+                         (pcase (plist-get markup :kind)
+                           ("markdown" 'gfm-view-mode)
+                           ("plaintext" 'text-mode)
+                           (_ major-mode))))))
+      (with-temp-buffer
+        (setq-local markdown-fontify-code-blocks-natively t)
+        (insert (replace-regexp-in-string "^---\n" "" string))
+        ;;(apply #'insert (seq-filter (eglot-tidy-content) string))
+        (let ((inhibit-message t)
+              (message-log-max nil))
+          (ignore-errors (delay-mode-hooks (funcall mode))))
+        (font-lock-ensure)
+        (string-trim (buffer-string))))))
 
 (use-package consult-eglot)
 
