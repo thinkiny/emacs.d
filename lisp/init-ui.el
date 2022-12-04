@@ -98,7 +98,7 @@
 (after-load-theme
  (set-face-attribute 'button nil :background nil)
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
- (set-face-attribute 'fringe nil :background nil)
+ ;;(set-face-attribute 'fringe nil :background nil)
  (when (is-custom-theme-dark)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
    (set-face-attribute 'all-the-icons-ibuffer-size-face nil :inherit nil)

@@ -35,6 +35,9 @@
     (interactive)
     (eglot-code-actions (line-beginning-position) (line-end-position) nil t))
 
+  (defun eglot-fix-markdown-content (str)
+    (replace-regexp-in-string "^---\n" "" str))
+
   (defun eglot--format-markup (markup)
     "Format MARKUP according to LSP's spec."
     (pcase-let ((`(,string ,mode)
@@ -46,8 +49,7 @@
                            (_ major-mode))))))
       (with-temp-buffer
         (setq-local markdown-fontify-code-blocks-natively t)
-        (insert (replace-regexp-in-string "^---\n" "" string))
-        ;;(apply #'insert (seq-filter (eglot-tidy-content) string))
+        (insert (eglot-fix-markdown-content string))
         (let ((inhibit-message t)
               (message-log-max nil))
           (ignore-errors (delay-mode-hooks (funcall mode))))
