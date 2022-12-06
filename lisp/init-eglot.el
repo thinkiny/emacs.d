@@ -73,7 +73,8 @@
   (setq-local eglot-enable-format-at-save nil))
 
 (defun my-eglot-mode-hook()
-  (eldoc-box-hover-at-point-mode)
+  (eglot--setq-saving eldoc-documentation-functions
+                        '(eglot-signature-eldoc-function))
   (if eglot-enable-format-at-save
       (eglot-enable-format)))
 
