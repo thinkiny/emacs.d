@@ -209,34 +209,6 @@
 ;; hide-mode-line
 (require-package 'hide-mode-line)
 
-;; dashboard
-(use-package dashboard
-  :demand t
-  :config
-  (setq dashboard-startup-banner nil)
-  (setq dashboard-set-init-info nil)
-  (setq dashboard-set-navigator nil)
-  (setq dashboard-set-heading-icons t)
-  (setq dashboard-banner-logo-title nil)
-  (setq dashboard-set-file-icons nil)
-  (setq dashboard-set-footer nil)
-  (setq dashboard-bookmarks-show-base 'align)
-  (setq initial-buffer-choice (lambda () (get-buffer dashboard-buffer-name)))
-  (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
-  (setq dashboard-items '((recents  . 15)
-                          (bookmarks . 10)
-                          (agenda . 5)))
-  (dashboard-setup-startup-hook)
-
-  (defun switch-to-dashboard()
-    (interactive)
-    (let ((buf (get-buffer-create dashboard-buffer-name))
-          (dashboard-force-refresh t))
-      (dashboard-insert-startupify-lists)
-      (switch-to-buffer buf)))
-
-  (global-set-key (kbd "C-h h") #'switch-to-dashboard))
-
 ;; term-color
 (defun justify-term-theme()
   (when (and (theme-dark-p) (featurep 'term))
