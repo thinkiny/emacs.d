@@ -8,6 +8,7 @@
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-eglot-help-at-point)
+  (define-key eglot-mode-map (kbd "C-c w r") 'eglot-reconnect)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line))
 
