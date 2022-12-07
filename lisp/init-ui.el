@@ -87,19 +87,19 @@
         modus-themes-paren-match '(bold intense)))
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom custom-theme (cons 'cloud 'light)
+(defcustom default-theme (cons 'cloud 'light)
   "The current theme"
   :group 'faces
   :type 'cons)
 
-(defun is-custom-theme-dark ()
-  (eq 'dark (cdr custom-theme)))
+(defun theme-dark-p ()
+  (eq 'dark (cdr default-theme)))
 
 (after-load-theme
  (set-face-attribute 'button nil :background nil)
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
  ;;(set-face-attribute 'fringe nil :background nil)
- (when (is-custom-theme-dark)
+ (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
    (set-face-attribute 'all-the-icons-ibuffer-size-face nil :inherit nil)
    (set-face-attribute 'all-the-icons-ivy-rich-size-face nil :inherit nil)
@@ -108,7 +108,7 @@
 
 (add-hook 'after-init-hook
           (lambda ()
-            (load-theme (car custom-theme) t)
+            (load-theme (car default-theme) t)
             (run-hooks 'load-theme-hook)))
 
 ;;fonts
@@ -239,7 +239,7 @@
 
 ;; term-color
 (defun justify-term-theme()
-  (when (and (is-custom-theme-dark) (featurep 'term))
+  (when (and (theme-dark-p) (featurep 'term))
     (set-face-background 'term-color-black (face-attribute 'default :foreground))
     (set-face-foreground 'term-color-blue "skyblue3")
     (set-face-foreground 'term-color-red "IndianRed1")))

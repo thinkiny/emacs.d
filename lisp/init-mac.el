@@ -31,7 +31,7 @@
     (menu-bar-mode t))
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-(if (is-custom-theme-dark)
+(if (theme-dark-p)
     (add-to-list 'default-frame-alist '(ns-appearance . dark))
   (add-to-list 'default-frame-alist '(ns-appearance . light)))
 (setq ns-use-proxy-icon nil)
