@@ -123,6 +123,7 @@
   (yas-minor-mode -1)
   (cua-mode -1)
   (tree-sitter-mode -1)
+  (pixel-scroll-precision-mode -1)
   (setq-local left-fringe-width 1)
   ;;(pdf-view-midnight-minor-mode)
   (pdf-view-roll-minor-mode)

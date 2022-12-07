@@ -24,8 +24,7 @@
 (global-set-key (kbd "C-x c g") #'customize-group)
 
 ;; scroll
-;; (if (fboundp 'pixel-scroll-precision-mode)
-;;     (pixel-scroll-precision-mode)
+(pixel-scroll-precision-mode)
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 (setq mouse-wheel-progressive-speed nil)
 (setq mouse-wheel-follow-mouse 't)
@@ -126,8 +125,8 @@
   (if window-system
       (progn
         (if (> (x-display-pixel-width) 1280)
-            (add-to-list 'default-frame-alist '(width . 140))
-          (add-to-list 'default-frame-alist '(width . 80)))
+            (add-to-list 'default-frame-alist '(width . 160))
+          (add-to-list 'default-frame-alist '(width . 85)))
         (add-to-list 'default-frame-alist
                      (cons 'height (/ (- (x-display-pixel-height) 250)
                                       (frame-char-height)))))))
@@ -156,8 +155,7 @@
   (cond ((eq 'pdf-view-mode major-mode) (mode-line-pdfview-page-number))
         ((eq 'doc-view-mode major-mode) (mode-line-docview-page-number))
         ((member major-mode '(eshell-mode term-mode xwidget-webkit-mode)) "")
-        (t (format-mode-line "%l"))))
-
+        (t (format-mode-line " %l:%C"))))
 
 ;; lsp symbol
 (defvar lsp-modeline-symbol "")
@@ -172,9 +170,7 @@
                 " ["
                 mode-name
                 ;;minor-mode-alist
-                "]"
-                ;;(vc-mode vc-mode)
-                " "
+                "] "
                 global-mode-string
                 ))
 
