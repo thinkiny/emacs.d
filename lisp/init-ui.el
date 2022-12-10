@@ -43,6 +43,7 @@
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
 (use-package all-the-icons-ibuffer
+  :demand t
   :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
 
 ;; doom-themes
