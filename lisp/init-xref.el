@@ -62,4 +62,12 @@
 (global-set-key (kbd "M-]") #'xref-go-forward)
 (global-set-key (kbd "M-,") #'xref-find-references)
 
+;; dumb-jump
+(use-package dumb-jump
+  :demand t
+  :config
+  (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
+  (setq xref-backend-functions (remq 'etags--xref-backend xref-backend-functions))
+  (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate t))
+
 (provide 'init-xref)
