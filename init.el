@@ -22,12 +22,12 @@
 (require 'init-whitespace)
 (require 'init-tramp)
 (require 'init-doxymacs)
+(require 'init-treesit)
 
 ;;language
 (require 'init-flycheck)
 (require 'init-lisp)
 (require 'init-lsp)
-;; (require 'init-sideline)
 (require 'init-gtags)
 (require 'init-cpp)
 (require 'init-python)
@@ -48,8 +48,7 @@
 
 ;;file
 (require 'init-markdown)
-(require 'init-toml)
-(require 'init-yaml)
+(require 'init-conf-files)
 (when window-system
   (require 'init-pdf)
   (require 'init-epub))

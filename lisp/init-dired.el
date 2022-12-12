@@ -25,5 +25,17 @@
 
 (use-package ztree)
 
+(defun copy-filename ()
+  "Copy the current buffer file name to the clipboard."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      (dired-get-filename)
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message filename))))
+
+(global-set-key (kbd "C-x w") #'copy-filename)
+
 (provide 'init-dired)
 ;;; init-dired.el ends here

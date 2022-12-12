@@ -315,18 +315,14 @@ With arg N, insert N newlines."
 (smex-initialize)
 (global-set-key (kbd "M-x") 'smex)
 
-;; protobuf
-(use-package protobuf-mode
-  :mode (("\\.proto$" . protobuf-mode) ("\\.proto3$" . protobuf-mode))
-  :config
-  (add-hook 'protobuf-mode-hook
-            (lambda ()
-              (add-hook 'xref-backend-functions #'dumb-jump-xref-activate nil t))))
-
 ;; clipetty
 (use-package clipetty
   :ensure t
   :hook (after-init . global-clipetty-mode))
+
+;; ;; nxml-mode
+;; (with-eval-after-load 'nxml-mode
+;;   (unbind-key (kbd "C-c ]") 'nxml-mode-map))
 
 ;; disable spook
 (fmakunbound 'spook)
@@ -334,43 +330,6 @@ With arg N, insert N newlines."
 ;; disable text scale with mouse
 (unbind-key (kbd "C-<wheel-down>") 'global-map)
 (unbind-key (kbd "C-<wheel-up>") 'global-map)
-
-;; tree-sitter
-(require-package 'tree-sitter)
-(require-package 'tree-sitter-langs)
-
-(require 'tree-sitter-langs)
-(global-tree-sitter-mode)
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-(after-load-theme (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal))
-
-(defun copy-filename ()
-  "Copy the current buffer file name to the clipboard."
-  (interactive)
-  (let ((filename (if (equal major-mode 'dired-mode)
-                      (dired-get-filename)
-                    (buffer-file-name))))
-    (when filename
-      (kill-new filename)
-      (message filename))))
-
-(global-set-key (kbd "C-x w") #'copy-filename)
-
-;; dockerfile
-(use-package dockerfile-mode)
-
-;; nxml-mode
-(with-eval-after-load 'nxml-mode
-  (unbind-key (kbd "C-c ]") 'nxml-mode-map))
-
-;; dumb-jump
-(use-package dumb-jump
-  :demand t
-  :config
-  (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
-  (setq xref-backend-functions (remq 'etags--xref-backend xref-backend-functions))
-  (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate t))
-
 
 ;; native-compile
 (defun native-compile-dir()
