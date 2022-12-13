@@ -13,6 +13,7 @@ if [ -d "pdf-tools" ]; then
     pushd server
     ./autogen.sh
     ./configure
+    rm -f epdfinfo
     make -j4
     cp epdfinfo ../lisp/
     popd
