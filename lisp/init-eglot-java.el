@@ -102,7 +102,8 @@ If INTERACTIVE, prompt user for details."
                           (file-expand-wildcards (concat root "*/build.gradle"))
                           (file-expand-wildcards (concat root "*/.project")))))))
         :test #'string=)]
-    :settings (:import (:gradle (:enabled t)))
+    :settings (:import (:gradle (:enabled t)
+                        :wrapper (:enabled t)))
     :extendedClientCapabilities ( :classFileContentsSupport t
                                   :overrideMethodsPromptSupport t
                                   :advancedOrganizeImportsSupport t
