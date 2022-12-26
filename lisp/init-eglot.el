@@ -75,7 +75,16 @@
 
 (defun my-eglot-mode-hook()
   (eglot--setq-saving eldoc-documentation-functions
-                        '(eglot-signature-eldoc-function))
+                      '(eglot-signature-eldoc-function))
+  (eglot--setq-saving completion-at-point-functions
+                      (list
+                       (cape-capf-buster
+                        (cape-super-capf
+                         (cape-company-to-capf #'company-files)
+                         #'eglot-completion-at-point
+                         )
+                        'equal)))
+  (eglot-completion-at-point)
   (if eglot-enable-format-at-save
       (eglot-enable-format)))
 
