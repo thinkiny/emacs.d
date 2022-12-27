@@ -24,8 +24,7 @@
 (global-set-key (kbd "C-x c g") #'customize-group)
 
 ;; scroll
-(if (fboundp 'pixel-scroll-precision-mode)
-    (pixel-scroll-precision-mode))
+(pixel-scroll-precision-mode)
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 (setq mouse-wheel-progressive-speed nil)
 (setq mouse-wheel-follow-mouse 't)
