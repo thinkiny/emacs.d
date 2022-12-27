@@ -217,7 +217,7 @@ returns the command to execute."
         lsp-ui-imenu-enable nil
         lsp-ui-peek-enable t
         lsp-ui-sideline-delay 0.2)
-  (if (is-custom-theme-dark)
+  (if (theme-dark-p)
       (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1")
     (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple4")))
 ;; (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
