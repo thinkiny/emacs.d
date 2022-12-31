@@ -187,7 +187,7 @@ returns the command to execute."
       (lsp-enable-format)))
 
 (defun my-lsp-completion-mode-hook()
-  (setq-local completion-category-defaults nil)
+  ;;(setq-local completion-category-defaults nil)
   (setq-local completion-at-point-functions
               (list
                (cape-capf-buster
@@ -198,7 +198,7 @@ returns the command to execute."
                 'equal))))
 
 (add-hook 'lsp-mode-hook #'my-lsp-mode-hook)
-(add-hook 'lsp-completion-mode-hook 'my-lsp-completion-mode-hook)
+;;(add-hook 'lsp-completion-mode-hook 'my-lsp-completion-mode-hook)
 
 ;; lsp-ui
 (use-package lsp-ui
