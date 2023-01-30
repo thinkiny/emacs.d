@@ -1,4 +1,4 @@
-;;; counsel-term.el --- counsel terminal management -*- lexical-binding: t -*-
+;; -*- lexical-binding: t -*-
 
 ;;; Code:
 
@@ -79,15 +79,13 @@
                   (concat (when term-user (concat term-user "@")) term-host)
                   (if term-port
                       (list "-p" term-port))
-                  (concat "\"cd " term-localname " && $SHELL -l\""))))
+                  (concat "\"cd " term-localname " && /bin/bash -l\""))))
           ("docker"
            (list "docker" "exec" "-it" term-host "/bin/bash"))
           (tramp-jumper-method
            (list tramp-jumper-exec term-user term-host
                  (concat "cd " term-localname)))))
-    (list (or (getenv "SHELL")
-              (getenv "ESHELL")
-              "/bin/sh") "-l")))
+    (list "/bin/bash" "-l")))
 
 (defun counsel-term-handle-close ()
   "Close current term buffer when `exit' from term buffer."

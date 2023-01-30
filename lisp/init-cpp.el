@@ -2,6 +2,9 @@
 (require-package 'cmake-mode)
 (require-package 'disaster)
 
+(use-package cuda-mode
+  :hook (cuda-mode . lsp-later))
+
 (use-package bazel :demand t)
 ;;(use-package bazel-mode
 ;;  :mode "\\.BUILD$"

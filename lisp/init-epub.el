@@ -4,6 +4,9 @@
   (require 'nov-xwidget)
   (add-hook 'nov-mode-hook 'my-nov-mode-hook))
 
+(defun modeline-nov-document-index()
+  (format " %d/%d" nov-documents-index (length nov-documents)))
+
 (defun nov-goto-next-line-or-page(&optional arg)
   (interactive)
   (when (eq (forward-line 1) 1)
