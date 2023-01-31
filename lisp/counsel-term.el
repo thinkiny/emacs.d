@@ -115,8 +115,8 @@
     (switch-to-buffer (vterm name))
     (if (tramp-tramp-file-p default-directory)
         (with-parsed-tramp-file-name default-directory term
-          (vterm--flush-output (format "cd %s\n" term-localname))
-          (vterm--flush-output "clear\n")
+          ;; (vterm--flush-output (format "cd %s\n" term-localname))
+          ;; (vterm--flush-output "clear\n")
           (setq-local tramp-default-method term-method)))
     (rename-buffer name)))
 
