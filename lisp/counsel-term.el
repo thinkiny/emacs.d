@@ -110,7 +110,9 @@
   (rename-buffer name))
 
 (defun counsel-open-vterm (name)
-  (switch-to-buffer (vterm name))
+  (defvar vterm-shell)
+  (let ((vterm-shell "/bin/bash -l"))
+    (switch-to-buffer (vterm name)))
   (if (tramp-tramp-file-p default-directory)
       (with-parsed-tramp-file-name default-directory term
         (vterm--flush-output (format "cd %s\n" term-localname))
