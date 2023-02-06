@@ -154,6 +154,7 @@
   "Display line number."
   (cond ((eq 'pdf-view-mode major-mode) (mode-line-pdfview-page-number))
         ((eq 'doc-view-mode major-mode) (mode-line-docview-page-number))
+        ((eq 'nov-mode major-mode) (modeline-nov-document-index))
         ((member major-mode '(eshell-mode term-mode xwidget-webkit-mode)) "")
         (t (format-mode-line " %l:%C"))))
 

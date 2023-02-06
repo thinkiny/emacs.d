@@ -1,4 +1,4 @@
-;; tree-sit
+;; -*- lexical-binding: t -*-
 
 (defvar treesit-use-build-in nil)
 (defun tree-sitter-init()
@@ -19,8 +19,8 @@
                   ("rust" . rust)
                   ("scala" . scala)
                   ("java" . java)))
-    (when-let ((hook (intern (concat (car lang) "-mode-hook")))
-               (ts-mode (intern (concat (car lang) "-ts-mode"))))
+    (when-let* ((hook (intern (concat (car lang) "-mode-hook")))
+                (ts-mode (intern (concat (car lang) "-ts-mode"))))
       (add-hook hook (lambda ()
                        (when (treesit-ready-p (cdr lang))
                          (funcall ts-mode)))))))

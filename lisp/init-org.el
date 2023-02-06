@@ -347,7 +347,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
     ;;(make-local-variable face)
     (set-face-attribute face nil :height 1.0)))
 
-;;(after-load-theme (org-level-reset-height))
+(after-load-theme (org-level-reset-height))
 
 (add-hook 'org-mode-hook (lambda ()
                            (setq-local electric-pair-inhibit-predicate

@@ -342,4 +342,11 @@ With arg N, insert N newlines."
            :matcher #'counsel--find-file-matcher)))
     (native-compile-async selected-directory 'recursively)))
 
+;; tabs
+(defun set-tab-width()
+  (interactive)
+  (let* ((value (read-number "set tab width: ")))
+    (setq-local tab-width value)
+    (setq-local c-basic-offset value)))
+
 (provide 'init-editing-utils)

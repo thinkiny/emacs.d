@@ -1,4 +1,4 @@
-;;; counsel-term.el --- counsel terminal management -*- lexical-binding: t -*-
+;; -*- lexical-binding: t -*-
 
 ;;; Code:
 
@@ -79,15 +79,13 @@
                   (concat (when term-user (concat term-user "@")) term-host)
                   (if term-port
                       (list "-p" term-port))
-                  (concat "\"cd " term-localname " && $SHELL -l\""))))
+                  (concat "\"cd " term-localname " && /bin/bash -l\""))))
           ("docker"
            (list "docker" "exec" "-it" term-host "/bin/bash"))
           (tramp-jumper-method
            (list tramp-jumper-exec term-user term-host
                  (concat "cd " term-localname)))))
-    (list (or (getenv "SHELL")
-              (getenv "ESHELL")
-              "/bin/sh") "-l")))
+    (list "/bin/bash" "-l")))
 
 (defun counsel-term-handle-close ()
   "Close current term buffer when `exit' from term buffer."
@@ -113,14 +111,14 @@
 
 (defun counsel-open-vterm (name)
   (defvar vterm-shell)
-  (let ((vterm-shell (s-join " " (counsel-term-get-term-cmd))))
-    (switch-to-buffer (vterm name))
-    (if (tramp-tramp-file-p default-directory)
-        (with-parsed-tramp-file-name default-directory term
-          (vterm--flush-output (format "cd %s\n" term-localname))
-          (vterm--flush-output "clear\n")
-          (setq-local tramp-default-method term-method)))
-    (rename-buffer name)))
+  (let ((vterm-shell "/bin/bash -l"))
+    (switch-to-buffer (vterm name)))
+  (if (tramp-tramp-file-p default-directory)
+      (with-parsed-tramp-file-name default-directory term
+        (vterm--flush-output (format "cd %s\n" term-localname))
+        (vterm--flush-output "clear\n")
+        (setq-local tramp-default-method term-method)))
+  (rename-buffer name))
 
 (defun counsel-mt/launch()
   "Launch a terminal in a new buffer."
