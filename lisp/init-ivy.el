@@ -3,7 +3,7 @@
   :commands ivy-mode
   :init (ivy-mode 1)
   :config
-  (setq-default ivy-use-virtual-buffers t
+  (setq-default ivy-use-virtual-buffers 'recentf
                 ivy-virtual-abbreviate 'abbreviate
                 ivy-count-format ""
                 ivy-wrap t
