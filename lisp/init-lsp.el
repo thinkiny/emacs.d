@@ -10,6 +10,7 @@
         lsp-enable-symbol-highlighting nil
         lsp-enable-indentation nil
         lsp-references-exclude-definition t
+        lsp-warn-no-matched-clients nil
         ;;lsp-enable-xref t
         lsp-auto-configure t
         lsp-enable-on-type-formatting nil
