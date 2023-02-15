@@ -129,11 +129,10 @@ and binds some keystroke with `term-raw-map'."
 (use-package vterm
   :commands (vterm-mode vterm)
   :config
-
+  (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash"))
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 60)
   (setq vterm-max-scrollback 5000)
-  (setq vterm-tramp-shells nil)
 
   (defun vterm-copy-text ()
     (interactive)
