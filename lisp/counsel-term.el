@@ -79,7 +79,7 @@
                   (concat (when term-user (concat term-user "@")) term-host)
                   (if term-port
                       (list "-p" term-port))
-                  (concat "\"cd " term-localname " && /bin/bash -l\""))))
+                  (concat "\"cd '" term-localname "' && /bin/bash -l\""))))
           ("docker"
            (list "docker" "exec" "-it" term-host "/bin/bash"))
           (tramp-jumper-method
@@ -110,14 +110,13 @@
   (rename-buffer name))
 
 (defun counsel-open-vterm (name)
-  (defvar vterm-shell)
-  (let ((vterm-shell "/bin/bash -l"))
-    (switch-to-buffer (vterm name)))
-  (if (tramp-tramp-file-p default-directory)
-      (with-parsed-tramp-file-name default-directory term
-        (vterm--flush-output (format "cd %s\n" term-localname))
-        (vterm--flush-output "clear\n")
-        (setq-local tramp-default-method term-method)))
+  (let ((curr-dir default-directory))
+    (switch-to-buffer (vterm name))
+    (if (tramp-tramp-file-p curr-dir)
+        (with-parsed-tramp-file-name curr-dir term
+          ;; (vterm--flush-output (format "cd '%s'\n" term-localname))
+          ;; (vterm--flush-output "clear\n")
+          (setq-local tramp-default-method term-method))))
   (rename-buffer name))
 
 (defun counsel-mt/launch()
@@ -145,5 +144,6 @@
                           (counsel-mt/launch))))
             :caller 'counsel-term))
 
+(ignore-tramp-ssh-control-master 'counsel-term)
 (provide 'counsel-term)
 ;;; counsel-term.el ends here
