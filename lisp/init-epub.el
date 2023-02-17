@@ -30,6 +30,8 @@
   (define-key nov-mode-map (kbd "P") 'nov-previous-document)
   (define-key nov-mode-map (kbd "n") 'nov-goto-next-line-or-page)
   (define-key nov-mode-map (kbd "p") 'nov-goto-previous-line-or-page)
-  (define-key nov-mode-map (kbd "o") 'nov-goto-toc))
+  (define-key nov-mode-map (kbd "o") 'nov-goto-toc)
+  (define-key nov-mode-map (kbd "=") 'er/expand-region)
+  (define-key nov-mode-map (kbd ",") 'bing-dict-at-point))
 
 (provide 'init-epub)
