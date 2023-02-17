@@ -95,6 +95,6 @@
   (if eglot-enable-format-at-save
       (eglot-enable-format)))
 
-(ignore-tramp-ssh-control-master #'eglot-ensure)
+(ignore-tramp-ssh-control-master #'eglot--connect)
 
 (provide 'init-eglot)
