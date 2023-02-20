@@ -27,6 +27,7 @@
       (setq-local mwheel-scroll-down-function
                   #'nov-goto-previous-line-or-page))
   (setq-local line-spacing 0.8)
+  (visual-line-mode)
   (define-key nov-mode-map (kbd "N") 'nov-next-document)
   (define-key nov-mode-map (kbd "P") 'nov-previous-document)
   (define-key nov-mode-map (kbd "n") 'nov-goto-next-line-or-page)
