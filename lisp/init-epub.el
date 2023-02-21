@@ -35,6 +35,8 @@
   (define-key nov-mode-map (kbd "o") 'nov-goto-toc)
   (define-key nov-mode-map (kbd "f") 'forward-char)
   (define-key nov-mode-map (kbd "b") 'backward-char)
+  (define-key nov-mode-map (kbd "e") 'end-of-line)
+  (define-key nov-mode-map (kbd "a") 'beginning-of-line)
   (define-key nov-mode-map (kbd "l") 'forward-char)
   (define-key nov-mode-map (kbd "h") 'backward-char)
   (define-key nov-mode-map (kbd "j") 'nov-goto-next-line-or-page)
