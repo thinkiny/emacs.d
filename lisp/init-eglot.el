@@ -59,8 +59,11 @@
 
   (defun eglot-restart-workspace()
     (interactive)
-    (if-let ((server (eglot-current-server)))
-        (eglot-shutdown server))
+    (when-let ((server (eglot-current-server)))
+      (cancel-timer eldoc-timer)
+      (setq-local eldoc-idle-delay 60)
+      (eglot-shutdown server))
+    (setq-local eldoc-idle-delay 0.5)
     (eglot-ensure))
   )
 
@@ -91,7 +94,6 @@
                          #'eglot-completion-at-point
                          )
                         'equal)))
-  (eglot-completion-at-point)
   (if eglot-enable-format-at-save
       (eglot-enable-format)))
 
