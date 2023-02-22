@@ -1,6 +1,7 @@
 (use-package eldoc
   :config
-  (setq eldoc-echo-area-use-multiline-p 0.5))
+  (setq eldoc-echo-area-use-multiline-p 0.5)
+  (setq eldoc-documentation-strategy #'eldoc-documentation-compose))
 
 (use-package eldoc-box
   :after eldoc
