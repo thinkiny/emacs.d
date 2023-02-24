@@ -9,7 +9,7 @@
 (setq vc-ignore-dir-regexp (format "\\(%s\\)\\|\\(%s\\)" vc-ignore-dir-regexp tramp-file-name-regexp))
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
 
-;;(setq tramp-default-method "ssh")
+(setq tramp-default-method "ssh")
 ;;(setq tramp-chunksize 500)
 (setq remote-file-name-inhibit-cache 600)
 (setq tramp-inline-compress-start-size (* 1024 8))
