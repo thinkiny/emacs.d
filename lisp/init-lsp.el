@@ -199,7 +199,7 @@ returns the command to execute."
                 'equal))))
 
 (add-hook 'lsp-mode-hook #'my-lsp-mode-hook)
-;;(add-hook 'lsp-completion-mode-hook 'my-lsp-completion-mode-hook)
+(add-hook 'lsp-completion-mode-hook 'my-lsp-completion-mode-hook)
 
 ;; lsp-ui
 (use-package lsp-ui
