@@ -115,8 +115,7 @@
     (if (tramp-tramp-file-p curr-dir)
         (with-parsed-tramp-file-name curr-dir term
           (vterm--flush-output (format "cd '%s'\n" term-localname))
-          (vterm--flush-output "clear\n")
-          (setq-local tramp-default-method term-method))))
+          (vterm--flush-output "clear\n"))))
   (rename-buffer name))
 
 (defun counsel-mt/launch()
