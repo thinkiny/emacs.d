@@ -109,6 +109,9 @@
           (kill-region beg end)
           (insert (s-replace "]" "}" (s-replace "[" "{" str)))))))
 
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '((c-mode c++-mode) . ("clangd" "--header-insertion-decorators=0" "--log=error" "--clang-tidy"))))
+
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
