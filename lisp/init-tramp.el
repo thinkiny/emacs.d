@@ -29,8 +29,8 @@
 (setq debug-ignored-errors
       (cons 'remote-file-error debug-ignored-errors))
 
-(defvar tramp-ssh-controlmaster-options)
-(setq tramp-ssh-controlmaster-options (concat
+(defvar tramp-use-connection-share)
+(setq tramp-use-connection-share (concat
                                        "-o ControlPath=/tmp/ssh-ControlPath-%%r@%%h:%%p "
                                        "-o ControlMaster=auto -o ControlPersist=yes"))
 
@@ -38,8 +38,8 @@
 
 ;; fix tramp master-control
 (defun advice/ignore-tramp-ssh-control-master (func &rest args)
-  (defvar tramp-ssh-controlmaster-options)
-  (let ((tramp-ssh-controlmaster-options tramp-ssh-without-controlmaster-options))
+  (defvar tramp-use-connection-share)
+  (let ((tramp-use-connection-share tramp-ssh-without-controlmaster-options))
     (apply func args)))
 
 (defun ignore-tramp-ssh-control-master (&rest funcs)
