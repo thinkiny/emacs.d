@@ -110,12 +110,11 @@
   (rename-buffer name))
 
 (defun counsel-open-vterm (name)
-  (let ((curr-dir default-directory))
-    (switch-to-buffer (vterm name))
-    (if (tramp-tramp-file-p curr-dir)
-        (with-parsed-tramp-file-name curr-dir term
-          (vterm--flush-output (format "cd '%s'\n" term-localname))
-          (vterm--flush-output "clear\n"))))
+  (switch-to-buffer (vterm name))
+  (if (tramp-tramp-file-p default-directory)
+      (with-parsed-tramp-file-name default-directory term
+        (vterm--flush-output (format "cd '%s'\n" term-localname))
+        (vterm--flush-output "clear\n")))
   (rename-buffer name))
 
 (defun counsel-mt/launch()
