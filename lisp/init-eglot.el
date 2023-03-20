@@ -13,6 +13,12 @@
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line))
 
 (with-eval-after-load 'eglot
+  (defun print-eglot-project-root ()
+    (interactive)
+    (if-let ((server (eglot-current-server)))
+        (message (project-root (eglot--project server)))
+      (message "eglot server is not alive")))
+
   (defun eglot-rename-with-current (newname)
     "Rename the current symbol to NEWNAME."
     (interactive
