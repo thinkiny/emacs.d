@@ -19,6 +19,13 @@
         (message (project-root (eglot--project server)))
       (message "eglot server is not alive")))
 
+  (defun eglot-disable-format-project()
+    (interactive)
+    (when-let ((project-root (projectile-project-root))
+               (file (format "%s.dir-locals.el" project-root)))
+      (write-region (format "((%s . ((eval . (eglot-disable-format)))))" major-mode) nil file)
+      (message (format "write %s" file))))
+
   (defun eglot-rename-with-current (newname)
     "Rename the current symbol to NEWNAME."
     (interactive
