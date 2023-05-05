@@ -125,7 +125,7 @@
   (if window-system
       (progn
         (if (> (x-display-pixel-width) 1280)
-            (add-to-list 'default-frame-alist '(width . 160))
+            (add-to-list 'default-frame-alist '(width . 120))
           (add-to-list 'default-frame-alist '(width . 85)))
         (add-to-list 'default-frame-alist
                      (cons 'height (/ (- (x-display-pixel-height) 250)
