@@ -29,4 +29,14 @@
             (delete-dups (mapcar #'file-name-directory recentf-list))
             :action #'delete-recentf-action))
 
+
+(defun recentf-keep-predicate (file)
+  "Return non-nil if FILE should be kept in the recent list.
+It handles the case of remote files as well."
+  (cond
+   ((file-remote-p file) t)
+   ((file-readable-p file))))
+
+(setq recentf-keep '(recentf-keep-predicate))
+
 (provide 'init-recentf)
