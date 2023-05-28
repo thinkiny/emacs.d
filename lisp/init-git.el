@@ -31,7 +31,7 @@
     (vc-print-log)))
 
 (setq vc-follow-symlinks nil)
-;;(setq vc-handled-backends nil)
+(setq vc-handled-backends nil)
 (remove-hook 'find-file-hooks 'vc-refresh-state)
 
 ;; Convenient binding for vc-git-grep
