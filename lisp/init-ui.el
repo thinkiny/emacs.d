@@ -207,15 +207,4 @@
 ;; hide-mode-line
 (require-package 'hide-mode-line)
 
-;; term-color
-(defun justify-term-theme()
-  (when (and (theme-dark-p) (featurep 'term))
-    (set-face-background 'term-color-black (face-attribute 'default :foreground))
-    (set-face-foreground 'term-color-blue "skyblue3")
-    (set-face-foreground 'term-color-red "IndianRed1")))
-
-(after-load-theme (justify-term-theme))
-(with-eval-after-load 'term
-  (justify-term-theme))
-
 (provide 'init-ui)

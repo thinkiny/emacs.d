@@ -113,4 +113,9 @@
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
 
+(with-eval-after-load-theme
+ 'eglot
+ (when (theme-dark-p)
+   (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground))))
+
 (provide 'init-eglot)

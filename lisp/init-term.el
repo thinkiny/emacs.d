@@ -184,4 +184,11 @@ and binds some keystroke with `term-raw-map'."
 (require 'counsel-term)
 (global-set-key (kbd "C-x t") 'counsel-term)
 
+;; term-color
+(with-eval-after-load-theme 'term
+  (when (theme-dark-p)
+    (set-face-background 'term-color-black (face-attribute 'default :foreground))
+    (set-face-foreground 'term-color-blue "skyblue3")
+    (set-face-foreground 'term-color-red "IndianRed1")))
+
 (provide 'init-term)
