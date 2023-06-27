@@ -99,6 +99,14 @@
 (defmacro after-load-theme (&rest body)
   `(add-hook 'load-theme-hook (lambda () ,@body)))
 
+(defmacro with-eval-after-load-theme (mode &rest body)
+  `(progn
+     (eval-after-load ,mode (lambda () ,@body))
+     (add-hook 'load-theme-hook
+             (lambda ()
+               (when (featurep ,mode)
+                 ,@body)))))
+
 ;; proxy
 (defun set-proxy()
   (interactive)
