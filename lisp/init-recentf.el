@@ -6,11 +6,10 @@
  recentf-exclude `("/tmp/"
                    ,(expand-file-name "~/\\.emacs\\.d/elpa/")
                    ,(expand-file-name "~/\\.emacs\\.d/workspace/")
+                   ,(expand-file-name "~/\\.emacs\\.d/eglot-eclipse-jdt-cache/")
                    "/Applications/"
                    ".*/.metals/"
-                   ".*/.cache/"
-                   "/usr/include"
-                   "/usr/local/include"))
+                   ".*/.cache/"))
 
 (defun get-recentf-exclude-list(name)
   (if (s-suffix-p "//" name)
