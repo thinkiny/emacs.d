@@ -3,6 +3,8 @@
   :config
   (setq eglot-events-buffer-size 0)
   (setq eglot-extend-to-xref t)
+  (setq eglot-autoshutdown t)
+  (setq eglot-prefer-plaintext t)
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
@@ -49,27 +51,6 @@
     (interactive)
     (eglot-code-actions (line-beginning-position) (line-end-position) nil t))
 
-  (defun eglot-fix-markdown-content (str)
-    (replace-regexp-in-string "^---\n" "" str))
-
-  (defun eglot--format-markup (markup)
-    "Format MARKUP according to LSP's spec."
-    (pcase-let ((`(,string ,mode)
-                 (if (stringp markup) (list markup 'gfm-view-mode)
-                   (list (plist-get markup :value)
-                         (pcase (plist-get markup :kind)
-                           ("markdown" 'gfm-view-mode)
-                           ("plaintext" 'text-mode)
-                           (_ major-mode))))))
-      (with-temp-buffer
-        (setq-local markdown-fontify-code-blocks-natively t)
-        (insert (eglot-fix-markdown-content string))
-        (let ((inhibit-message t)
-              (message-log-max nil))
-          (ignore-errors (delay-mode-hooks (funcall mode))))
-        (font-lock-ensure)
-        (string-trim (buffer-string)))))
-
   (defun eglot-restart-workspace()
     (interactive)
     (when-let ((server (eglot-current-server)))
@@ -97,8 +78,8 @@
   (setq-local eglot-enable-format-at-save nil))
 
 (defun my-eglot-mode-hook()
-  (eglot--setq-saving eldoc-documentation-functions
-                      '(eglot-signature-eldoc-function))
+;; (eglot--setq-saving eldoc-documentation-functions
+;;                       '(eglot-signature-eldoc-function))
   (eglot--setq-saving completion-at-point-functions
                       (list
                        (cape-capf-buster
