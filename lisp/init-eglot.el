@@ -5,6 +5,7 @@
   (setq eglot-extend-to-xref t)
   (setq eglot-autoshutdown t)
   (setq eglot-prefer-plaintext t)
+  (setq jsonrpc-inhibit-debug-on-error t)
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
@@ -76,6 +77,14 @@
   (whitespace-cleanup-mode 0)
   (remove-hook 'before-save-hook 'eglot-format-buffer 'eglot-format)
   (setq-local eglot-enable-format-at-save nil))
+
+
+(defun advice/ignore-errors (old-fn &rest args)
+  (ignore-errors
+    (apply old-fn args)))
+
+(advice-add #'eglot--sig-info :around #'advice/ignore-errors)
+(advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
 
 (defun my-eglot-mode-hook()
 ;; (eglot--setq-saving eldoc-documentation-functions
