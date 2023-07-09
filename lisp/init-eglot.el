@@ -26,7 +26,7 @@
     (interactive)
     (when-let ((project-root (projectile-project-root))
                (file (format "%s.dir-locals.el" project-root)))
-      (write-region (format "((%s . ((eval . (eglot-disable-format)))))" major-mode) nil file)
+      (write-region (format "((%s . ((eglot-enable-format-at-save . nil))))" major-mode) nil file)
       (message (format "write %s" file))))
 
   (defun eglot-rename-with-current (newname)
