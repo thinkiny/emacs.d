@@ -98,7 +98,8 @@
                          )
                         'equal)))
   (if eglot-enable-format-at-save
-      (eglot-enable-format))
+      (eglot-enable-format)
+    (eglot-disable-format))
   (flymake-mode))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)

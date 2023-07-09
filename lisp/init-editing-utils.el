@@ -28,6 +28,7 @@
               nxml-slash-auto-complete-flag t
               warning-minimum-level :error
               select-safe-coding-system-function nil
+              enable-local-eval t
               line-number-mode t)
 
 (put 'erase-buffer 'disabled nil)
