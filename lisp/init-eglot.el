@@ -78,11 +78,6 @@
   (remove-hook 'before-save-hook 'eglot-format-buffer 'eglot-format)
   (setq-local eglot-enable-format-at-save nil))
 
-
-(defun advice/ignore-errors (old-fn &rest args)
-  (ignore-errors
-    (apply old-fn args)))
-
 (advice-add #'eglot--sig-info :around #'advice/ignore-errors)
 (advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
 
