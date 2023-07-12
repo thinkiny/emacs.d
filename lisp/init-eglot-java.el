@@ -13,60 +13,31 @@
                 "-Xms100m"
                 ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))))
 
-(defun eglot-java-handle-uri (fn url)
-  (if (and (stringp url) (string-match "jdt://contents/\\(.*?\\)/\\(.*\\)\.class\\?" url))
-      (eglot-java--resolve-uri url)
-    (funcall fn url)))
+;; ----------------------- Support URI jdt:// protocol -----------------------
+(defun +eglot/jdtls-uri-to-path (uri)
+  "Support Eclipse jdtls `jdt://' uri scheme."
+  (when-let* ((jdt-scheme-p (string-prefix-p "jdt://" uri))
+              (filename (when (string-match "^jdt://contents/\\(.*?\\)/\\(.*\\)\.class\\?" uri)
+                          (format "%s.java" (replace-regexp-in-string "/" "." (match-string 2 uri) t t))))
+              (source-dir (file-name-concat (project-root (eglot--current-project)) ".eglot"))
+              (source-file (expand-file-name (file-name-concat source-dir filename))))
+    (unless (file-directory-p source-dir)
+      (make-directory source-dir t))
+    (unless (file-readable-p source-file)
+      (let ((content (jsonrpc-request (eglot--current-server-or-lose)
+                                      :java/classFileContents
+                                      (list :uri uri))))
+        (with-temp-file source-file (insert content))))
+    (puthash source-file uri eglot-path-uri-cache)
+    source-file))
 
-(defun eglot-java--ensure-dir (path)
-  "Ensure that directory PATH exists."
-  (unless (file-directory-p path)
-    (make-directory path t)))
+(cl-defmethod +eglot/ext-uri-to-path (uri &context (major-mode java-mode))
+  (+eglot/jdtls-uri-to-path uri))
 
-(defun eglot-java--get-metadata-location (file-location)
-  "Given a FILE-LOCATION return the file containing the metadata for the file."
-  (format "%s.%s.metadata"
-          (file-name-directory file-location)
-          (file-name-base file-location)))
+(cl-defmethod +eglot/ext-uri-to-path (uri &context (major-mode java-ts-mode))
+  (+eglot/jdtls-uri-to-path uri))
 
-(defun eglot-java--get-filename (url)
-  "Get the name of the buffer calculating it based on URL."
-  (or (save-match-data
-        (when (string-match "jdt://contents/\\(.*?\\)/\\(.*\\)\.class\\?" url)
-          (format "%s.java"
-                  (replace-regexp-in-string "/" "." (match-string 2 url) t t))))
-      (-when-let ((_ file-name _ jar)
-                  (s-match
-                   "jdt://.*?/\\(.*?\\)\\?=\\(.*?\\)/.*/\\(.*\\)"
-                   (url-unhex-string url)))
-        (format "%s(%s)" file-name
-                (->> jar
-                     (s-replace "/" "")
-                     (s-replace "\\" ""))))
-      (save-match-data
-        (when (string-match "chelib://\\(.*\\)" url)
-          (let ((matched (match-string 1 url)))
-            (replace-regexp-in-string (regexp-quote ".jar") "jar" matched t t))))
-      (error "Unable to match %s" url)))
-
-(defun eglot-java--resolve-uri (uri)
-  "Load a file corresponding to URI executing request to the jdt server."
-  (let* ((buffer-name (eglot-java--get-filename uri))
-         (file-location (concat (eglot-java-workspace-dir) "/jdt.ls-java-project/src/" buffer-name)))
-    (unless (file-readable-p file-location)
-      (eglot-java--ensure-dir (file-name-directory file-location))
-      (let ((content (jsonrpc-request
-                      (eglot--current-server-or-lose)
-                      :java/classFileContents
-                      (list :uri uri))))
-        (with-temp-file file-location
-          (insert content))
-        (with-temp-file (eglot-java--get-metadata-location file-location)
-          (insert uri))
-        ))
-    file-location))
-
-(advice-add 'eglot--uri-to-path :around #'eglot-java-handle-uri)
+;;(advice-add 'eglot--uri-to-path :around #'eglot-java-handle-uri)
 
 (defun eglot-java-workspace-dir ()
   (let ((workspace (expand-file-name (md5 (project-root (eglot--current-project)))
@@ -177,5 +148,12 @@ ACTION is an LSP object of either `CodeAction' or `Command' type."
 
 (cl-defmethod eglot-execute (server action &context (major-mode java-ts-mode))
   (+java/eglot-execute server action))
+
+(use-package jdecomp
+  :commands (jdecomp-mode)
+  :config
+  (setq jdecomp-decompiler-type 'fernflower
+        jdecomp-decompiler-paths `((fernflower . ,(file-name-concat eglot-java-server-install-dir "java" "bundles" "dg.jdt.ls.decompiler.fernflower-0.0.3.jar")))
+        jdecomp-decompiler-options '((fernflower "-hes=0" "-hdc=0" "-fdi=0"))))
 
 (provide 'init-eglot-java)
