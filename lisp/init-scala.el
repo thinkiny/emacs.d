@@ -6,33 +6,33 @@
   (projectile-with-default-dir (projectile-project-root)
     (file-exists-p ".scala3")))
 
-(setq scala3-indent-keywords (list
-                              "def"
+(setq scala3-indent-keywords '("def"
                               "if"
                               "object"
                               "class"
                               "trait"
                               "enum"
-                              "while"))
+                              "while"
+                              "catch"
+                              "try"))
 
 (defun scala3-indent-line ()
   (interactive "P")
   (if (and abbrev-mode
            (eq (char-syntax (preceding-char)) ?w))
       (expand-abbrev))
-  (let ((start-column (current-column))
-        last-word
+  (let (start-word
         indent)
     (save-excursion
       (beginning-of-line)
       (if (re-search-backward "^[^\n]" nil t)
           (let ((end (save-excursion (forward-line 1) (point))))
             (skip-chars-forward " \t" end)
-            (setq last-word (current-word))
+            (setq start-word (current-word))
             (or (= (point) end) (setq indent (current-column))))))
     (cond (indent
            (let ((opoint (point-marker)))
-             (if (member last-word scala3-indent-keywords)
+             (if (member start-word scala3-indent-keywords)
                  (indent-to (+ indent 2))
                (indent-to indent))
              (if (> opoint (point))
@@ -42,6 +42,7 @@
 
 (defun set-scala3-indent ()
   (when (scala3-project-p)
+    (message "enable scala3 indent")
     (setq-local indent-line-function 'scala3-indent-line)))
 
 (defun my-scala-mode-hook()

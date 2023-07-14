@@ -37,8 +37,6 @@
 (cl-defmethod +eglot/ext-uri-to-path (uri &context (major-mode java-ts-mode))
   (+eglot/jdtls-uri-to-path uri))
 
-;;(advice-add 'eglot--uri-to-path :around #'eglot-java-handle-uri)
-
 (defun eglot-java-workspace-dir ()
   (let ((workspace (expand-file-name (md5 (project-root (eglot--current-project)))
                                      (expand-file-name "~/.emacs.d/eglot-eclipse-jdt-cache"))))
@@ -70,6 +68,7 @@ If INTERACTIVE, prompt user for details."
                          #'file-name-directory
                          (append
                           (file-expand-wildcards (concat root "*/pom.xml"))
+                          (file-expand-wildcards (concat root "*/.git"))
                           (file-expand-wildcards (concat root "*/build.gradle"))
                           (file-expand-wildcards (concat root "*/.project")))))))
         :test #'string=)]
@@ -149,6 +148,7 @@ ACTION is an LSP object of either `CodeAction' or `Command' type."
 (cl-defmethod eglot-execute (server action &context (major-mode java-ts-mode))
   (+java/eglot-execute server action))
 
+;; jdecomp
 (use-package jdecomp
   :commands (jdecomp-mode)
   :config
