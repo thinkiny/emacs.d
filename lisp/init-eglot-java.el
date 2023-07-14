@@ -44,7 +44,7 @@
       (make-directory workspace t))
     workspace))
 
-(add-to-list 'eglot-server-programs '(java-mode . eglot--eclipse-jdt-contact))
+(add-to-list 'eglot-server-programs '((java-mode java-ts-mode) . eglot--eclipse-jdt-contact))
 (defun eglot--eclipse-jdt-contact (interactive)
   "Return cons (CLASS . ARGS) for connecting to Eclipse JDT.
 If INTERACTIVE, prompt user for details."

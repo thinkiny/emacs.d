@@ -24,3 +24,4 @@ fi
 
 wget https://raw.githubusercontent.com/dalanicolai/image-roll.el/main/image-roll.el -O pdf-tools/lisp/image-roll.el
 wget https://raw.githubusercontent.com/007kevin/pdf-view-restore/master/pdf-view-restore.el -O pdf-tools/lisp/pdf-view-restore.el
+wget https://github.com/KaranAhlawat/scala-ts-mode/blob/main/scala-ts-mode.el -O scala-ts-mode.el
