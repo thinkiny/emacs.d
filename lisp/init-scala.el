@@ -3,14 +3,14 @@
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs '((scala-mode scala-ts-mode) . ("metals"))))
 
-(defun my-scala-ts-mode-hook()
+(defun my-scala-mode-hook()
   (eglot-ensure)
   (setq-local tab-width 2)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
      ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode)))))
 
-(add-hook 'scala-ts-mode-hook #'my-scala-ts-mode-hook)
+(add-hook 'scala-ts-mode-hook #'my-scala-mode-hook)
 
 (defun sbt-shell()
   (interactive)
