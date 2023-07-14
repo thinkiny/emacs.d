@@ -6,15 +6,19 @@
   (projectile-with-default-dir (projectile-project-root)
     (file-exists-p ".scala3")))
 
-(setq scala3-indent-keywords '("def"
-                              "if"
-                              "object"
-                              "class"
-                              "trait"
-                              "enum"
-                              "while"
-                              "catch"
-                              "try"))
+(setq scala3-indent-start-words '("def"
+                                  "if"
+                                  "object"
+                                  "class"
+                                  "trait"
+                                  "enum"
+                                  "while"
+                                  "catch"
+                                  "case"
+                                  "try"))
+
+(setq scala3-indent-end-words '("match"
+                                "=>"))
 
 (defun scala3-indent-line ()
   (interactive "P")
@@ -22,6 +26,7 @@
            (eq (char-syntax (preceding-char)) ?w))
       (expand-abbrev))
   (let (start-word
+        end-word
         indent)
     (save-excursion
       (beginning-of-line)
@@ -30,15 +35,22 @@
             (skip-chars-forward " \t" end)
             (setq start-word (current-word))
             (or (= (point) end) (setq indent (current-column))))))
+    (save-excursion
+      (forward-line 1)
+      (end-of-line)
+      (backward-char 1)
+      (setq end-word (current-word)))
     (cond (indent
            (let ((opoint (point-marker)))
-             (if (member start-word scala3-indent-keywords)
-                 (indent-to (+ indent 2))
-               (indent-to indent))
+             (if (member start-word scala3-indent-start-words)
+                 (setq indent (+ indent 2)))
+             (if (member end-word scala3-indent-end-words)
+                 (setq indent (+ indent 2)))
+             (indent-to indent)
              (if (> opoint (point))
                  (goto-char opoint))
              (move-marker opoint nil)))
-          (t nil))))
+          (t (tab-to-tab-stop)))))
 
 (defun set-scala3-indent ()
   (when (scala3-project-p)

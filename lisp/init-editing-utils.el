@@ -322,8 +322,8 @@ With arg N, insert N newlines."
   :hook (after-init . global-clipetty-mode))
 
 ;; ;; nxml-mode
-;; (with-eval-after-load 'nxml-mode
-;;   (unbind-key (kbd "C-c ]") 'nxml-mode-map))
+(with-eval-after-load 'nxml-mode
+  (unbind-key (kbd "C-c ]") 'nxml-mode-map))
 
 ;; disable spook
 (fmakunbound 'spook)
