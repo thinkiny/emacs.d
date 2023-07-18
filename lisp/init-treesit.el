@@ -13,8 +13,9 @@
 (defun treesit-init()
   (setq treesit-use-build-in t)
   (require 'treesit)
-  (dolist (lang '(("c" . c)
-                  ("c++" . cpp)
+  (dolist (lang '(
+                  ;;("c" . c)
+                  ;;("c++" . cpp)
                   ("go" . go)
                   ("rust" . rust)
                   ("scala" . scala)
@@ -23,7 +24,8 @@
                 (ts-mode (intern (concat (car lang) "-ts-mode"))))
       (add-hook hook (lambda ()
                        (when (treesit-ready-p (cdr lang))
-                         (funcall ts-mode)))))))
+                         (funcall ts-mode)
+                         (yas-activate-extra-mode (intern (concat (car lang) "-mode")))))))))
 
 (if (and (fboundp 'treesit-available-p) (treesit-available-p))
     (treesit-init)

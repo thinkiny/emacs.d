@@ -298,7 +298,7 @@ With arg N, insert N newlines."
               flycheck-mode
               smartparens-mode
               smartparens-strict-mode))
-  (global-so-long-mode 1))
+  (global-so-long-mode))
 
 ;; tab indent
 (defun tab-indent-on()

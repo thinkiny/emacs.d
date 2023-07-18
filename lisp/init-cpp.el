@@ -90,7 +90,7 @@
 ;; hook
 (defun my-cpp-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -
-  ;;(c-add-style "Google" google-c-style t)
+  (c-add-style "Google" google-c-style t)
   (local-set-key (kbd "C-c x") 'switch-cpp-header-source)
   (local-set-key (kbd "C-c b g") 'generate-compdb)
   (local-set-key (kbd "C-c b b") 'build-cpp-project)
