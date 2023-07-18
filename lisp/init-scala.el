@@ -10,7 +10,7 @@
     (cond
      ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode)))))
 
-(add-hook 'scala-ts-mode-hook #'my-scala-mode-hook)
+(add-hook 'scala-mode-hook #'my-scala-mode-hook)
 
 (defun sbt-shell()
   (interactive)

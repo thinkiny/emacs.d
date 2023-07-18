@@ -25,9 +25,9 @@
                        (when (treesit-ready-p (cdr lang))
                          (funcall ts-mode)))))))
 
-;; (if (and (fboundp 'treesit-available-p) (treesit-available-p))
-;;     (treesit-init)
-;;   (tree-sitter-init))
+(if (and (fboundp 'treesit-available-p) (treesit-available-p))
+    (treesit-init)
+  (tree-sitter-init))
 
-(tree-sitter-init)
+;; (tree-sitter-init)
 (provide 'init-treesit)

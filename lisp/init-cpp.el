@@ -90,7 +90,7 @@
 ;; hook
 (defun my-cpp-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -
-  (c-add-style "Google" google-c-style t)
+  ;;(c-add-style "Google" google-c-style t)
   (local-set-key (kbd "C-c x") 'switch-cpp-header-source)
   (local-set-key (kbd "C-c b g") 'generate-compdb)
   (local-set-key (kbd "C-c b b") 'build-cpp-project)
@@ -110,11 +110,12 @@
           (insert (s-replace "]" "}" (s-replace "[" "{" str)))))))
 
 (with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '((c-mode c++-mode) . ("clangd" "--header-insertion-decorators=0" "--log=error" "--clang-tidy" "--import-insertions" "--function-arg-placeholders"))))
+  (add-to-list 'eglot-server-programs '((c-mode c++-mode c++-ts-mode) . ("clangd" "--header-insertion-decorators=0" "--log=error" "--clang-tidy" "--import-insertions" "--function-arg-placeholders"))))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
+
 (add-hook 'c-mode-hook 'my-cpp-mode-hook)
 (add-hook 'c++-mode-hook 'my-cpp-mode-hook)
 
