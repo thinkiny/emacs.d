@@ -13,7 +13,8 @@
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
   (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
-  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line))
+  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
+  (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
   (defun print-eglot-project-root ()
