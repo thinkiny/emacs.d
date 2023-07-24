@@ -26,6 +26,5 @@
 (add-hook 'java-mode-hook #'my-java-mode-hook)
 (add-hook 'java-ts-mode-hook #'my-java-mode-hook)
 
-
 (provide 'init-java)
 ;;; init-java ends here
