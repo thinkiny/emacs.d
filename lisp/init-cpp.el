@@ -76,7 +76,7 @@
 
 ;; styles
 (require 'google-c-style)
-(defun google-set-c-style-with-offset (n)
+(defun set-google-style-offset (n)
   (interactive "noffset: ")
   (let* ((copy (copy-tree google-c-style))
          (new-style (mapcar (lambda (x)
@@ -90,7 +90,7 @@
 ;; hook
 (defun my-cpp-mode-hook ()
   ;; ;;echo "" | g++ -v -x c++ -E -
-  (c-add-style "Google" google-c-style t)
+  ;;(c-add-style "Google" google-c-style t)
   (local-set-key (kbd "C-c x") 'switch-cpp-header-source)
   (local-set-key (kbd "C-c b g") 'generate-compdb)
   (local-set-key (kbd "C-c b b") 'build-cpp-project)
@@ -98,6 +98,10 @@
   (if (gtags-get-rootpath)
       (gtags-mode)
     (eglot-ensure)))
+
+
+(with-eval-after-load 'c++-ts-mode
+  (setq c-ts-mode-indent-style 'k&r))
 
 (defun json-to-vector()
   (interactive)
@@ -112,11 +116,11 @@
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs '((c-mode c++-mode c++-ts-mode) . ("clangd" "--header-insertion-decorators=0" "--log=error" "--clang-tidy" "--import-insertions" "--function-arg-placeholders"))))
 
-(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
-(add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-mode))
-(add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-ts-mode))
 
-(add-hook 'c-mode-hook 'my-cpp-mode-hook)
-(add-hook 'c++-mode-hook 'my-cpp-mode-hook)
+;;(add-hook 'c-mode-hook 'my-cpp-mode-hook)
+(add-hook 'c++-ts-mode-hook 'my-cpp-mode-hook)
 
 (provide 'init-cpp)

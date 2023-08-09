@@ -14,8 +14,8 @@
   (setq treesit-use-build-in t)
   (require 'treesit)
   (dolist (lang '(
-                  ;;("c" . c)
-                  ;;("c++" . cpp)
+                  ("c" . c)
+                  ("c++" . cpp)
                   ("go" . go)
                   ("rust" . rust)
                   ("scala" . scala)
