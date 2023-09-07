@@ -26,6 +26,6 @@
   (unless (string= "json" (file-name-extension (buffer-file-name)))
     (eglot-ensure)))
 
-(add-hook 'js-mode-hook #'my-js-mode-hook)
+;; (add-hook 'js-mode-hook #'my-js-mode-hook)
 
 (provide 'init-js)
