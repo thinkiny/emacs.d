@@ -15,7 +15,7 @@
 (require 'init-recentf)
 (require 'init-projectile)
 (require 'init-ivy)
-(require 'init-company)
+;;(require 'init-company)
 (require 'init-windows)
 (require 'init-yasnippet)
 (require 'init-dired)
@@ -27,7 +27,8 @@
 ;;language
 (require 'init-lisp)
 (require 'init-sideline)
-(require 'init-eglot)
+;;(require 'init-eglot)
+(require 'init-lsp-bridge)
 (require 'init-eldoc)
 (require 'init-gtags)
 (require 'init-cpp)
