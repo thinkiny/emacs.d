@@ -1,12 +1,13 @@
 (use-package sideline
   :init
   ;;(setq sideline-backends-left '((sideline-blame . down)))
-  (setq sideline-backends-right '((sideline-flymake . down)))
-  (global-sideline-mode 1))
+  (setq sideline-backends-right '((sideline-flymake . down))))
+  ;;(global-sideline-mode 1))
 
 (use-package sideline-flymake
-  :after sideline
-  :hook (flymake-mode-hook . sideline-mode))
+  :hook (flymake-mode . sideline-mode)
+  :init
+  (setq sideline-flymake-display-mode 'line))
 
 (use-package sideline-blame
   :after sideline)
