@@ -11,7 +11,7 @@
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
-  (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
+  (define-key eglot-mode-map (kbd "C-c w r") 'eglot-reconnect)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
@@ -51,17 +51,7 @@
   (eglot--code-action eglot-code-action-override "source.overrideMethods")
   (defun eglot-code-actions-current-line()
     (interactive)
-    (eglot-code-actions (line-beginning-position) (line-end-position) nil t))
-
-  (defun eglot-restart-workspace()
-    (interactive)
-    (when-let ((server (eglot-current-server)))
-      (cancel-timer eldoc-timer)
-      (setq-local eldoc-idle-delay 60)
-      (eglot-shutdown server))
-    (setq-local eldoc-idle-delay 0.5)
-    (eglot-ensure))
-  )
+    (eglot-code-actions (line-beginning-position) (line-end-position) nil t)))
 
 (use-package consult-eglot)
 
