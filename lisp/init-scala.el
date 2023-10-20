@@ -1,7 +1,7 @@
 (require 'scala-ts-mode)
 
-;; (with-eval-after-load 'eglot
-;;   (add-to-list 'eglot-server-programs '((scala-mode scala-ts-mode) . ("metals"
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '((scala-mode scala-ts-mode) . ("metals"))))
 ;;                                                                       :initializationOptions
 ;;                                                                       (:decorationProvider t
 ;;                                                                        :inlineDecorationProvider t
