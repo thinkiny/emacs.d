@@ -1,10 +1,12 @@
 (add-to-list 'load-path "~/.emacs.d/lsp-bridge")
 
 (require 'lsp-bridge)
+(require 'lsp-bridge-jdtls)
 
 (setq lsp-bridge-enable-with-tramp t)
-
 (setq acm-enable-tabnine nil)
+(setq lsp-bridge-signature-show-function 'lsp-bridge-signature-show-with-frame)
+(setq acm-backend-yas-match-by-trigger-keyword t)
 
 (defun lsp-bridge-code-action-override()
   (interactive)
