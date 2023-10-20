@@ -36,4 +36,6 @@
   (define-key lsp-bridge-mode-map (kbd "M-[") 'lsp-bridge-find-def-return)
   (define-key lsp-bridge-mode-map (kbd "M-,") 'lsp-bridge-find-references))
 
+(add-hook 'after-init-hook #'global-lsp-bridge-mode)
+
 (provide 'init-lsp-bridge)

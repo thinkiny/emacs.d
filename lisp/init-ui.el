@@ -168,7 +168,7 @@
                 mode-name
                 ;;minor-mode-alist
                 "] "
-                global-mode-string
+                mode-line-misc-info
                 ))
 
 ;; (use-package centaur-tabs

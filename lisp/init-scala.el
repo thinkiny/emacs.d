@@ -1,15 +1,11 @@
 (require 'scala-ts-mode)
 
-(with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '((scala-mode scala-ts-mode) . ("metals"
-                                                                      :initializationOptions
-                                                                      (:decorationProvider t
-                                                                       :inlineDecorationProvider t
-                                                                      )
-                                                                      ))))
+
+(with-eval-after-load 'lsp-bridge
+  (push '((scala-ts-mode) . "metals") lsp-bridge-single-lang-server-mode-list)
+  (push 'scala-ts-mode-hook lsp-bridge-default-mode-hooks))
 
 (defun my-scala-mode-hook()
-  (eglot-ensure)
   (setq-local tab-width 2)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
