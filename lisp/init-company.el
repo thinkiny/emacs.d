@@ -18,7 +18,7 @@
   (define-key company-active-map (kbd "\C-h") 'company-show-doc-buffer)
   (define-key company-active-map (kbd "TAB") 'company-complete-selection-partial)
   (global-set-key (kbd "M-/") 'company-complete)
-  (setq company-format-margin-function nil)
+  ;; (setq company-format-margin-function 'company-text-icons-margin)
   (setq company-require-match nil)
   (setq company-backends (delete 'company-semantic company-backends))
   (setq company-backends (delete 'company-clang company-backends))
