@@ -1,6 +1,5 @@
 ;; -*- lexical-binding: t -*-
 
-(defvar treesit-use-build-in nil)
 (defun tree-sitter-init()
   (require-package 'tree-sitter)
   (require-package 'tree-sitter-langs)
@@ -29,7 +28,6 @@
      (scala "https://github.com/tree-sitter/tree-sitter-scala")))
 
 (defun treesit-init()
-  (setq treesit-use-build-in t)
   (require 'treesit)
   (dolist (lang '(
                   ;; ("c" . c)
