@@ -6,6 +6,7 @@
   (setq eglot-autoshutdown t)
   (setq eglot-prefer-plaintext t)
   (setq jsonrpc-inhibit-debug-on-error t)
+  (setq jsonrpc-default-request-timeout 15)
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
@@ -80,6 +81,7 @@
                        (cape-capf-buster
                         (cape-super-capf
                          (cape-company-to-capf #'company-files)
+                         (cape-company-to-capf #'company-yasnippet)
                          #'eglot-completion-at-point
                          )
                         'equal)))

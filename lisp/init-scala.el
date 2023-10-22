@@ -10,6 +10,7 @@
 
 (defun my-scala-mode-hook()
   (eglot-ensure)
+  (yas-activate-extra-mode 'scala-mode)
   (setq-local tab-width 2)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
