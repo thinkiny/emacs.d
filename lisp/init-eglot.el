@@ -81,7 +81,6 @@
                        (cape-capf-buster
                         (cape-super-capf
                          (cape-company-to-capf #'company-files)
-                         (cape-company-to-capf #'company-yasnippet)
                          #'eglot-completion-at-point
                          )
                         'equal)))
