@@ -1,16 +1,7 @@
-(defcustom markdown-enable-strapdown t
-  "Whether to use strapdown"
-  :group 'markdown
-  :type 'boolean)
-
-(defcustom markdown-strapdown-style "united"
-  "Default strapdown style"
-  :group 'markdown
-  :type 'string)
-
 (use-package markdown-mode
   :mode ("\\.md\\'" . gfm-mode)
-  :commands (markdown-mode gfm-mode))
+  :config
+  (setq markdown-fontify-code-blocks-natively t))
 
 (defun markdown-live-preview-window-xwidgets (file)
   "Preview FILE with eww.

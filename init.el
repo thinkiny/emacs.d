@@ -27,6 +27,7 @@
 ;;language
 (require 'init-flycheck)
 (require 'init-lisp)
+(require 'init-eldoc)
 (require 'init-lsp)
 (require 'init-gtags)
 (require 'init-cpp)

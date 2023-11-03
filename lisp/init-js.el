@@ -22,6 +22,7 @@
 ;;   (unbind-key (kbd "M-.") 'js-mode-map))
 
 (defun my-js-mode-hook ()
+  (so-long-mode)
   (unless (string= "json" (file-name-extension (buffer-file-name)))
     (lsp-later)))
 

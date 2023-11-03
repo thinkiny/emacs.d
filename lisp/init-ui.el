@@ -125,7 +125,7 @@
   (if window-system
       (progn
         (if (> (x-display-pixel-width) 1280)
-            (add-to-list 'default-frame-alist '(width . 120))
+            (add-to-list 'default-frame-alist '(width . 140))
           (add-to-list 'default-frame-alist '(width . 85)))
         (add-to-list 'default-frame-alist
                      (cons 'height (/ (- (x-display-pixel-height) 250)
@@ -158,21 +158,23 @@
         ((member major-mode '(eshell-mode term-mode xwidget-webkit-mode)) "")
         (t (format-mode-line " %l:%C"))))
 
-;; lsp symbol
-(defvar lsp-modeline-symbol "")
 
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)
+
+(defvar lsp-modeline-symbol " ")
 (setq-default mode-line-format
               '((:eval (mode-line-linum))
                 " "
                 mode-line-buffer-identification
                 lsp-modeline-symbol
-                " ["
-                mode-name
-                ;;minor-mode-alist
-                "] "
-                global-mode-string
+                ;; " ["
+                ;; mode-name
+                ;; ;;minor-mode-alist
+                ;; "]"
+                ;; global-mode-string
+                ;; " "
+                mode-line-misc-info
                 ))
 
 ;; (use-package centaur-tabs

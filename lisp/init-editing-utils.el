@@ -28,6 +28,7 @@
               nxml-slash-auto-complete-flag t
               warning-minimum-level :error
               select-safe-coding-system-function nil
+              enable-local-eval t
               line-number-mode t)
 
 (put 'erase-buffer 'disabled nil)
@@ -297,7 +298,7 @@ With arg N, insert N newlines."
               flycheck-mode
               smartparens-mode
               smartparens-strict-mode))
-  (global-so-long-mode 1))
+  (global-so-long-mode))
 
 ;; tab indent
 (defun tab-indent-on()
@@ -321,8 +322,8 @@ With arg N, insert N newlines."
   :hook (after-init . global-clipetty-mode))
 
 ;; ;; nxml-mode
-;; (with-eval-after-load 'nxml-mode
-;;   (unbind-key (kbd "C-c ]") 'nxml-mode-map))
+(with-eval-after-load 'nxml-mode
+  (unbind-key (kbd "C-c ]") 'nxml-mode-map))
 
 ;; disable spook
 (fmakunbound 'spook)

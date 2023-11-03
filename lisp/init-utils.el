@@ -128,4 +128,9 @@
       (common-string-length a b (+ idx 1))
     idx))
 
+;; ignore errors
+(defun advice/ignore-errors (old-fn &rest args)
+  (ignore-errors
+    (apply old-fn args)))
+
 (provide 'init-utils)

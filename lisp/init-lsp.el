@@ -3,15 +3,15 @@
   :config
   (diminish 'lsp-mode)
   (require 'lsp-diagnostics)
-  (setq lsp-inhibit-message t
-        lsp-diagnostics-provider :flycheck
+  (setq lsp-diagnostics-provider :flycheck
         lsp-modeline-diagnostics-enable nil
         lsp-modeline-code-actions-enable nil
         lsp-enable-symbol-highlighting nil
         lsp-enable-indentation nil
         lsp-references-exclude-definition t
         lsp-warn-no-matched-clients nil
-        ;;lsp-enable-xref t
+        lsp-enable-xref t
+        lsp-modeline-code-actions-enable nil
         lsp-auto-configure t
         lsp-enable-on-type-formatting nil
         lsp-enable-text-document-color nil
@@ -172,13 +172,18 @@ returns the command to execute."
           )))
 
 
-;; ;; update lsp-symbol every two seconds
+;; update lsp-symbol every two seconds
 (setq lsp-modeline-symbol-running nil)
 (defun lsp-enable-modeline-symbol()
   (unless lsp-modeline-symbol-running
     (setq lsp-modeline-symbol-running t)
-    (run-at-time 2 2 (lambda ()
-                       (setq lsp-modeline-symbol (lsp-modeline-get-symbol-name))))))
+    (run-at-time 2 2
+                 (lambda ()
+                   (let ((sym (lsp-modeline-get-symbol-name)))
+                     (if (equal sym "")
+                         " "
+                       (setq lsp-modeline-symbol (format " => %s " sym))))))))
+
 ;; hook
 (defun my-lsp-mode-hook ()
   (lsp-enable-modeline-symbol)
@@ -265,11 +270,10 @@ returns the command to execute."
                    (symbols (lsp--get-document-symbols))
                    (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols)))
             ;;(concat " => " (gethash "name" (car (last symbols-hierarchy))))
-            (concat " => "
-                    (mapconcat
-                     (lambda (symbol)
-                       (gethash "name" symbol))
-                     symbols-hierarchy "/"))
+            (mapconcat
+             (lambda (symbol)
+               (gethash "name" symbol))
+             symbols-hierarchy "/")
           "")
       "")))
 

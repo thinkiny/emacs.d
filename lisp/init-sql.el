@@ -119,15 +119,15 @@ This command currently blocks the UI, sorry."
           (end (re-search-forward "^)" nil t)))
       (align-regexp start end (make-sql-align-column 0) 1 2 nil)
       (align-regexp start end (make-sql-align-column 1) 1 2 nil))))
-      ;;(align-regexp start end (make-sql-align-column 2) 1 2 nil))))
+;;(align-regexp start end (make-sql-align-column 2) 1 2 nil))))
 
 (with-eval-after-load 'lsp-sqls
   (defun lsp-sql-execute-current (&optional command)
-  "Execute COMMAND on paragraph against current database."
-  (interactive)
-  (let ((start (or (save-excursion (re-search-backward ";" nil t)) -1))
-        (end (or (save-excursion (search-forward ";" nil t)) (point-max))))
-    (lsp-sql-execute-query command (+ start 1) end)))
+    "Execute COMMAND on paragraph against current database."
+    (interactive)
+    (let ((start (or (save-excursion (re-search-backward ";" nil t)) -1))
+          (end (or (save-excursion (search-forward ";" nil t)) (point-max))))
+      (lsp-sql-execute-query command (+ start 1) end)))
 
   (defun lsp-sqls--show-results (result)
     (with-current-buffer (get-buffer-create "*sqls results*")
@@ -136,7 +136,6 @@ This command currently blocks the UI, sorry."
       (display-buffer (current-buffer))
       (set-window-point (get-buffer-window) (point-max))))
 
-
   (defun lsp-sql-execute-file (&optional command)
     "Execute COMMAND on file against current database."
     (interactive)
@@ -144,7 +143,7 @@ This command currently blocks the UI, sorry."
 
 (defun my-sql-hook()
   (setq-local lsp-enable-format-at-save nil)
-  (lsp)
+  (lsp-later)
   (local-set-key (kbd "C-c C-t") #'align-create-table)
   (local-set-key (kbd "C-c C-f") #'sqlformat)
   (local-set-key (kbd "C-x C-e") #'lsp-sql-execute-current)
