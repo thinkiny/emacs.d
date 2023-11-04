@@ -6,7 +6,7 @@
 (require 'tramp)
 (require 's)
 
-(defvar counsel-mt-shell-type 'vterm)
+(defvar counsel-mt-shell-type 'eshell)
 (defconst counsel-mt-name-header "*term: ")
 (defvar-local counsel-mt-create-time nil)
 

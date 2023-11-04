@@ -34,6 +34,7 @@
             (setenv "PAGER" "cat")
             (setenv "GIT_EDITOR" "emacsclient")
             (eshell-cmpl-initialize)
+            (company-mode)
             (define-key eshell-mode-map (kbd "C-a") 'eshell-maybe-bol)))
 
 (provide 'init-eshell)
