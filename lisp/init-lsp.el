@@ -139,7 +139,6 @@ Request codeAction/resolve for more info if server supports."
 
 ;; update lsp-symbol every two seconds
 (defvar lsp-modeline-symbol " ")
-(defvar lsp-modeline-symbol-running nil)
 (defun lsp-modeline-get-symbol-name ()
   "Get the symbol under cursor ."
   (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/documentSymbol"))
@@ -154,20 +153,15 @@ Request codeAction/resolve for more info if server supports."
         "")
     ""))
 
-
-(defun lsp-enable-modeline-symbol()
-  (unless lsp-modeline-symbol-running
-    (setq lsp-modeline-symbol-running t)
-    (run-at-time 2 2
-                 (lambda ()
-                   (let ((sym (lsp-modeline-get-symbol-name)))
-                     (if (equal sym "")
-                         " "
-                       (setq lsp-modeline-symbol (format " => %s " sym))))))))
-
+;; start timer
+(run-at-time 2 2
+             (lambda ()
+               (let ((sym (lsp-modeline-get-symbol-name)))
+                 (if (equal sym "")
+                     (setq lsp-modeline-symbol " ")
+                   (setq lsp-modeline-symbol (format " => %s " sym))))))
 ;; hook
 (defun my-lsp-mode-hook ()
-  (lsp-enable-modeline-symbol)
   (make-local-variable 'markdown-header-face-2)
   (set-face-attribute 'markdown-header-face-2 nil :height 1.0)
   (if lsp-enable-format-at-save
