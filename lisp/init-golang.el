@@ -11,7 +11,7 @@
   (setq lsp-go-codelens nil)
   ;;(setq lsp-go-env (make-hash-table))
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection-fast (lambda () (cons lsp-go-gopls-server-path lsp-go-gopls-server-args)))
+   (make-lsp-client :new-connection (lsp-tramp-connection (lambda () (cons lsp-go-gopls-server-path lsp-go-gopls-server-args)))
                     :major-modes '(go-mode go-dot-mod-mode)
                     :remote? t
                     :server-id 'gopls-remote

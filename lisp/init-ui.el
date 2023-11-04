@@ -162,7 +162,7 @@
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)
 
-(defvar lsp-modeline-symbol " ")
+;; modeline
 (setq-default mode-line-format
               '((:eval (mode-line-linum))
                 " "

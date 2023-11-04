@@ -84,11 +84,22 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
                (regexp-quote string)))
       (point-min))))
 
+
+(defun xwdiget-translate-range()
+  (interactive)
+  (xwidget-webkit-get-selection (lambda (text)
+                                  (bing-dict-brief text))))
+
 (add-hook 'xwidget-webkit-mode-hook
           (lambda ()
-            (setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
+            ;;(setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
             (setq-local isearch-lazy-highlight nil)
             (setq-local header-line-format nil)
-            (local-set-key (kbd "C-s") #'isearch-forward)))
+            (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-webkit-scroll-up-line)
+            (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-webkit-scroll-down-line)
+            (define-key xwidget-webkit-mode-map (kbd "M-v") 'xwidget-webkit-scroll-down)
+            (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-webkit-scroll-up)
+            ;;(local-set-key (kbd "C-s") #'isearch-forward)
+            (local-set-key (kbd "C-,") #'xwdiget-translate-range)))
 
 (provide 'init-xwidget-webkit)

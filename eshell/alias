@@ -1,3 +1,4 @@
-alias pk eshell-up-peek
-alias up eshell-up
+alias cdroot eshell/cdroot
 alias clear clear 1
+alias up eshell-up
+alias pk eshell-up-peek

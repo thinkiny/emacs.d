@@ -61,7 +61,7 @@
   (c-toggle-auto-newline -1)
   (setq fill-column 100))
 
-(add-hook 'java-ts-mode-hook #'my-java-hook)
+(add-hook 'java-mode-hook #'my-java-hook)
 
 (provide 'init-java)
 ;;; init-java ends here
