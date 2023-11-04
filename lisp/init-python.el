@@ -12,9 +12,9 @@
   (require 'lsp-pyright)
   (lsp-register-client
    (make-lsp-client
-    :new-connection (lsp-tramp-connection-fast (lambda ()
-                                                 (cons "pyright-python-langserver"
-                                                       lsp-pyright-langserver-command-args)))
+    :new-connection (lsp-tramp-connection (lambda ()
+                                            (cons "pyright-python-langserver"
+                                                  lsp-pyright-langserver-command-args)))
     :major-modes '(python-mode cython-mode)
     :multi-root lsp-pyright-multi-root
     :priority -1

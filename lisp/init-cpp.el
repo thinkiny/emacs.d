@@ -13,11 +13,11 @@
 ;;                              (setq-local yas-indent-line 'fixed))))
 
 ;; use clangd
-(with-eval-after-load 'lsp-mode
+(with-eval-after-load 'lsp-clangd
   ;;(require 'dap-cpptools)
   (setq lsp-clients-clangd-args '("--header-insertion-decorators=0" "--log=error" "--header-insertion=never" "--import-insertions" "--function-arg-placeholders"))
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection-fast 'lsp-clients--clangd-command)
+   (make-lsp-client :new-connection (lsp-tramp-connection 'lsp-clients--clangd-command)
                     :activation-fn (lsp-activate-on "c" "cpp" "objective-c" "cuda")
                     :library-folders-fn (lambda (_workspace) lsp-clients-clangd-library-directories)
                     :server-id 'clangd-remote
@@ -110,9 +110,9 @@ returned to avoid that the echo area grows uncomfortably."
   (interactive "noffset: ")
   (let* ((copy (copy-tree google-c-style))
          (new-style (mapcar (lambda (x)
-              (if (eq (car x) 'c-basic-offset)
-                  `(c-basic-offset . ,n)
-                x)) copy)))
+                              (if (eq (car x) 'c-basic-offset)
+                                  `(c-basic-offset . ,n)
+                                x)) copy)))
     (make-local-variable 'c-tab-always-indent)
     (setq c-tab-always-indent t)
     (c-add-style "Google" new-style t)))

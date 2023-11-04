@@ -137,43 +137,24 @@ Request codeAction/resolve for more info if server supports."
     (write-region (format "((%s . ((eval . (lsp-disable-format)))))" major-mode) nil file)
     (message (format "write %s" file))))
 
-;; tramp
-;;(ignore-tramp-ssh-control-master 'lsp)
-(with-eval-after-load 'lsp-mode
-  (defun lsp-tramp-connection-fast (local-command)
-    "Create LSP stdio connection named name.
-LOCAL-COMMAND is either list of strings, string or function which
-returns the command to execute."
-    (defvar tramp-connection-properties)
-    (if (tramp-tramp-file-p default-directory)
-        (add-to-list 'tramp-connection-properties
-                     (list (regexp-quote (file-remote-p default-directory))
-                           "direct-async-process" t)))
-    (list :connect (lambda (filter sentinel name environment-fn _workspace)
-                     (let* ((final-command (lsp-resolve-final-function
-                                            local-command))
-                            (process-name (generate-new-buffer-name name))
-                            (process-environment
-                             (lsp--compute-process-environment environment-fn))
-                            (proc (make-process
-                                   :name process-name
-                                   :buffer (format "*%s*" process-name)
-                                   :command final-command
-                                   :connection-type 'pipe
-                                   :coding 'no-conversion
-                                   :noquery t
-                                   :filter filter
-                                   :sentinel sentinel
-                                   :stderr (get-buffer-create (format "*%s::stderr*" process-name))
-                                   :file-handler t)))
-                       (cons proc proc)))
-          ;;:test? (lambda() t)
-          :test? (lambda () (-> local-command lsp-resolve-final-function lsp-server-present?))
-          )))
-
-
 ;; update lsp-symbol every two seconds
-(setq lsp-modeline-symbol-running nil)
+(defvar lsp-modeline-symbol " ")
+(defvar lsp-modeline-symbol-running nil)
+(defun lsp-modeline-get-symbol-name ()
+  "Get the symbol under cursor ."
+  (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/documentSymbol"))
+      (-if-let* ((lsp--document-symbols-request-async t)
+                 (symbols (lsp--get-document-symbols))
+                 (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols)))
+          ;;(concat " => " (gethash "name" (car (last symbols-hierarchy))))
+          (mapconcat
+           (lambda (symbol)
+             (gethash "name" symbol))
+           symbols-hierarchy "/")
+        "")
+    ""))
+
+
 (defun lsp-enable-modeline-symbol()
   (unless lsp-modeline-symbol-running
     (setq lsp-modeline-symbol-running t)
@@ -260,22 +241,6 @@ returns the command to execute."
             (when lsp-later-timer
               (cancel-timer lsp-later-timer)
               (lsp-later-run))))
-
-
-(with-eval-after-load 'lsp-mode
-  (defun lsp-modeline-get-symbol-name ()
-    "Get the symbol under cursor ."
-    (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/documentSymbol"))
-        (-if-let* ((lsp--document-symbols-request-async t)
-                   (symbols (lsp--get-document-symbols))
-                   (symbols-hierarchy (lsp--symbols->document-symbols-hierarchy symbols)))
-            ;;(concat " => " (gethash "name" (car (last symbols-hierarchy))))
-            (mapconcat
-             (lambda (symbol)
-               (gethash "name" symbol))
-             symbols-hierarchy "/")
-          "")
-      "")))
 
 (defun lsp-enable-log-io()
   (interactive)
