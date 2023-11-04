@@ -6,6 +6,8 @@
   (setq lsp-diagnostics-provider :flycheck
         lsp-modeline-diagnostics-enable nil
         lsp-modeline-code-actions-enable nil
+        lsp-inlay-hint-enable t
+        lsp-enable-suggest-server-download nil
         lsp-enable-symbol-highlighting nil
         lsp-enable-indentation nil
         lsp-references-exclude-definition t
