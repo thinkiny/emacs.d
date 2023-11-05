@@ -4,7 +4,8 @@
   (setq eshell-up-ignore-case nil))
 
 (with-eval-after-load 'eshell
-  (server-start)
+  (add-to-list 'eshell-modules-list 'eshell-smart)
+  ;;(server-start)
   (require 'eshell-company-patch)
   (setq eshell-history-size 10000
         eshell-save-history-on-exit t
