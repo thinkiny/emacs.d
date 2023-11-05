@@ -5,8 +5,6 @@
 
 (with-eval-after-load 'eshell
   (add-to-list 'eshell-modules-list 'eshell-smart)
-  ;;(server-start)
-  (require 'eshell-company-patch)
   (setq eshell-history-size 10000
         eshell-save-history-on-exit t
         eshell-hist-ignoredups t
@@ -35,7 +33,6 @@
             (setenv "PAGER" "cat")
             (setenv "GIT_EDITOR" "emacsclient")
             (eshell-cmpl-initialize)
-            (company-mode)
             (define-key eshell-mode-map (kbd "C-a") 'eshell-maybe-bol)))
 
 (provide 'init-eshell)
