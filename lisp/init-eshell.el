@@ -27,12 +27,17 @@
     (if (= p (point))
         (beginning-of-line))))
 
-(add-hook 'eshell-mode-hook
-          (lambda ()
-            (setenv "TERM" "term")
-            (setenv "PAGER" "cat")
-            (setenv "GIT_EDITOR" "emacsclient")
-            (eshell-cmpl-initialize)
-            (define-key eshell-mode-map (kbd "C-a") 'eshell-maybe-bol)))
+(defun eshell/cdroot ()
+  (when-let ((project-root (projectile-project-root)))
+    (eshell/cd project-root)))
+
+(defun my-eshell-mode-hook()
+  (setenv "TERM" "term")
+  (setenv "PAGER" "cat")
+  (setenv "GIT_EDITOR" "emacsclient")
+  (eshell-cmpl-initialize)
+  (define-key eshell-mode-map (kbd "C-a") 'eshell-maybe-bol))
+
+(add-hook 'eshell-mode-hook #'my-eshell-mode-hook)
 
 (provide 'init-eshell)
