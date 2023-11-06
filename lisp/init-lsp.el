@@ -9,6 +9,7 @@
         lsp-inlay-hint-enable t
         lsp-enable-suggest-server-download nil
         lsp-enable-symbol-highlighting nil
+        lsp-semantic-tokens-enable t
         lsp-enable-indentation nil
         lsp-references-exclude-definition t
         lsp-warn-no-matched-clients nil
@@ -16,13 +17,10 @@
         lsp-modeline-code-actions-enable nil
         lsp-auto-configure t
         lsp-enable-on-type-formatting nil
-        lsp-enable-text-document-color nil
         lsp-file-watch-threshold nil
         lsp-before-save-edits nil
-        lsp-eldoc-render-all nil
         lsp-enable-file-watchers t
         lsp-lens-enable nil
-        lsp-signature-render-documentation t
         lsp-enable-folding nil
         lsp-enable-links nil
         lsp-keep-workspace-alive nil
@@ -31,12 +29,17 @@
         ;;lsp-auto-guess-root t
         lsp-headerline-breadcrumb-enable nil
         lsp-enable-dap-auto-configure nil
-        lsp-debounce-full-sync-notifications nil
-        ;; lsp-signature-doc-lines 1
-        ;; lsp-signature-function #'my-lsp-lv-message
+
+        ;; doc
+        lsp-eldoc-enable-hover t
+        lsp-eldoc-render-all nil
+        lsp-enable-text-document-color t
+        lsp-signature-render-documentation t
+        ;; lsp-signature-doc-lines 2
+        ;;lsp-signature-function #'lsp-lv-brief-message
         )
 
-  (defun my-lsp-lv-message (message)
+  (defun lsp-lv-brief-message (message)
     (if message
         (let ((pos (min (or (string-search "\n" message) (length message))
                         (frame-width))))
@@ -81,8 +84,6 @@ Request codeAction/resolve for more info if server supports."
   (define-key lsp-mode-map (kbd "C-c y") 'dap-hydra)
   ;;(define-key lsp-mode-map (kbd "C-c v") 'lsp-ui-peek-find-implementation)
   (define-key lsp-mode-map (kbd "C-c v") 'lsp-find-implementation)
-  (define-key lsp-mode-map (kbd "C-c h") 'lsp-ui-doc-glance)
-  (define-key lsp-mode-map (kbd "C-c w e") 'lsp-ui-flycheck-list)
   (define-key lsp-mode-map (kbd "C-c e") 'flycheck-list-errors)
   (define-key lsp-mode-map (kbd "C-c f") 'lsp-execute-code-action-this-line)
   (define-key lsp-mode-map (kbd "C-c s a") 'lsp-signature-activate)
@@ -191,7 +192,8 @@ Request codeAction/resolve for more info if server supports."
   (setq lsp-ui-sideline-update-mode 'line
         lsp-ui-doc-enable nil
         lsp-ui-doc-position 'at-point
-        lsp-ui-doc-show-with-cursor nil
+        lsp-ui-doc-show-with-mouse nil
+        lsp-ui-doc-show-with-cursor t
         lsp-ui-doc-use-webkit nil
         lsp-ui-sideline-enable t
         lsp-ui-sideline-show-code-actions t
@@ -203,7 +205,10 @@ Request codeAction/resolve for more info if server supports."
         lsp-ui-sideline-delay 0.2)
   (if (theme-dark-p)
       (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple1")
-    (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple4")))
+    (set-face-foreground 'lsp-ui-sideline-code-action "MediumPurple4"))
+  (define-key lsp-mode-map (kbd "C-c h") 'lsp-ui-doc-glance)
+  (define-key lsp-mode-map (kbd "C-c w e") 'lsp-ui-flycheck-list)
+  )
 ;; (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
 ;;(define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
 
