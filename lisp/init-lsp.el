@@ -22,7 +22,7 @@
         lsp-eldoc-render-all nil
         lsp-enable-file-watchers t
         lsp-lens-enable nil
-        lsp-signature-render-documentation nil
+        lsp-signature-render-documentation t
         lsp-enable-folding nil
         lsp-enable-links nil
         lsp-keep-workspace-alive nil
@@ -31,6 +31,7 @@
         ;;lsp-auto-guess-root t
         lsp-headerline-breadcrumb-enable nil
         lsp-enable-dap-auto-configure nil
+        lsp-debounce-full-sync-notifications nil
         ;; lsp-signature-doc-lines 1
         ;; lsp-signature-function #'my-lsp-lv-message
         )
