@@ -3,7 +3,7 @@
 (use-package lsp-metals
   :config
   (setq lsp-metals-sbt-script (expand-file-name "~/.emacs.d/third-parties/sbt")
-        lsp-metals-show-implicit-arguments t
+        ;; lsp-metals-show-implicit-arguments t
         lsp-metals-show-inferred-type t
         ;; lsp-metals-show-implicit-conversions-and-classes t
         )
