@@ -1,7 +1,10 @@
+(defvar nov-use-xwidget t)
 (use-package nov
   :mode (("\\.epub$" . nov-mode))
   :config
-  (require 'nov-xwidget)
+  (when nov-use-xwidget
+    (require 'nov-xwidget)
+    (add-hook 'nov-mode-hook 'nov-xwidget-inject-all-files))
   (add-hook 'nov-mode-hook 'my-nov-mode-hook))
 
 (defun modeline-nov-document-index()
@@ -19,16 +22,7 @@
     (goto-char (point-max))
     (beginning-of-line)))
 
-
-(defun my-nov-mode-hook()
-  (if (boundp 'mwheel-scroll-up-function)
-      (setq-local mwheel-scroll-up-function
-                  #'nov-goto-next-line-or-page))
-  (if (boundp 'mwheel-scroll-down-function)
-      (setq-local mwheel-scroll-down-function
-                  #'nov-goto-previous-line-or-page))
-  (setq-local line-spacing 0.8)
-  (visual-line-mode)
+(defun set-nov-keymaps()
   (define-key nov-mode-map (kbd "N") 'nov-next-document)
   (define-key nov-mode-map (kbd "P") 'nov-previous-document)
   (define-key nov-mode-map (kbd "n") 'nov-goto-next-line-or-page)
@@ -44,5 +38,24 @@
   (define-key nov-mode-map (kbd "k") 'nov-goto-previous-line-or-page)
   (define-key nov-mode-map (kbd "=") 'er/expand-region)
   (define-key nov-mode-map (kbd ",") 'bing-dict-at-point))
+
+(defun set-nov-xwidget-keymaps()
+  (nov-xwidget-view)
+  (define-key xwidget-webkit-mode-map (kbd "N") 'nov-xwidget-next-document)
+  (define-key xwidget-webkit-mode-map (kbd "P") 'nov-xwidget-previous-document)
+  (define-key xwidget-webkit-mode-map (kbd "o") 'nov-xwidget-goto-toc))
+
+(defun my-nov-mode-hook()
+  (if (boundp 'mwheel-scroll-up-function)
+      (setq-local mwheel-scroll-up-function
+                  #'nov-goto-next-line-or-page))
+  (if (boundp 'mwheel-scroll-down-function)
+      (setq-local mwheel-scroll-down-function
+                  #'nov-goto-previous-line-or-page))
+  (setq-local line-spacing 0.8)
+  (visual-line-mode)
+  (if nov-use-xwidget
+      (set-nov-xwidget-keymaps)
+    (set-nov-keymaps)))
 
 (provide 'init-epub)

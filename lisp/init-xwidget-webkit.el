@@ -89,6 +89,10 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
             (setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
             (setq-local isearch-lazy-highlight nil)
             (setq-local header-line-format nil)
+            (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-webkit-scroll-up-line)
+            (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-webkit-scroll-down-line)
+            (define-key xwidget-webkit-mode-map (kbd "M-v") 'xwidget-webkit-scroll-down)
+            (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-webkit-scroll-up)
             (local-set-key (kbd "C-s") #'isearch-forward)))
 
 (provide 'init-xwidget-webkit)
