@@ -20,8 +20,6 @@
   (global-set-key (kbd "M-/") 'company-complete)
   ;; (setq company-format-margin-function 'company-text-icons-margin)
   (setq company-require-match nil)
-  (setq company-backends (delete 'company-semantic company-backends))
-  (setq company-backends (delete 'company-clang company-backends))
   ;;(set-face-attribute 'company-preview nil :inherit 'company-tooltip)
   (diminish 'company-mode))
 

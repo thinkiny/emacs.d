@@ -35,8 +35,8 @@
         lsp-eldoc-render-all nil
         lsp-enable-text-document-color t
         lsp-signature-render-documentation t
-        ;; lsp-signature-doc-lines 2
-        ;;lsp-signature-function #'lsp-lv-brief-message
+        lsp-signature-doc-lines 2
+        lsp-signature-function #'lsp-lv-brief-message
         )
 
   (defun lsp-lv-brief-message (message)
@@ -118,7 +118,7 @@ Request codeAction/resolve for more info if server supports."
 
 ;; multi-root
 (advice-add 'lsp :before (lambda (&rest _args)
-                           (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
+                          (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
 
 ;; format
 (defvar-local lsp-enable-format-at-save t)
@@ -173,17 +173,19 @@ Request codeAction/resolve for more info if server supports."
 
 (defun my-lsp-completion-mode-hook()
   ;;(setq-local completion-category-defaults nil)
-  (setq-local completion-at-point-functions
-              (list
-               (cape-capf-buster
-                (cape-super-capf
-                 (cape-company-to-capf #'company-files)
-                 #'lsp-completion-at-point
-                 )
-                'equal))))
+  ;; (add-to-list 'company-backends 'company-files)
+  ;; (setq-local completion-at-point-functions
+  ;;             (list
+  ;;              (cape-capf-buster
+  ;;               (cape-capf-super
+  ;;                (cape-company-to-capf #'company-files)
+  ;;                #'lsp-completion-at-point
+  ;;                )
+  ;;               'equal)))
+  )
 
 (add-hook 'lsp-mode-hook #'my-lsp-mode-hook)
-(add-hook 'lsp-completion-mode-hook 'my-lsp-completion-mode-hook)
+;; (add-hook 'lsp-completion-mode-hook 'my-lsp-completion-mode-hook)
 
 ;; lsp-ui
 (use-package lsp-ui
