@@ -5,23 +5,15 @@
 
 (require-package 'pip-requirements)
 
-(defvar-local lsp-pylsp-extra-paths [])
-(defvar-local lsp-pylsp-cache-for [])
-(with-eval-after-load 'lsp-mode
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection
-                                     (lambda () lsp-pylsp-server-command))
-                    :activation-fn (lsp-activate-on "python")
-                    :priority -1
-                    :remote? t
-                    :server-id 'pylsp
-                    :library-folders-fn (lambda (_workspace) lsp-clients-pylsp-library-directories)
-                    :initialized-fn (lambda (workspace)
-                                      (with-lsp-workspace workspace
-                                        (lsp--set-configuration (lsp-configuration-section "pylsp")))))))
+(use-package pyvenv-auto
+  :custom
+  (pyvenv-auto-mode t))
 
-(add-hook 'python-mode-hook (lambda ()
-                              (setq-local lsp-enable-format-at-save nil)
-                              (lsp-later)))
+(defun my-python-mode-hook()
+  (setq-local lsp-enable-format-at-save nil)
+  (eglot-ensure))
+
+(add-hook 'python-mode-hook #'my-python-mode-hook)
+(add-hook 'python-ts-mode-hook #'my-python-mode-hook)
 
 (provide 'init-python)

@@ -1,23 +1,23 @@
 (require 'scala-ts-mode)
 
-(use-package lsp-metals
-  :config
-  (setq lsp-metals-sbt-script (expand-file-name "~/.emacs.d/third-parties/sbt")
-        ;; lsp-metals-show-implicit-arguments t
-        ;; lsp-metals-show-inferred-type t
-        ;; lsp-metals-show-implicit-conversions-and-classes t
-        )
-  ;; :custom
-  ;; (lsp-metals-server-args '("-J-Dmetals.showInferredType=on" "-J-Dmetals.showImplicitArguments=on" "-J-Dmetals.showImplicitConversionsAndClasses=on"))
-  :hook (scala-ts-mode . my-scala-mode-hook))
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '((scala-mode scala-ts-mode) . ("metals"))))
+;;                                                                       :initializationOptions
+;;                                                                       (:decorationProvider t
+;;                                                                        :inlineDecorationProvider t
+;;                                                                       )
+;;                                                                       ))))
 
 (defun my-scala-mode-hook()
-  (lsp-later)
+  (eglot-ensure)
   (yas-activate-extra-mode 'scala-mode)
   (setq-local tab-width 2)
   (let ((ext (file-name-extension buffer-file-name)))
     (cond
      ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode)))))
+
+(add-hook 'scala-ts-mode-hook #'my-scala-mode-hook)
+(add-hook 'scala-mode-hook #'my-scala-mode-hook)
 
 (defun sbt-shell()
   (interactive)

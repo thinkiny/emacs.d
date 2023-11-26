@@ -158,16 +158,12 @@
         ((member major-mode '(eshell-mode term-mode xwidget-webkit-mode)) "")
         (t (format-mode-line " %l:%C"))))
 
-
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)
-
-;; modeline
 (setq-default mode-line-format
               '((:eval (mode-line-linum))
                 " "
                 mode-line-buffer-identification
-                lsp-modeline-symbol
                 ;; " ["
                 ;; mode-name
                 ;; ;;minor-mode-alist

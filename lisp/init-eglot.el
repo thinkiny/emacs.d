@@ -7,7 +7,7 @@
   (setq eglot-prefer-plaintext t)
   (setq jsonrpc-inhibit-debug-on-error t)
   (setq jsonrpc-default-request-timeout 15)
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
@@ -30,24 +30,6 @@
                (file (format "%s.dir-locals.el" project-root)))
       (write-region (format "((%s . ((eglot-enable-format-at-save . nil))))" major-mode) nil file)
       (message (format "write %s" file))))
-
-  (defun eglot-rename-with-current (newname)
-    "Rename the current symbol to NEWNAME."
-    (interactive
-     (let ((curr (thing-at-point 'symbol t)))
-       (list (read-from-minibuffer
-              (format "Rename `%s' to: " (or curr
-                                             "unknown symbol"))
-              curr nil nil nil
-              (symbol-name (symbol-at-point))))))
-
-    (unless (eglot--server-capable :renameProvider)
-      (eglot--error "Server can't rename!"))
-    (eglot--apply-workspace-edit
-     (jsonrpc-request (eglot--current-server-or-lose)
-                      :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
-                                             :newName ,newname))
-     current-prefix-arg))
 
   (eglot--code-action eglot-code-action-override "source.overrideMethods")
   (defun eglot-code-actions-current-line()
