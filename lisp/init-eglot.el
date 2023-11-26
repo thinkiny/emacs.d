@@ -18,6 +18,10 @@
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
+  (setq mode-line-misc-info
+        (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
+  (add-to-list 'mode-line-misc-info
+             `(eglot--managed-mode ("[" eglot--mode-line-format "] ")))
   (defun print-eglot-project-root ()
     (interactive)
     (if-let ((server (eglot-current-server)))
@@ -61,8 +65,8 @@
   (remove-hook 'before-save-hook 'eglot-format-buffer 'eglot-format)
   (setq-local eglot-enable-format-at-save nil))
 
-(advice-add #'eglot--sig-info :around #'advice/ignore-errors)
-(advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
+;; (advice-add #'eglot--sig-info :around #'advice/ignore-errors)
+;; (advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
 
 (defun my-eglot-mode-hook()
 ;; (eglot--setq-saving eldoc-documentation-functions

@@ -164,10 +164,11 @@
               '((:eval (mode-line-linum))
                 " "
                 mode-line-buffer-identification
-                ;; " ["
+                " "
+                ;;" ["
                 ;; mode-name
-                ;; ;;minor-mode-alist
-                ;; "]"
+                ;;minor-mode-alist
+                ;; "] "
                 ;; global-mode-string
                 ;; " "
                 mode-line-misc-info
