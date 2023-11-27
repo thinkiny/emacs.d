@@ -15,7 +15,10 @@
   (setq erlang-electric-commands (delete 'erlang-electric-gt erlang-electric-commands))
   (unbind-key (kbd "RET") 'erlang-mode-map))
 
-(add-hook 'erlang-mode-hook #'eglot-ensure)
+(add-hook 'erlang-mode-hook
+          (lambda ()
+            (setq-local lsp-enable-format-at-save nil)
+            (lsp-later)))
 
 (defun init-erlang-ls()
   (interactive)

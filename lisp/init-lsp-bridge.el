@@ -1,11 +1,17 @@
 (add-to-list 'load-path "~/.emacs.d/lsp-bridge")
 
+(setq lsp-bridge-enable-mode-line nil)
+
 (require 'lsp-bridge)
 (require 'lsp-bridge-jdtls)
 
 (setq lsp-bridge-enable-with-tramp t)
+(setq lsp-bridge-enable-hover-diagnostic t)
+(setq lsp-bridge-python-lsp-server "pylsp")
+
+;; (setq lsp-bridge-signature-show-function 'lsp-bridge-signature-show-with-frame)
+(setq acm-enable-doc nil)
 (setq acm-enable-tabnine nil)
-(setq lsp-bridge-signature-show-function 'lsp-bridge-signature-show-with-frame)
 (setq acm-backend-yas-match-by-trigger-keyword t)
 
 (defun lsp-bridge-code-action-override()
@@ -19,6 +25,8 @@
 (defun lsp-bridge-code-action-quickfix()
   (interactive)
   (lsp-bridge-code-action "quickfix"))
+
+(advice-add #'lsp-bridge-find-def :before #'xref-push-marker-stack-once)
 
 (setq lsp-bridge-completion-hide-characters nil)
 (with-eval-after-load 'lsp-bridge
@@ -35,7 +43,6 @@
   (define-key lsp-bridge-mode-map (kbd "C-c f") 'lsp-bridge-code-action-quickfix)
   (define-key lsp-bridge-mode-map (kbd "C-c a") 'lsp-bridge-code-action)
   (define-key lsp-bridge-mode-map (kbd "M-.") 'lsp-bridge-find-def)
-  (define-key lsp-bridge-mode-map (kbd "M-[") 'lsp-bridge-find-def-return)
   (define-key lsp-bridge-mode-map (kbd "M-,") 'lsp-bridge-find-references))
 
 (add-hook 'after-init-hook #'global-lsp-bridge-mode)

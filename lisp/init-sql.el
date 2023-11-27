@@ -143,7 +143,7 @@ This command currently blocks the UI, sorry."
 
 (defun my-sql-hook()
   (setq-local lsp-enable-format-at-save nil)
-  (eglot-ensure)
+  (lsp-later)
   (local-set-key (kbd "C-c C-t") #'align-create-table)
   (local-set-key (kbd "C-c C-f") #'sqlformat)
   (local-set-key (kbd "C-x C-e") #'lsp-sql-execute-current)

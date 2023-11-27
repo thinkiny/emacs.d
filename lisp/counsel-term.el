@@ -111,10 +111,10 @@
 
 (defun counsel-open-vterm (name)
   (switch-to-buffer (vterm name))
-  (if (tramp-tramp-file-p default-directory)
-      (with-parsed-tramp-file-name default-directory term
-        (vterm--flush-output (format "cd '%s'\n" term-localname))
-        (vterm--flush-output "clear\n")))
+  ;; (if (tramp-tramp-file-p default-directory)
+  ;;     (with-parsed-tramp-file-name default-directory term
+  ;;       (vterm--flush-output (format "cd '%s'\n" term-localname))
+  ;;       (vterm--flush-output "clear\n")))
   (rename-buffer name))
 
 (defun counsel-mt/launch()
@@ -142,6 +142,7 @@
                           (counsel-mt/launch))))
             :caller 'counsel-term))
 
-(ignore-tramp-ssh-control-master 'counsel-term)
+(ignore-tramp-ssh-control-master 'counsel-mt/launch)
+
 (provide 'counsel-term)
 ;;; counsel-term.el ends here

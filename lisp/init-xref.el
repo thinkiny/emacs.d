@@ -37,7 +37,9 @@
       (not (equal (point-marker) (ring-ref xref--marker-ring 0)))))
 
 (defun xref-push-marker-stack-once(&rest _)
-  (xref--push-markers))
+    (let ((cb (current-buffer))
+          (pt (point)))
+      (xref--push-markers cb pt)))
 
 (defun xref-push-marker-stack-twice(&rest _)
   (xref--push-markers)

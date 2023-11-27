@@ -12,23 +12,9 @@
 ;;  (add-hook 'bazel-mode-hook (lambda ()
 ;;                              (setq-local yas-indent-line 'fixed))))
 
-(defun eglot-clangd-find-other-file (&optional new-window)
-  (interactive)
-  (let
-      ((other-file (jsonrpc-request
-                    (eglot--current-server-or-lose)
-                    :textDocument/switchSourceHeader
-                    (eglot--TextDocumentIdentifier))))
-    (unless (s-present? other-file)
-      (user-error "Could not find other file"))
-    (funcall (if new-window #'find-file-other-window #'find-file)
-             (eglot--uri-to-path other-file))))
-
 (defun switch-cpp-header-source()
   (interactive)
-  (if (bound-and-true-p eglot--cached-server)
-      (eglot-clangd-find-other-file)
-    (cff-find-other-file)))
+  (cff-find-other-file))
 
 ;; generate-compdb
 (defun generate-compdb-bazel (root)
@@ -97,10 +83,7 @@
   (local-set-key (kbd "C-c b b") 'build-cpp-project)
   (local-set-key (kbd "C-c a") 'disaster)
   (if (gtags-get-rootpath)
-      (gtags-mode)
-    ;; (eglot-ensure)
-    (lsp-bridge-mode)
-    ))
+      (gtags-mode)))
 
 
 (with-eval-after-load 'c++-ts-mode

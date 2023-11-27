@@ -25,8 +25,9 @@
 (require 'init-treesit)
 
 ;;language
+;; (require 'init-flycheck)
 (require 'init-lisp)
-(require 'init-sideline)
+;;(require 'init-sideline)
 ;;(require 'init-eglot)
 (require 'init-lsp-bridge)
 (require 'init-eldoc)

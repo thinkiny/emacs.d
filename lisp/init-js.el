@@ -22,10 +22,8 @@
 ;;   (unbind-key (kbd "M-.") 'js-mode-map))
 
 (defun my-js-mode-hook ()
-  (so-long-mode)
-  (unless (string= "json" (file-name-extension (buffer-file-name)))
-    (eglot-ensure)))
+  (so-long-mode))
 
-;; (add-hook 'js-mode-hook #'my-js-mode-hook)
+(add-hook 'js-mode-hook #'my-js-mode-hook)
 
 (provide 'init-js)

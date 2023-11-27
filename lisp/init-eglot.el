@@ -6,7 +6,8 @@
   (setq eglot-autoshutdown t)
   (setq eglot-prefer-plaintext t)
   (setq jsonrpc-inhibit-debug-on-error t)
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
+  (setq jsonrpc-default-request-timeout 15)
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
@@ -17,6 +18,10 @@
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
+  (setq mode-line-misc-info
+        (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
+  (add-to-list 'mode-line-misc-info
+             `(eglot--managed-mode ("[" eglot--mode-line-format "] ")))
   (defun print-eglot-project-root ()
     (interactive)
     (if-let ((server (eglot-current-server)))
@@ -30,38 +35,19 @@
       (write-region (format "((%s . ((eglot-enable-format-at-save . nil))))" major-mode) nil file)
       (message (format "write %s" file))))
 
-  (defun eglot-rename-with-current (newname)
-    "Rename the current symbol to NEWNAME."
-    (interactive
-     (let ((curr (thing-at-point 'symbol t)))
-       (list (read-from-minibuffer
-              (format "Rename `%s' to: " (or curr
-                                             "unknown symbol"))
-              curr nil nil nil
-              (symbol-name (symbol-at-point))))))
-
-    (unless (eglot--server-capable :renameProvider)
-      (eglot--error "Server can't rename!"))
-    (eglot--apply-workspace-edit
-     (jsonrpc-request (eglot--current-server-or-lose)
-                      :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
-                                             :newName ,newname))
-     current-prefix-arg))
-
   (eglot--code-action eglot-code-action-override "source.overrideMethods")
   (defun eglot-code-actions-current-line()
     (interactive)
     (eglot-code-actions (line-beginning-position) (line-end-position) nil t))
 
   (defun eglot-restart-workspace()
+    "Reconnect to SERVER.
+    INTERACTIVE is t if called interactively."
     (interactive)
-    (when-let ((server (eglot-current-server)))
-      (cancel-timer eldoc-timer)
-      (setq-local eldoc-idle-delay 60)
-      (eglot-shutdown server))
-    (setq-local eldoc-idle-delay 0.5)
-    (eglot-ensure))
-  )
+    (when-let (server (eglot-current-server))
+      (when (jsonrpc-running-p server)
+        (ignore-errors (eglot-shutdown server t nil nil))))
+    (eglot-ensure)))
 
 (use-package consult-eglot)
 
@@ -79,8 +65,8 @@
   (remove-hook 'before-save-hook 'eglot-format-buffer 'eglot-format)
   (setq-local eglot-enable-format-at-save nil))
 
-(advice-add #'eglot--sig-info :around #'advice/ignore-errors)
-(advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
+;; (advice-add #'eglot--sig-info :around #'advice/ignore-errors)
+;; (advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
 
 (defun my-eglot-mode-hook()
 ;; (eglot--setq-saving eldoc-documentation-functions
@@ -95,8 +81,7 @@
                         'equal)))
   (if eglot-enable-format-at-save
       (eglot-enable-format)
-    (eglot-disable-format))
-  (flymake-mode))
+    (eglot-disable-format)))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
 

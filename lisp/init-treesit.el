@@ -1,6 +1,5 @@
 ;; -*- lexical-binding: t -*-
 
-(defvar treesit-use-build-in nil)
 (defun tree-sitter-init()
   (require-package 'tree-sitter)
   (require-package 'tree-sitter-langs)
@@ -8,7 +7,6 @@
   (global-tree-sitter-mode)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
   (after-load-theme (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)))
-
 
 (setq treesit-language-source-alist
    '((bash "https://github.com/tree-sitter/tree-sitter-bash")
@@ -19,6 +17,7 @@
      (html "https://github.com/tree-sitter/tree-sitter-html")
      (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
      (json "https://github.com/tree-sitter/tree-sitter-json")
+     (java "https://github.com/tree-sitter/tree-sitter-java")
      (make "https://github.com/alemuller/tree-sitter-make")
      (markdown "https://github.com/ikatyang/tree-sitter-markdown")
      (python "https://github.com/tree-sitter/tree-sitter-python")
@@ -29,7 +28,6 @@
      (scala "https://github.com/tree-sitter/tree-sitter-scala")))
 
 (defun treesit-init()
-  (setq treesit-use-build-in t)
   (require 'treesit)
   (dolist (lang '(
                   ;; ("c" . c)

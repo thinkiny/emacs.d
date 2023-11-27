@@ -196,6 +196,7 @@ With arg N, insert N newlines."
     (indent-according-to-mode)))
 
 (global-set-key (kbd "C-o") 'sanityinc/open-line-with-reindent)
+(global-set-key (kbd "<RET>") 'newline-and-indent)
 
 ;;----------------------------------------------------------------------------
 ;; Random line sorting

@@ -5,7 +5,7 @@
 ;; Author: Karan Ahlawat <ahlawatkaran12@gmail.com>
 ;; Version: 0.0.1
 ;; Filename: scala-ts-mode.el
-;; Package-Requires: ((emacs "29.0.91"))
+;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: scala, languages, tree-sitter
 ;; URL: https://github.com/KaranAhlawat/scala-ts-mode
 
@@ -29,7 +29,7 @@
 ;; statuses are
 ;; 1. font-locking (complete, looking for bugs and maintainance)
 ;; 2. imenu (basic support, needs work)
-;; 3. indentation (initial support, incomplete, broken)
+;; 3. indentation
 
 ;;; Code:
 
@@ -70,11 +70,10 @@
     (modify-syntax-entry ?'  "/" table)  ; Char start
     (modify-syntax-entry ?/ "< 12" table) ; Comment seq a, first two char are /
     (modify-syntax-entry ?\n ">" table) ; Comment seq a, ends with a newline
-    (modify-syntax-entry ?/ ". 14b") ; Comment seq b, starts and ends with /
-    (modify-syntax-entry ?* ". 23b") ; Comment seq b, second start and first end char is *
+    (modify-syntax-entry ?/ ". 14b" table) ; Comment seq b, starts and ends with /
+    (modify-syntax-entry ?* ". 23b" table) ; Comment seq b, second start and first end char is *
     table)
   "Syntax table for `scala-ts-mode'.")
-
 
 ;; utility functions -- begin
 
@@ -143,13 +142,14 @@
    
    :language 'scala
    :feature 'comment
-   '((comment) @font-lock-comment-face)
+   '((comment) @font-lock-comment-face
+     (block_comment) @font-lock-comment-face)
 
    :language 'scala
    :feature 'doc-comment
    :override t
-   `((((comment) @font-lock-doc-face)
-      (:match ,(rx-to-string '( : bol "/*"
+   `((((block_comment) @font-lock-doc-face)
+      (:match ,(rx-to-string '( : bol "/**"
                                 (* (| (not "*")
                                       (: "*" (not "/"))))
                                 (+ "*") "/")
@@ -170,6 +170,37 @@
       name: (identifier) @font-lock-type-face)
      (simple_enum_case
       name: (identifier) @font-lock-type-face))
+
+   :language 'scala
+   :feature 'function
+   '(;; method definitions
+     (function_declaration
+      name: (identifier) @font-lock-function-name-face)
+     (function_definition
+      name: (identifier) @font-lock-function-name-face)
+
+     ;; method invocations
+     (call_expression
+      function: (identifier) @font-lock-function-call-face)
+     (call_expression
+      function: (operator_identifier) @font-lock-function-call-face)
+     (call_expression
+      function: (field_expression
+                 field: (identifier) @font-lock-function-call-face))
+     ((call_expression
+       function: (identifier) @font-lock-function-call-face)
+      (:match "^[A-Z]" @font-lock-function-call-face))
+     (generic_function
+      function: (identifier) @font-lock-function-call-face)
+     
+
+     ;; function definitions
+     (function_definition
+      name: (identifier) @font-lock-function-name-face)
+     (parameter
+      name: (identifier) @font-lock-variable-name-face)
+     (binding
+      name: (identifier) @font-lock-variable-name-face))
 
    :language 'scala
    :feature 'variable
@@ -200,38 +231,6 @@
       (:match "^[A-Z]" @font-lock-type-face))
      (((identifier) @font-lock-type-face)
       (:match "^[A-Z]" @font-lock-type-face)))
-
-   :language 'scala
-   :feature 'function
-   '(;; method definitions
-     (function_declaration
-      name: (identifier) @font-lock-function-name-face)
-     (function_definition
-      name: (identifier) @font-lock-function-name-face)
-
-     ;; method invocations
-     (call_expression
-      function: (identifier) @font-lock-function-call-face)
-     (call_expression
-      function: (operator_identifier) @font-lock-function-call-face)
-     (call_expression
-      function: (field_expression
-                 field: (identifier) @font-lock-function-call-face))
-     ((call_expression
-       function: (identifier) @font-lock-function-call-face)
-      (:match "^[A-Z]" @font-lock-function-call-face))
-     (generic_function
-      function: (identifier) @font-lock-function-call-face)
-     (interpolated_string_expression
-      interpolator: (identifier) @font-lock-function-call-face)
-
-     ;; function definitions
-     (function_definition
-      name: (identifier) @font-lock-function-name-face)
-     (parameter
-      name: (identifier) @font-lock-variable-name-face)
-     (binding
-      name: (identifier) @font-lock-variable-name-face))
 
    :language 'scala
    :feature 'import
@@ -269,11 +268,19 @@
       (symbol_literal)
       (string)
       (character_literal)
+      ] @font-lock-string-face)
+
+   :language 'scala
+   :feature 'interpolation
+   :override t
+   '((interpolation [(block) (identifier)] @font-lock-variable-use-face)
+     (interpolation (block ["{" "}"] @font-lock-bracket-face))
+     (interpolated_string_expression
+      interpolator: (identifier) @font-lock-function-call-face)
+     [
       (interpolated_string)
-      (interpolated_string_expression)
-      ] @font-lock-string-face
-     (interpolation) @font-lock-string-face
-     (interpolation "$" @font-lock-string-face)))
+      "$"
+      ] @font-lock-string-face))
   "Treesitter font-lock settings for `scala-ts-mode'.")
 
 (defun scala-ts--indent-end (node _parent _bol)
@@ -469,8 +476,8 @@
        ((parent-is "^template_body$") parent-bol ,offset)
        ((parent-is "^with_template_body$") parent-bol ,offset)
        ((parent-is "^field_expression$") parent-bol ,offset)
-       ((parent-is "^class_parameters$") parent-bol ,(* 2 offset))
-       ((parent-is "^parameters$") parent-bol ,(* 2 offset))
+       ((parent-is "^class_parameters$") parent-bol ,offset)
+       ((parent-is "^parameters$") parent-bol ,offset)
        ((parent-is "^arguments$") parent-bol ,offset)
        ((parent-is "^tuple_expression$") parent ,offset)
        
@@ -553,7 +560,7 @@ Return nil if there is no name or if NODE is not a defun node."
     (setq-local treesit-font-lock-feature-list '((comment doc-comment definition)
                                                  (keyword  type)
                                                  (import extra)
-                                                 (variable function operator literal)))
+                                                 (variable function operator literal interpolation)))
 
 
     (setq-local

@@ -1,6 +1,5 @@
 (require 'scala-ts-mode)
 
-
 (with-eval-after-load 'lsp-bridge
   (push '((scala-ts-mode) . "metals") lsp-bridge-single-lang-server-mode-list)
   (push 'scala-ts-mode-hook lsp-bridge-default-mode-hooks))

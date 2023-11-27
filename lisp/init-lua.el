@@ -3,7 +3,7 @@
 
 (add-hook 'lua-mode-hook (lambda()
                            ;;(semantic-mode 0)
-                           (eglot-ensure)
+                           (lsp-later)
                            (ruby-end-mode)))
 
 (provide 'init-lua)

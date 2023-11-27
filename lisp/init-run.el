@@ -105,7 +105,6 @@
                            (run-command-with-output (format "*ScalaRun-%s*" file-name) dir command))))
 
 
-;; go
 (register-run-template go-mode
                        nil
                        (lambda (file)
@@ -115,8 +114,30 @@
                            (run-command-with-output (format "*GoRun-%s*" file-name) dir command))))
 
 ;;java
+(defun java-get-run-args-template ()
+  "Java run args template."
+  (list :type "java"
+        :args ""
+        :noDebug t
+        :cwd nil
+        :host "localhost"
+        :request "launch"
+        :modulePaths []
+        :classPaths nil
+        :name (concat "JavaRun-" (buffer-name))
+        :projectName nil
+        :mainClass nil))
+
+(defun java-get-run-args ()
+  "Return java run args."
+  (let* ((debug-args (dap-variables-expand-in-launch-configuration (java-get-run-args-template))))
+    (-some-> (plist-get debug-args :type)
+      (gethash dap--debug-providers)
+      (funcall debug-args))))
+
 (register-run-template java-mode
-                       nil
-                       (lambda (file)
-                         (eglot-java-run-main)))
+                       #'java-get-run-args
+                       (lambda (conf)
+                         (dap-delete-all-sessions)
+                         (dap-debug conf)))
 (provide 'init-run)
