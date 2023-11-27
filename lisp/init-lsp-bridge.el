@@ -3,13 +3,12 @@
 (setq lsp-bridge-enable-mode-line nil)
 
 (require 'lsp-bridge)
-(require 'lsp-bridge-jdtls)
-
 (setq lsp-bridge-enable-with-tramp t)
 (setq lsp-bridge-enable-hover-diagnostic t)
 (setq lsp-bridge-python-lsp-server "pylsp")
-
+(setq lsp-bridge-enable-auto-format-code t)
 ;; (setq lsp-bridge-signature-show-function 'lsp-bridge-signature-show-with-frame)
+
 (setq acm-enable-doc nil)
 (setq acm-enable-tabnine nil)
 (setq acm-backend-yas-match-by-trigger-keyword t)
