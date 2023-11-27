@@ -1,0 +1,3 @@
+[submodule "lsp-bridge"]
+	path = lsp-bridge
+	url = ssh://git@ssh.github.com:443/manateelazycat/lsp-bridge.git
