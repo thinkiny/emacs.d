@@ -122,7 +122,9 @@ there is no current file, eval the current buffer."
 ;; ----------------------------------------------------------------------------
 (defun sanityinc/lisp-setup ()
   "Enable features useful in any Lisp mode."
-  (run-hooks 'sanityinc/lispy-modes-hook))
+  (run-hooks 'sanityinc/lispy-modes-hook)
+  (lsp-bridge-mode -1)
+  (company-mode))
 
 (defun sanityinc/emacs-lisp-setup ()
   "Enable features useful when working with elisp."
