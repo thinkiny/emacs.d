@@ -86,8 +86,10 @@
   (define-key xwidget-webkit-mode-map (kbd "N") 'nov-xwidget-next-document)
   (define-key xwidget-webkit-mode-map (kbd "P") 'nov-xwidget-previous-document)
   (define-key xwidget-webkit-mode-map (kbd "n") #'nov-xwidget-next-line-or-page)
+  (define-key xwidget-webkit-mode-map (kbd "j") #'nov-xwidget-next-line-or-page)
   (define-key xwidget-webkit-mode-map (kbd "G") #'xwidget-webkit-scroll-bottom)
   (define-key xwidget-webkit-mode-map (kbd "p") #'nov-xwidget-previous-line-or-page)
+  (define-key xwidget-webkit-mode-map (kbd "k") #'nov-xwidget-previous-line-or-page)
   (define-key xwidget-webkit-mode-map (kbd "o") 'nov-xwidget-goto-toc))
 
 (defun my-nov-mode-hook()
