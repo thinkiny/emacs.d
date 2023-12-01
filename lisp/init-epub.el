@@ -1,4 +1,4 @@
-(defvar nov-use-xwidget t)
+(defvar nov-use-xwidget nil)
 (defvar nov-scroll-step 10)
 (use-package nov
   :mode (("\\.epub$" . nov-mode))
