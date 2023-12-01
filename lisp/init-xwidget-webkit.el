@@ -95,6 +95,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
             ;;(setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
             (setq-local isearch-lazy-highlight nil)
             (setq-local header-line-format nil)
+            (setq-local left-fringe-width 0)
             (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-webkit-scroll-up-line)
             (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-webkit-scroll-down-line)
             (define-key xwidget-webkit-mode-map (kbd "M-v") 'xwidget-webkit-scroll-down)
