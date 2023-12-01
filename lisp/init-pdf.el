@@ -140,6 +140,8 @@
   (define-key pdf-view-mode-map (kbd "0") #'pdf-view-goto-page-start)
   (define-key pdf-view-mode-map (kbd "n") #'pdf-view-next-line-or-next-page)
   (define-key pdf-view-mode-map (kbd "p") #'pdf-view-previous-line-or-previous-page)
+  (define-key pdf-view-mode-map (kbd "j") #'pdf-view-next-line-or-next-page)
+  (define-key pdf-view-mode-map (kbd "k") #'pdf-view-previous-line-or-previous-page)
   (define-key pdf-view-mode-map (kbd "N") #'pdf-view-next-page)
   (define-key pdf-view-mode-map (kbd "P") #'pdf-view-previous-page)
   (define-key pdf-view-mode-map (kbd "M-v") #'image-roll-scroll-screen-backward)
