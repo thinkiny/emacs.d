@@ -85,7 +85,7 @@
   (eglot--setq-saving completion-at-point-functions
                       (list
                        (cape-capf-buster
-                        (cape-super-capf
+                        (cape-capf-super
                          (cape-company-to-capf #'company-files)
                          #'eglot-completion-at-point
                          )

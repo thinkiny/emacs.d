@@ -12,9 +12,10 @@
   (eglot-ensure)
   (yas-activate-extra-mode 'scala-mode)
   (setq-local tab-width 2)
-  (let ((ext (file-name-extension buffer-file-name)))
-    (cond
-     ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode)))))
+  ;; (let ((ext (file-name-extension (buffer-file-name))))
+  ;;   (cond
+  ;;    ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode))))
+  )
 
 (add-hook 'scala-ts-mode-hook #'my-scala-mode-hook)
 (add-hook 'scala-mode-hook #'my-scala-mode-hook)
