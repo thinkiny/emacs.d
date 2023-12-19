@@ -25,7 +25,7 @@
 (require 'init-treesit)
 
 ;;language
-(require 'init-flycheck)
+(require 'init-flymake)
 (require 'init-lisp)
 (require 'init-eldoc)
 (require 'init-eglot)

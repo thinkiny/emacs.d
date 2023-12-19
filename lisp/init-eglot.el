@@ -30,8 +30,13 @@
        (list (read-from-minibuffer
               (format "Rename `%s' to: " (or curr
                                              "unknown symbol"))
-              curr nil nil nil
-              (symbol-name (symbol-at-point)))))))
+              curr nil nil nil curr))))
+    (eglot-server-capable-or-lose :renameProvider)
+    (eglot--apply-workspace-edit
+     (eglot--request (eglot--current-server-or-lose)
+                     :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
+                                            :newName ,newname))
+     this-command))
 
   (defun print-eglot-project-root ()
     (interactive)
@@ -81,7 +86,8 @@
 
 (defun my-eglot-mode-hook()
   ;; (eglot--setq-saving eldoc-documentation-functions
-  ;;                       '(eglot-signature-eldoc-function))
+  ;;                       '(eglot-signature-eldoc-function
+  ;;                         eglot-hover-eldoc-function))
   (eglot--setq-saving completion-at-point-functions
                       (list
                        (cape-capf-buster
