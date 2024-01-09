@@ -57,7 +57,6 @@
                                       (unusedvariable . t)
                                       (nilness . t)))))))
   (eglot-ensure)
-  (eglot-format-buffer-on-save)
   (subword-mode)
 
   (define-key go-mode-map (kbd "C-c g j") #'go-generate-tag-json)
