@@ -1,11 +1,9 @@
-(defvar nov-use-xwidget t)
+(defvar nov-use-xwidget nil)
 (defvar nov-scroll-step 10)
 (use-package nov
   :mode (("\\.epub$" . nov-mode))
   :config
-  (when nov-use-xwidget
-    (require 'nov-xwidget)
-    (add-hook 'nov-mode-hook 'nov-xwidget-inject-all-files))
+  (require 'nov-xwidget)
   (add-hook 'nov-mode-hook 'my-nov-mode-hook))
 
 (defun modeline-nov-document-index()
@@ -78,6 +76,7 @@
 })();" #'nov-xwidget-previous-line-or-page-cb))
 
 (defun setup-nov-xwidget()
+  (nov-xwidget-inject-all-files)
   (nov-xwidget-view)
   (let ((title (cdr (assq 'title nov-metadata))))
     (setq-local xwidget-webkit-buffer-name-format title)
@@ -93,9 +92,8 @@
   (define-key xwidget-webkit-mode-map (kbd "o") 'nov-xwidget-goto-toc))
 
 (defun my-nov-mode-hook()
-  (if (boundp 'mwheel-scroll-up-function)
-      (setq-local mwheel-scroll-up-function
-                  #'nov-goto-next-line-or-page))
+  (setq-local mwheel-scroll-up-function
+              #'nov-goto-next-line-or-page)
   (if (boundp 'mwheel-scroll-down-function)
       (setq-local mwheel-scroll-down-function
                   #'nov-goto-previous-line-or-page))
