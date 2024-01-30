@@ -97,7 +97,6 @@
   (if (boundp 'mwheel-scroll-down-function)
       (setq-local mwheel-scroll-down-function
                   #'nov-goto-previous-line-or-page))
-  (setq-local line-spacing 0.8)
   (visual-line-mode)
   (if nov-use-xwidget
       (setup-nov-xwidget)
