@@ -32,12 +32,13 @@
   (define-key nov-mode-map (kbd "e") 'end-of-line)
   (define-key nov-mode-map (kbd "a") 'beginning-of-line)
   (define-key nov-mode-map (kbd "l") 'forward-char)
+  (define-key nov-mode-map (kbd "M-b") 'nov-history-back)
+  (define-key nov-mode-map (kbd "M-f") 'nov-history-forward)
   (define-key nov-mode-map (kbd "h") 'backward-char)
   (define-key nov-mode-map (kbd "j") 'nov-goto-next-line-or-page)
   (define-key nov-mode-map (kbd "k") 'nov-goto-previous-line-or-page)
   (define-key nov-mode-map (kbd "=") 'er/expand-region)
   (define-key nov-mode-map (kbd ",") 'bing-dict-at-point))
-
 
 (defun nov-xwidget-next-line-or-page-cb(end)
   (if (s-equals-p end "1")
