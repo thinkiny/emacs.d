@@ -198,12 +198,12 @@
 (defun counsel-load-theme ()
   "Forward to `load-theme'."
   (interactive)
-  (let ((orig-theme (when custom-enabled-themes
+  (let ((curr-theme (when custom-enabled-themes
                       (car custom-enabled-themes))))
     (ivy-read "Load custom theme: "
-            (mapcar 'symbol-name (custom-available-themes))
+              (mapcar 'symbol-name (custom-available-themes))
             :action #'counsel--load-theme-action
-            :preselect (symbol-name orig-theme)
+            :preselect (symbol-name curr-theme)
             ;;:update-fn #'counsel--update-theme-action
             )))
 
