@@ -22,11 +22,12 @@ wget --no-check-certificate https://raw.githubusercontent.com/chenyanming/nov-xw
 
 if [ ! -d "pdf-tools" ]; then
     #git clone --branch pdf-roll https://github.com/dalanicolai/pdf-tools.git
-    git clone --branch continuous-scroll https://github.com/aikrahguzar/pdf-tools.git
+    #git clone --branch continuous-scroll https://github.com/aikrahguzar/pdf-tools.git
+    git clone --branch child-frame-preview https://github.com/aikrahguzar/pdf-tools.git
 fi
 
 build_pdf_tools pdf-tools
 
 #wget https://raw.githubusercontent.com/dalanicolai/image-roll.el/main/image-roll.el -O pdf-tools/lisp/image-roll.el
-wget --no-check-certificate https://raw.githubusercontent.com/aikrahguzar/image-roll.el/main/image-roll.el -O pdf-tools/lisp/image-roll.el
+#wget --no-check-certificate https://raw.githubusercontent.com/aikrahguzar/image-roll.el/main/image-roll.el -O pdf-tools/lisp/image-roll.el
 wget --no-check-certificate https://raw.githubusercontent.com/007kevin/pdf-view-restore/master/pdf-view-restore.el -O pdf-tools/lisp/pdf-view-restore.el
