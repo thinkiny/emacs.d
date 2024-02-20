@@ -350,4 +350,8 @@ With arg N, insert N newlines."
     (setq-local tab-width value)
     (setq-local c-basic-offset value)))
 
+;; Handlebars
+(use-package handlebars-mode
+  :mode (("\\.hbs$" . handlebars-mode)))
+
 (provide 'init-editing-utils)

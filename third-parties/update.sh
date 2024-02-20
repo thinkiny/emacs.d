@@ -31,3 +31,4 @@ build_pdf_tools pdf-tools
 #wget https://raw.githubusercontent.com/dalanicolai/image-roll.el/main/image-roll.el -O pdf-tools/lisp/image-roll.el
 #wget --no-check-certificate https://raw.githubusercontent.com/aikrahguzar/image-roll.el/main/image-roll.el -O pdf-tools/lisp/image-roll.el
 wget --no-check-certificate https://raw.githubusercontent.com/007kevin/pdf-view-restore/master/pdf-view-restore.el -O pdf-tools/lisp/pdf-view-restore.el
+wget --no-check-certificate https://raw.githubusercontent.com/jdtsmith/eglot-booster/main/eglot-booster.el -O eglot-booster.el
