@@ -34,6 +34,11 @@
   (add-auto-mode 'pdf-view-mode "\\.pdf$")
   (add-hook 'pdf-view-mode-hook 'my-pdf-view-mode-hook))
 
+(after-load-theme
+ (require 'pdf-tools)
+ (when (theme-dark-p)
+   (add-to-list 'pdf-tools-enabled-modes 'pdf-view-dark-minor-mode)))
+
 (with-eval-after-load 'pdf-view
   (add-hook 'pdf-view-midnight-minor-mode-hook
             (lambda ()
@@ -125,6 +130,9 @@
   (cua-mode -1)
   (pixel-scroll-precision-mode -1)
   (setq-local left-fringe-width 0)
+
+  (if (theme-dark-p)
+      (pdf-view-midnight-minor-mode))
 
   (if (boundp 'mwheel-scroll-up-function)
       (setq-local mwheel-scroll-up-function

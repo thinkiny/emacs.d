@@ -65,9 +65,9 @@
   :type 'integer
   :set (lambda (var val)
          (set-default var val)
-         (if *is-a-linux*
-             (set-frame-parameter nil 'alpha-background val)
-           (set-frame-parameter nil 'alpha val))))
+         (if *is-a-nt*
+             (set-frame-parameter nil 'alpha val)
+           (set-frame-parameter nil 'alpha-background val))))
 
 (defun set-transparency ()
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
@@ -87,13 +87,12 @@
         modus-themes-paren-match '(bold intense)))
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom default-theme (cons 'cloud 'light)
+(defcustom default-theme 'cloud
   "The current theme"
-  :group 'faces
-  :type 'cons)
+  :group 'faces)
 
 (defun theme-dark-p ()
-  (eq 'dark (cdr default-theme)))
+  (eq 'dark (frame-parameter nil 'background-mode)))
 
 (after-load-theme
  (set-face-attribute 'button nil :background nil)
@@ -108,7 +107,7 @@
 
 (add-hook 'after-init-hook
           (lambda ()
-            (load-theme (car default-theme) t)
+            (load-theme default-theme t)
             (run-hooks 'load-theme-hook)))
 
 ;;fonts
