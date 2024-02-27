@@ -16,9 +16,7 @@
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions)
-
-  (require 'eglot-booster)
-  (eglot-booster-mode))
+  (require 'eglot-booster))
 
 (with-eval-after-load 'eglot
   (setq mode-line-misc-info
@@ -101,7 +99,10 @@
                         'equal)))
   (if eglot-enable-format-at-save
       (eglot-enable-format)
-    (eglot-disable-format)))
+    (eglot-disable-format))
+
+  (unless (file-remote-p default-directory)
+      (eglot-booster-mode)))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
 

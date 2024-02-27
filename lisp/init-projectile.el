@@ -21,7 +21,10 @@
   ;; don't use file-truename
   (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
   (unbind-key (kbd "C-c p t") 'projectile-mode-map)
-  (diminish 'projectile-mode))
+  (diminish 'projectile-mode)
+
+  ;; delete directory is too slow
+  (advice-remove 'delete-file #'delete-file-projectile-remove-from-cache))
 
 (defun projectile-kill-not-project-buffers ()
   "Kill buffers not belongs to this project including dired-mode buffer"
