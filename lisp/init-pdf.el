@@ -87,6 +87,15 @@
       ;;(pdf-view-deactivate-region)
       ))
 
+  (defvar pdf-view-scroll-step 10)
+  (defun pdf-view-scroll-up ()
+    (interactive)
+    (pdf-view-scroll-up-or-next-page pdf-view-scroll-step))
+
+  (defun pdf-view-scroll-down ()
+    (interactive)
+    (pdf-view-scroll-down-or-previous-page pdf-view-scroll-step))
+
   (defun pdf-view-mouse-set-region-wapper (event)
     (interactive "@e")
     (pdf-view-mouse-set-region event)
@@ -134,12 +143,12 @@
   (if (theme-dark-p)
       (pdf-view-midnight-minor-mode))
 
-  (if (boundp 'mwheel-scroll-up-function)
-      (setq-local mwheel-scroll-up-function
-                  #'pdf-view-next-line-or-next-page))
-  (if (boundp 'mwheel-scroll-down-function)
-      (setq-local mwheel-scroll-down-function
-                  #'pdf-view-previous-line-or-previous-page))
+  ;; (if (boundp 'mwheel-scroll-up-function)
+  ;;     (setq-local mwheel-scroll-up-function
+  ;;                 #'pdf-view-next-line-or-next-page))
+  ;; (if (boundp 'mwheel-scroll-down-function)
+  ;;     (setq-local mwheel-scroll-down-function
+  ;;                 #'pdf-view-previous-line-or-previous-page))
 
   (define-key pdf-view-mode-map (kbd "q") #'kill-current-buffer)
   (define-key pdf-view-mode-map (kbd "0") #'pdf-view-goto-page-start)
@@ -151,8 +160,8 @@
   (define-key pdf-view-mode-map (kbd "b") #'pdf-view-previous-line-or-previous-page)
   (define-key pdf-view-mode-map (kbd "N") #'pdf-view-next-page)
   (define-key pdf-view-mode-map (kbd "P") #'pdf-view-previous-page)
-  (define-key pdf-view-mode-map (kbd "M-v") #'pdf-view-scroll-down-or-previous-page)
-  (define-key pdf-view-mode-map (kbd "C-v") #'pdf-view-scroll-up-or-next-page)
+  (define-key pdf-view-mode-map (kbd "M-v") #'pdf-view-scroll-down)
+  (define-key pdf-view-mode-map (kbd "C-v") #'pdf-view-scroll-up)
   ;;(define-key pdf-view-mode-map (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
   (define-key pdf-view-mode-map (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
   ;;(add-function :after after-focus-change-function 'pdf-cscroll-close-window-when-dual)
