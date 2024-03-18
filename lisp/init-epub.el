@@ -46,6 +46,8 @@
   (define-key nov-mode-map (kbd "$") 'end-of-line)
   (define-key nov-mode-map (kbd "j") 'nov-goto-next-line-or-page)
   (define-key nov-mode-map (kbd "k") 'nov-goto-previous-line-or-page)
+  (define-key nov-mode-map (kbd "<down>") 'nov-goto-next-line-or-page)
+  (define-key nov-mode-map (kbd "<up>") 'nov-goto-previous-line-or-page)
   (define-key nov-mode-map (kbd "=") 'er/expand-region)
   (define-key nov-mode-map (kbd ",") 'bing-dict-at-point)
   (define-key nov-mode-map (kbd "<double-mouse-1>") #'bing-dict-at-point))
