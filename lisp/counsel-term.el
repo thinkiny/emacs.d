@@ -4,10 +4,9 @@
 
 (require 'cl-lib)
 (require 'tramp)
-(require 's)
 
 (defvar counsel-mt-shell-type 'vterm)
-(defconst counsel-mt-name-header "*Term")
+(defconst counsel-mt-name-header "*TERM-")
 (defvar counsel-mt-create-index 0)
 
 (defun counsel-mt/get-dir(&optional buf)
