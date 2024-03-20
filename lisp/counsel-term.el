@@ -7,7 +7,6 @@
 
 (defvar counsel-mt-shell-type 'vterm)
 (defconst counsel-mt-name-header "*TERM-")
-(defvar counsel-mt-create-index 0)
 
 (defun counsel-mt/get-dir(&optional buf)
   (with-current-buffer (or buf (current-buffer))
@@ -19,12 +18,23 @@
 (defun counsel-mt/get-dir-with-index()
   (format "[%d] %s" (counsel-mt/get-buf-index) (counsel-mt/get-dir)))
 
-(defun counsel-mt/new-buffer-name()
+(defun counsel-mt/new-buffer-name(idx)
   (generate-new-buffer-name
-   (format "%s[%d] %s"
-           counsel-mt-name-header
-           counsel-mt-create-index
-           (counsel-mt/get-dir))))
+   (format "%s[%d] %s" counsel-mt-name-header idx (counsel-mt/get-dir))))
+
+(defun counsel-mt/get-continuation (seq)
+  (let ((next 0))
+    (cl-loop for i in seq
+             if (not (= i next)) return next
+             else do (setq next (+ 1 next))
+             finally return next)))
+
+(defun counsel-mt/get-next-index()
+  (counsel-mt/get-continuation
+   (cl-sort (cl-loop for buf in (buffer-list)
+                     when (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
+                     collect (counsel-mt/get-buf-index buf))
+            #'< )))
 
 (defun counsel-mt/get-buf-index(&optional buf)
   (buffer-local-value 'counsel-mt-index (or buf (current-buffer))))
@@ -32,8 +42,13 @@
 (defun counsel-mt/get-buf-index-pair(pair)
   (counsel-mt/get-buf-index (cdr pair)))
 
-(defun counsel-mt/get-dir-pair(pair)
-  (counsel-mt/get-dir (cdr pair)))
+(defun counsel-mt/sort-dir-pair(a b)
+  (let ((a-dir (counsel-mt/get-dir (cdr a)))
+        (b-dir (counsel-mt/get-dir (cdr b))))
+    (if (string-lessp a-dir b-dir)
+        t
+      (and (string-equal a-dir b-dir)
+           (< (counsel-mt/get-buf-index-pair a) (counsel-mt/get-buf-index-pair b))))))
 
 (defun counsel-mt/sort-by-dir()
   "Sort all terminal buffer ordered by current directory"
@@ -42,13 +57,13 @@
                     collect (with-current-buffer buf
                               (rename-buffer (format "%s%s" counsel-mt-name-header (counsel-mt/get-dir-with-index)))
                               (cons (counsel-mt/get-dir-with-index) buf)))
-           #'string-lessp :key #'counsel-mt/get-dir-pair))
+           #'counsel-mt/sort-dir-pair))
 
 (defun counsel-mt/list-dirs-by-index()
   (mapcar #'car (cl-sort (cl-loop for buf in (buffer-list)
-                    when (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
-                    collect (cons (counsel-mt/get-dir buf) buf))
-                    #'< :key #'counsel-mt/get-buf-index-pair)))
+                                  when (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
+                                  collect (cons (counsel-mt/get-dir buf) buf))
+                         #'< :key #'counsel-mt/get-buf-index-pair)))
 
 (defun counsel-mt/ivy-pselect()
   (let* ((dir  (counsel-mt/get-dir))
@@ -56,7 +71,7 @@
     (if (length> dirs 0)
         (-max-by (lambda (a b)
                    (>= (common-string-length a dir)
-                      (common-string-length b dir))) dirs)
+                       (common-string-length b dir))) dirs)
       dir)))
 
 (defun counsel-term-get-term-cmd()
@@ -111,13 +126,14 @@
 
 (defun counsel-mt/launch()
   "Launch a terminal in a new buffer."
-  (let ((name (counsel-mt/new-buffer-name)))
+  (let* ((idx (counsel-mt/get-next-index))
+         (name (counsel-mt/new-buffer-name idx)))
     (pcase counsel-mt-shell-type
       ('eshell (counsel-open-eshell name))
       ('term (counsel-open-term name))
-      ('vterm (counsel-open-vterm name))))
-  (setq-local counsel-mt-index counsel-mt-create-index)
-  (setq counsel-mt-create-index (+ 1 counsel-mt-create-index)))
+      ('vterm (counsel-open-vterm name)))
+    (setq-local counsel-mt-index idx)))
+
 
 (defun counsel-mt/list ()
   "Counsel source with candidates for all terminal buffers."
