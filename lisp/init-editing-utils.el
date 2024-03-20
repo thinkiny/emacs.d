@@ -354,4 +354,8 @@ With arg N, insert N newlines."
 (use-package handlebars-mode
   :mode (("\\.hbs$" . handlebars-mode)))
 
+;; hcl-mode
+(use-package hcl-mode
+  :mode (("\\.conf$" . hcl-mode)))
+
 (provide 'init-editing-utils)
