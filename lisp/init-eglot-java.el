@@ -8,9 +8,12 @@
 (setq eglot-java-jdt-args
       (mapcar #'eglot-java-jdt-make-jvm-arg
               `("-XX:+UseG1GC"
+                "-Xms100m"
                 "-XX:MaxGCPauseMillis=50"
                 "-Dsun.zip.disableMemoryMapping=true"
-                "-Xms100m"
+                "--add-modules=ALL-SYSTEM"
+                "--add-opens=java.base/java.util=ALL-UNNAMED"
+                "--add-opens=java.base/java.lang=ALL-UNNAMED"
                 ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))))
 
 ;; ----------------------- Support URI jdt:// protocol -----------------------
