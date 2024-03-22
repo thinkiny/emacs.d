@@ -47,6 +47,7 @@
 (require 'init-run)
 (require 'init-js)
 (require 'init-kotlin)
+(require 'init-flutter)
 
 ;;file
 (require 'init-markdown)

@@ -73,13 +73,13 @@
 (defun eglot-enable-format ()
   (interactive)
   (whitespace-cleanup-mode 1)
-  (add-hook 'before-save-hook 'eglot-format-buffer nil 'eglot-format)
+  (add-hook 'before-save-hook 'eglot-format-buffer nil t)
   (setq-local eglot-enable-format-at-save t))
 
 (defun eglot-disable-format ()
   (interactive)
   (whitespace-cleanup-mode 0)
-  (remove-hook 'before-save-hook 'eglot-format-buffer 'eglot-format)
+  (remove-hook 'before-save-hook 'eglot-format-buffer t)
   (setq-local eglot-enable-format-at-save nil))
 
 ;; (advice-add #'eglot--sig-info :around #'advice/ignore-errors)
