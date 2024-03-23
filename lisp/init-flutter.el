@@ -1,4 +1,6 @@
-(use-package flutter)
+(use-package flutter
+  :after dart-mode)
+
 (use-package flutter-l10n-flycheck)
 
 (use-package dart-mode
@@ -10,6 +12,8 @@
 
 (defun my-dart-mode-hook()
   (eglot-ensure)
+  (flutter-test-mode)
+  (define-key dart-mode-map (kbd "C-c <RET>") #'flutter-run)
   (add-hook 'after-save-hook 'flutter-maybe-hotload nil t))
 
 (provide 'init-flutter)

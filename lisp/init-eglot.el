@@ -89,14 +89,6 @@
   ;; (eglot--setq-saving eldoc-documentation-functions
   ;;                       '(eglot-signature-eldoc-function
   ;;                         eglot-hover-eldoc-function))
-  (eglot--setq-saving completion-at-point-functions
-                      (list
-                       (cape-capf-buster
-                        (cape-capf-super
-                         (cape-company-to-capf #'company-files)
-                         #'eglot-completion-at-point
-                         )
-                        'equal)))
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format))

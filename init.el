@@ -15,7 +15,7 @@
 (require 'init-recentf)
 (require 'init-projectile)
 (require 'init-ivy)
-(require 'init-company)
+(require 'init-corfu)
 (require 'init-windows)
 (require 'init-yasnippet)
 (require 'init-dired)
