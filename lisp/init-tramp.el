@@ -1,7 +1,7 @@
 ;;; init-tramp.el  -*- lexical-binding: t -*-
 
 (require 'tramp)
-(setenv "SHELL" "/bin/bash")
+;; (setenv "SHELL" "/bin/bash")
 (setq tramp-default-remote-shell "/bin/bash")
 (setq tramp-allow-unsafe-temporary-files t)
 (setq enable-remote-dir-locals t)

@@ -92,7 +92,7 @@
           (tramp-jumper-method
            (list tramp-jumper-exec term-user term-host
                  (concat "cd " term-localname)))))
-    (list "/bin/bash" "-l")))
+    (list (getenv "SHELL") "-l")))
 
 (defun counsel-term-handle-close ()
   "Close current term buffer when `exit' from term buffer."
