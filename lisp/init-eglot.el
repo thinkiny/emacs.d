@@ -39,12 +39,6 @@
                                             :newName ,newname))
      this-command))
 
-  (defun print-eglot-project-root ()
-    (interactive)
-    (if-let ((server (eglot-current-server)))
-        (message (project-root (eglot--project server)))
-      (message "eglot server is not alive")))
-
   (defun eglot-disable-format-project()
     (interactive)
     (when-let ((project-root (projectile-project-root))
@@ -92,11 +86,10 @@
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format))
-
-  (unless (file-remote-p default-directory)
-      (eglot-booster-mode)))
+  (eglot-booster-mode))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
+(ignore-tramp-ssh-control-master #'eglot-booster--init)
 
 (with-eval-after-load-theme
  'eglot

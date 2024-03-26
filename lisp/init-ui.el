@@ -83,9 +83,7 @@
 ;; themes
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
-(require-package 'inkpot-theme)
 (require-package 'ef-themes)
-(require-package 'vscode-dark-plus-theme)
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
@@ -198,17 +196,17 @@
   "Change theme to selected."
   (counsel--load-theme-action (ivy-state-current ivy-last)))
 
-(defun counsel-load-theme ()
+(defun counsel-theme ()
   "Forward to `load-theme'."
   (interactive)
-  (let ((curr-theme (when custom-enabled-themes
-                      (car custom-enabled-themes))))
-    (ivy-read "Load custom theme: "
-              (mapcar 'symbol-name (custom-available-themes))
+  (ivy-read "Load custom theme: "
+            (mapcar 'symbol-name (custom-available-themes))
             :action #'counsel--load-theme-action
-            :preselect (symbol-name curr-theme)
+            :preselect (symbol-name (or (when custom-enabled-themes
+                                          (car custom-enabled-themes))
+                                        default-theme))
             ;;:update-fn #'counsel--update-theme-action
-            )))
+            ))
 
 ;; hide-mode-line
 (require-package 'hide-mode-line)
