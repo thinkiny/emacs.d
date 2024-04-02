@@ -1,5 +1,4 @@
 (require-package 'yasnippet)
-(require-package 'yasnippet-snippets)
 (add-hook 'after-init-hook 'yas-global-mode)
 
 (setq yas-snippet-dirs '("~/.emacs.d/snippets"))

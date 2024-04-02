@@ -1,5 +1,4 @@
 (use-package go-mode)
-(require-package 'go-snippets)
 
 ;; project
 (require 'project)

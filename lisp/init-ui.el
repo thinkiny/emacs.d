@@ -45,10 +45,6 @@
   (window-divider-mode)
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
-(use-package all-the-icons-ibuffer
-  :demand t
-  :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
-
 ;; doom-themes
 (require-package 'doom-themes)
 (setq doom-themes-enable-bold t
@@ -102,7 +98,6 @@
  ;;(set-face-attribute 'fringe nil :background nil)
  (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
-   (set-face-attribute 'all-the-icons-ibuffer-size-face nil :inherit nil)
    (set-face-attribute 'all-the-icons-ivy-rich-size-face nil :inherit nil)
    (set-face-attribute 'default nil :foreground "#C4C4C4")
    (set-face-attribute 'ivy-virtual nil :foreground nil)))
@@ -196,8 +191,8 @@
   "Change theme to selected."
   (counsel--load-theme-action (ivy-state-current ivy-last)))
 
-(defun counsel-theme ()
-  "Forward to `load-theme'."
+(defun change-theme ()
+  "Change current theme."
   (interactive)
   (ivy-read "Load custom theme: "
             (mapcar 'symbol-name (custom-available-themes))
