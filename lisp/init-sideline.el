@@ -6,7 +6,8 @@
 
 (use-package sideline-flymake
   :config
-  (setq sideline-flymake-display-mode 'line))
+  (setq sideline-flymake-display-mode 'line)
+  :hook (flymake-mode . sideline-mode))
 
 (use-package sideline-blame
   :after sideline)

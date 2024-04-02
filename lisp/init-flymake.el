@@ -12,7 +12,6 @@
 
 (defun my-flymake-mode-hook()
   ;;(setq flymake-show-diagnostics-at-end-of-line 'short)
-  (sideline-mode)
   (define-key flymake-mode-map (kbd "C-c e") #'flymake-show-buffer-diagnostics)
   (define-key flymake-mode-map (kbd "C-c e") #'flymake-show-project-diagnostics)
   (remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t))
