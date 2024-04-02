@@ -93,14 +93,14 @@
   (eq 'dark (frame-parameter nil 'background-mode)))
 
 (after-load-theme
- (set-face-attribute 'button nil :background nil)
+ (set-face-attribute 'button nil :background 'unspecified)
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
  ;;(set-face-attribute 'fringe nil :background nil)
  (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
    (set-face-attribute 'all-the-icons-ivy-rich-size-face nil :inherit nil)
    (set-face-attribute 'default nil :foreground "#C4C4C4")
-   (set-face-attribute 'ivy-virtual nil :foreground nil)))
+   (set-face-attribute 'ivy-virtual nil :foreground 'unspecified)))
 
 (add-hook 'after-init-hook
           (lambda ()
