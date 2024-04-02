@@ -24,20 +24,35 @@
   (add-to-list 'mode-line-misc-info
                `(eglot--managed-mode ("[" eglot--mode-line-format "] ")))
 
-  (defun eglot-rename-with-current (newname)
-    "Rename the current symbol to NEWNAME."
-    (interactive
-     (let ((curr (thing-at-point 'symbol t)))
-       (list (read-from-minibuffer
-              (format "Rename `%s' to: " (or curr
-                                             "unknown symbol"))
-              curr nil nil nil curr))))
-    (eglot-server-capable-or-lose :renameProvider)
-    (eglot--apply-workspace-edit
-     (eglot--request (eglot--current-server-or-lose)
-                     :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
-                                            :newName ,newname))
-     this-command))
+  (if (version< emacs-version "30")
+      (defun eglot-rename-with-current (newname)
+        "Rename the current symbol to NEWNAME."
+        (interactive
+         (let ((curr (thing-at-point 'symbol t)))
+           (list (read-from-minibuffer
+                  (format "Rename `%s' to: " (or curr
+                                                 "unknown symbol"))
+                  curr nil nil nil curr))))
+        (eglot--server-capable-or-lose :renameProvider)
+        (eglot--apply-workspace-edit
+         (jsonrpc-request (eglot--current-server-or-lose)
+                          :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
+                                                 :newName ,newname))
+         this-command))
+    (defun eglot-rename-with-current (newname)
+      "Rename the current symbol to NEWNAME."
+      (interactive
+       (let ((curr (thing-at-point 'symbol t)))
+         (list (read-from-minibuffer
+                (format "Rename `%s' to: " (or curr
+                                               "unknown symbol"))
+                curr nil nil nil curr))))
+      (eglot-server-capable-or-lose :renameProvider)
+      (eglot--apply-workspace-edit
+       (eglot--request (eglot--current-server-or-lose)
+                       :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
+                                              :newName ,newname))
+       this-command)))
 
   (defun eglot-disable-format-project()
     (interactive)
