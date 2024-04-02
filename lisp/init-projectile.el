@@ -11,6 +11,7 @@
   (setq projectile-enable-caching t)
   (setq projectile-require-project-root nil)
   (setq projectile-indexing-method 'native)
+  (setq projectile-show-menu nil)
   (projectile-mode)
 
   ;; (defadvice projectile-project-root (around ignore-remote first activate)

@@ -6,6 +6,9 @@
                  (reusable-frames . visible)
                  (window-height   . 0.30)))
 
+(with-eval-after-load 'flymake-mode
+  (easy-menu-define nil flymake-mode-map nil
+    (list "Flymake" :visible nil)))
 
 (defun my-flymake-mode-hook()
   ;;(setq flymake-show-diagnostics-at-end-of-line 'short)
