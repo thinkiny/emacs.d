@@ -10,7 +10,6 @@
   (define-key ctl-x-map "t" nil))
 
 (when window-system
-  (scroll-bar-mode -1)
   (set-fringe-mode '(nil . 1)))
 
 (setq frame-resize-pixelwise t)
