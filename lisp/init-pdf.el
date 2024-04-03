@@ -139,8 +139,8 @@
   (pixel-scroll-precision-mode -1)
   (setq-local left-fringe-width 0)
 
-  (if (theme-dark-p)
-      (pdf-view-midnight-minor-mode))
+  ;; (if (theme-dark-p)
+  ;;     (pdf-view-midnight-minor-mode))
 
   ;; (if (boundp 'mwheel-scroll-up-function)
   ;;     (setq-local mwheel-scroll-up-function

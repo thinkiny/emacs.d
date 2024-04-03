@@ -1,8 +1,6 @@
 (use-package flutter
   :after dart-mode)
 
-(use-package flutter-l10n-flycheck)
-
 (use-package dart-mode
   :hook (dart-mode . my-dart-mode-hook))
 
