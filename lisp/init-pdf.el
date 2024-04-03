@@ -128,7 +128,6 @@
   (pdf-view-roll-minor-mode)
   (pdf-outline-minor-mode)
   (pdf-history-minor-mode)
-  (company-mode -1)
   (blink-cursor-mode -1)
   (eldoc-mode -1)
   (whitespace-cleanup-mode -1)
