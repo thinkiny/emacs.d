@@ -152,6 +152,14 @@ This command currently blocks the UI, sorry."
 
 (add-hook 'sql-mode-hook #'my-sql-hook)
 
+(require 'sqlite-mode)
+(defun my/sqlite-view-file ()
+    "Runs `sqlite-mode-open-file' on the file name visited by the current buffer, killing it."
+    (let ((file-name buffer-file-name))
+      (kill-current-buffer)
+      (sqlite-mode-open-file file-name)))
+(add-to-list 'magic-mode-alist '("SQLite format 3\x00" . my/sqlite-view-file))
+
 (use-package sqlite-mode-extras
   :bind (:map
          sqlite-mode-map
