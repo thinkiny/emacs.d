@@ -61,9 +61,9 @@
 
 (use-package ivy-hydra)
 ;; icons
-(when window-system
-  (use-package all-the-icons-ivy-rich
-    :init (all-the-icons-ivy-rich-mode 1)))
+;; (when window-system
+;;   (use-package all-the-icons-ivy-rich
+;;     :init (all-the-icons-ivy-rich-mode 1)))
 
 (use-package ivy-rich
   :diminish ivy-rich-mode

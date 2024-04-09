@@ -14,8 +14,8 @@
   (setq projectile-show-menu nil)
   (projectile-mode)
 
-  ;; (defadvice projectile-project-root (around ignore-remote first activate)
-  ;;   (unless (file-remote-p default-directory) ad-do-it))
+  (defadvice projectile-project-root (around ignore-remote first activate)
+   (unless (file-remote-p default-directory) ad-do-it))
 
   (require 'project-projectile)
   (add-hook 'project-find-functions #'project-projectile 'append)

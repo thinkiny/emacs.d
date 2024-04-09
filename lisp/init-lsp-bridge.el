@@ -1,12 +1,16 @@
 (add-to-list 'load-path "~/.emacs.d/lsp-bridge")
 
-(setq lsp-bridge-enable-mode-line t)
+(setq lsp-bridge-enable-mode-line nil)
 
 (require 'lsp-bridge)
-(setq lsp-bridge-enable-with-tramp t)
 (setq lsp-bridge-enable-hover-diagnostic t)
 (setq lsp-bridge-python-lsp-server "pylsp")
 (setq lsp-bridge-enable-auto-format-code t)
+
+
+(setq lsp-bridge-enable-with-tramp t)
+(setq lsp-bridge-remote-start-automatically nil)
+
 ;; (setq lsp-bridge-signature-show-function 'lsp-bridge-signature-show-with-frame)
 
 (setq acm-enable-doc nil)
@@ -25,9 +29,36 @@
   (interactive)
   (lsp-bridge-code-action "quickfix"))
 
-(advice-add #'lsp-bridge-find-def :before #'xref-push-marker-stack-once)
+;; (advice-add #'lsp-bridge-find-def :before #'xref-push-marker-stack-once)
 
-(setq lsp-bridge-completion-hide-characters nil)
+
+(defun lsp-bridge-find-def-xref ()
+  (interactive)
+  (cond
+   ((lsp-bridge-has-lsp-server-p)
+    (setq-local lsp-bridge-jump-to-def-in-other-window nil)
+    (xref-push-marker-stack)
+    (lsp-bridge-call-file-api "find_define" (lsp-bridge--position)))
+   (t
+    (call-interactively 'xref-find-definitions))))
+
+(defun test-func()
+  (interactive)
+  (if (lsp-bridge-has-lsp-server-p)
+      (message "ok")
+    (message "no")))
+
+(defun lsp-bridge-find-references-xref ()
+  (interactive)
+  (cond
+   ((lsp-bridge-has-lsp-server-p)
+    (xref-push-marker-stack)
+    (lsp-bridge-call-file-api "find_references" (lsp-bridge--position)
+   (t
+    (xref-find-references))))))
+
+;; (setq lsp-bridge-completion-hide-characters nil)
+
 (with-eval-after-load 'lsp-bridge
   (setq lsp-bridge-completion-popup-predicates (delete 'lsp-bridge-not-match-hide-characters lsp-bridge-completion-popup-predicates))
   (define-key lsp-bridge-mode-map (kbd "M-/") 'lsp-bridge-popup-complete-menu)
@@ -41,8 +72,9 @@
   (define-key lsp-bridge-mode-map (kbd "C-c v") 'lsp-bridge-find-impl)
   (define-key lsp-bridge-mode-map (kbd "C-c f") 'lsp-bridge-code-action-quickfix)
   (define-key lsp-bridge-mode-map (kbd "C-c a") 'lsp-bridge-code-action)
-  (define-key lsp-bridge-mode-map (kbd "M-.") 'lsp-bridge-find-def)
-  (define-key lsp-bridge-mode-map (kbd "M-,") 'lsp-bridge-find-references))
+  (define-key lsp-bridge-mode-map (kbd "M-.") 'lsp-bridge-find-def-xref)
+  ;;(define-key lsp-bridge-mode-map (kbd "M-[") 'lsp-bridge-find-def-return-xref)
+  (define-key lsp-bridge-mode-map (kbd "M-,") 'lsp-bridge-find-references-xref))
 
 (add-hook 'after-init-hook #'global-lsp-bridge-mode)
 

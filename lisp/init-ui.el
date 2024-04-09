@@ -97,7 +97,6 @@
  ;;(set-face-attribute 'fringe nil :background nil)
  (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
-   (set-face-attribute 'all-the-icons-ivy-rich-size-face nil :inherit nil)
    (set-face-attribute 'default nil :foreground "#C4C4C4")
    (set-face-attribute 'ivy-virtual nil :foreground 'unspecified)))
 
