@@ -82,10 +82,9 @@
   (local-set-key (kbd "C-c x") 'switch-cpp-header-source)
   (local-set-key (kbd "C-c b g") 'generate-compdb)
   (local-set-key (kbd "C-c b b") 'build-cpp-project)
-  (local-set-key (kbd "C-c a") 'disaster)
+  (local-set-key (kbd "C-c a") 'disaster))
   ;; (if (gtags-get-rootpath)
   ;;     (gtags-mode)
-  (eglot-ensure))
 
 (with-eval-after-load 'c++-ts-mode
   (setq c-ts-mode-indent-style 'k&r))

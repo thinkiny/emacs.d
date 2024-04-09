@@ -7,9 +7,8 @@
 (setq lsp-bridge-python-lsp-server "pylsp")
 (setq lsp-bridge-enable-auto-format-code t)
 
-
 (setq lsp-bridge-enable-with-tramp t)
-(setq lsp-bridge-remote-start-automatically nil)
+(setq lsp-bridge-remote-start-automatically t)
 
 ;; (setq lsp-bridge-signature-show-function 'lsp-bridge-signature-show-with-frame)
 
@@ -41,12 +40,6 @@
     (lsp-bridge-call-file-api "find_define" (lsp-bridge--position)))
    (t
     (call-interactively 'xref-find-definitions))))
-
-(defun test-func()
-  (interactive)
-  (if (lsp-bridge-has-lsp-server-p)
-      (message "ok")
-    (message "no")))
 
 (defun lsp-bridge-find-references-xref ()
   (interactive)
