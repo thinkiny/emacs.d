@@ -1,14 +1,17 @@
-(require 'scala-ts-mode)
+(use-package scala-ts-mode)
 
 (with-eval-after-load 'lsp-bridge
   (push '((scala-ts-mode) . "metals") lsp-bridge-single-lang-server-mode-list)
   (push 'scala-ts-mode-hook lsp-bridge-default-mode-hooks))
 
 (defun my-scala-mode-hook()
+  (eglot-ensure)
+  (yas-activate-extra-mode 'scala-mode)
   (setq-local tab-width 2)
-  (let ((ext (file-name-extension buffer-file-name)))
-    (cond
-     ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode)))))
+  ;; (let ((ext (file-name-extension (buffer-file-name))))
+  ;;   (cond
+  ;;    ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode))))
+  )
 
 (add-hook 'scala-ts-mode-hook #'my-scala-mode-hook)
 (add-hook 'scala-mode-hook #'my-scala-mode-hook)

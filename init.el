@@ -15,7 +15,7 @@
 (require 'init-recentf)
 (require 'init-projectile)
 (require 'init-ivy)
-(require 'init-company)
+(require 'init-corfu)
 (require 'init-windows)
 (require 'init-yasnippet)
 (require 'init-dired)
@@ -25,9 +25,11 @@
 (require 'init-treesit)
 
 ;;language
+(require 'init-flymake)
 (require 'init-lisp)
-(require 'init-lsp-bridge)
 (require 'init-eldoc)
+(require 'init-eglot)
+(require 'init-sideline)
 (require 'init-gtags)
 (require 'init-cpp)
 (require 'init-python)
@@ -45,6 +47,7 @@
 (require 'init-run)
 (require 'init-js)
 (require 'init-kotlin)
+(require 'init-flutter)
 
 ;;file
 (require 'init-markdown)

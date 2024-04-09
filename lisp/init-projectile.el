@@ -9,7 +9,9 @@
   (define-key projectile-command-map (kbd "u") #'projectile-revert-project-buffers)
   (setq projectile-completion-system 'ivy)
   (setq projectile-enable-caching t)
+  (setq projectile-require-project-root nil)
   (setq projectile-indexing-method 'native)
+  (setq projectile-show-menu nil)
   (projectile-mode)
 
   ;; (defadvice projectile-project-root (around ignore-remote first activate)
@@ -21,7 +23,11 @@
   ;; don't use file-truename
   (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
   (unbind-key (kbd "C-c p t") 'projectile-mode-map)
-  (diminish 'projectile-mode))
+  (diminish 'projectile-mode)
+
+  ;; delete directory is too slow
+  (add-hook 'projectile-mode-hook (lambda ()
+                                    (advice-remove 'delete-file #'delete-file-projectile-remove-from-cache))))
 
 (defun projectile-kill-not-project-buffers ()
   "Kill buffers not belongs to this project including dired-mode buffer"

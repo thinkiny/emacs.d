@@ -10,7 +10,6 @@
   (define-key ctl-x-map "t" nil))
 
 (when window-system
-  (scroll-bar-mode -1)
   (set-fringe-mode '(nil . 1)))
 
 (setq frame-resize-pixelwise t)
@@ -28,7 +27,11 @@
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 (setq mouse-wheel-progressive-speed nil)
 (setq mouse-wheel-follow-mouse 't)
-(setq scroll-step 1)
+(setq scroll-step 1
+      scroll-conservatively 101
+      scroll-up-aggressively 0.01
+      scroll-down-aggressively 0.01
+      auto-window-vscroll nil)
 
 (let ((no-border '(internal-border-width . 0)))
   (add-to-list 'default-frame-alist no-border)
@@ -40,10 +43,6 @@
   (use-package all-the-icons-dired)
   (window-divider-mode)
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
-
-(use-package all-the-icons-ibuffer
-  :demand t
-  :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
 
 ;; doom-themes
 (require-package 'doom-themes)
@@ -65,9 +64,9 @@
   :type 'integer
   :set (lambda (var val)
          (set-default var val)
-         (if *is-a-linux*
-             (set-frame-parameter nil 'alpha-background val)
-           (set-frame-parameter nil 'alpha val))))
+         (if *is-a-nt*
+             (set-frame-parameter nil 'alpha val)
+           (set-frame-parameter nil 'alpha-background val))))
 
 (defun set-transparency ()
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
@@ -79,36 +78,32 @@
 ;; themes
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
-(require-package 'inkpot-theme)
 (require-package 'ef-themes)
-(require-package 'vscode-dark-plus-theme)
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-(defcustom default-theme (cons 'cloud 'light)
+(defcustom default-theme 'cloud
   "The current theme"
-  :group 'faces
-  :type 'cons)
+  :group 'faces)
 
 (defun theme-dark-p ()
-  (eq 'dark (cdr default-theme)))
+  (eq 'dark (frame-parameter nil 'background-mode)))
 
 (after-load-theme
- (set-face-attribute 'button nil :background nil)
+ (set-face-attribute 'button nil :background 'unspecified)
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
  ;;(set-face-attribute 'fringe nil :background nil)
  (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
-   (set-face-attribute 'all-the-icons-ibuffer-size-face nil :inherit nil)
    (set-face-attribute 'all-the-icons-ivy-rich-size-face nil :inherit nil)
    (set-face-attribute 'default nil :foreground "#C4C4C4")
-   (set-face-attribute 'ivy-virtual nil :foreground nil)))
+   (set-face-attribute 'ivy-virtual nil :foreground 'unspecified)))
 
 (add-hook 'after-init-hook
           (lambda ()
-            (load-theme (car default-theme) t)
+            (load-theme default-theme t)
             (run-hooks 'load-theme-hook)))
 
 ;;fonts
@@ -168,6 +163,9 @@
                 ;;" ["
                 ;; mode-name
                 ;;minor-mode-alist
+                ;; "] "
+                ;; global-mode-string
+                ;; " "
                 mode-line-misc-info
                 ))
 
@@ -192,17 +190,17 @@
   "Change theme to selected."
   (counsel--load-theme-action (ivy-state-current ivy-last)))
 
-(defun counsel-load-theme ()
-  "Forward to `load-theme'."
+(defun change-theme ()
+  "Change current theme."
   (interactive)
-  (let ((orig-theme (when custom-enabled-themes
-                      (car custom-enabled-themes))))
-    (ivy-read "Load custom theme: "
+  (ivy-read "Load custom theme: "
             (mapcar 'symbol-name (custom-available-themes))
             :action #'counsel--load-theme-action
-            :preselect (symbol-name orig-theme)
+            :preselect (symbol-name (or (when custom-enabled-themes
+                                          (car custom-enabled-themes))
+                                        default-theme))
             ;;:update-fn #'counsel--update-theme-action
-            )))
+            ))
 
 ;; hide-mode-line
 (require-package 'hide-mode-line)

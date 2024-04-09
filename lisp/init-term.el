@@ -187,7 +187,7 @@ and binds some keystroke with `term-raw-map'."
 ;; term-color
 (with-eval-after-load-theme 'term
   (when (theme-dark-p)
-    (set-face-background 'term-color-black (face-attribute 'default :foreground))
+    ;; (set-face-background 'term-color-black (face-attribute 'default :foreground))
     (set-face-foreground 'term-color-blue "skyblue3")
     (set-face-foreground 'term-color-red "IndianRed1")))
 
