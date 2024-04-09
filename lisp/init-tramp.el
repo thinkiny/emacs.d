@@ -4,12 +4,12 @@
 (setq tramp-default-remote-shell "/bin/bash")
 (setq tramp-allow-unsafe-temporary-files t)
 (setq enable-remote-dir-locals t)
+(setq tramp-default-method "ssh")
 (setq tramp-verbose 0)
 (setq vc-ignore-dir-regexp (format "\\(%s\\)\\|\\(%s\\)" vc-ignore-dir-regexp tramp-file-name-regexp))
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
 (setq remote-file-name-inhibit-cache 600)
 (setq tramp-auto-save-directory temporary-file-directory)
-
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 (add-to-list 'backup-directory-alist
              (cons tramp-file-name-regexp nil))
