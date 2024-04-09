@@ -39,10 +39,23 @@
   (dolist (func funcs)
     (advice-add func :around #'advice/ignore-tramp-ssh-control-master)))
 
-(add-to-list 'tramp-connection-properties
-              (list "/ssh:" "direct-async-process" t))
-(add-to-list 'tramp-connection-properties
-              (list "/scp:" "direct-async-process" t))
+(with-eval-after-load 'tramp-sh
+  (add-to-list 'tramp-methods
+               `("ssh"
+                 (tramp-login-program        "ssh")
+                 (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
+                                              ("-e" "none") ("%h")))
+                 (tramp-async-args           (("-q")))
+                 (tramp-direct-async         t)
+                 (tramp-remote-shell         ,tramp-default-remote-shell)
+                 (tramp-remote-shell-login   ("-l"))
+                 (tramp-remote-shell-args    ("-c"))
+                 (tramp-copy-program         "scp")
+                 (tramp-copy-args            (("-P" "%p") ("-p" "%k")
+                                              ("%x") ("%y") ("%z")
+                                              ("-q") ("-r") ("%c")))
+                 (tramp-copy-keep-date       t)
+                 (tramp-copy-recursive       t))))
 
 (require 'tramp-jumper)
 
