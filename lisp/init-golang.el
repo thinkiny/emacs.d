@@ -10,7 +10,7 @@
 (cl-defmethod project-root ((project (head go-module)))
   (cdr project))
 
-(add-hook 'project-find-functions #'project-find-go-module)
+;; (add-hook 'project-find-functions #'project-find-go-module)
 
 ;; (defun lsp-enable-go-bazel()
 ;;   (interactive)
