@@ -1,8 +1,7 @@
 (use-package projectile
   :config
-  (add-to-list 'projectile-globally-ignored-directories ".metals")
-  (add-to-list 'projectile-globally-ignored-directories ".bloop")
-  (add-to-list 'projectile-globally-ignored-directories ".settings")
+  (setq projectile-globally-ignored-directories
+        '(".idea" ".eunit" ".git" ".hg" ".svn" ".bzr" ".tox" "build" "target" ".bloop" ".metals" ".settings"))
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
   (define-key projectile-command-map (kbd "0") #'projectile-kill-no-files)
@@ -12,10 +11,11 @@
   (setq projectile-require-project-root nil)
   (setq projectile-indexing-method 'native)
   (setq projectile-show-menu nil)
+  (setq projectile-file-exists-remote-cache-expire nil)
   (projectile-mode)
 
-  (defadvice projectile-project-root (around ignore-remote first activate)
-   (unless (file-remote-p default-directory) ad-do-it))
+  ;;(defadvice projectile-project-root (around ignore-remote first activate)
+  ;; (unless (file-remote-p default-directory) ad-do-it))
 
   (require 'project-projectile)
   (add-hook 'project-find-functions #'project-projectile 'append)
