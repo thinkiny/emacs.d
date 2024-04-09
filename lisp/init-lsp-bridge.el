@@ -8,7 +8,7 @@
 (setq lsp-bridge-enable-auto-format-code t)
 
 (setq lsp-bridge-enable-with-tramp t)
-(setq lsp-bridge-remote-start-automatically t)
+(setq lsp-bridge-remote-start-automatically nil)
 
 ;; (setq lsp-bridge-signature-show-function 'lsp-bridge-signature-show-with-frame)
 
@@ -46,9 +46,9 @@
   (cond
    ((lsp-bridge-has-lsp-server-p)
     (xref-push-marker-stack)
-    (lsp-bridge-call-file-api "find_references" (lsp-bridge--position)
+    (lsp-bridge-call-file-api "find_references" (lsp-bridge--position)))
    (t
-    (xref-find-references))))))
+    (call-interactively #'xref-find-references))))
 
 ;; (setq lsp-bridge-completion-hide-characters nil)
 
