@@ -1,6 +1,6 @@
 (add-to-list 'load-path "~/.emacs.d/lsp-bridge")
 
-(setq lsp-bridge-enable-mode-line nil)
+(setq lsp-bridge-enable-mode-line t)
 
 (require 'lsp-bridge)
 (setq lsp-bridge-enable-with-tramp t)

@@ -15,7 +15,6 @@
 (require 'init-recentf)
 (require 'init-projectile)
 (require 'init-ivy)
-(require 'init-corfu)
 (require 'init-windows)
 (require 'init-yasnippet)
 (require 'init-dired)
@@ -25,10 +24,10 @@
 (require 'init-treesit)
 
 ;;language
+(require 'init-lsp-bridge)
 (require 'init-flymake)
 (require 'init-lisp)
 (require 'init-eldoc)
-(require 'init-eglot)
 (require 'init-sideline)
 (require 'init-gtags)
 (require 'init-cpp)

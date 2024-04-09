@@ -2,8 +2,7 @@
 (require-package 'cmake-mode)
 (require-package 'disaster)
 
-(use-package cuda-mode
-  :hook (cuda-mode . eglot-ensure))
+(use-package cuda-mode)
 
 (use-package bazel :demand t)
 ;;(use-package bazel-mode
