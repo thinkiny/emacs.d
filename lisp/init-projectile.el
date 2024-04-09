@@ -8,20 +8,20 @@
   (define-key projectile-command-map (kbd "u") #'projectile-revert-project-buffers)
   (setq projectile-completion-system 'ivy)
   (setq projectile-enable-caching t)
-  (setq projectile-require-project-root nil)
-  (setq projectile-indexing-method 'native)
+  ;; (setq projectile-require-project-root nil)
+  ;; (setq projectile-indexing-method 'native)
   (setq projectile-show-menu nil)
   (setq projectile-file-exists-remote-cache-expire nil)
   (projectile-mode)
 
-  ;;(defadvice projectile-project-root (around ignore-remote first activate)
-  ;; (unless (file-remote-p default-directory) ad-do-it))
+  ;; (defadvice projectile-project-root (around ignore-remote first activate)
+  ;;   (unless (file-remote-p default-directory) ad-do-it))
 
-  (require 'project-projectile)
-  (add-hook 'project-find-functions #'project-projectile 'append)
+  ;; (require 'project-projectile)
+  ;; (add-hook 'project-find-functions #'project-projectile 'append)
 
   ;; don't use file-truename
-  (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
+  ;; (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
   (unbind-key (kbd "C-c p t") 'projectile-mode-map)
   (diminish 'projectile-mode)
 

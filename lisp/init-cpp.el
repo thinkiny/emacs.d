@@ -4,7 +4,9 @@
 
 (use-package cuda-mode)
 
-(use-package bazel :demand t)
+(use-package bazel :demand t
+  :config
+  (remove-hook 'project-find-functions #'bazel-find-project))
 ;;(use-package bazel-mode
 ;;  :mode "\\.BUILD$"
 ;;  :config
@@ -81,9 +83,9 @@
   (local-set-key (kbd "C-c b g") 'generate-compdb)
   (local-set-key (kbd "C-c b b") 'build-cpp-project)
   (local-set-key (kbd "C-c a") 'disaster)
-  (if (gtags-get-rootpath)
-      (gtags-mode)))
-
+  ;; (if (gtags-get-rootpath)
+  ;;     (gtags-mode)
+  (eglot-ensure))
 
 (with-eval-after-load 'c++-ts-mode
   (setq c-ts-mode-indent-style 'k&r))
