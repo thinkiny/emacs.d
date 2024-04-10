@@ -12,8 +12,10 @@
 
 (defun my-flymake-mode-hook()
   ;;(setq flymake-show-diagnostics-at-end-of-line 'short)
-  (define-key flymake-mode-map (kbd "C-c e") #'flymake-show-buffer-diagnostics)
-  (define-key flymake-mode-map (kbd "C-c e") #'flymake-show-project-diagnostics)
+  (define-key flymake-mode-map (kbd "C-c e l") #'flymake-show-buffer-diagnostics)
+  (define-key flymake-mode-map (kbd "C-c e p") #'flymake-show-project-diagnostics)
+  (define-key flymake-mode-map (kbd "C-c e n") #'flymake-goto-next-error)
+  (define-key flymake-mode-map (kbd "C-c e b") #'flymake-goto-prev-error)
   (remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t))
 
 (add-hook 'flymake-mode-hook #'my-flymake-mode-hook)
