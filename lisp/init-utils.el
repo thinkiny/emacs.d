@@ -79,6 +79,7 @@
                           (lambda (process event)
                             (princ (format "%s: %s" process event))))))
 
+;; resolve symlink correct
 (defun advice/ignore-file-truename (old-fn &rest args)
   (cl-letf (((symbol-function 'file-truename) #'identity))
     (apply old-fn args)))

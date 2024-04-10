@@ -30,7 +30,7 @@
   (interactive)
   (if (bound-and-true-p eglot--cached-server)
       (eglot-clangd-find-other-file)
-    (cff-find-other-file)))
+    (call-interactively #'cff-find-other-file)))
 
 ;; generate-compdb
 (defun generate-compdb-bazel (root)

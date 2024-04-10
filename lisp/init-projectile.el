@@ -16,21 +16,25 @@
   (setq projectile-file-exists-remote-cache-expire nil)
   (projectile-mode)
 
-  (defadvice projectile-project-root (around ignore-remote first activate)
-    (unless (file-remote-p default-directory) ad-do-it))
+  (defun need_find_project()
+    (if (file-remote-p default-directory)
+        (with-parsed-tramp-file-name default-directory dir
+          (s-starts-with? "/home/" dir-localname))
+      t))
 
-  ;; (require 'project-projectile)
-  (with-eval-after-load 'project-projectile
-    (remove-hook 'project-find-functions #'project-projectile))
+  (defadvice projectile-project-root (around ignore-remote first activate)
+    (if (need_find_project) ad-do-it))
 
   ;; don't use file-truename
-  ;; (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
+  (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
   (unbind-key (kbd "C-c p t") 'projectile-mode-map)
   (diminish 'projectile-mode)
 
-  ;; delete directory is too slow
-  (add-hook 'projectile-mode-hook (lambda ()
-                                    (advice-remove 'delete-file #'delete-file-projectile-remove-from-cache))))
+  (add-hook 'projectile-mode-hook
+            (lambda ()
+              ;; delete directory is too slow
+              (advice-remove 'delete-file #'delete-file-projectile-remove-from-cache)
+              )))
 
 (defun projectile-kill-not-project-buffers ()
   "Kill buffers not belongs to this project including dired-mode buffer"
@@ -79,7 +83,6 @@
         (unless (buffer-file-name buffer)
             (kill-buffer buffer)))))
     (message "Killed buffers not having files associcated"))
-
 
 (use-package ag
   :config
