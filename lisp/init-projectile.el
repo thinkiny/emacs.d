@@ -1,7 +1,11 @@
 (use-package projectile
   :config
-  (setq projectile-globally-ignored-directories
-        '(".idea" ".eunit" ".git" ".hg" ".svn" ".bzr" ".tox" "build" "target" ".bloop" ".metals" ".settings"))
+  (add-to-list 'projectile-globally-ignored-directories "node_modules")
+  (add-to-list 'projectile-globally-ignored-directories ".bloop")
+  (add-to-list 'projectile-globally-ignored-directories ".metals")
+  (add-to-list 'projectile-globally-ignored-directories "build")
+  (add-to-list 'projectile-globally-ignored-directories "target")
+  (add-to-list 'projectile-globally-ignored-directories ".cache")
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
   (define-key projectile-command-map (kbd "0") #'projectile-kill-no-files)
