@@ -1,7 +1,7 @@
 (use-package gcmh
   :init
-  (setq gcmh-low-cons-threshold (* 64 1024 1024)
-        gcmh-high-cons-threshold most-positive-fixnum)
+  (setq gcmh-low-cons-threshold (* 32 1024 1024)
+        gcmh-high-cons-threshold (* 512 1024 1024))
   (gcmh-mode 1))
 
 (defun profile-cpu-start ()

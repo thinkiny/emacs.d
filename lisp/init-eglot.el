@@ -10,7 +10,6 @@
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
-  (define-key eglot-mode-map (kbd "C-c e") 'flymake-show-buffer-diagnostics)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
   (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)

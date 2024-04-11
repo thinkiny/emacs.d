@@ -1,11 +1,20 @@
 (use-package projectile
   :config
-  (add-to-list 'projectile-globally-ignored-directories "node_modules")
-  (add-to-list 'projectile-globally-ignored-directories ".bloop")
-  (add-to-list 'projectile-globally-ignored-directories ".metals")
-  (add-to-list 'projectile-globally-ignored-directories "build")
-  (add-to-list 'projectile-globally-ignored-directories "target")
-  (add-to-list 'projectile-globally-ignored-directories ".cache")
+  (setq projectile-globally-ignored-directories
+        '("*node_modules$"
+          "^\\.bloop$"
+          "^\\.metals$"
+          "^\\.idea$"
+          "^\\.vscode$"
+          "*\\.cache$"
+          "*\\.git$"
+          "*\\.svn$"
+          "*\\.hg$"
+          "*\\.bzr$"
+          "*build$"
+          "*target$"
+          "^vendor$"
+          ))
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
   (define-key projectile-command-map (kbd "0") #'projectile-kill-no-files)
@@ -14,8 +23,7 @@
   (setq projectile-enable-caching t)
   (setq projectile-auto-update-cache nil)
   (setq projectile-dynamic-mode-line nil)
-  ;; (setq projectile-require-project-root nil)
-  ;; (setq projectile-indexing-method 'native)
+  (setq projectile-indexing-method 'hybrid)
   (setq projectile-show-menu nil)
   (setq projectile-file-exists-remote-cache-expire nil)
   (projectile-mode)
