@@ -1,21 +1,48 @@
 (use-package scala-ts-mode)
 
 (with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '((scala-mode scala-ts-mode) . ("metals"
-                                                                      :initializationOptions
-                                                                      (:decorationProvider t
-                                                                       :inlineDecorationProvider t
-                                                                      )
-                                                                      ))))
+  (defclass metals-eglot-lsp-server (eglot-lsp-server) nil
+    :documentation "Eglot LSP server subclass for metals.")
+
+  (cl-defmethod eglot-initialization-options ((server metals-eglot-lsp-server))
+    `(:decorationProvider t
+      :inlineDecorationProvider t))
+
+  (defun metals-eglot-lsp-server-connect (interactive)
+    (cons 'metals-eglot-lsp-server (list "metals")))
+
+  (defun metals-eglot-ignore-requests(actions)
+    (member "Open doctor." (mapcar (lambda (obj) (plist-get obj :title)) actions)))
+
+  (cl-defmethod eglot-handle-request
+    ((server metals-eglot-lsp-server) (_method (eql window/showMessageRequest)) &key type message actions &allow-other-keys)
+    "Handle server request window/showMessageRequest."
+    (unless (metals-eglot-ignore-requests actions)
+      (let* ((actions (append actions nil)) ;; gh#627
+             (label (completing-read
+                     (concat
+                      (format (propertize "[eglot] Server reports (type=%s): %s"
+                                          'face (if (or (not type) (<= type 1)) 'error))
+                              type message)
+                      "\nChoose an option: ")
+                     (or (mapcar (lambda (obj) (plist-get obj :title)) actions)
+                         '("OK"))
+                     nil t (plist-get (elt actions 0) :title))))
+        (if label `(:title ,label) :null))))
+
+  (add-to-list 'eglot-server-programs '((scala-mode scala-ts-mode) .  metals-eglot-lsp-server-connect))
+  ;; (add-to-list 'eglot-server-programs '((scala-mode scala-ts-mode) .  ("metals"
+  ;;                                                                     :initializationOptions
+  ;;                                                                     (:decorationProvider t
+  ;;                                                                      :inlineDecorationProvider t
+  ;;                                                                     )
+  ;;                                                                     )))
+  )
 
 (defun my-scala-mode-hook()
   (yas-activate-extra-mode 'scala-mode)
   (setq-local tab-width 2)
   (eglot-ensure)
-  ;; (setq-local eglot-ignored-server-capabilities
-  ;;             (nconc '(metals/executeClientCommand
-  ;;                      window/showMessageRequest)
-  ;;                    eglot-ignored-server-capabilities))
   ;; (let ((ext (file-name-extension (buffer-file-name))))
   ;;   (cond
   ;;    ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode))))
