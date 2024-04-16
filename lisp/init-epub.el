@@ -9,7 +9,7 @@
 (defun modeline-nov-document-index()
   (format " %d/%d" nov-documents-index (length nov-documents)))
 
-(defun nov-goto-next-line-or-page()
+(defun nov-goto-next-line-or-page(&optional rest)
   (interactive)
   (if (>= (window-end) (point-max))
       (nov-next-document)
@@ -17,7 +17,7 @@
   (if (get-text-property (point) 'display)
       (forward-line 1)))
 
-(defun nov-goto-previous-line-or-page()
+(defun nov-goto-previous-line-or-page(&optional rest)
   (interactive)
   (if (and (<= (window-start) (point-min))
            (> nov-documents-index 0))
