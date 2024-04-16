@@ -12,7 +12,10 @@
   (yas-activate-extra-mode 'scala-mode)
   (setq-local tab-width 2)
   (eglot-ensure)
-  (setq-local eglot-ignored-server-capabilities (cons 'window/showMessageRequest  eglot-ignored-server-capabilities))
+  ;; (setq-local eglot-ignored-server-capabilities
+  ;;             (nconc '(metals/executeClientCommand
+  ;;                      window/showMessageRequest)
+  ;;                    eglot-ignored-server-capabilities))
   ;; (let ((ext (file-name-extension (buffer-file-name))))
   ;;   (cond
   ;;    ((string= ext "sbt") (yas-activate-extra-mode 'maven-pom-mode))))

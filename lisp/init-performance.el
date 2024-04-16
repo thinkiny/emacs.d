@@ -1,5 +1,6 @@
 (use-package gcmh
-  :init
+  :demand t
+  :config
   (setq gcmh-low-cons-threshold (* 32 1024 1024)
         gcmh-high-cons-threshold (* 512 1024 1024))
   (gcmh-mode 1))
