@@ -17,7 +17,9 @@
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions)
-  (require 'eglot-booster))
+  (if (version< emacs-version "30")
+      (require 'eglot-booster))
+  )
 
 (with-eval-after-load 'eglot
   (setq mode-line-misc-info
@@ -102,7 +104,8 @@
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format))
-  (eglot-booster-mode))
+  (if (version< emacs-version "30")
+      (eglot-booster-mode)))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
 (ignore-tramp-ssh-control-master #'eglot-booster--init)
