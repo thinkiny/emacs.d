@@ -5,10 +5,9 @@
   (setq eglot-extend-to-xref t)
   (setq eglot-autoshutdown t)
   (setq eglot-prefer-plaintext t)
-  (setq jsonrpc-inhibit-debug-on-error t)
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
                                             :documentOnTypeFormattingProvider))
-  ;; (setq jsonrpc-default-request-timeout 15)
+  (setq jsonrpc-default-request-timeout 15)
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
@@ -17,6 +16,11 @@
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions)
+
+  ;; json rpc
+  (setq jsonrpc-inhibit-debug-on-error t)
+  (setq jsonrpc-event-hook nil)
+
   (if (version< emacs-version "30")
       (require 'eglot-booster))
   )
