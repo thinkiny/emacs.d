@@ -20,10 +20,7 @@
   ;; json rpc
   (setq jsonrpc-inhibit-debug-on-error t)
   (setq jsonrpc-event-hook nil)
-
-  (if (version< emacs-version "30")
-      (require 'eglot-booster))
-  )
+  (require 'eglot-booster))
 
 (with-eval-after-load 'eglot
   (setq mode-line-misc-info
@@ -108,8 +105,7 @@
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format))
-  (if (version< emacs-version "30")
-      (eglot-booster-mode)))
+  (eglot-booster-mode))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
 (ignore-tramp-ssh-control-master #'eglot-booster--init)
