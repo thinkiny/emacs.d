@@ -2,8 +2,10 @@
   :config
   (setq projectile-globally-ignored-directories
         '("*node_modules$"
-          "^\\.bloop$"
-          "^\\.metals$"
+          ".bloop"
+          ".metals"
+          ".bsp"
+          ".clangd"
           "^\\.idea$"
           "^\\.vscode$"
           "*\\.cache$"
@@ -11,9 +13,9 @@
           "*\\.svn$"
           "*\\.hg$"
           "*\\.bzr$"
-          "*build$"
-          "*target$"
-          "^vendor$"
+          "build"
+          "target"
+          "vendor"
           ))
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)

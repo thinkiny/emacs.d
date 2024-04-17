@@ -1,8 +1,9 @@
 (use-package sideline
+  :demand t
   :init
   ;;(setq sideline-backends-left '((sideline-blame . down)))
-  (setq sideline-backends-right '((sideline-flymake . down))))
-  ;;(global-sideline-mode 1))
+  (setq sideline-backends-right '((sideline-flymake . down)))
+  (global-sideline-mode 1))
 
 (use-package sideline-flymake
   :config
