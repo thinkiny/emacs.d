@@ -17,7 +17,7 @@ function build_pdf_tools() {
 
 wget --no-check-certificate https://raw.githubusercontent.com/google/styleguide/gh-pages/google-c-style.el -O google-c-style.el
 wget --no-check-certificate https://raw.githubusercontent.com/canatella/use-theme/master/use-theme.el -O use-theme.el
-wget --no-check-certificate https://raw.githubusercontent.com/dwijnand/sbt-extras/master/sbt -O sbt
+# wget --no-check-certificate https://raw.githubusercontent.com/dwijnand/sbt-extras/master/sbt -O sbt
 wget --no-check-certificate https://raw.githubusercontent.com/chenyanming/nov-xwidget/main/nov-xwidget.el -O nov-xwidget.el
 
 if [ ! -d "pdf-tools" ]; then

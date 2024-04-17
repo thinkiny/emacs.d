@@ -6,7 +6,9 @@
 
   (cl-defmethod eglot-initialization-options ((server metals-eglot-lsp-server))
     `(:decorationProvider t
-      :inlineDecorationProvider t))
+      :inlineDecorationProvider t
+      :enableSemanticHighlighting  nil
+      :autoImportBuild "all"))
 
   (defun metals-eglot-lsp-server-connect (interactive)
     (cons 'metals-eglot-lsp-server (list "metals")))
