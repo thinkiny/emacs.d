@@ -10,7 +10,8 @@
   (define-key ctl-x-map "t" nil))
 
 (when window-system
-  (set-fringe-mode '(nil . 1)))
+  (set-fringe-mode '(nil . 1))
+  (scroll-bar-mode -1))
 
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)
