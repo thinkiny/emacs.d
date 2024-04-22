@@ -5,6 +5,7 @@
 
 (with-eval-after-load 'yasnippet
   (diminish 'yas-minor-mode)
+  (setq yas-indent-line 'fixed)
   (defun gen-cpp-header-tag()
     (let* ((root (projectile-project-root))
            (path (string-trim-left
