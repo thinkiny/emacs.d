@@ -156,6 +156,20 @@
         ((member major-mode '(eshell-mode term-mode xwidget-webkit-mode)) "")
         (t (format-mode-line " %l:%C"))))
 
+
+;; project-name in mode-line
+(defun project-name-mode-line ()
+  (cond
+   ((bound-and-true-p eglot--cached-server) `("["
+                                              ,(propertize
+                                                (eglot-project-nickname (eglot-current-server))
+                                                'face 'eglot-mode-line
+                                                'keymap (let ((map (make-sparse-keymap)))
+                                                          (define-key map [mode-line down-mouse-1] eglot-menu)
+                                                          map))
+                                              "]"))
+   (t (format "[%s]" (projectile-project-name)))))
+
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)
 (setq-default mode-line-format
@@ -169,6 +183,8 @@
                 ;; global-mode-string
                 ;; " "
                 flymake-mode-line-counters
+                " "
+                (:eval (project-name-mode-line))
                 " "
                 mode-line-misc-info
                 ))

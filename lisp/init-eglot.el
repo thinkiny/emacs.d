@@ -25,8 +25,8 @@
 (with-eval-after-load 'eglot
   (setq mode-line-misc-info
         (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
-  (add-to-list 'mode-line-misc-info
-               `(eglot--managed-mode ("[" eglot--mode-line-format "] ")))
+  ;; (add-to-list 'mode-line-misc-info
+  ;;              `(eglot--managed-mode ("[" eglot--mode-line-format "] ")))
 
   (if (version< emacs-version "30")
       (defun eglot-rename-with-current (newname)
