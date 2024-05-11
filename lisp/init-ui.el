@@ -162,13 +162,14 @@
               '((:eval (mode-line-linum))
                 " "
                 mode-line-buffer-identification
-                " "
                 ;;" ["
                 ;; mode-name
                 ;;minor-mode-alist
                 ;; "] "
                 ;; global-mode-string
                 ;; " "
+                flymake-mode-line-counters
+                " "
                 mode-line-misc-info
                 ))
 
