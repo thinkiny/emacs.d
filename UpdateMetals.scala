@@ -1,4 +1,5 @@
-//> using dep "org.jsoup:jsoup:1.16.1"
+//> using scala 3.3.3
+//> using dep "org.jsoup:jsoup:1.17.2"
 
 import org.jsoup.Jsoup
 import scala.jdk.CollectionConverters._
