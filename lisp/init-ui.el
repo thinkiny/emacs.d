@@ -170,6 +170,11 @@
                                               "]"))
    (t (format "[%s]" (projectile-project-name)))))
 
+(defun my-flymake-mode-line-counters ()
+  (if (bound-and-true-p flymake-mode)
+      (flymake--mode-line-counters)
+    ""))
+
 (setq-default auto-revert-check-vc-info t)
 (setq-default auto-revert-interval 3)
 (setq-default mode-line-format
@@ -182,9 +187,7 @@
                 ;; "] "
                 ;; global-mode-string
                 ;; " "
-                flymake-mode-line-counters
-                " "
-                (:eval (project-name-mode-line))
+                (:eval (my-flymake-mode-line-counters))
                 " "
                 mode-line-misc-info
                 ))
