@@ -13,6 +13,7 @@
           "*\\.svn$"
           "*\\.hg$"
           "*\\.bzr$"
+          "aarch64-darwin"
           "build"
           "target"
           "vendor"
