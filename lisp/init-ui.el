@@ -180,7 +180,7 @@
 (setq-default mode-line-format
               '((:eval (mode-line-linum))
                 " "
-                mode-line-buffer-identification
+                "%b"
                 ;;" ["
                 ;; mode-name
                 ;;minor-mode-alist
