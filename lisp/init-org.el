@@ -1,26 +1,4 @@
 ﻿;; init-org.el --- Org-mode config -*- lexical-binding: t -*-
-;;; Commentary:
-
-;; Among settings for many aspects of `org-mode', this code includes
-;; an opinionated setup for the Getting Things Done (GTD) system based
-;; around the Org Agenda.  I have an "inbox.org" file with a header
-;; including
-
-;;     #+CATEGORY: Inbox
-;;     #+FILETAGS: INBOX
-
-;; and then set this file as `org-default-notes-file'.  Captured org
-;; items will then go into this file with the file-level tag, and can
-;; be refiled to other locations as necessary.
-
-;; Those other locations are generally other org files, which should
-;; be added to `org-agenda-files-list' (along with "inbox.org" org).
-;; With that done, there's then an agenda view, accessible via the
-;; `org-agenda' command, which gives a convenient overview.
-;; `org-todo-keywords' is customised here to provide corresponding
-;; TODO states, which should make sense to GTD adherents.
-
-;;; Code:
 
 (require-package 'org-cliplink)
 (require-package 'org-contrib)
@@ -322,21 +300,49 @@ _k_: delete row   _l_: delete column  _s_: shorten
 
 (use-package org2ctex
   :config
-  (setq org-latex-logfiles-extensions (append '("tex" "bbl" "pyg") org-latex-logfiles-extensions))
+  (setq org-latex-logfiles-extensions (append '("bbl" "pyg") org-latex-logfiles-extensions))
   (setq org-latex-listings 'minted)
   (setq org2ctex-latex-packages-alist (list (string-join (mapcar (apply-partially 'format "\\usepackage{%s}")
-                                                                 '("minted" "tikz" "CJKulem" "graphicx"))
+                                                                 '("minted" "tikz" "graphicx"))
                                                          "\n")))
   (setq org-latex-minted-options '(("breaklines")
                                    ("fontsize" "\\footnotesize")
                                    ("breakbefore" ".")))
+
+  (setq org2ctex-latex-classes
+  '(("ctexart"
+     "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexart}"
+     ("\\section{%s}" . "\\section*{%s}")
+     ("\\subsection{%s}" . "\\subsection*{%s}")
+     ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+     ("\\paragraph{%s}" . "\\paragraph*{%s}")
+     ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
+    ("ctexrep"
+     "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexrep}"
+     ("\\part{%s}" . "\\part*{%s}")
+     ("\\chapter{%s}" . "\\chapter*{%s}")
+     ("\\section{%s}" . "\\section*{%s}")
+     ("\\subsection{%s}" . "\\subsection*{%s}")
+     ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+    ("ctexbook"
+     "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexbook}"
+     ("\\part{%s}" . "\\part*{%s}")
+     ("\\chapter{%s}" . "\\chapter*{%s}")
+     ("\\section{%s}" . "\\section*{%s}")
+     ("\\subsection{%s}" . "\\subsection*{%s}")
+     ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+    ("beamer"
+     "\\documentclass[presentation]{beamer}
+\\usepackage[fontset=none,UTF8,zihao=-4]{ctex}"
+     ("\\section{%s}" . "\\section*{%s}")
+     ("\\subsection{%s}" . "\\subsection*{%s}")
+     ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
   (setq org2ctex-latex-commands
         '("xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
           "bibtex %b"
           "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
           "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-  ;;:hook (org-mode . org2ctex-mode)
-  )
+  :hook (org-mode . org2ctex-mode))
 
 (require 'org-tempo nil 'noerror)
 (require-package 'org-preview-html)
