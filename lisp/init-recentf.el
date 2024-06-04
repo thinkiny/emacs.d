@@ -4,9 +4,10 @@
 (setq-default
  recentf-max-saved-items 1000
  recentf-exclude `("/tmp/"
-                   ,(expand-file-name "~/\\.emacs\\.d/elpa/")
-                   ,(expand-file-name "~/\\.emacs\\.d/workspace/")
-                   ,(expand-file-name "~/\\.emacs\\.d/eglot-eclipse-jdt-cache/")
+                   ,(expand-file-name "cache" user-emacs-directory)
+                   ,(expand-file-name "elpa" user-emacs-directory)
+                   ,(expand-file-name "workspace" user-emacs-directory)
+                   ,(expand-file-name "eglot-eclipse-jdt-cache" user-emacs-directory)
                    "/Applications/"
                    ".*/.metals/"
                    ".*/.cache/"))

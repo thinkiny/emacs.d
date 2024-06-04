@@ -107,6 +107,6 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
             (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-copy-range)
             (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-webkit-scroll-up)
             ;;(local-set-key (kbd "C-s") #'isearch-forward)
-            (local-set-key (kbd "C-,") #'xwidget-translate-range)))
+            (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range)))
 
 (provide 'init-xwidget-webkit)

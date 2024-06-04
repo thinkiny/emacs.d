@@ -11,7 +11,7 @@
   (unbind-key (kbd "N") 'pdf-history-minor-mode-map)
 
   (require 'pdf-view-restore)
-  (setq pdf-view-restore-filename "~/.emacs.d/.pdf-view-restore")
+  (setq pdf-view-restore-filename (expand-file-name ".pdf-view-restore" user-emacs-directory))
 
   ;; (defun calc-image-roll-size-mouse(arg)
   ;;   (cond

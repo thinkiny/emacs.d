@@ -86,7 +86,7 @@
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
 (defcustom default-theme 'cloud
   "The current theme"
