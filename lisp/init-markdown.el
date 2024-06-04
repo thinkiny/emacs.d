@@ -3,6 +3,14 @@
   :config
   (setq markdown-fontify-code-blocks-natively t))
 
+(use-package grip-mode
+  :ensure t
+  :bind (:map markdown-mode-command-map
+              ("g" . grip-mode))
+  :config
+  (setq grip-preview-use-webkit t)
+  (setq grip-update-after-change nil))
+
 (defun markdown-live-preview-window-xwidgets (file)
   "Preview FILE with eww.
 To be used with `markdown-live-preview-window-function'."
