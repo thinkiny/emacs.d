@@ -85,10 +85,15 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
       (point-min))))
 
 
-(defun xwdiget-translate-range()
+(defun xwidget-translate-range()
   (interactive)
   (xwidget-webkit-get-selection (lambda (text)
                                   (bing-dict-brief text))))
+
+(defun xwidget-copy-range()
+  (interactive)
+  (xwidget-webkit-get-selection (lambda (text)
+                                  (kill-new text))))
 
 (add-hook 'xwidget-webkit-mode-hook
           (lambda ()
@@ -99,8 +104,9 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
             (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-webkit-scroll-up-line)
             (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-webkit-scroll-down-line)
             (define-key xwidget-webkit-mode-map (kbd "M-v") 'xwidget-webkit-scroll-down)
+            (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-copy-range)
             (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-webkit-scroll-up)
             ;;(local-set-key (kbd "C-s") #'isearch-forward)
-            (local-set-key (kbd "C-,") #'xwdiget-translate-range)))
+            (local-set-key (kbd "C-,") #'xwidget-translate-range)))
 
 (provide 'init-xwidget-webkit)
