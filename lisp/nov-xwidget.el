@@ -144,7 +144,7 @@ alternative browser function."
       ;; (encode-coding-region (point-min) (point-max) 'utf-8)
       output-native-path)))
 
-(defun nov-xwidget-inject-all-files()
+(defun nov-xwidget-inject-all-files(nov-xwidget-need-inject)
   "Inject `nov-xwidget-style-dark', `nov-xwidget-style-light', or
 `nov-xwidget-script' to all files in `nov-documents'. It should
 be run once after the epub file is opened, so that it can fix all
@@ -163,7 +163,8 @@ also run it after modifing `nov-xwidget-style-dark',
                                     (file-name-base file)))
              (if (file-exists-p file)
                  (rename-file file new-file)))
-           (nov-xwidget-inject new-file)
+           (if nov-xwidget-need-inject
+               (nov-xwidget-inject new-file))
            (aset nov-documents i (cons (car document) new-file))))
            nov-documents)))
 
@@ -234,10 +235,11 @@ Interactively, URL defaults to the string looking like a url around point."
       (setq-local nov-documents-index index))))
 
 (defun nov-xwidget-find-index-by-file (file)
-  (seq-position nov-documents
-                (url-unhex-string file)
-                (lambda (a b)
-                  (string-equal b (cdr a)))))
+  (if file
+      (seq-position nov-documents
+                    (url-unhex-string file)
+                    (lambda (a b)
+                      (string-equal b (cdr a))))))
 
 (defun nov-xwidget-extract-file-name (uri)
   (if (and uri (string-match "file:///\\([^#]*\\)" uri))
@@ -339,6 +341,17 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
                   (libxml-parse-html-region (point-min) (point-max))))
            (new-dom (let ((dom dom))
                       (if dom
+                          (cl-map 'list (lambda(x)
+                                    (let* ((href (dom-attr x 'href))
+                                           (new-href (nov-xwidget-fix-file-path href)))
+                                      (dom-set-attribute x 'href new-href)))
+                            ;; all elements that not start with http or https,
+                            ;; but matches htm.*
+                            (cl-remove-if
+                             (lambda(x)
+                               (string-match-p "https?.*"
+                                               (dom-attr x 'href)))
+                             (dom-elements dom 'href ".*htm.*")))
                           (dom-add-child-before
                            dom
                            `(head nil
@@ -400,7 +413,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
    "(function () {
-    if (window.innerHeight + window.scrollY >= document.body.scrollHeight) {
+    if (document.body.clientHeight + document.body.scrollTop >= document.body.scrollHeight) {
         return \"1\";
     } else {
         return \"0\";

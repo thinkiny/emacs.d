@@ -54,8 +54,7 @@
               (setq nov-documents-index index)
             (nov-warn "Couldn't restore last position")))))
   (let ((dummy-buf (current-buffer)))
-    (if nov-xwidget-need-inject
-        (nov-xwidget-inject-all-files))
+    (nov-xwidget-inject-all-files nov-xwidget-need-inject)
     (nov-xwidget-view)
     (read-only-mode)
     (kill-buffer dummy-buf)))
