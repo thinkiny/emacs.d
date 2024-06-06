@@ -12,170 +12,19 @@
   :group 'nov-xwidget
   :type 'string)
 
-(defcustom nov-xwidget-style-light (format "
-    body {
-        writing-mode: horizontal-tb;
-        // background: %s !important;
-        font-size: 18px !important;
-        text-align: left !important;
-        width: 90%% !important;
-        height: 50%% !important;
-        position: absolute !important;
-        left: 49%% !important;
-        top: 30%% !important;
-        transform: translate(-50%%, -55%%) !important;
-    }
-    p {
-        font-size: 1em !important;
-        text-align: left !important;
-        line-height: 1.3 !important;
-        margin-bottom: 25px !important;
-    }
-    pre, tr, td, div.warning {
-        font-size: 1em;
-        background: #d8dee9;
-    }
-    th {
-        font-size: 1em;
-    }
-    span {
-        font-size: 18px;
-    }
-    /* Same font for all tags */
-    a, em, caption, th, pre, tr, td, code, h1, h2, h3, h4, h5, h6, p, body {
-        font-family: \"Fira Code\", Georgia,Cambria,\"Times New Roman\",Times,serif !important;
-    }
-    h1 {
-        font-size: 2em !important;
-        color: #2e3440 !important;
-        margin-bottom: 10px !important;
-    }
-    h2 {
-        font-size: 1.5em !important;
-        color: #2e3440 !important;
-        margin-bottom: 10px !important;
-    }
-    h3 {
-        font-size: 1.3em !important;
-        color: #2e3440 !important;
-        margin-bottom: 10px !important;
-    }
-    h4 {
-        font-size: 1.2em !important;
-        color: #2e3440 !important;
-        margin-bottom: 10px !important;
-    }
-    h5 {
-        font-size: 1.1em !important;
-        color: #2e3440 !important;
-        margin-bottom: 10px !important;
-    }
-    h6 {
-        font-size: 1em !important;
-        color: #2e3440 !important;
-        margin-bottom: 10px !important;
-    }
-    code {
-        font-size: 1em !important;
-    }
-    :root {
-        color-scheme: light; /* both supported */
-    }
+(defun nov-xwidget-read-style(file)
+  (let ((path (expand-file-name (format "css/%s" file) user-emacs-directory)))
+    (with-temp-buffer
+      (insert-file-contents path)
+      (buffer-string))))
 
-    body img {
-        max-width: 100%% !important;
-    }
-    .programlisting {
-        font-size: 20px;
-    }
-" (face-attribute 'default :background))
+(defcustom nov-xwidget-style-light (nov-xwidget-read-style "nov-light.css")
   "Light mode CSS style used to render the epub file."
   :group 'nov-xwidget
   :type 'string)
 
 
-(defcustom nov-xwidget-style-dark (format "
-    body {
-        writing-mode: horizontal-tb;
-        // background: %s !important;
-        color: #eee !important;
-        font-size: 18px !important;
-        text-align: left !important;
-        width: 90%% !important;
-        height: 50%% !important;
-        position: absolute !important;
-        left: 49%% !important;
-        top: 30%% !important;
-        transform: translate(-50%%, -55%%) !important;
-    }
-    p {
-        text-align: left !important;
-        line-height: 1.3 !important;
-        margin-bottom: 25px !important;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        /*color: #eee !important;*/
-        border-bottom: 0px solid #eee !important;
-    }
-    pre, tr, td, div.warning {
-        font-size: 1em;
-        background: #272c35;
-    }
-    th {
-        font-size: 1em;
-        color: #eee !important;
-    }
-
-    span {
-        font-size: 18px;
-        color: #eee !important;
-    }
-    h1 {
-        color: #ffaf69 !important;
-    }
-    h2 {
-        color: #3fc6b7 !important;
-    }
-    h3 {
-        color: #88d498 !important;
-    }
-    h4 {
-        color: #80c3f0 !important;
-    }
-    h5 {
-        color: #cccccc !important;
-    }
-    h6 {
-        color: #cccccc !important;
-    }
-
-    /* Same font for all tags */
-    a, em, caption, th, pre, tr, td, code, h1, h2, h3, h4, h5, h6, p, body {
-        font-family: \"Fira Code\", Georgia,Cambria,\"Times New Roman\",Times,serif !important;
-    }
-    code {
-        font-size: 1em !important;
-    }
-    :root {
-        color-scheme: dark; /* both supported */
-    }
-
-    body, p.title  {
-        color: #eee !important;
-    }
-
-    body a{
-        color: #809fff !important;
-    }
-
-    body img {
-        max-width: 100%% !important;
-        filter: brightness(.8) contrast(1.2);
-    }
-    .programlisting {
-        font-size: 20px;
-    }
-" (face-attribute 'default :background))
+(defcustom nov-xwidget-style-dark (nov-xwidget-read-style "nov-dark.css")
   "Dark mode CSS style used to render the epub file."
   :group 'nov-xwidget
   :type 'string)
