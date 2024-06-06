@@ -402,7 +402,6 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (add-to-list 'window-size-change-functions
                'nov-xwidget-webkit-adjust-size-in-frame))
 
-
 (defun nov-xwidget-next-line-or-page-cb(end)
   (if (s-equals-p end "1")
       (nov-xwidget-next-document)
