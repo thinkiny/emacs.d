@@ -99,7 +99,7 @@ alternative browser function."
           (or (file-name-directory file) "")
           (file-name-base file)
           (replace-regexp-in-string
-           "x?html?"
+           "x?html"
            "html"
            (file-name-extension file))))
 
