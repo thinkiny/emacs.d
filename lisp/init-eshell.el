@@ -17,8 +17,8 @@
                      (funcall pcomplete-command-completion-function)
                      (pcomplete-arg 'last) t)))))))
 
-(with-eval-after-load 'em-prompt
-  (set-face-attribute 'eshell-prompt nil :foreground "DeepSkyBlue4"))
+;; (with-eval-after-load 'em-prompt
+;;   (set-face-attribute 'eshell-prompt nil :foreground "DeepSkyBlue4"))
 
 (defun eshell-maybe-bol ()
   (interactive)

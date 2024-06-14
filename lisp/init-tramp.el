@@ -50,7 +50,7 @@
                  (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
                                               ("-e" "none") ("%h")))
                  (tramp-async-args           (("-q")))
-                 (tramp-direct-async         t)
+                 (tramp-direct-async         ("-t" "-t"))
                  (tramp-remote-shell         ,tramp-default-remote-shell)
                  (tramp-remote-shell-login   ("-l"))
                  (tramp-remote-shell-args    ("-c"))
