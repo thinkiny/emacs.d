@@ -112,6 +112,7 @@
 ;;fonts
 (when window-system
   (use-package cnfonts
+    :ensure t
     :demand t
     :config
     (setq cnfonts-use-face-font-rescale t)

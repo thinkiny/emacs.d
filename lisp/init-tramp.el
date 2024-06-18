@@ -1,7 +1,6 @@
 ;;; init-tramp.el  -*- lexical-binding: t -*-
 
 (require 'tramp)
-(setq tramp-default-remote-shell "/bin/bash")
 (setq tramp-allow-unsafe-temporary-files t)
 (setq enable-remote-dir-locals t)
 (setq remote-file-name-inhibit-locks t)
@@ -44,11 +43,12 @@
     (advice-add func :around #'advice/ignore-tramp-ssh-control-master)))
 
 (with-eval-after-load 'tramp-sh
+  (setq tramp-default-remote-shell "/bin/bash")
   (add-to-list 'tramp-methods
                `("ssh"
                  (tramp-login-program        "ssh")
                  (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
-                                              ("-e" "none") ("%h")))
+                                              ("-e" "none") ("%h") ))
                  (tramp-async-args           (("-q")))
                  (tramp-direct-async         ("-t" "-t"))
                  (tramp-remote-shell         ,tramp-default-remote-shell)

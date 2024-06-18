@@ -107,8 +107,8 @@
     (eglot-disable-format))
   (eglot-booster-mode))
 
-(ignore-tramp-ssh-control-master #'eglot--connect)
-(ignore-tramp-ssh-control-master #'eglot-booster--init)
+;; (ignore-tramp-ssh-control-master #'eglot--connect)
+;; (ignore-tramp-ssh-control-master #'eglot-booster--init)
 
 (with-eval-after-load-theme
  'eglot
