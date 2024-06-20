@@ -190,6 +190,8 @@
                 ;; " "
                 (:eval (my-flymake-mode-line-counters))
                 " "
+                (:eval (project-name-mode-line))
+                " "
                 mode-line-misc-info
                 ))
 

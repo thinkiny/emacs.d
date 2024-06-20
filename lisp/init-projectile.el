@@ -5,6 +5,7 @@
           ".bloop"
           ".metals"
           ".bsp"
+          "*.github"
           ".clangd"
           "^\\.idea$"
           "^\\.vscode$"

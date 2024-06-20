@@ -1,3 +1,5 @@
+(setq eglot-enable-booster nil)
+
 (use-package eglot
   :hook (eglot-managed-mode . my-eglot-mode-hook)
   :config
@@ -20,7 +22,8 @@
   ;; json rpc
   (setq jsonrpc-inhibit-debug-on-error t)
   (setq jsonrpc-event-hook nil)
-  (require 'eglot-booster))
+  (if eglot-enable-booster
+      (require 'eglot-booster)))
 
 (with-eval-after-load 'eglot
   (setq mode-line-misc-info
@@ -105,7 +108,8 @@
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format))
-  (eglot-booster-mode))
+  (if eglot-enable-booster
+      (eglot-booster-mode)))
 
 ;; (ignore-tramp-ssh-control-master #'eglot--connect)
 ;; (ignore-tramp-ssh-control-master #'eglot-booster--init)
