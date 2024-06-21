@@ -85,10 +85,18 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
       (point-min))))
 
 
+(defvar xwidget-translate-timer nil)
 (defun xwidget-translate-range()
   (interactive)
-  (xwidget-webkit-get-selection (lambda (text)
-                                  (bing-dict-brief text))))
+  (if xwidget-translate-timer
+      (cancel-timer xwidget-translate-timer))
+  (setq xwidget-translate-timer
+        (run-with-timer 0.1 nil
+                        (lambda ()
+                          (setq xwidget-translate-timer nil)
+                          (xwidget-webkit-get-selection
+                           (lambda (text)
+                             (bing-dict-brief text)))))))
 
 (defun xwidget-copy-range()
   (interactive)
