@@ -3,12 +3,12 @@ body {
     // background: %s !important;
     font-size: 18px !important;
     text-align: left !important;
-    width: 90%% !important;
-    height: 50%% !important;
+    width: 90% !important;
+    height: 50% !important;
     position: absolute !important;
-    left: 49%% !important;
-    top: 30%% !important;
-    transform: translate(-50%%, -55%%) !important;
+    left: 49% !important;
+    top: 30% !important;
+    transform: translate(-50%, -55%) !important;
 }
 p {
     font-size: 1em !important;
@@ -68,7 +68,7 @@ code {
 }
 
 body img {
-    max-width: 100%% !important;
+    max-width: 100% !important;
 }
 .programlisting {
     font-size: 20px;
