@@ -7,7 +7,7 @@
                  (window-height   . 0.30)))
 
 (with-eval-after-load 'flymake
-  (setq flymake-show-diagnostics-at-end-of-line t)
+  ;;(setq flymake-show-diagnostics-at-end-of-line t)
   (setq flymake-mode-line-counter-format
   '(":["
     flymake-mode-line-error-counter
@@ -28,9 +28,9 @@
         (flymake--delete-overlay ov)))))
 
 (defun my-flymake-mode-hook()
-  (remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t)
-  (remove-hook 'after-change-functions 'flymake-after-change-function t)
-  (add-hook 'after-change-functions #'clear-flymake-from-current-line t)
+  ;;(remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t)
+  ;;(remove-hook 'after-change-functions 'flymake-after-change-function t)
+  ;;(add-hook 'after-change-functions #'clear-flymake-from-current-line t)
   (define-key flymake-mode-map (kbd "C-c e l") #'flymake-show-buffer-diagnostics)
   (define-key flymake-mode-map (kbd "C-c e p") #'flymake-show-project-diagnostics)
   (define-key flymake-mode-map (kbd "C-c e n") #'flymake-goto-next-error)

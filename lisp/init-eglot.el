@@ -111,7 +111,7 @@
   (if eglot-enable-booster
       (eglot-booster-mode)))
 
-;; (ignore-tramp-ssh-control-master #'eglot--connect)
+(ignore-tramp-ssh-control-master #'eglot--connect)
 ;; (ignore-tramp-ssh-control-master #'eglot-booster--init)
 
 (with-eval-after-load-theme

@@ -26,6 +26,7 @@
 
 ;;language
 (require 'init-flymake)
+(require 'init-sideline)
 (require 'init-lisp)
 (require 'init-eldoc)
 (require 'init-eglot)
