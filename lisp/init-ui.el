@@ -83,6 +83,7 @@
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
 (require-package 'ef-themes)
+(require-package 'kanagawa-theme)
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
@@ -116,7 +117,8 @@
     :demand t
     :config
     (setq cnfonts-use-face-font-rescale t)
-    (cnfonts-enable)))
+    (cnfonts-enable)
+    (unbind-all-keys cnfonts-mode-map)))
 
 ;;size
 (defun set-frame-size-according-to-resolution ()
