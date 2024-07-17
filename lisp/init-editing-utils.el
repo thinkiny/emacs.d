@@ -245,6 +245,7 @@ With arg N, insert N newlines."
 
 (require-package 'htmlize)
 
+;; dict
 (use-package bing-dict
   :init
   (defun bing-dict-at-point()
@@ -262,6 +263,21 @@ With arg N, insert N newlines."
   (setq bing-dict-cache-auto-save t)
   :bind (:map global-map
               ("C-,"  . 'bing-dict-at-point)))
+
+(defun test-func()
+  (interactive)
+  (if (eq major-mode 'nov-xwidget-webkit-mode)
+      (message "yesyes")
+    (message "nonono")))
+
+(defvar-local auto-translate-mouse-selection nil)
+(defun translate-mouse-selection()
+  (interactive)
+  (when auto-translate-mouse-selection
+    (if (eq major-mode 'nov-xwidget-webkit-mode)
+        (xwidget-translate-range)
+      (bing-dict-at-point))))
+(advice-add #'mouse-set-region-1 :after #'translate-mouse-selection)
 
 ;; view-mode
 (with-eval-after-load 'view

@@ -98,13 +98,9 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
                            (lambda (text)
                              (bing-dict-brief text)))))))
 
-(defun xwidget-copy-range()
-  (interactive)
-  (xwidget-webkit-get-selection (lambda (text)
-                                  (kill-new text))))
-
 (add-hook 'xwidget-webkit-mode-hook
           (lambda ()
+            (setq-local auto-translate-mouse-selection t)
             ;;(setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
             (setq-local isearch-lazy-highlight nil)
             (setq-local header-line-format nil)
@@ -112,7 +108,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
             (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-webkit-scroll-up-line)
             (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-webkit-scroll-down-line)
             (define-key xwidget-webkit-mode-map (kbd "M-v") 'xwidget-webkit-scroll-down)
-            (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-copy-range)
+            (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-webkit-copy-selection-as-kill)
             (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-webkit-scroll-up)
             ;;(local-set-key (kbd "C-s") #'isearch-forward)
             (define-key xwidget-webkit-mode-map (kbd "<double-mouse-1>") #'xwidget-translate-range)
