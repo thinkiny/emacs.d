@@ -2,13 +2,15 @@
   :config
   (setq elfeed-curl-extra-arguments '("-x" "http://localhost:1087"))
   (setq elfeed-db-directory "~/.emacs.d/elfeed")
-  (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
+  (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"))
+
+(add-hook 'elfeed-show-mode-hook (lambda ()
   (define-key elfeed-show-mode-map (kbd "n") #'next-line)
   (define-key elfeed-show-mode-map (kbd "p") #'previous-line)
   (define-key elfeed-show-mode-map (kbd "j") #'next-line)
   (define-key elfeed-show-mode-map (kbd "k") #'previous-line)
   (define-key elfeed-show-mode-map (kbd "N") #'elfeed-show-next)
-  (define-key elfeed-show-mode-map (kbd "P") #'elfeed-show-prev))
+  (define-key elfeed-show-mode-map (kbd "P") #'elfeed-show-prev)))
 
 (use-package elfeed-goodies
   :after elfeed
@@ -26,7 +28,8 @@
 
 (feed-github-commit "emacs-mirror/emacs")
 
-(setq elfeed-feeds
+(with-eval-after-load 'elfeed
+  (setq elfeed-feeds
       `(("https://rsshub.app/oschina/news/industry" news)
         ("https://rsshub.app/cnbeta" news)
         ("https://rsshub.app/36kr/hot-list" news)
@@ -37,7 +40,7 @@
         ("https://rsshub.app/meituan/tech" tech)
         ("https://rsshub.app/techcrunch/news" tech)
         ,(feed-github-commit "emacs-mirror/emacs")
-        ,(feed-github-commit "scalameta/metals")))
+        ,(feed-github-commit "scalameta/metals"))))
 
 (global-set-key (kbd "C-x e") 'elfeed)
 
