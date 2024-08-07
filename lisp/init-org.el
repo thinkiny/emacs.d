@@ -3,6 +3,64 @@
 (require-package 'org-cliplink)
 (require-package 'org-contrib)
 
+;; org-roam
+(use-package org-roam
+  :bind (("C-c n f" . org-roam-node-find)
+         ("C-c n r" . org-roam-node-random)
+         (:map org-mode-map
+               (("C-c n i" . org-roam-node-insert)
+                ("C-c n o" . org-id-get-create)
+                ("C-c n t" . org-roam-tag-add)
+                ("C-c n a" . org-roam-alias-add)
+                ("C-c n l" . org-roam-buffer-toggle))))
+  :config
+  (setq org-roam-directory (file-truename "~/org/roam"))
+  (org-roam-db-autosync-mode))
+
+(use-package org-roam-ui
+  :after org-roam
+  :config
+  (setq org-roam-ui-sync-theme t
+        org-roam-ui-follow t
+        org-roam-ui-update-on-save t
+        org-roam-ui-open-on-start t))
+
+;; org-modern
+(use-package org-modern)
+(with-eval-after-load 'org
+  (setq
+   ;; Edit settings
+   org-auto-align-tags nil
+   org-tags-column 0
+   org-catch-invisible-edits 'show-and-error
+   org-special-ctrl-a/e t
+   org-insert-heading-respect-content t
+
+   ;; Org styling, hide markup etc.
+   org-hide-emphasis-markers t
+   org-pretty-entities t
+
+   ;; Agenda styling
+   org-agenda-tags-column 0
+   org-agenda-block-separator ?─
+   org-agenda-time-grid
+   '((daily today require-timed)
+     (800 1000 1200 1400 1600 1800 2000)
+     " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+   org-agenda-current-time-string
+   "◀── now ─────────────────────────────────────────────────")
+
+  ;; Ellipsis styling
+  (setq org-ellipsis "…")
+  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
+  (global-org-modern-mode))
+
+;; org-appear
+(use-package org-appear
+  :config
+  (setq org-appear-autolinks t))
+(add-hook 'org-mode-hook 'org-appear-mode)
+
 ;; (use-package org-pdftools
 ;;   :hook (org-mode . org-pdftools-setup-link))
 
@@ -238,12 +296,9 @@ _k_: delete row   _l_: delete column  _s_: shorten
   ;; Various preferences
   (setq org-log-done t
         org-edit-timestamp-down-means-later t
-        org-hide-emphasis-markers t
-        org-catch-invisible-edits 'show
         org-export-coding-system 'utf-8
         org-fast-tag-selection-single-key 'expert
         org-html-validation-link nil
-        org-tags-column 100
         org-src-fontify-natively t
         org-src-tab-acts-natively t
         org-src-preserve-indentation nil
@@ -260,7 +315,6 @@ _k_: delete row   _l_: delete column  _s_: shorten
 
   (require 'ox-reveal)
   (require 'ox-gfm)
-  ;;(require 'org-sidebar)
   (org-beamer-mode)
   (unbind-key (kbd "C-,") org-mode-map)
   (unbind-key (kbd "C-c $") org-mode-map)
@@ -272,6 +326,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (define-key org-mode-map (kbd "C-c C-p") #'org-cliplink)
   (define-key org-mode-map (kbd "C-M-<up>") 'org-up-element)
   ;;(electric-pair-local-mode)
+  (setq org-confirm-babel-evaluate nil)
   (org-babel-do-load-languages
    'org-babel-load-languages
    `((R . t)
@@ -288,6 +343,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
      (python . t)
      (ruby . t)
      (screen . nil)
+;;     (scala . t)
      (,(if (locate-library "ob-sh") 'sh 'shell) . t)
      (sql . t)
      (sqlite . t))))
@@ -310,33 +366,33 @@ _k_: delete row   _l_: delete column  _s_: shorten
                                    ("breakbefore" ".")))
 
   (setq org2ctex-latex-classes
-  '(("ctexart"
-     "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexart}"
-     ("\\section{%s}" . "\\section*{%s}")
-     ("\\subsection{%s}" . "\\subsection*{%s}")
-     ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-     ("\\paragraph{%s}" . "\\paragraph*{%s}")
-     ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
-    ("ctexrep"
-     "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexrep}"
-     ("\\part{%s}" . "\\part*{%s}")
-     ("\\chapter{%s}" . "\\chapter*{%s}")
-     ("\\section{%s}" . "\\section*{%s}")
-     ("\\subsection{%s}" . "\\subsection*{%s}")
-     ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
-    ("ctexbook"
-     "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexbook}"
-     ("\\part{%s}" . "\\part*{%s}")
-     ("\\chapter{%s}" . "\\chapter*{%s}")
-     ("\\section{%s}" . "\\section*{%s}")
-     ("\\subsection{%s}" . "\\subsection*{%s}")
-     ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
-    ("beamer"
-     "\\documentclass[presentation]{beamer}
+        '(("ctexart"
+           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexart}"
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+           ("\\paragraph{%s}" . "\\paragraph*{%s}")
+           ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
+          ("ctexrep"
+           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexrep}"
+           ("\\part{%s}" . "\\part*{%s}")
+           ("\\chapter{%s}" . "\\chapter*{%s}")
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+          ("ctexbook"
+           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexbook}"
+           ("\\part{%s}" . "\\part*{%s}")
+           ("\\chapter{%s}" . "\\chapter*{%s}")
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+          ("beamer"
+           "\\documentclass[presentation]{beamer}
 \\usepackage[fontset=none,UTF8,zihao=-4]{ctex}"
-     ("\\section{%s}" . "\\section*{%s}")
-     ("\\subsection{%s}" . "\\subsection*{%s}")
-     ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
   (setq org2ctex-latex-commands
         '("xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
           "bibtex %b"
@@ -353,7 +409,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
     ;;(make-local-variable face)
     (set-face-attribute face nil :height 1.0)))
 
-(after-load-theme (org-level-reset-height))
+;;(after-load-theme (org-level-reset-height))
 
 (add-hook 'org-mode-hook (lambda ()
                            (setq-local electric-pair-inhibit-predicate

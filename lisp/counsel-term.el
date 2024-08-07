@@ -53,7 +53,8 @@
 (defun counsel-mt/sort-by-dir()
   "Sort all terminal buffer ordered by current directory"
   (cl-sort (cl-loop for buf in (buffer-list)
-                    when (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
+                    when (and (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
+                              (buffer-local-boundp 'counsel-mt-index buf))
                     collect (with-current-buffer buf
                               (rename-buffer (format "%s%s" counsel-mt-name-header (counsel-mt/get-dir-with-index)))
                               (cons (counsel-mt/get-dir-with-index) buf)))
