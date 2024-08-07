@@ -10,6 +10,10 @@
 
 (defvar xwidget-webkit-browse-session nil)
 
+(defun xwidget-webkit-get-browse-buffer()
+  (let ((buffer (and xwidget-webkit-browse-session (xwidget-buffer xwidget-webkit-browse-session))))
+    (and (buffer-live-p buffer) buffer)))
+
 (defun xwidget-webkit-browse-open-url (url &optional rest)
   "Ask xwidget-webkit to browse URL.
 NEW-SESSION specifies whether to create a new xwidget-webkit session.
@@ -23,8 +27,8 @@ Interactively, URL defaults to the string looking like a url around point."
     ;; If it's a "naked url", just try adding https: to it.
     (unless (string-match "\\`[A-Za-z]+:" url)
       (setq url (concat "https://" url)))
-    (let ((buffer (and xwidget-webkit-browse-session (xwidget-buffer xwidget-webkit-browse-session))))
-      (if (and buffer (buffer-live-p buffer))
+    (let ((buffer (xwidget-webkit-get-browse-buffer)))
+      (if buffer
           (progn
             (xwidget-webkit-goto-uri xwidget-webkit-browse-session url)
             (switch-to-buffer buffer))
