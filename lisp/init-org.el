@@ -23,9 +23,11 @@
   (setq org-roam-ui-sync-theme t
         org-roam-ui-follow t
         org-roam-ui-update-on-save t
-        org-roam-ui-open-on-start t))
+        org-roam-ui-open-on-start t
+        org-roam-ui-browser-function #'browse-url-firefox))
 
-;; org style
+;; org-modern
+(use-package org-modern)
 (with-eval-after-load 'org
   (setq
    ;; Edit settings
@@ -52,7 +54,8 @@
 
   ;; Ellipsis styling
   (setq org-ellipsis "…")
-  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil))
+  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
+  (global-org-modern-mode))
 
 ;; auto download
 (require 'org-remoteimg)

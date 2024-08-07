@@ -15,7 +15,6 @@
   :ensure t)
 (elfeed-goodies/setup)
 
-
 ;; setup feeds
 (defun feed-github-commit (repo)
   (let ((name (car (last (split-string repo "/")))))
