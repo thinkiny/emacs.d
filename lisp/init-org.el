@@ -25,8 +25,7 @@
         org-roam-ui-update-on-save t
         org-roam-ui-open-on-start t))
 
-;; org-modern
-(use-package org-modern)
+;; org style
 (with-eval-after-load 'org
   (setq
    ;; Edit settings
@@ -52,8 +51,7 @@
 
   ;; Ellipsis styling
   (setq org-ellipsis "…")
-  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
-  (global-org-modern-mode))
+  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil))
 
 ;; org-appear
 (use-package org-appear

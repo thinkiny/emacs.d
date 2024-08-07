@@ -7,7 +7,31 @@
 (require 'xwidget)
 (with-eval-after-load 'xwidget
   (defun xwidget-webkit--update-progress-timer-function (_)))
-(setq browse-url-browser-function 'xwidget-webkit-browse-url)
+
+(defvar xwidget-webkit-browse-session nil)
+
+(defun xwidget-webkit-browse-open-url (url &optional rest)
+  "Ask xwidget-webkit to browse URL.
+NEW-SESSION specifies whether to create a new xwidget-webkit session.
+Interactively, URL defaults to the string looking like a url around point."
+  (interactive (progn
+                 (require 'browse-url)
+                 (browse-url-interactive-arg "xwidget-webkit URL: ")))
+  (or (featurep 'xwidget-internal)
+      (user-error "Your Emacs was not compiled with xwidgets support"))
+  (when (stringp url)
+    ;; If it's a "naked url", just try adding https: to it.
+    (unless (string-match "\\`[A-Za-z]+:" url)
+      (setq url (concat "https://" url)))
+    (let ((buffer (and xwidget-webkit-browse-session (xwidget-buffer xwidget-webkit-browse-session))))
+      (if (and buffer (buffer-live-p buffer))
+          (progn
+            (xwidget-webkit-goto-uri xwidget-webkit-browse-session url)
+            (switch-to-buffer buffer))
+        (xwidget-webkit-new-session url)
+        (setq xwidget-webkit-browse-session (xwidget-webkit-last-session))))))
+
+(setq browse-url-browser-function 'xwidget-webkit-browse-open-url)
 
 (defun advice/after-xwidget-plus-webkit-browse-url (&rest _)
   "Advice to add switch to window when calling `xwidget-webkit-browse-url'."
