@@ -23,6 +23,8 @@
 (require 'init-tramp)
 (require 'init-doxymacs)
 (require 'init-treesit)
+(require 'init-org)
+(require 'init-feed)
 
 ;;language
 (require 'init-flymake)
@@ -33,7 +35,6 @@
 (require 'init-gtags)
 (require 'init-cpp)
 (require 'init-python)
-(require 'init-org)
 (require 'init-lua)
 (require 'init-golang)
 (require 'init-html)

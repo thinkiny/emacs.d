@@ -134,4 +134,16 @@
   (ignore-errors
     (apply old-fn args)))
 
+
+;; use http proxy
+(defun advice/use-http-proxy (old-fn &rest args)
+  (set-proxy)
+  (let ((res (apply old-fn args)))
+    (unset-proxy)
+    res))
+
+(defun use-http-proxy (&rest funcs)
+  (dolist (func funcs)
+    (advice-add func :around #'advice/use-http-proxy)))
+
 (provide 'init-utils)

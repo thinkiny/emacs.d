@@ -20,7 +20,7 @@
         treemacs-no-png-images                 nil
         treemacs-no-delete-other-windows       t
         treemacs-project-follow-cleanup        nil
-        treemacs-persist-file                  (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
+        treemacs-persist-file                  (expand-file-name "cache/treemacs-persist" user-emacs-directory)
         treemacs-position                      'right
         treemacs-read-string-input             'from-minibuffer
         treemacs-recenter-distance             0.1

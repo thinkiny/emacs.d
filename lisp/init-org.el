@@ -34,6 +34,7 @@
    org-catch-invisible-edits 'show-and-error
    org-special-ctrl-a/e t
    org-insert-heading-respect-content t
+   org-startup-with-inline-images t
 
    ;; Org styling, hide markup etc.
    org-hide-emphasis-markers t
@@ -52,6 +53,11 @@
   ;; Ellipsis styling
   (setq org-ellipsis "…")
   (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil))
+
+;; auto download
+(require 'org-remoteimg)
+(setq url-cache-directory "~/.emacs.d/cache/url")
+(setq org-display-remote-inline-images 'cache)
 
 ;; org-appear
 (use-package org-appear
@@ -313,7 +319,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
 
   (require 'ox-reveal)
   (require 'ox-gfm)
-  (org-beamer-mode)
+  ;; (org-beamer-mode)
   (unbind-key (kbd "C-,") org-mode-map)
   (unbind-key (kbd "C-c $") org-mode-map)
   (unbind-key (kbd "C-c C-m") org-mode-map)
