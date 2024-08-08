@@ -58,6 +58,7 @@ browser defined by `browse-url-generic-program'."
           ("https://rsshub.app/36kr/hot-list" news)
           ("https://rsshub.app/v2ex/tab/hot" discuss)
           ("https://rsshub.app/sspai/index" news)
+          ("https://www.solidot.org/index.rss" news)
           ("https://www.geekpark.net/rss" tech)
           ("https://www.biede.com/feed/" news)
           ("https://rsshub.app/juejin/posts/1838039172387262" tech)
