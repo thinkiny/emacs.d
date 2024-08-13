@@ -10,7 +10,7 @@
   (let* ((buffer (get-buffer "*elfeed-entry*")))
     (kill-buffer buffer)))
 
-(with-eval-after-load 'elfeed
+(with-eval-after-load 'elfeed-show
   (defun elfeed-show-visit (&optional use-generic-p)
     "Visit the current entry in your browser using `browse-url'.
 If there is a prefix argument, visit the current entry in the
@@ -58,7 +58,6 @@ browser defined by `browse-url-generic-program'."
           ("https://rsshub.app/v2ex/tab/hot" discuss)
           ("https://rsshub.app/sspai/index" news)
           ("https://www.solidot.org/index.rss" news)
-          ("https://rsshub.app/egsea/flash" news)
           ("https://www.geekpark.net/rss" tech)
           ("https://www.biede.com/feed/" news)
           ("https://rsshub.app/hellobtc/kepu/latest" tech)
