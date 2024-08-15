@@ -62,7 +62,7 @@
   (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
 
 ;; frame transparency
-(defcustom frame-transparency 100
+(defcustom frame-transparency 90
   "The Transparency of frame"
   :group 'faces
   :type 'integer
@@ -70,7 +70,7 @@
          (set-default var val)
          (if *is-a-nt*
              (set-frame-parameter nil 'alpha val)
-           (set-frame-parameter nil 'alpha-background val))))
+           (set-frame-parameter nil 'alpha val))))
 
 (defun set-transparency ()
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
@@ -89,7 +89,7 @@
         modus-themes-paren-match '(bold intense)))
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
-(defcustom default-theme 'cloud
+(defcustom default-theme 'ef-maris-dark
   "The current theme"
   :group 'faces)
 

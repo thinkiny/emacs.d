@@ -32,14 +32,11 @@
   (setq projectile-file-exists-remote-cache-expire nil)
   (projectile-mode)
 
-  (defun need_find_project()
-    (if (file-remote-p default-directory)
-        (with-parsed-tramp-file-name default-directory dir
-          (s-starts-with? "/home/" dir-localname))
-      t))
-
-  (defadvice projectile-project-root (around ignore-remote first activate)
-    (if (need_find_project) ad-do-it))
+  ;; (defun need_find_project()
+  ;;   (if (file-remote-p default-directory)
+  ;;       (with-parsed-tramp-file-name default-directory dir
+  ;;         (s-starts-with? "/home/" dir-localname))
+  ;;     t))
 
   ;; don't use file-truename
   (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
