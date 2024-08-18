@@ -4,13 +4,8 @@
   :config
   (setq elfeed-curl-extra-arguments '("-x" "http://localhost:1087"))
   (setq elfeed-db-directory "~/.emacs.d/elfeed")
-  (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"))
+  (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
 
-(defun kill-elfeed-buffer()
-  (let* ((buffer (get-buffer "*elfeed-entry*")))
-    (kill-buffer buffer)))
-
-(with-eval-after-load 'elfeed-show
   (defun elfeed-show-visit (&optional use-generic-p)
     "Visit the current entry in your browser using `browse-url'.
 If there is a prefix argument, visit the current entry in the
@@ -34,6 +29,10 @@ browser defined by `browse-url-generic-program'."
     (define-key elfeed-show-mode-map (kbd "P") #'elfeed-show-prev))
 
   (add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook))
+
+(defun kill-elfeed-buffer()
+  (let* ((buffer (get-buffer "*elfeed-entry*")))
+    (kill-buffer buffer)))
 
 (use-package elfeed-goodies
   :after elfeed
