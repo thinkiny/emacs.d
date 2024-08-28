@@ -7,7 +7,7 @@
 (use-package org-roam
   :bind (("C-c n f" . org-roam-node-find)
          ("C-c n r" . org-roam-node-random)
-         (:map org-mode-map
+         (:map global-map
                (("C-c n i" . org-roam-node-insert)
                 ("C-c n o" . org-id-get-create)
                 ("C-c n t" . org-roam-tag-add)
@@ -62,11 +62,10 @@
 (setq url-cache-directory "~/.emacs.d/cache/url")
 (setq org-display-remote-inline-images 'cache)
 
-;; org-appear
+;; ;; org-appear
 (use-package org-appear
   :config
   (setq org-appear-autolinks t))
-(add-hook 'org-mode-hook 'org-appear-mode)
 
 ;; (use-package org-pdftools
 ;;   :hook (org-mode . org-pdftools-setup-link))
@@ -317,7 +316,6 @@ _k_: delete row   _l_: delete column  _s_: shorten
         org-support-shift-select t)
 
   ;; open file in the same window
-  (setf (cdr (assoc 'file org-link-frame-setup)) 'find-file)
   (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
 
   (require 'ox-reveal)
