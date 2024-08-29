@@ -62,14 +62,14 @@
   (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
 
 ;; frame transparency
-(defcustom frame-transparency 90
+(defcustom frame-transparency 100
   "The Transparency of frame"
   :group 'faces
   :type 'integer
   :set (lambda (var val)
          (set-default var val)
-         (if *is-a-nt*
-             (set-frame-parameter nil 'alpha val)
+         (if *is-a-linux*
+             (set-frame-parameter nil 'alpha-background val)
            (set-frame-parameter nil 'alpha val))))
 
 (defun set-transparency ()
