@@ -30,7 +30,9 @@ browser defined by `browse-url-generic-program'."
     (define-key elfeed-show-mode-map (kbd "P") #'elfeed-show-prev)
     (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'bing-dict-at-point))
 
-  (add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook))
+  (add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook)
+  (define-key elfeed-search-mode-map (kbd "j") #'next-line)
+  (define-key elfeed-search-mode-map (kbd "k") #'previous-line))
 
 (defun kill-elfeed-buffer()
   (let* ((buffer (get-buffer "*elfeed-entry*")))
