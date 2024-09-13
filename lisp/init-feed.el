@@ -65,7 +65,6 @@ browser defined by `browse-url-generic-program'."
           ("https://www.biede.com/feed/" news)
           ("https://rsshub.app/bbc/world-asia" news)
           ("https://rsshub.app/hellobtc/kepu/latest" tech)
-          ("https://rsshub.app/hellobtc/news" news)
           ("https://rsshub.app/juejin/posts/1838039172387262" tech)
           ("http://www.ruanyifeng.com/blog/atom.xml" tech)
           ("https://rsshub.app/51cto/index/recommend" tech)

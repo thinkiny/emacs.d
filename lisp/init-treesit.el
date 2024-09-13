@@ -30,6 +30,7 @@
 
 (defun treesit-init()
   (require 'treesit)
+  (setq treesit-font-lock-level 4)
   (dolist (lang '(
                   ;; ("c" . c)
                   ;; ("c++" . cpp)
