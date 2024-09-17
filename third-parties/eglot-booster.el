@@ -4,7 +4,7 @@
 ;; Author: J.D. Smith
 ;; Homepage: https://github.com/jdtsmith/eglot-booster
 ;; Package-Requires: ((emacs "29.1") (jsonrpc "1.0") (eglot "1.0") (seq "2.24"))
-;; Version: 0.0.1
+;; Version: 0.0.2
 ;; Keywords: convenience, programming
 ;; Prefix: eglot-booster
 ;; Separator: -
@@ -52,6 +52,7 @@
   "Test if command COM is a plain eglot server command."
   (and (consp com)
        (not (integerp (cadr com)))
+       (not (keywordp (car com)))
        (not (memq :autoport com))))
 
 (defvar-local eglot-booster-boosted nil)
