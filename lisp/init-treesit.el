@@ -28,6 +28,11 @@
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")
      (scala "https://github.com/tree-sitter/tree-sitter-scala")))
 
+(defun treesit-install-all-language()
+  (interactive)
+  (cl-loop for i in treesit-language-source-alist
+           do (treesit-install-language-grammar (car i))))
+
 (defun treesit-init()
   (require 'treesit)
   (setq treesit-font-lock-level 4)
