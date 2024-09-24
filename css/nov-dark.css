@@ -2,9 +2,9 @@ body {
     writing-mode: horizontal-tb;
     // background: %s !important;
     color: #eee !important;
-    font-size: 18px !important;
+    font-size: 20px !important;
     text-align: left !important;
-    width: 90% !important;
+    width: 95% !important;
     height: 50% !important;
     position: absolute !important;
     left: 49% !important;
@@ -30,7 +30,6 @@ th {
 }
 
 span {
-    font-size: 18px;
     color: #eee !important;
 }
 h1 {
@@ -74,7 +73,4 @@ body a{
 body img {
     max-width: 100% !important;
     filter: brightness(.8) contrast(1.2);
-}
-.programlisting {
-    font-size: 20px;
 }

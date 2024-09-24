@@ -1,9 +1,9 @@
 body {
     writing-mode: horizontal-tb;
     // background: %s !important;
-    font-size: 18px !important;
+    font-size: 20px !important;
     text-align: left !important;
-    width: 90% !important;
+    width: 95% !important;
     height: 50% !important;
     position: absolute !important;
     left: 49% !important;
@@ -23,9 +23,7 @@ pre, tr, td, div.warning {
 th {
     font-size: 1em;
 }
-span {
-    font-size: 18px;
-}
+
 /* Same font for all tags */
 a, em, caption, th, pre, tr, td, code, h1, h2, h3, h4, h5, h6, p, body {
     font-family: \"Fira Code\", Georgia,Cambria,\"Times New Roman\",Times,serif !important;
@@ -69,7 +67,4 @@ code {
 
 body img {
     max-width: 100% !important;
-}
-.programlisting {
-    font-size: 20px;
 }
