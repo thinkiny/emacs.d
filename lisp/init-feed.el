@@ -23,6 +23,8 @@ browser defined by `browse-url-generic-program'."
     (define-key elfeed-show-mode-map (kbd "n") #'next-line)
     (define-key elfeed-show-mode-map (kbd "b") #'backward-char)
     (define-key elfeed-show-mode-map (kbd "f") #'forward-char)
+    (define-key elfeed-show-mode-map (kbd "a") #'beginning-of-line)
+    (define-key elfeed-show-mode-map (kbd "e") #'end-of-line)
     (define-key elfeed-show-mode-map (kbd ",") #'bing-dict-at-point)
     (define-key elfeed-show-mode-map (kbd "v") #'elfeed-show-visit)
     (define-key elfeed-show-mode-map (kbd "p") #'previous-line)

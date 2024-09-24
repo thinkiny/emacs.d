@@ -119,13 +119,14 @@
 
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs '((c-mode c++-mode c++-ts-mode) .
-                                        ("clangd" "--header-insertion-decorators=0" "--log=error" "--clang-tidy" "--import-insertions" "--function-arg-placeholders" "--background-index"))))
+                                        ("clangd" "--header-insertion-decorators=0" "--log=error" "--clang-tidy" "--function-arg-placeholders" "--background-index"))))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.c\\'" . c++-mode))
 
-;;(add-hook 'c-mode-hook 'my-cpp-mode-hook)
+;; (add-hook 'c-mode-hook 'my-cpp-mode-hook)
 (add-hook 'c++-mode-hook 'my-cpp-mode-hook)
 
 (provide 'init-cpp)
