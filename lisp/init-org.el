@@ -91,7 +91,6 @@
 (global-set-key (kbd "C-c c") 'org-capture)
 (global-set-key (kbd "C-c a") 'org-agenda)
 
-
 (setq org-capture-templates
       `(("t" "todo" entry (file "todo.org")  ; "" => `org-default-notes-file'
          "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n")
@@ -157,10 +156,7 @@
 
 
 ;;; Agenda views
-
 (setq-default org-agenda-clockreport-parameter-plist '(:link t :maxlevel 3))
-
-
 (let ((active-project-match "-INBOX/PROJECT"))
   (setq org-stuck-projects
         `(,active-project-match ("NEXT")))
@@ -248,24 +244,24 @@
 
 ;; Save the running clock and all clock history when exiting Emacs, load it on startup
 (with-eval-after-load 'org
-  (org-clock-persistence-insinuate))
-(setq org-clock-persist t)
-(setq org-clock-in-resume t)
+  (org-clock-persistence-insinuate)
+  (setq org-clock-persist t)
+  (setq org-clock-in-resume t)
 
-;; Save clock data and notes in the LOGBOOK drawer
-(setq org-clock-into-drawer t)
-;; Save state changes in the LOGBOOK drawer
-(setq org-log-into-drawer t)
-;; Removes clocked tasks with 0:00 duration
-(setq org-clock-out-remove-zero-time-clocks t)
+  ;; Save clock data and notes in the LOGBOOK drawer
+  (setq org-clock-into-drawer t)
+  ;; Save state changes in the LOGBOOK drawer
+  (setq org-log-into-drawer t)
+  ;; Removes clocked tasks with 0:00 duration
+  (setq org-clock-out-remove-zero-time-clocks t)
 
-;; Show clock sums as hours and minutes, not "n days" etc.
-(setq org-time-clocksum-format
-      '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t))
+  ;; Show clock sums as hours and minutes, not "n days" etc.
+  (setq org-time-clocksum-format
+        '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t))
 
 ;;; Archiving
-(setq org-archive-mark-done nil)
-(setq org-archive-location "%s_archive::* Archive")
+  (setq org-archive-mark-done nil)
+  (setq org-archive-location "%s_archive::* Archive"))
 
 ;; (require-package 'org-pomodoro)
 ;; (setq org-pomodoro-keep-killed-pomodoro-time t)
@@ -304,6 +300,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
         org-edit-timestamp-down-means-later t
         org-export-coding-system 'utf-8
         org-fast-tag-selection-single-key 'expert
+        org-cycle-include-plain-lists 'integrate
         org-html-validation-link nil
         org-src-fontify-natively t
         org-src-tab-acts-natively t
@@ -326,9 +323,9 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (unbind-key (kbd "C-c C-m") org-mode-map)
   (unbind-key (kbd "C-c [") org-mode-map)
   (unbind-key (kbd "C-c ]") org-mode-map)
-  (define-key org-mode-map (kbd "C-c t t") #'hydra-org-table/body)
+  (define-key org-mode-map (kbd "C-c v") #'org-overview)
   (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
-  (define-key org-mode-map (kbd "C-c C-p") #'org-cliplink)
+  (define-key org-mode-map (kbd "C-c C-c") #'org-cliplink)
   (define-key org-mode-map (kbd "C-M-<up>") 'org-up-element)
   ;;(electric-pair-local-mode)
   (setq org-confirm-babel-evaluate nil)
@@ -348,7 +345,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
      (python . t)
      (ruby . t)
      (screen . nil)
-;;     (scala . t)
+     ;;     (scala . t)
      (,(if (locate-library "ob-sh") 'sh 'shell) . t)
      (sql . t)
      (sqlite . t))))
