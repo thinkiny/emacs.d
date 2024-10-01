@@ -1,7 +1,7 @@
 body {
     writing-mode: horizontal-tb;
-    // background: %s !important;
-    color: #eee !important;
+    background-color: #282c34 !important;
+    color: #bbc2cf !important;
     font-size: 20px !important;
     text-align: left !important;
     width: 95% !important;
@@ -17,8 +17,8 @@ p {
     margin-bottom: 25px !important;
 }
 h1, h2, h3, h4, h5, h6 {
-    /*color: #eee !important;*/
-    border-bottom: 0px solid #eee !important;
+    /*color: #d4d4d4 !important;*/
+    border-bottom: 0px solid #d4d4d4 !important;
 }
 pre, tr, td, div.warning {
     font-size: 1em;
@@ -26,11 +26,11 @@ pre, tr, td, div.warning {
 }
 th {
     font-size: 1em;
-    color: #eee !important;
+    color: #d4d4d4 !important;
 }
 
 span {
-    color: #eee !important;
+    color: #d4d4d4 !important;
 }
 h1 {
     color: #ffaf69 !important;
@@ -62,8 +62,8 @@ code {
     color-scheme: dark; /* both supported */
 }
 
-body, p.title  {
-    color: #eee !important;
+body p.title  {
+    color: #d4d4d4 !important;
 }
 
 body a{
