@@ -33,6 +33,7 @@ browser defined by `browse-url-generic-program'."
     (define-key elfeed-show-mode-map (kbd "w") #'elfeed-show-yank)
     (define-key elfeed-show-mode-map (kbd "N") #'elfeed-show-next)
     (define-key elfeed-show-mode-map (kbd "P") #'elfeed-show-prev)
+    (define-key elfeed-show-mode-map (kbd "M-v") #'scroll-down-command)
     (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'bing-dict-at-point))
 
   (add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook)
@@ -76,6 +77,7 @@ browser defined by `browse-url-generic-program'."
           ("https://rsshub.app/deeplearning/thebatch" tech)
           ("https://rsshub.app/cloudnative/blog" tech)
           ("https://rsshub.app/meituan/tech" tech)
+          ("https://rsshub.app/cncf" tech)
           ,(feed-github-commit "emacs-mirror/emacs")
           ,(feed-github-commit "scalameta/metals"))))
 
