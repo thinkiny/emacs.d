@@ -103,6 +103,49 @@ alternative browser function."
            "html"
            (file-name-extension file))))
 
+(defun nov-xwdidget-fix-href-dom (dom)
+  (cl-map 'list (lambda(x)
+                  (let* ((href (dom-attr x 'href))
+                         (new-href (nov-xwidget-fix-file-path href)))
+                    (dom-set-attribute x 'href new-href)))
+          ;; all elements that not start with http or https,
+          ;; but matches htm.*
+          (cl-remove-if
+           (lambda(x)
+             (string-match-p "https?.*"
+                             (dom-attr x 'href)))
+           (dom-elements dom 'href ".*htm.*")))
+  dom)
+
+(defun nov-xwidget-inject-js-css-dom (dom &optional title)
+  (dom-add-child-before
+   dom
+   `(head nil
+          (meta ((charset . "utf-8")))
+          (title nil ,title)
+          (style nil ,(get-nov-xwidget-style))
+          (script nil ,nov-xwidget-script)))
+  dom)
+
+(defun nov-xwidget-remove-calibre-class (cls)
+  (replace-regexp-in-string "calibre[^ ]*" "" cls))
+
+(defun nov-xwidget-remove-calibre-dom (dom)
+  (cl-map 'list (lambda(x)
+                      (let* ((cls (dom-attr x 'class))
+                             (new-cls (nov-xwidget-remove-calibre-class cls)))
+                        (dom-set-attribute x 'class new-cls)))
+          (dom-elements dom 'class ".*calibre.*"))
+    dom)
+
+(defun nov-xwidget-inject-dom (dom &optional title)
+  (if dom
+      (nov-xwidget-inject-js-css-dom
+       (nov-xwidget-remove-calibre-dom
+        (nov-xwdidget-fix-href-dom dom))
+       title)
+    dom))
+
 (defun nov-xwidget-inject (file &optional callback)
   "Inject `nov-xwidget-script', `nov-xwidget-style-light', or `nov-xwidget-style-dark' into FILE."
   (when nov-xwidget-debug
@@ -118,25 +161,7 @@ alternative browser function."
          (dom (with-temp-buffer
                 (insert-file-contents native-path)
                 (libxml-parse-html-region (point-min) (point-max))))
-         (new-dom (let ((dom dom))
-                    (cl-map 'list (lambda(x)
-                                    (let* ((href (dom-attr x 'href))
-                                           (new-href (nov-xwidget-fix-file-path href)))
-                                      (dom-set-attribute x 'href new-href)))
-                            ;; all elements that not start with http or https,
-                            ;; but matches htm.*
-                            (cl-remove-if
-                             (lambda(x)
-                               (string-match-p "https?.*"
-                                               (dom-attr x 'href)))
-                             (dom-elements dom 'href ".*htm.*")))
-                    (dom-add-child-before
-                     dom
-                     `(head nil
-                            (meta ((charset . "utf-8")))
-                            (style nil ,(get-nov-xwidget-style))
-                            (script nil ,nov-xwidget-script)))
-                    dom)))
+         (new-dom (nov-xwidget-inject-dom dom)))
     (if callback
         (funcall callback new-dom))
     (with-temp-file output-native-path
@@ -166,7 +191,7 @@ also run it after modifing `nov-xwidget-style-dark',
            (if nov-xwidget-need-inject
                (nov-xwidget-inject new-file))
            (aset nov-documents i (cons (car document) new-file))))
-           nov-documents)))
+       nov-documents)))
 
 (defun nov-xwidget-webkit-find-file (file &optional arg new-session)
   "Open a FILE with xwidget webkit."
@@ -284,7 +309,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
         (setq-local nov-temp-dir temp-dir)
         (setq-local nov-metadata metadata)
         (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name))
-        )))))
+                    )))))
 
 (defun nov-xwidget-next-document ()
   "Go to the next document and render it."
@@ -339,28 +364,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
                       (insert (nov-xwidget-ncx-to-html path))
                     (insert-file-contents path))
                   (libxml-parse-html-region (point-min) (point-max))))
-           (new-dom (let ((dom dom))
-                      (if dom
-                          (cl-map 'list (lambda(x)
-                                    (let* ((href (dom-attr x 'href))
-                                           (new-href (nov-xwidget-fix-file-path href)))
-                                      (dom-set-attribute x 'href new-href)))
-                            ;; all elements that not start with http or https,
-                            ;; but matches htm.*
-                            (cl-remove-if
-                             (lambda(x)
-                               (string-match-p "https?.*"
-                                               (dom-attr x 'href)))
-                             (dom-elements dom 'href ".*htm.*")))
-                          (dom-add-child-before
-                           dom
-                           `(head nil
-                                  (meta ((charset . "utf-8")))
-                                  (title nil "TOC")
-                                  (style nil ,(get-nov-xwidget-style))
-                                  (script nil ,nov-xwidget-script))) )
-                      dom)))
-
+           (new-dom (nov-xwidget-inject-dom dom "TOC")))
       (with-temp-file html-path
         (shr-dom-print new-dom)
         html-path))))
