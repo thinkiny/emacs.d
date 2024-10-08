@@ -1,11 +1,14 @@
-;;; nov-xwidget.el --- nov-xwidget - the best epub reader in Emacs -*- lexical-binding: t; -*-
-
+;;; nov-xwidget-browse.el --- nov-xwidget-browse - the best epub reader in Emacs -*- lexical-binding: t; -*-
 
 (require 'nov)
 (require 'shr)
 (require 'xwidget)
 (require 'cl-lib)
 (require 'evil-core nil 'noerror)
+
+(defvar nov-xwidget-scroll-step 10)
+(defvar nov-xwidget-style 'light)
+(defvar nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
 
 (defcustom nov-xwidget-script ""
   "Javascript scripts used to run in the epub file."
@@ -45,8 +48,6 @@ alternative browser function."
   "The nov-xwidget injected output html directory."
   :group 'nov-xwidget
   :type 'directory)
-
-(defvar nov-xwidget-style 'light)
 
 (defvar nov-xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))
@@ -409,7 +410,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 (defun nov-xwidget-next-line-or-page-cb(end)
   (if (s-equals-p end "1")
       (nov-xwidget-next-document)
-    (xwidget-webkit-scroll-up-line nov-scroll-step)))
+    (xwidget-webkit-scroll-up-line nov-xwidget-scroll-step)))
 
 (defun nov-xwidget-next-line-or-page()
   (interactive)
@@ -428,7 +429,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (progn
         (nov-xwidget-previous-document)
         (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-    (xwidget-webkit-scroll-down-line nov-scroll-step)))
+    (xwidget-webkit-scroll-down-line nov-xwidget-scroll-step)))
 
 (defun nov-xwidget-previous-line-or-page()
   (interactive)
@@ -442,5 +443,5 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     }
 })();" #'nov-xwidget-previous-line-or-page-cb))
 
-(provide 'nov-xwidget)
-;;; nov-xwidget.el ends here
+(provide 'nov-xwidget-browse)
+;;; nov-xwidget-browse.el ends here

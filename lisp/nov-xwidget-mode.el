@@ -1,7 +1,5 @@
-(require 'nov-xwidget)
-(setq nov-xwidget-style 'auto)
+(require 'nov-xwidget-browse)
 
-(defvar nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
 (defvar-local nov-xwidget-need-inject nil)
 
 (defun nov-extract-epub()
