@@ -1,6 +1,7 @@
 ;; init-pdf.el -*- lexical-binding: t; -*-
 
 (defconst pdf-tools-lisp-dir (expand-file-name "third-parties/pdf-tools/lisp" user-emacs-directory))
+(defvar pdf-view-theme-auto-dark nil)
 
 (when (file-directory-p pdf-tools-lisp-dir)
   (add-to-list 'load-path pdf-tools-lisp-dir)
@@ -37,14 +38,13 @@
 (after-load-theme
  (require 'pdf-tools)
  (when (theme-dark-p)
-   (add-to-list 'pdf-tools-enabled-modes 'pdf-view-dark-minor-mode)))
+   (add-to-list 'pdf-tools-enabled-modes 'pdf-view-dark-minor-mode)
+   (setq pdf-view-midnight-colors '("#ffffff" . "#282c34"))
+   (if pdf-view-theme-auto-dark
+       (add-hook 'pdf-view-mode-hook 'pdf-view-midnight-minor-mode))))
+
 
 (with-eval-after-load 'pdf-view
-  (add-hook 'pdf-view-midnight-minor-mode-hook
-            (lambda ()
-              (setq pdf-view-midnight-colors
-                    `(,(face-attribute 'default :foreground) . ,(face-attribute 'default :background)))))
-
   ;; (setq pdf-view-use-unicode-ligther nil)
   (setq pdf-view-use-scaling t)
   (setq pdf-view-use-imagemagick nil)
@@ -138,10 +138,6 @@
   (cua-mode -1)
   (pixel-scroll-precision-mode -1)
   (setq-local left-fringe-width 0)
-
-  ;; (if (theme-dark-p)
-  ;;     (pdf-view-midnight-minor-mode))
-
   ;; (if (boundp 'mwheel-scroll-up-function)
   ;;     (setq-local mwheel-scroll-up-function
   ;;                 #'pdf-view-next-line-or-next-page))
