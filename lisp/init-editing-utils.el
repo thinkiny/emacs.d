@@ -216,14 +216,12 @@ With arg N, insert N newlines."
 (require-package 'json-mode)
 (add-to-list 'auto-mode-alist '("\\.json\\'"  . json-mode))
 
-(require-package 'highlight-symbol)
-(setq highlight-symbol-idle-delay 1)
-(dolist (hook '(prog-mode-hook html-mode-hook css-mode-hook))
-  (add-hook hook 'highlight-symbol-mode)
-  (add-hook hook 'highlight-symbol-nav-mode))
-(add-hook 'org-mode-hook 'highlight-symbol-nav-mode)
-(with-eval-after-load 'highlight-symbol
-  (diminish 'highlight-symbol-mode))
+
+;; symbol-overlay
+(require-package 'symbol-overlay)
+(global-set-key (kbd "M-i") 'symbol-overlay-put)
+(global-set-key (kbd "M-n") 'symbol-overlay-jump-next)
+(global-set-key (kbd "M-p") 'symbol-overlay-jump-prev)
 
 (require 'scroll-other-window)
 (fset 'yes-or-no-p 'y-or-n-p)

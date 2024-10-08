@@ -33,7 +33,7 @@
 
 (advice-add #'god-mode-all :after #'god-global-mode-report)
 
-(global-set-key (kbd "M-i") #'god-local-mode)
+(global-set-key (kbd "M-g i") #'god-local-mode)
 (global-set-key (kbd "M-'") #'god-mode-all)
 
 (provide 'init-god)
