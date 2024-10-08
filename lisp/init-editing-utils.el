@@ -374,4 +374,17 @@ With arg N, insert N newlines."
 (use-package hcl-mode
   :mode (("\\.conf$" . hcl-mode)))
 
+;; scroll functions
+(defun scroll-down-line()
+  (interactive)
+  (pixel-scroll-precision-scroll-down (line-pixel-height))
+  (if (get-text-property (point) 'display)
+      (forward-line 1)))
+
+(defun scroll-up-line()
+  (interactive)
+  (pixel-scroll-precision-scroll-up (line-pixel-height))
+  (if (get-text-property (point) 'display)
+      (forward-line -1)))
+
 (provide 'init-editing-utils)
