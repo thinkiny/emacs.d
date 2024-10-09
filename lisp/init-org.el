@@ -1,6 +1,5 @@
 ﻿;; init-org.el --- Org-mode config -*- lexical-binding: t -*-
 
-(require-package 'org-cliplink)
 (require-package 'org-contrib)
 
 ;; org-roam
@@ -325,7 +324,8 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (unbind-key (kbd "C-c ]") org-mode-map)
   (define-key org-mode-map (kbd "C-c v") #'org-overview)
   (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
-  (define-key org-mode-map (kbd "C-c C-c") #'org-cliplink)
+  (define-key org-mode-map (kbd "C-c t i") #'org-toggle-inline-images)
+  (define-key org-mode-map (kbd "C-c C-c") #'org-clip-paste)
   (define-key org-mode-map (kbd "C-M-<up>") 'org-up-element)
   ;;(electric-pair-local-mode)
   (setq org-confirm-babel-evaluate nil)
@@ -413,10 +413,30 @@ _k_: delete row   _l_: delete column  _s_: shorten
 
 ;;(after-load-theme (org-level-reset-height))
 
-(add-hook 'org-mode-hook (lambda ()
-                           (setq-local electric-pair-inhibit-predicate
-                                       `(lambda (c)
-                                          (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
+(defun my-org-mode-hook()
+  (setq-local electric-pair-inhibit-predicate
+              `(lambda (c)
+                 (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))
+  (setq-local org-download-image-dir (concat (buffer-name) "-assets/images")))
+
+(add-hook 'org-mode-hook #'my-org-mode-hook)
+
+
+;; clipboard
+(require-package 'org-cliplink)
+(defun org-download-annotate-empty (_)
+  "")
+
+(with-eval-after-load 'org
+  (require 'org-download)
+  (setq org-download-annotate-function #'org-download-annotate-empty)
+  (defun org-clip-paste()
+    (interactive)
+    (let ((clip-text (substring-no-properties (gui-get-selection 'CLIPBOARD 'STRING))))
+      (if (s-starts-with? "http" clip-text)
+          (org-cliplink)
+        (org-download-clipboard))))
+  )
 
 (provide 'init-org)
 ;;; init-org.el ends here
