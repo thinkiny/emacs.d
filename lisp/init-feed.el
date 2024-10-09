@@ -59,28 +59,6 @@ browser defined by `browse-url-generic-program'."
   (let ((name (car (last (split-string repo "/")))))
     `(,(format "https://github.com/%s/releases.atom" repo) ,(intern name) github)))
 
-(with-eval-after-load 'elfeed
-  (setq elfeed-feeds
-        `(("https://rsshub.app/oschina/news/industry" tech)
-          ("https://rsshub.app/cnbeta" news)
-          ("https://rsshub.app/36kr/hot-list" news)
-          ("https://rsshub.app/v2ex/tab/hot" discuss)
-          ("https://rsshub.app/sspai/index" news)
-          ("https://www.solidot.org/index.rss" news)
-          ("https://www.geekpark.net/rss" tech)
-          ("https://www.biede.com/feed/" news)
-          ("https://rsshub.app/bbc/world-asia" news)
-          ("https://rsshub.app/hellobtc/kepu/latest" tech)
-          ("https://rsshub.app/juejin/posts/1838039172387262" tech)
-          ("http://www.ruanyifeng.com/blog/atom.xml" tech)
-          ("https://rsshub.app/51cto/index/recommend" tech)
-          ("https://rsshub.app/deeplearning/thebatch" tech)
-          ("https://rsshub.app/cloudnative/blog" tech)
-          ("https://rsshub.app/meituan/tech" tech)
-          ("https://rsshub.app/cncf" tech)
-          ,(feed-github-commit "emacs-mirror/emacs")
-          ,(feed-github-commit "scalameta/metals"))))
-
 (global-set-key (kbd "C-x e") 'elfeed)
 
 (provide 'init-feed)
