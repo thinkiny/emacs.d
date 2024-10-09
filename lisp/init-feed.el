@@ -19,14 +19,18 @@ browser defined by `browse-url-generic-program'."
         (add-hook 'quit-window-hook #'kill-elfeed-buffer nil t))))
 
   (defun my-elfeed-show-mode-hook()
-    (visual-line-mode)
+    (visual-line-mode))
+
+  (with-eval-after-load 'elfeed-show
     (define-key elfeed-show-mode-map (kbd "n") #'scroll-down-line)
     (define-key elfeed-show-mode-map (kbd "b") #'backward-char)
     (define-key elfeed-show-mode-map (kbd "f") #'forward-char)
     (define-key elfeed-show-mode-map (kbd "a") #'beginning-of-line)
     (define-key elfeed-show-mode-map (kbd "e") #'end-of-line)
     (define-key elfeed-show-mode-map (kbd ",") #'bing-dict-at-point)
-    (define-key elfeed-show-mode-map (kbd "v") #'elfeed-show-visit)
+    (define-key elfeed-show-mode-map (kbd "v") #'scroll-up)
+    (define-key elfeed-show-mode-map (kbd "M-v") #'scroll-down)
+    (define-key elfeed-show-mode-map (kbd "<RET>") #'elfeed-show-visit)
     (define-key elfeed-show-mode-map (kbd "p") #'scroll-up-line)
     (define-key elfeed-show-mode-map (kbd "j") #'scroll-down-line)
     (define-key elfeed-show-mode-map (kbd "k") #'scroll-up-line)
@@ -58,6 +62,9 @@ browser defined by `browse-url-generic-program'."
 (defun feed-github-release (repo)
   (let ((name (car (last (split-string repo "/")))))
     `(,(format "https://github.com/%s/releases.atom" repo) ,(intern name) github)))
+
+(with-eval-after-load 'elfeed
+  (require 'feeds nil 'noerror))
 
 (global-set-key (kbd "C-x e") 'elfeed)
 
