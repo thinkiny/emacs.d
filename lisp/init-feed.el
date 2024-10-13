@@ -67,5 +67,6 @@ browser defined by `browse-url-generic-program'."
   (require 'feeds nil 'noerror))
 
 (global-set-key (kbd "C-x e") 'elfeed)
+(use-proxy-local 'elfeed-show-visit)
 
 (provide 'init-feed)

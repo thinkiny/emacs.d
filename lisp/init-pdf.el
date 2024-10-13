@@ -152,6 +152,7 @@
   (define-key pdf-view-mode-map (kbd "j") #'pdf-view-next-line-or-next-page)
   (define-key pdf-view-mode-map (kbd "k") #'pdf-view-previous-line-or-previous-page)
   (define-key pdf-view-mode-map (kbd "f") #'pdf-view-next-line-or-next-page)
+  (define-key pdf-view-mode-map (kbd "M-c") #'pdf-view-kill-ring-save)
   (define-key pdf-view-mode-map (kbd "b") #'pdf-view-previous-line-or-previous-page)
   (define-key pdf-view-mode-map (kbd "N") #'pdf-view-next-page)
   (define-key pdf-view-mode-map (kbd "P") #'pdf-view-previous-page)

@@ -1,3 +1,4 @@
+;;; init-utils.el  -*- lexical-binding: t -*-
 (require 'subr-x)
 ;;(require 'jka-compr)
 
@@ -109,16 +110,27 @@
                  ,@body)))))
 
 ;; proxy
+(defvar url-proxy-services-local
+  '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
+          ("http" . "127.0.0.1:1087")
+          ("https" . "127.0.0.1:1087")))
+
 (defun set-proxy()
   (interactive)
-  (setq url-proxy-services
-        '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
-          ("http" . "127.0.0.1:1087")
-          ("https" . "127.0.0.1:1087"))))
+  (setq url-proxy-services url-proxy-services-local))
 
 (defun unset-proxy()
   (interactive)
   (setq url-proxy-services nil))
+
+(defun advice/use-proxy-local (func &rest args)
+  (defvar url-proxy-services)
+  (let ((url-proxy-services url-proxy-services-local))
+    (apply func args)))
+
+(defun use-proxy-local(&rest funcs)
+  (dolist (func funcs)
+    (advice-add func :around #'advice/use-proxy-local)))
 
 ;; common string
 (defun common-string-length (a b &optional idx)

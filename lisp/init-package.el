@@ -58,5 +58,6 @@ locate PACKAGE."
       use-package-always-ensure t)
 
 (setq package-native-compile t)
+(use-proxy-local 'package-list-packages)
 
 (provide 'init-package)
