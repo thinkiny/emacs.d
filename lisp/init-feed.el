@@ -33,13 +33,14 @@ browser defined by `browse-url-generic-program'."
     (define-key elfeed-show-mode-map (kbd ",") #'bing-dict-at-point)
     (define-key elfeed-show-mode-map (kbd "v") #'scroll-up)
     ;;(define-key elfeed-show-mode-map (kbd "M-v") #'scroll-down)
-    (define-key elfeed-show-mode-map (kbd "<RET>") #'elfeed-show-visit)
+    (define-key elfeed-show-mode-map (kbd "o") #'elfeed-show-visit)
     (define-key elfeed-show-mode-map (kbd "p") #'scroll-up-line)
     (define-key elfeed-show-mode-map (kbd "j") #'scroll-down-line)
     (define-key elfeed-show-mode-map (kbd "k") #'scroll-up-line)
     (define-key elfeed-show-mode-map (kbd "w") #'elfeed-show-yank)
     (define-key elfeed-show-mode-map (kbd "N") #'elfeed-show-next)
     (define-key elfeed-show-mode-map (kbd "P") #'elfeed-show-prev)
+    (define-key elfeed-show-mode-map (kbd "M-c") #'kill-ring-save)
     (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'bing-dict-at-point))
 
   (elfeed-goodies/setup)
@@ -73,6 +74,6 @@ browser defined by `browse-url-generic-program'."
   (require 'feeds nil 'noerror))
 
 (global-set-key (kbd "C-x e") 'elfeed)
-(use-proxy-local 'elfeed-show-visit)
+(use-proxy-local 'elfeed-search-show-entry)
 
 (provide 'init-feed)
