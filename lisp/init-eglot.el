@@ -1,4 +1,8 @@
-(setq eglot-enable-booster nil)
+;;; init-eglot
+
+(with-eval-after-load 'jsonrpc
+  (setq jsonrpc-inhibit-debug-on-error t)
+  (setq jsonrpc-event-hook nil))
 
 (use-package eglot
   :hook (eglot-managed-mode . my-eglot-mode-hook)
@@ -17,13 +21,7 @@
   (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
-  (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions)
-
-  ;; json rpc
-  (setq jsonrpc-inhibit-debug-on-error t)
-  (setq jsonrpc-event-hook nil)
-  (if eglot-enable-booster
-      (require 'eglot-booster)))
+  (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
   (setq mode-line-misc-info
@@ -107,12 +105,9 @@
   ;;                         eglot-hover-eldoc-function))
   (if eglot-enable-format-at-save
       (eglot-enable-format)
-    (eglot-disable-format))
-  (if eglot-enable-booster
-      (eglot-booster-mode)))
+    (eglot-disable-format)))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
-;; (ignore-tramp-ssh-control-master #'eglot-booster--init)
 
 (with-eval-after-load-theme
  'eglot
