@@ -139,6 +139,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
             (define-key xwidget-webkit-mode-map (kbd "M-c") 'xwidget-webkit-copy-selection-as-kill)
             (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-webkit-copy-selection-as-kill)
             (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-webkit-scroll-up)
+            (define-key xwidget-webkit-mode-map (kbd "<drag-mouse-1>") #'xwidget-translate-range)
             ;;(local-set-key (kbd "C-s") #'isearch-forward)
             (define-key xwidget-webkit-mode-map (kbd "<double-mouse-1>") #'xwidget-translate-range)
             (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range)))
