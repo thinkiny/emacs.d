@@ -8,7 +8,6 @@
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
   (after-load-theme (set-face-attribute 'tree-sitter-hl-face:property nil :slant 'normal)))
 
-
 (setq treesit-language-source-alist
    '((bash "https://github.com/tree-sitter/tree-sitter-bash")
      (cmake "https://github.com/uyha/tree-sitter-cmake")
@@ -26,7 +25,8 @@
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-     (scala "https://github.com/tree-sitter/tree-sitter-scala")))
+     (scala "https://github.com/tree-sitter/tree-sitter-scala")
+     (haskell "https://github.com/tree-sitter/tree-sitter-haskell")))
 
 (defun treesit-install-all-language()
   (interactive)

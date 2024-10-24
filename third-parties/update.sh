@@ -33,3 +33,4 @@ wget --no-check-certificate https://raw.githubusercontent.com/007kevin/pdf-view-
 wget --no-check-certificate https://raw.githubusercontent.com/jdtsmith/eglot-booster/main/eglot-booster.el -O eglot-booster.el
 wget --no-check-certificate https://raw.githubusercontent.com/gaoDean/org-remoteimg/main/org-remoteimg.el -O org-remoteimg.el
 wget --no-check-certificate https://raw.githubusercontent.com/abo-abo/org-download/refs/heads/master/org-download.el -O org-download.el
+wget --no-check-certificate https://codeberg.org/pranshu/haskell-ts-mode/raw/branch/main/haskell-ts-mode.el -O haskell-ts-mode.el

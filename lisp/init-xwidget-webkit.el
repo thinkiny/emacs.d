@@ -135,6 +135,8 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
             (setq-local left-fringe-width 0)
             (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-webkit-scroll-up-line)
             (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-webkit-scroll-down-line)
+            (define-key xwidget-webkit-mode-map (kbd "j") 'xwidget-webkit-scroll-up-line)
+            (define-key xwidget-webkit-mode-map (kbd "k") 'xwidget-webkit-scroll-down-line)
             (define-key xwidget-webkit-mode-map (kbd "M-v") 'xwidget-webkit-scroll-down)
             (define-key xwidget-webkit-mode-map (kbd "M-c") 'xwidget-webkit-copy-selection-as-kill)
             (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-webkit-copy-selection-as-kill)

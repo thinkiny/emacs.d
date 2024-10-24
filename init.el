@@ -49,6 +49,7 @@
 (require 'init-js)
 (require 'init-kotlin)
 (require 'init-flutter)
+(require 'init-haskell)
 
 ;;file
 (require 'init-markdown)
