@@ -16,7 +16,7 @@
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)
 (setq-default line-number-display-limit-width 2000000)
-;;(setq-default window-divider-default-right-width 1)
+;; (setq-default window-divider-default-right-width 1)
 (setq ring-bell-function 'ignore)
 
 (global-set-key (kbd "C-x c f") #'customize-face)
@@ -122,18 +122,16 @@
     (unbind-all-keys cnfonts-mode-map)))
 
 ;;size
-(defun set-frame-size-according-to-resolution ()
+(defun ajust-frame-size (width-p height-p)
   (interactive)
-  (if window-system
-      (progn
-        (if (> (x-display-pixel-width) 1280)
-            (add-to-list 'default-frame-alist '(width . 140))
-          (add-to-list 'default-frame-alist '(width . 85)))
-        (add-to-list 'default-frame-alist
-                     (cons 'height (/ (- (x-display-pixel-height) 250)
-                                      (frame-char-height)))))))
+  (when window-system
+    (let ((w  (/ (x-display-pixel-width) (frame-char-width)))
+          (h  (/ (x-display-pixel-height) (frame-char-height))))
+      (add-to-list 'default-frame-alist `(width . ,(truncate (* w width-p))))
+      (add-to-list 'default-frame-alist `(height . ,(truncate (* h height-p)))))))
 
-(set-frame-size-according-to-resolution)
+
+(ajust-frame-size 0.6 0.75)
 
 ;;mode line
 (setq mode-line-percent-position nil)
