@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# key: boost
+# --
+
+http_archive(
+    name = "boost",
+    strip_prefix = "boost_${1:1_75_0}",
+    urls = ["https://dl.bintray.com/boostorg/release/${2:1.75.0}/source/boost_$1.tar.gz"],
+    build_file_content = """
+filegroup(
+    name = "source",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"])
+"""
+)

@@ -1,0 +1,80 @@
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    writing-mode: horizontal-tb;
+    background-color: #282c34 !important;
+    color: #bbc2cf !important;
+    font-size: 20px !important;
+    text-align: left !important;
+    width: 95% !important;
+    height: 50% !important;
+    position: absolute !important;
+    left: 49% !important;
+    top: 30% !important;
+    transform: translate(-50%, -55%) !important;
+}
+p {
+    text-align: left !important;
+    line-height: 1.3 !important;
+    margin-bottom: 25px !important;
+}
+h1, h2, h3, h4, h5, h6 {
+    /*color: #d4d4d4 !important;*/
+    border-bottom: 0px solid #d4d4d4 !important;
+}
+pre, tr, td, div.warning {
+    font-size: 1em;
+    background: #272c35;
+}
+th {
+    font-size: 1em;
+    color: #d4d4d4 !important;
+}
+
+span {
+    color: #d4d4d4 !important;
+}
+h1 {
+    color: #ffaf69 !important;
+}
+h2 {
+    color: #3fc6b7 !important;
+}
+h3 {
+    color: #88d498 !important;
+}
+h4 {
+    color: #80c3f0 !important;
+}
+h5 {
+    color: #cccccc !important;
+}
+h6 {
+    color: #cccccc !important;
+}
+
+/* Same font for all tags */
+a, em, caption, th, pre, tr, td, code, h1, h2, h3, h4, h5, h6, p, body {
+    font-family: \"Fira Code\", Georgia,Cambria,\"Times New Roman\",Times,serif !important;
+}
+code {
+    font-size: 1em !important;
+}
+:root {
+    color-scheme: dark; /* both supported */
+}
+
+body p.title  {
+    color: #d4d4d4 !important;
+}
+
+body a{
+    color: #809fff !important;
+}
+
+body img {
+    max-width: 100% !important;
+    filter: brightness(.8) contrast(1.2);
+}

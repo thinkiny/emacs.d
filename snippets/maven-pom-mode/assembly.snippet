@@ -1,0 +1,28 @@
+# -*- mode: snippet -*-
+# name: assembly
+# key: ass
+# --
+
+<plugin>
+  <artifactId>maven-assembly-plugin</artifactId>
+  <version>${1:3.4.2}</version>
+  <configuration>
+    <descriptorRefs>
+      <descriptorRef>jar-with-dependencies</descriptorRef>
+    </descriptorRefs>
+    <archive>
+      <manifest>
+        <mainClass>${2:\${mainClassName}}</mainClass>
+      </manifest>
+    </archive>
+  </configuration>
+  <executions>
+    <execution>
+      <id>make-assembly</id>
+      <phase>package</phase>
+      <goals>
+        <goal>single</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>

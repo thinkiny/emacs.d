@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# key: http
+# --
+
+http_archive(
+  name = "${1:name}",
+  urls = ["${2:url}"],
+  sha256 = "${3:sha256}"
+)

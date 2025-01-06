@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# key: conf
+# --
+
+configure_make(
+    name = "${1:name}",
+    lib_source = "",
+    out_lib_dir = "",
+    shared_libraries = [],
+    visibility = ["//visibility:public"]
+)

@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: #ifndef with dir
+# key: hdr
+# --
+
+#ifndef ${1:`(gen-cpp-header-tag)`}
+#define $1
+
+$0
+
+#endif  // $1

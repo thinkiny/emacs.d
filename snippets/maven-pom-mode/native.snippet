@@ -1,0 +1,24 @@
+# -*- mode: snippet -*-
+# name: native
+# key: nat
+# --
+
+<plugin>
+    <groupId>org.graalvm.nativeimage</groupId>
+    <artifactId>native-image-maven-plugin</artifactId>
+    <version>\${graalvm.version}</version>
+    <executions>
+        <execution>
+            <goals>
+                <goal>native-image</goal>
+            </goals>
+            <phase>package</phase>
+        </execution>
+    </executions>
+    <configuration>
+        <skip>false</skip>
+        <buildArgs>
+            --no-fallback \${mainClassName}
+        </buildArgs>
+    </configuration>
+</plugin>

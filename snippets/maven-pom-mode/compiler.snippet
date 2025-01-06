@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: compiler
+# key: com
+# --
+
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <version>${1:3.8.1}</version>
+  <configuration>
+     <source>\${java.version}</source>
+     <target>\${java.version}</target>
+     <encoding>UTF-8</encoding>
+  </configuration>
+</plugin>

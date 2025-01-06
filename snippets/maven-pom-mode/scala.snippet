@@ -1,0 +1,29 @@
+# -*- mode: snippet -*-
+# name: scala
+# key: sca
+# --
+
+<plugin>
+  <groupId>net.alchim31.maven</groupId>
+  <artifactId>scala-maven-plugin</artifactId>
+  <version>4.4.0</version>
+  <configuration>
+    <args>
+      <arg>-deprecation</arg>
+      <arg>-unchecked</arg>
+      <arg>-feature</arg>
+      <arg>-Xlint</arg>
+    </args>
+    <source>\${java.version}</source>
+    <target>\${java.version}</target>
+    <scalaVersion>\${scala.version}</scalaVersion>
+  </configuration>
+  <executions>
+    <execution>
+      <goals>
+        <goal>compile</goal>
+        <goal>testCompile</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>

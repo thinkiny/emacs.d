@@ -1,0 +1,11 @@
+cache
+*.elc
+elfeed
+elpa
+java
+auto-save-list
+eln-cache
+eshell
+file-server
+tree-sitter
+cnfonts

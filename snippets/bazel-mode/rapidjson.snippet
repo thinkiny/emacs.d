@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# key: rapidjson
+# --
+
+new_git_repository(
+    name = "rapidjson",
+    remote = "https://github.com/Tencent/rapidjson.git",
+    commit = "cd5ee4dfe9814fa88b7ba66c1f9d8176d154c62f",
+    build_file_content = """
+cc_library(
+    name = "rapidjson",
+    hdrs = glob(["include/rapidjson/**/*.h"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"])
+"""
+)

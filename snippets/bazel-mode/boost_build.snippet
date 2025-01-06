@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# key: boostb
+# --
+
+boost_build(
+    name = "${1:name}",
+    lib_source = "${2:@boost//:source}",
+    static_libraries = ["${3:libs}"],
+    user_options = ["${4:opts}"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# key:  toml11
+# --
+
+new_git_repository(
+    name = "toml11",
+    remote = "https://github.com/ToruNiina/toml11.git",
+    branch = "master",
+    build_file_content = """
+cc_library(
+    name = "toml11",
+    hdrs = glob(["toml/*.hpp", "toml.hpp"]),
+    visibility = ["//visibility:public"])
+"""
+)
