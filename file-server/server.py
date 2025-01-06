@@ -3,7 +3,7 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from zipfile import ZipFile
-import sys
+import sys, os
 
 class CORSRequestHandler (SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -14,10 +14,12 @@ class CORSRequestHandler (SimpleHTTPRequestHandler):
         SimpleHTTPRequestHandler.end_headers(self)
 
 def extractPdfJs():
-    pdfjs_path = Path("./pdfjs")
+    root = os.path.dirname(__file__)
+    pdfjs_path = Path(f'{root}/pdfjs')
+    pdfjs_zip = Path(f'{root}/pdfjs.zip')
     if not pdfjs_path.exists():
-        with ZipFile('./pdfjs.zip', 'r') as z:
-            z.extractall(path = './')
+        with ZipFile(pdfjs_zip, 'r') as z:
+            z.extractall(path = root)
 
 if __name__ == '__main__':
     extractPdfJs()

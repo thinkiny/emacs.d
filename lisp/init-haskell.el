@@ -1,7 +1,9 @@
 (require 'haskell-ts-mode)
 
 (with-eval-after-load 'eglot
-  (haskell-ts-setup-eglot))
+  (defvar eglot-server-programs)
+  (add-to-list 'eglot-server-programs
+               '(haskell-ts-mode . ("haskell-language-server-wrapper" "--lsp"))))
 
 (defun my-haskell-mode-hook()
   (eglot-ensure))
