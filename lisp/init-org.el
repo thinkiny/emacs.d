@@ -288,12 +288,24 @@ _k_: delete row   _l_: delete column  _s_: shorten
   ("w" #'table-widen-cell)
   ("s" #'table-shorten-cell))
 
-
 (defun org-link-complete-docview (&optional _)
   "Create a file link using completion."
   (interactive)
   (concat "docview:"
           (read-file-name "DocFile: " "~/Documents" "./")))
+
+;; delete link at point with associated file
+(defun org-delete-link-at-point()
+   (interactive)
+   (let* ((link (org-element-context))
+          (type (org-element-type link))
+          (beg (org-element-property :begin link))
+          (end (org-element-property :end link))
+          (from (org-element-property :type link))
+          (path (org-element-property :path link)))
+     (when (and (s-equals? from "file") (eq type 'link))
+       (delete-region beg end)
+       (delete-file path))))
 
 (with-eval-after-load 'org
   ;; Various preferences
@@ -337,6 +349,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (define-key org-mode-map (kbd "C-M-<up>") #'org-up-element)
   (define-key org-mode-map (kbd "M-.") #'org-open-at-point)
   (define-key org-mode-map (kbd "C-c i l") #'org-insert-link)
+  (define-key org-mode-map (kbd "C-c d l") #'org-delete-link-at-point)
 
   (setq org-confirm-babel-evaluate nil)
   (org-babel-do-load-languages

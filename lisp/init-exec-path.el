@@ -4,7 +4,6 @@
 
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns x))
-  :ensure t
   :demand t
   :config
   (setq exec-path-from-shell-arguments '("-l"))
