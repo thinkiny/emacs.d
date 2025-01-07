@@ -303,8 +303,8 @@ _k_: delete row   _l_: delete column  _s_: shorten
           (end (org-element-property :end link))
           (from (org-element-property :type link))
           (path (org-element-property :path link)))
+     (delete-region beg end)
      (when (and (s-equals? from "file") (eq type 'link))
-       (delete-region beg end)
        (delete-file path))))
 
 (with-eval-after-load 'org

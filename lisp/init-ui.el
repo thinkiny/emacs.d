@@ -99,6 +99,7 @@
  (set-face-attribute 'button nil :background 'unspecified)
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
  (set-face-attribute 'ivy-virtual nil :foreground 'unspecified)
+ (set-face-attribute 'variable-pitch-text nil :height 1.0)
  ;;(set-face-attribute 'fringe nil :background nil)
  (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
