@@ -1,8 +1,5 @@
 ﻿;; init-org.el --- Org-mode config -*- lexical-binding: t -*-
 
-(require-package 'org-contrib)
-(require-package 'async)
-
 ;; org-roam
 (use-package org-roam
   :bind (("C-c n f" . org-roam-node-find)
@@ -13,6 +10,7 @@
                 ("C-c n t" . org-roam-tag-add)
                 ("C-c n a" . org-roam-alias-add)
                 ("C-c n l" . org-roam-buffer-toggle))))
+  :after org
   :config
   (setq org-roam-directory (file-truename "~/org/roam")))
 
@@ -28,7 +26,6 @@
 ;; org-modern
 (use-package org-modern)
 (with-eval-after-load 'org
-  (require 'org-indent)
   ;; auto download
   (require 'org-remoteimg)
   (setq url-cache-directory "~/.emacs.d/cache/url")
@@ -65,6 +62,7 @@
 
 ;; ;; org-appear
 (use-package org-appear
+  :after org
   :config
   (setq org-appear-autolinks t))
 
@@ -296,16 +294,16 @@ _k_: delete row   _l_: delete column  _s_: shorten
 
 ;; delete link at point with associated file
 (defun org-delete-link-at-point()
-   (interactive)
-   (let* ((link (org-element-context))
-          (type (org-element-type link))
-          (beg (org-element-property :begin link))
-          (end (org-element-property :end link))
-          (from (org-element-property :type link))
-          (path (org-element-property :path link)))
-     (delete-region beg end)
-     (when (and (s-equals? from "file") (eq type 'link))
-       (delete-file path))))
+  (interactive)
+  (let* ((link (org-element-context))
+         (type (org-element-type link))
+         (beg (org-element-property :begin link))
+         (end (org-element-property :end link))
+         (from (org-element-property :type link))
+         (path (org-element-property :path link)))
+    (delete-region beg end)
+    (when (and (s-equals? from "file") (eq type 'link))
+      (delete-file path))))
 
 (with-eval-after-load 'org
   ;; Various preferences
@@ -334,13 +332,13 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (require 'ox-gfm)
   ;; (org-beamer-mode)
 
-  ;; binding keys
+  ;; keybindings
   (unbind-key (kbd "C-,") org-mode-map)
   (unbind-key (kbd "C-c $") org-mode-map)
   (unbind-key (kbd "C-c C-m") org-mode-map)
   (unbind-key (kbd "C-c [") org-mode-map)
   (unbind-key (kbd "C-c ]") org-mode-map)
-  (unbind-key (kbd "C-c TAB") org-mode-map)
+  ;; (unbind-key (kbd "C-c TAB") org-mode-map)
 
   (define-key org-mode-map (kbd "C-c v") #'org-overview)
   (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
@@ -348,7 +346,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (define-key org-mode-map (kbd "C-c C-c") #'org-clip-paste)
   (define-key org-mode-map (kbd "C-M-<up>") #'org-up-element)
   (define-key org-mode-map (kbd "M-.") #'org-open-at-point)
-  (define-key org-mode-map (kbd "C-c i l") #'org-insert-link)
+  ;;(define-key org-mode-map (kbd "C-c i l") #'org-insert-link)
   (define-key org-mode-map (kbd "C-c d l") #'org-delete-link-at-point)
 
   (setq org-confirm-babel-evaluate nil)
