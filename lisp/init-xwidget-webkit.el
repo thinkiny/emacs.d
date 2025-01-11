@@ -1,6 +1,3 @@
-(defconst xwidget-scroll-line 10)
-(defconst xwidget-scroll-page 30)
-
 (defgroup xwidget-webkit '() "xwidget webkit" :group 'tools)
 (defcustom xwidget-webkit-urls '()
   "Specify xwidgets webkit URLS."
@@ -139,19 +136,19 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (defun xwidget-scroll-up-line()
   (interactive)
-  (xwidget-webkit-scroll-up-line xwidget-scroll-line))
+  (xwidget-webkit-scroll-up pixel-scroll-line-height))
 
 (defun xwidget-scroll-down-line()
   (interactive)
-  (xwidget-webkit-scroll-down-line xwidget-scroll-line))
+  (xwidget-webkit-scroll-down pixel-scroll-line-height))
 
 (defun xwidget-scroll-up()
   (interactive)
-  (xwidget-webkit-scroll-up-line xwidget-scroll-page))
+  (xwidget-webkit-scroll-up pixel-scroll-page-height))
 
 (defun xwidget-scroll-down()
   (interactive)
-  (xwidget-webkit-scroll-down-line xwidget-scroll-page))
+  (xwidget-webkit-scroll-down pixel-scroll-page-height))
 
 (with-eval-after-load 'xwidget
   (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-scroll-up-line)

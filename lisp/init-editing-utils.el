@@ -375,17 +375,24 @@ With arg N, insert N newlines."
   :mode (("\\.conf$" . hcl-mode)))
 
 ;; scroll functions
-(defun scroll-up-line()
-  (interactive)
-  (pixel-scroll-precision-scroll-down (line-pixel-height))
-  (if (get-text-property (point) 'display)
-      (forward-line 1)))
+(defconst pixel-scroll-line-height 40)
+(defconst pixel-scroll-page-height 240)
 
-(defun scroll-down-line()
+(defun pixel-scroll-up-line()
   (interactive)
-  (pixel-scroll-precision-scroll-up (line-pixel-height))
-  (if (get-text-property (point) 'display)
-      (forward-line -1)))
+  (pixel-scroll-precision-scroll-down pixel-scroll-line-height))
+
+(defun pixel-scroll-down-line()
+  (interactive)
+  (pixel-scroll-precision-scroll-up pixel-scroll-line-height))
+
+(defun pixel-scroll-up-page()
+  (interactive)
+  (pixel-scroll-precision-scroll-down pixel-scroll-page-height))
+
+(defun pixel-scroll-down-page()
+  (interactive)
+  (pixel-scroll-precision-scroll-up pixel-scroll-page-height))
 
 (use-package dwim-shell-command
   :demand t

@@ -6,9 +6,7 @@
   (interactive)
   (if (>= (window-end) (point-max))
       (nov-next-document)
-    (pixel-scroll-precision-scroll-down (line-pixel-height)))
-  (if (get-text-property (point) 'display)
-      (forward-line 1)))
+    (pixel-scroll-precision-scroll-down pixel-scroll-line-height)))
 
 (defun nov-goto-previous-line-or-page(&optional rest)
   (interactive)
@@ -17,9 +15,7 @@
       (progn
         (nov-previous-document)
         (goto-char (point-max)))
-    (pixel-scroll-precision-scroll-up (line-pixel-height)))
-  (if (get-text-property (point) 'display)
-      (forward-line -1)))
+    (pixel-scroll-precision-scroll-up pixel-scroll-line-height)))
 
 (defun setup-nov()
   (define-key nov-mode-map (kbd "N") 'nov-next-document)

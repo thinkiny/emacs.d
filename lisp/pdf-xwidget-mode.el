@@ -26,28 +26,28 @@
            file))))
 
 ;; pdf xwidget scroll
-(defun pdf-xwidget-scroll(lines)
+(defun pdf-xwidget-scroll(pixels)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
    (format
     "document.getElementById(\"viewerContainer\").scrollBy({top: %d, behavior: 'smooth'})"
-    (* lines (window-font-height)))))
+    pixels)))
 
 (defun pdf-xwidget-scroll-up-line()
   (interactive)
-  (pdf-xwidget-scroll xwidget-scroll-line))
+  (pdf-xwidget-scroll pixel-scroll-line-height))
 
 (defun pdf-xwidget-scroll-up()
   (interactive)
-  (pdf-xwidget-scroll xwidget-scroll-page))
+  (pdf-xwidget-scroll pixel-scroll-page-height))
 
 (defun pdf-xwidget-scroll-down-line()
   (interactive)
-  (pdf-xwidget-scroll (* -1 xwidget-scroll-line)))
+  (pdf-xwidget-scroll (* -1 pixel-scroll-line-height)))
 
 (defun pdf-xwidget-scroll-down()
   (interactive)
-  (pdf-xwidget-scroll (* -1 xwidget-scroll-page)))
+  (pdf-xwidget-scroll (* -1 pixel-scroll-page-height)))
 
 ;; pdf xwidget toolbar
 (defvar-local pdf-xwidget-toolbar-show t)
