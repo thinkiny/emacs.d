@@ -23,16 +23,18 @@
 (global-set-key (kbd "C-x c g") #'customize-group)
 
 ;; scroll
-(pixel-scroll-precision-mode)
-(setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
-(setq mouse-wheel-progressive-speed nil)
-(setq mouse-wheel-follow-mouse 't)
-(setq scroll-step 1
-      scroll-conservatively 101
-      scroll-up-aggressively 0.01
-      scroll-down-aggressively 0.01
-      auto-window-vscroll nil)
+(when window-system
+  (pixel-scroll-precision-mode)
+  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+  (setq mouse-wheel-progressive-speed nil)
+  (setq mouse-wheel-follow-mouse 't)
+  (setq scroll-step 1
+        scroll-conservatively 101
+        scroll-up-aggressively 0.01
+        scroll-down-aggressively 0.01
+        auto-window-vscroll nil))
 
+;; border
 (let ((no-border '(internal-border-width . 0)))
   (add-to-list 'default-frame-alist no-border)
   (add-to-list 'initial-frame-alist no-border))
@@ -134,7 +136,7 @@
   (when window-system
    (if (> (x-display-pixel-width) 1280)
       (set-large-frame-size)
-      (set-small-frame-size))))
+     (set-small-frame-size))))
 
 (adjust-frame-size)
 
@@ -208,14 +210,6 @@
                 " "
                 mode-line-misc-info
                 ))
-
-;; (use-package centaur-tabs
-;;   :demand
-;;   :config
-;;   (centaur-tabs-mode t)
-;;   :bind
-;;   ("C-<prior>" . centaur-tabs-backward)
-;;   ("C-<next>" . centaur-tabs-forward))
 
 (defun counsel--load-theme-action (x)
   "Disable current themes and load theme X."

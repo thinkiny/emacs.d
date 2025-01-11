@@ -110,6 +110,7 @@
                    ,@body)))))
 
 ;; proxy
+(defconst enable-local-proxy t)
 (defvar url-proxy-services-local
   '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
     ("http" . "127.0.0.1:1087")
@@ -125,7 +126,9 @@
 
 (defun advice/use-proxy-local (func &rest args)
   (defvar url-proxy-services)
-  (let ((url-proxy-services url-proxy-services-local))
+  (if enable-local-proxy
+      (let ((url-proxy-services url-proxy-services-local))
+        (apply func args))
     (apply func args)))
 
 (defun use-proxy-local(&rest funcs)

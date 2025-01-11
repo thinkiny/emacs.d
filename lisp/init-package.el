@@ -1,3 +1,5 @@
+;;; init-package.el --- package related things -*- lexical-binding: t -*-
+
 ;; (setq package-archives '(("gnu" . "http://elpa.emacs-china.org/gnu/")
 ;;                          ("melpa" . "http://elpa.emacs-china.org/melpa/")))
 
@@ -58,6 +60,6 @@ locate PACKAGE."
       use-package-always-ensure t)
 
 (setq package-native-compile t)
-(use-proxy-local 'package-list-packages 'package-install 'package--update-selected-packages)
+(use-proxy-local 'package--download-and-read-archives 'package-install 'package--update-selected-packages)
 
 (provide 'init-package)
