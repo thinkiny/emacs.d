@@ -37,7 +37,7 @@
   (interactive)
   (pdf-xwidget-scroll pixel-scroll-line-height))
 
-(defun pdf-xwidget-scroll-up()
+(defun pdf-xwidget-scroll-up-page()
   (interactive)
   (pdf-xwidget-scroll pixel-scroll-page-height))
 
@@ -45,7 +45,7 @@
   (interactive)
   (pdf-xwidget-scroll (* -1 pixel-scroll-line-height)))
 
-(defun pdf-xwidget-scroll-down()
+(defun pdf-xwidget-scroll-down-page()
   (interactive)
   (pdf-xwidget-scroll (* -1 pixel-scroll-page-height)))
 
@@ -118,8 +118,9 @@
     (define-key map (kbd "s") #'pdf-xwidget-scroll-up-line)
     (define-key map (kbd "u") #'pdf-xwidget-reload)
     (define-key map (kbd "w") #'pdf-xwidget-scroll-down-line)
-    (define-key map (kbd "v") #'pdf-xwidget-scroll-up)
-    (define-key map (kbd "M-v") 'pdf-xwidget-scroll-down)
+    (define-key map (kbd "v") #'pdf-xwidget-scroll-up-page)
+    (define-key map (kbd "SPC") #'pdf-xwidget-scroll-up-page)
+    (define-key map (kbd "M-v") 'pdf-xwidget-scroll-down-page)
     (define-key map (kbd "g") #'xwidget-webkit-browse-url)
     (define-key map (kbd "M-c") 'xwidget-webkit-copy-selection-as-kill)
     (define-key map (kbd "M-w") 'xwidget-webkit-copy-selection-as-kill)

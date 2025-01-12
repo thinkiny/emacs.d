@@ -222,6 +222,10 @@ With arg N, insert N newlines."
 (global-set-key (kbd "M-i") 'symbol-overlay-put)
 (global-set-key (kbd "M-n") 'symbol-overlay-jump-next)
 (global-set-key (kbd "M-p") 'symbol-overlay-jump-prev)
+(add-hook 'prog-mode-hook 'symbol-overlay-mode)
+
+;; (define-globalized-minor-mode global-symbol-overlay-mode symbol-overlay-mode symbol-overlay-mode)
+;; (global-symbol-overlay-mode)
 
 (require 'scroll-other-window)
 (fset 'yes-or-no-p 'y-or-n-p)

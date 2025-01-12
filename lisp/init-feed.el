@@ -65,6 +65,7 @@ browser defined by `browse-url-generic-program'."
     (define-key elfeed-show-mode-map (kbd ",") #'bing-dict-at-point)
     (define-key elfeed-show-mode-map (kbd "v") #'pixel-scroll-up-page)
     (define-key elfeed-show-mode-map (kbd "M-v") #'pixel-scroll-down-page)
+    (define-key elfeed-show-mode-map (kbd "SPC") #'pixel-scroll-up-page)
     (define-key elfeed-show-mode-map (kbd "o") #'elfeed-open-in-chrome)
     (define-key elfeed-show-mode-map (kbd "i") #'elfeed-show-visit)
     (define-key elfeed-show-mode-map (kbd "p") #'pixel-scroll-down-line)
