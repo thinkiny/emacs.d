@@ -12,7 +12,12 @@
                 ("C-c n l" . org-roam-buffer-toggle))))
   :after org
   :config
-  (setq org-roam-directory (file-truename "~/org/roam")))
+  (setq org-roam-directory (file-truename "~/org/roam"))
+  (setq org-roam-db-node-include-function
+        (lambda ()
+          (pcase (org-element-type (org-element-context))
+            ('headline (member "ROAM_INCLUDE" (org-get-tags)))
+            (_ t)))))
 
 (use-package org-roam-ui
   :after org-roam
