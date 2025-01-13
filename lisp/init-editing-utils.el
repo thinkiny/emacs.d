@@ -428,7 +428,7 @@ fi"
   (defun dwim-shell-commands-macos-show-dock (status on-completion)
     "Control macOS dock shown."
     (let ((cmd (if status "true" "false"))
-          (title (if status "Show" "Hide")))
+          (title (if status "Hide" "Show")))
       (dwim-shell-command-on-marked-files
        (concat title " dock.")
        (format "osascript -e 'tell application \"System Events\" to set autohide of dock preferences to %s'" cmd)

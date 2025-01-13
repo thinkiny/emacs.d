@@ -56,6 +56,14 @@ transpositions to execute in sequence."
       (call-interactively 'enlarge-window-horizontally)
     (call-interactively 'shrink-window-horizontally)))
 
+(global-set-key (kbd "C-c TAB") 'crux-transpose-windows)
+(global-set-key (kbd "C-c m m") 'my-toggle-frame-maximized)
+(global-set-key (kbd "C-M-<left>") 'change-window-size-left)
+(global-set-key (kbd "C-M-<right>") 'change-window-size-right)
+(global-set-key (kbd "C-M-<down>") 'change-window-size-down)
+(global-set-key (kbd "C-M-<up>") 'change-window-size-up)
+
+;; maximize window
 (defun toggle-frame-maximized-callback(buffer _)
   (kill-buffer buffer)
   (run-with-timer 0.1 0 #'toggle-frame-maximized))
@@ -68,16 +76,10 @@ transpositions to execute in sequence."
 (defun my-toggle-frame-maximized()
   (interactive)
   (if *is-a-mac*
-      (toggle-frame-maximized-macos nil)
+      (toggle-frame-maximized-macos t)
     (toggle-frame-maximized)))
 
-(global-set-key (kbd "C-c TAB") 'crux-transpose-windows)
-(global-set-key (kbd "C-c m m") 'my-toggle-frame-maximized)
 (global-set-key (kbd "C-c m f") 'toggle-frame-fullscreen)
-(global-set-key (kbd "C-M-<left>") 'change-window-size-left)
-(global-set-key (kbd "C-M-<right>") 'change-window-size-right)
-(global-set-key (kbd "C-M-<down>") 'change-window-size-down)
-(global-set-key (kbd "C-M-<up>") 'change-window-size-up)
 
 (require 'project)
 ;; unset allkeys

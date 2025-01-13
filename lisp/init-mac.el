@@ -13,11 +13,7 @@
           (lambda ()
             (local-unset-key (kbd "C-c C-n"))))
 
-;; Curse Lion and its sudden but inevitable fullscreen mode!
-;; NOTE Meaningless to railwaycat's emacs-mac build
-(setq ns-use-native-fullscreen nil)
-
-;; Visit files opened outside of Emacs in existing frame, not a new one
+;; ;; Visit files opened outside of Emacs in existing frame, not a new one
 (setq ns-pop-up-frames nil)
 
 ;; sane trackpad/mouse scroll settings
