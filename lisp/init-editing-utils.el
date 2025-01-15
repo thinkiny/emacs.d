@@ -379,8 +379,8 @@ With arg N, insert N newlines."
   :mode (("\\.conf$" . hcl-mode)))
 
 ;; scroll functions
-(defconst pixel-scroll-line-height 40)
-(defconst pixel-scroll-page-height 240)
+(defconst pixel-scroll-line-height 60)
+(defconst pixel-scroll-page-height 400)
 
 (defun pixel-scroll-up-line()
   (interactive)

@@ -47,6 +47,7 @@ browser defined by `browse-url-generic-program'."
   (with-eval-after-load 'elfeed-search
     (define-key elfeed-search-mode-map (kbd "j") #'next-line)
     (define-key elfeed-search-mode-map (kbd "k") #'previous-line)
+    (define-key elfeed-search-mode-map (kbd "d") #'elfeed-search-untag-all-unread)
     (define-key elfeed-search-mode-map (kbd "o") #'elfeed-open-directly-in-chrome))
 
   (defun elfeed-open-in-chrome()

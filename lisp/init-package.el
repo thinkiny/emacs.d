@@ -60,6 +60,6 @@ locate PACKAGE."
       use-package-always-ensure t)
 
 (setq package-native-compile t)
-(use-proxy-local 'package--download-and-read-archives 'package-install 'package--update-selected-packages)
+(use-proxy-local 'package--with-response-buffer-1)
 
 (provide 'init-package)
