@@ -33,21 +33,21 @@
     "document.getElementById(\"viewerContainer\").scrollBy({top: %d, behavior: 'smooth'})"
     pixels)))
 
-(defun pdf-xwidget-scroll-up-line()
+(defun pdf-xwidget-scroll-up-scan()
   (interactive)
-  (pdf-xwidget-scroll pixel-scroll-line-height))
+  (pdf-xwidget-scroll pixel-scroll-scan-height))
 
 (defun pdf-xwidget-scroll-up-page()
   (interactive)
-  (pdf-xwidget-scroll pixel-scroll-page-height))
+  (pdf-xwidget-scroll (get-pixel-scroll-page-height)))
 
-(defun pdf-xwidget-scroll-down-line()
+(defun pdf-xwidget-scroll-down-scan()
   (interactive)
-  (pdf-xwidget-scroll (* -1 pixel-scroll-line-height)))
+  (pdf-xwidget-scroll (* -1 pixel-scroll-scan-height)))
 
 (defun pdf-xwidget-scroll-down-page()
   (interactive)
-  (pdf-xwidget-scroll (* -1 pixel-scroll-page-height)))
+  (pdf-xwidget-scroll (* -1 (get-pixel-scroll-page-height))))
 
 ;; pdf xwidget toolbar
 (defvar-local pdf-xwidget-toolbar-show t)
@@ -110,14 +110,14 @@
 (defvar pdf-xwidget-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") #'pdf-xwidget-toggle-sidebar)
-    (define-key map (kbd "n") #'pdf-xwidget-scroll-up-line)
+    (define-key map (kbd "n") #'pdf-xwidget-scroll-up-scan)
     (define-key map (kbd "t") #'pdf-xwidget-toggle-toolbar)
-    (define-key map (kbd "p") #'pdf-xwidget-scroll-down-line)
-    (define-key map (kbd "j") #'pdf-xwidget-scroll-up-line)
-    (define-key map (kbd "k") #'pdf-xwidget-scroll-down-line)
-    (define-key map (kbd "s") #'pdf-xwidget-scroll-up-line)
+    (define-key map (kbd "p") #'pdf-xwidget-scroll-down-scan)
+    (define-key map (kbd "j") #'pdf-xwidget-scroll-up-scan)
+    (define-key map (kbd "k") #'pdf-xwidget-scroll-down-scan)
+    (define-key map (kbd "s") #'pdf-xwidget-scroll-up-scan)
     (define-key map (kbd "u") #'pdf-xwidget-reload)
-    (define-key map (kbd "w") #'pdf-xwidget-scroll-down-line)
+    (define-key map (kbd "w") #'pdf-xwidget-scroll-down-scan)
     (define-key map (kbd "v") #'pdf-xwidget-scroll-up-page)
     (define-key map (kbd "SPC") #'pdf-xwidget-scroll-up-page)
     (define-key map (kbd "M-v") 'pdf-xwidget-scroll-down-page)

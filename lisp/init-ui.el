@@ -34,6 +34,45 @@
         scroll-down-aggressively 0.01
         auto-window-vscroll nil))
 
+;; scroll functions
+;; font-height: (/ (plist-get (font-face-attributes (face-attribute 'default :font)) :height) 10)
+(defconst pixel-scroll-scan-height 110)
+(defconst pixel-scroll-not-plain-line-height 60)
+(defconst pixel-scroll-page-lines 20)
+
+(defun get-pixel-scroll-line-height()
+  (frame-char-height))
+
+(defun get-pixel-scroll-page-height()
+  (* pixel-scroll-page-lines (get-pixel-scroll-line-height)))
+
+(defun not-plain-on-the-point()
+  (let ((props (text-properties-at (point))))
+    (and props
+         (seq-reduce
+          (lambda (acc k) (or acc (plist-get props k)))
+          '(htmlize-link image-displayer) nil))))
+
+(defun pixel-forward-line()
+  (interactive)
+  (if (not-plain-on-the-point)
+      (pixel-scroll-precision-scroll-down pixel-scroll-not-plain-line-height))
+    (forward-line 1))
+
+(defun pixel-backward-line()
+  (interactive)
+  (if (not-plain-on-the-point)
+      (pixel-scroll-precision-scroll-up pixel-scroll-not-plain-line-height))
+    (forward-line -1))
+
+(defun pixel-scroll-up-page()
+  (interactive)
+  (pixel-scroll-precision-scroll-down (get-pixel-scroll-page-height)))
+
+(defun pixel-scroll-down-page()
+  (interactive)
+  (pixel-scroll-precision-scroll-up (get-pixel-scroll-page-height)))
+
 ;; border
 (let ((no-border '(internal-border-width . 0)))
   (add-to-list 'default-frame-alist no-border)
@@ -75,7 +114,7 @@
            (set-frame-parameter nil 'alpha-background val))))
 
 (defun set-transparency ()
-  "Sets the transparency of the frame window. 0=transparent/100=opaque"
+  "Set the transparency of the frame window from 0=transparent to 100=opaque."
   (interactive)
   (when window-system
     (let* ((value (read-number "change frame transparency: " frame-transparency)))
@@ -125,8 +164,8 @@
 
 ;;size
 (defun set-large-frame-size()
-  (add-to-list 'default-frame-alist (cons 'width 120))
-  (add-to-list 'default-frame-alist (cons 'height 45)))
+  (add-to-list 'default-frame-alist (cons 'width 130))
+  (add-to-list 'default-frame-alist (cons 'height 50)))
 
 (defun set-small-frame-size()
   (add-to-list 'default-frame-alist (cons 'width 80))
@@ -134,9 +173,9 @@
 
 (defun adjust-frame-size ()
   (when window-system
-   (if (> (x-display-pixel-width) 1280)
-      (set-large-frame-size)
-     (set-small-frame-size))))
+    (if (> (x-display-pixel-width) 1280)
+        (set-large-frame-size)
+      (set-small-frame-size))))
 
 (adjust-frame-size)
 
@@ -167,12 +206,12 @@
 
 ;; project-name in mode-line
 (defun projectile-project-name-optional()
-   "Return project name.
+  "Return project name.
  If PROJECT is not specified acts on the current project."
-   (let ((project-root (projectile-project-root)))
-     (if project-root
-         (funcall projectile-project-name-function project-root)
-       "")))
+  (let ((project-root (projectile-project-root)))
+    (if project-root
+        (funcall projectile-project-name-function project-root)
+      "")))
 
 (defun project-name-mode-line ()
   (cond

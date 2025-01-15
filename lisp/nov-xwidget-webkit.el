@@ -52,13 +52,13 @@ alternative browser function."
     (define-key map (kbd "M-v") #'nov-xwidget-scroll-down-page)
     (define-key map (kbd "N") #'nov-xwidget-next-document)
     (define-key map (kbd "P") #'nov-xwidget-previous-document)
-    (define-key map (kbd "n") #'nov-xwidget-scroll-up-line)
-    (define-key map (kbd "j") #'nov-xwidget-scroll-up-line)
-    (define-key map (kbd "k") #'nov-xwidget-scroll-down-line)
-    (define-key map (kbd "s") #'nov-xwidget-scroll-up-line)
-    (define-key map (kbd "w") #'nov-xwidget-scroll-down-line)
+    (define-key map (kbd "n") #'nov-xwidget-scroll-up-scan)
+    (define-key map (kbd "j") #'nov-xwidget-scroll-up-scan)
+    (define-key map (kbd "k") #'nov-xwidget-scroll-down-scan)
+    (define-key map (kbd "s") #'nov-xwidget-scroll-up-scan)
+    (define-key map (kbd "w") #'nov-xwidget-scroll-down-scan)
     (define-key map (kbd "G") #'xwidget-webkit-scroll-bottom)
-    (define-key map (kbd "p") #'nov-xwidget-scroll-down-line)
+    (define-key map (kbd "p") #'nov-xwidget-scroll-down-scan)
     map)
   "Keymap for `nov-xwidget-webkit-mode-map'.")
 
@@ -408,20 +408,20 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (add-to-list 'window-size-change-functions
                'nov-xwidget-webkit-adjust-size-in-frame))
 
-(defun nov-xwidget-next-line-or-page-cb(end)
+(defun nov-xwidget-next-scan-or-page-cb(end)
   (if (s-equals-p end "1")
       (nov-xwidget-next-document)
-    (xwidget-webkit-scroll-up-line xwidget-scroll-line)))
+    (xwidget-webkit-scroll-up pixel-scroll-scan-height)))
 
 (defun nov-xwidget-scroll-up-page()
   (interactive)
-  (xwidget-webkit-scroll-up-line xwidget-scroll-page))
+  (xwidget-webkit-scroll-up (get-pixel-scroll-page-height)))
 
 (defun nov-xwidget-scroll-down-page()
   (interactive)
-  (xwidget-webkit-scroll-down-line xwidget-scroll-page))
+  (xwidget-webkit-scroll-down (get-pixel-scroll-page-height)))
 
-(defun nov-xwidget-scroll-up-line()
+(defun nov-xwidget-scroll-up-scan()
   (interactive)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
@@ -431,16 +431,16 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     } else {
         return \"0\";
     }
-})();" #'nov-xwidget-next-line-or-page-cb))
+})();" #'nov-xwidget-next-scan-or-page-cb))
 
-(defun nov-xwidget-previous-line-or-page-cb(end)
+(defun nov-xwidget-previous-scan-or-page-cb(end)
   (if (s-equals-p end "1")
       (progn
         (nov-xwidget-previous-document)
         (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-    (xwidget-webkit-scroll-down-line xwidget-scroll-line)))
+    (xwidget-webkit-scroll-down pixel-scroll-scan-height)))
 
-(defun nov-xwidget-scroll-down-line()
+(defun nov-xwidget-scroll-down-scan()
   (interactive)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
@@ -450,7 +450,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     } else {
         return \"0\";
     }
-})();" #'nov-xwidget-previous-line-or-page-cb))
+})();" #'nov-xwidget-previous-scan-or-page-cb))
 
 (provide 'nov-xwidget-webkit)
 ;;; nov-xwidget-webkit.el ends here
