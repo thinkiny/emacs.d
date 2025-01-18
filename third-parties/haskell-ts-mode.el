@@ -301,29 +301,45 @@
        (catch-all parent 2))))
   "\"Simple\" treesit indentation rules for haskell.")
 
-;; Copied from haskell-tng-mode, changed a bit
-
 (defvar haskell-ts-mode-syntax-table
   (eval-when-compile
     (let ((table (make-syntax-table))
 	  (syntax-list
-	   '(("_" ?! ?_)
-	     ("w" ?')
-	     ;; Haskell has some goofy comment enders like C-q C-l
-	     (">" 13 10 12 11)
-	     ("_ 123" ?-)
+	   `((" " ?\  ?\t)
+	     ("\"" ?\")
+	     ("_" ?\' ?_)
+	     ("()" ?\()
+	     (")(" ?\))
+	     ("(]" ?\[)
+	     (")[" ?\])
 	     ("(}1nb" ?\{)
 	     ("){4nb" ?\})
-	     ("<" ?#)
-	     (">" ?\n)
-	     ;; Special operaters
-	     ("." ?\, ?\; ?@)
-	     ("\"" ?\")
-	     ("$`"  ?\`))))
+	     ("< 123" ?-)
+	     ("<" ?\n)
+	     ("$`" ?\`)
+	     ,(cons
+	       "."
+	       (string-to-list "!#$%&*+./:<=>?@^|~,;\\")))))
       ;; The defaults are mostly fine
       (dolist (ls syntax-list table)
 	(dolist (char (cdr ls))
 	  (modify-syntax-entry char (car ls) table))))))
+
+(defun haskell-ts-sexp (node)
+  "Returns non-nil on a sexp node."
+  (let ((node-text (treesit-node-text node 1)))
+    (and
+     (not (member node-text '( "{" "}" "[" "]" "(" ")" ";")))
+     (not (and (string= "operator" (treesit-node-field-name node))
+	       (= 1 (length node-text)))))))
+
+(defvar haskell-ts-thing-settings
+  `((haskell
+     (sexp haskell-ts-sexp)
+     (sentence "match")
+     (string "string")
+     (text "string")))
+  "`treesit-thing-settings' for `haskell-ts-mode'.")
 
 (defmacro haskell-ts-imenu-name-function (check-func)
   `(lambda (node)
@@ -342,9 +358,12 @@
 ;;;###autoload
 (define-derived-mode haskell-ts-mode prog-mode "haskell ts mode"
   "Major mode for Haskell files using tree-sitter."
+  :table haskell-ts-mode-syntax-table
   (unless (treesit-ready-p 'haskell)
     (error "Tree-sitter for Haskell is not available"))
-  (treesit-parser-create 'haskell)
+  (setq treesit-primary-parser (treesit-parser-create 'haskell))
+  (setq treesit-language-at-point-function
+	(lambda (&rest _) 'haskell))
   (setq-local treesit-defun-type-regexp "\\(?:\\(?:function\\|struct\\)_definition\\)")
   ;; Indent
   (when haskell-ts-use-indent
@@ -359,6 +378,7 @@
 	      '((?` . ?`) (?\( . ?\)) (?{ . ?}) (?\" . ?\") (?\[ . ?\])))
   ;; Navigation
   (setq-local treesit-defun-name-function 'haskell-ts-defun-name)
+  (setq-local treesit-thing-settings haskell-ts-thing-settings)
   (setq-local treesit-defun-type-regexp
 	      ;; Since haskell is strict functional, any 2nd level
 	      ;; entity is defintion
@@ -430,11 +450,13 @@
     (comint-send-string hs "\n:}\n")))
 
 (defun run-haskell ()
+  "Run an inferior Haskell process."
   (interactive)
-  (pop-to-buffer-same-window
-   (if (comint-check-proc (concat "*" haskell-ts-ghci-buffer-name "*"))
-       haskell-ts-ghci-buffer-name
-     (make-comint haskell-ts-ghci-buffer-name haskell-ts-ghci nil buffer-file-name))))
+  (let ((buffer (concat "*" haskell-ts-ghci-buffer-name "*")))
+    (pop-to-buffer-same-window
+     (if (comint-check-proc buffer)
+         buffer
+       (make-comint haskell-ts-ghci-buffer-name haskell-ts-ghci nil buffer-file-name)))))
 
 (defun haskell-ts-haskell-session ()
   (get-buffer-process (concat "*" haskell-ts-ghci-buffer-name "*")))

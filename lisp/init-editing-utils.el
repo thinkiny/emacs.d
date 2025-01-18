@@ -266,12 +266,6 @@ With arg N, insert N newlines."
   :bind (:map global-map
               ("C-,"  . 'bing-dict-at-point)))
 
-(defun test-func()
-  (interactive)
-  (if (eq major-mode 'nov-xwidget-webkit-mode)
-      (message "yesyes")
-    (message "nonono")))
-
 (defvar-local auto-translate-mouse-selection nil)
 (defun translate-mouse-selection()
   (interactive)

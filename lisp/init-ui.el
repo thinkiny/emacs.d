@@ -48,10 +48,12 @@
 
 (defun not-plain-on-the-point()
   (let ((props (text-properties-at (point))))
-    (and props
-         (seq-reduce
-          (lambda (acc k) (or acc (plist-get props k)))
-          '(htmlize-link image-displayer) nil))))
+    (and
+     (> (pixel-line-height) (frame-char-height))
+     props
+     (seq-reduce
+      (lambda (acc k) (or acc (plist-get props k)))
+      '(htmlize-link image-displayer) nil))))
 
 (defun pixel-forward-line()
   (interactive)

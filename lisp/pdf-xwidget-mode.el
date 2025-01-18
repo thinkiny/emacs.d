@@ -13,7 +13,7 @@
      (start-process "file-server" nil "python3" (concat file-server-dir "/server.py") file-server-port)
      (lambda (process event)
        (princ (format "%s: %s" process event))))
-    (sleep-for 1)))
+    (sit-for 1)))
 
 (defun filer-server-pdf-view-url (file)
   (format "http://localhost:%s%s/pdfjs/web/viewer.html?file=%s"
