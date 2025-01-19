@@ -36,8 +36,8 @@
 
 ;; scroll functions
 ;; font-height: (/ (plist-get (font-face-attributes (face-attribute 'default :font)) :height) 10)
-(defconst pixel-scroll-scan-height 110)
-(defconst pixel-scroll-not-plain-line-height 60)
+(defconst pixel-scroll-scan-height 120)
+(defconst pixel-scroll-not-plain-line-height 120)
 (defconst pixel-scroll-page-lines 20)
 
 (defun get-pixel-scroll-line-height()
@@ -46,26 +46,42 @@
 (defun get-pixel-scroll-page-height()
   (* pixel-scroll-page-lines (get-pixel-scroll-line-height)))
 
+(defun is-org-link-shown()
+  (ignore-errors
+    (and (org-element-property :raw-link (org-element-context))
+           (> (line-pixel-height) (frame-char-height)))))
+
+(defun is-image-shown()
+  (plist-get (text-properties-at (point)) 'image-displayer))
+
 (defun not-plain-on-the-point()
-  (let ((props (text-properties-at (point))))
-    (and
-     (> (pixel-line-height) (frame-char-height))
-     props
-     (seq-reduce
-      (lambda (acc k) (or acc (plist-get props k)))
-      '(htmlize-link image-displayer) nil))))
+  (or (is-image-shown)
+      (is-org-link-shown)))
 
-(defun pixel-forward-line()
-  (interactive)
-  (if (not-plain-on-the-point)
-      (pixel-scroll-precision-scroll-down pixel-scroll-not-plain-line-height))
-    (forward-line 1))
+(defun not-plain-at-window-start()
+  (and (< (window-end) (point-max))
+       (save-excursion
+         (goto-char (window-start))
+         (not-plain-on-the-point))))
 
-(defun pixel-backward-line()
+(defun not-plain-at-window-end()
+  (and (> (window-start) (point-min))
+       (save-excursion
+         (goto-char (window-end))
+         (forward-line -1)
+         (not-plain-on-the-point))))
+
+(defun pixel-scroll-forward-line()
   (interactive)
-  (if (not-plain-on-the-point)
-      (pixel-scroll-precision-scroll-up pixel-scroll-not-plain-line-height))
-    (forward-line -1))
+  (if (or (not-plain-on-the-point) (not-plain-at-window-start))
+      (pixel-scroll-precision-scroll-down pixel-scroll-not-plain-line-height)
+    (forward-line 1)))
+
+(defun pixel-scroll-backward-line()
+  (interactive)
+  (if (or (not-plain-on-the-point) (not-plain-at-window-end))
+      (pixel-scroll-precision-scroll-up pixel-scroll-not-plain-line-height)
+    (forward-line -1)))
 
 (defun pixel-scroll-up-page()
   (interactive)

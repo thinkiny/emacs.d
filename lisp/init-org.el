@@ -344,8 +344,8 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (unbind-key (kbd "C-c [") org-mode-map)
   (unbind-key (kbd "C-c ]") org-mode-map)
 
-  (define-key org-mode-map (kbd "C-n") #'pixel-forward-line)
-  (define-key org-mode-map (kbd "C-p") #'pixel-backward-line)
+  (define-key org-mode-map (kbd "C-n") #'pixel-scroll-forward-line)
+  (define-key org-mode-map (kbd "C-p") #'pixel-scroll-backward-line)
   (define-key org-mode-map (kbd "C-v") #'pixel-scroll-up-page)
   (define-key org-mode-map (kbd "M-v") #'pixel-scroll-down-page)
   (define-key org-mode-map (kbd "C-c v") #'org-overview)
