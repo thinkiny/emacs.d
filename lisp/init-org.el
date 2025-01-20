@@ -291,11 +291,20 @@ _k_: delete row   _l_: delete column  _s_: shorten
   ("w" #'table-widen-cell)
   ("s" #'table-shorten-cell))
 
+;; custom links
 (defun org-link-complete-docview (&optional _)
   "Create a file link using completion."
   (interactive)
   (concat "docview:"
           (read-file-name "DocFile: " "~/Documents" "./")))
+
+(defun org-link-complete-chrome (&optional _)
+  "Create a file link using completion."
+  (interactive)
+  (let ((text (current-kill 0)))
+    (if (s-starts-with? "http" text)
+        (concat "chrome:" text)
+      "chrome:")))
 
 ;; delete link at point with associated file
 (defun org-delete-link-at-point()
@@ -328,8 +337,10 @@ _k_: delete row   _l_: delete column  _s_: shorten
         org-html-doctype "html5"
         org-support-shift-select t)
 
-  ;; open file in the same window
   (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
+  (org-link-set-parameters "chrome"
+                           :complete 'org-link-complete-chrome
+                           :follow 'browse-url-chrome)
 
   (require 'ox-reveal)
   (setq org-reveal-root (expand-file-name "~/.emacs.d/third-parties/reveal.js"))
