@@ -136,19 +136,19 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (defun xwidget-scroll-up-scan()
   (interactive)
-  (xwidget-webkit-scroll-up pixel-scroll-scan-height))
+  (xwidget-webkit-scroll-up percision-scroll-scan-height))
 
 (defun xwidget-scroll-down-scan()
   (interactive)
-  (xwidget-webkit-scroll-down pixel-scroll-scan-height))
+  (xwidget-webkit-scroll-down percision-scroll-scan-height))
 
 (defun xwidget-scroll-up-page()
   (interactive)
-  (xwidget-webkit-scroll-up (get-pixel-scroll-page-height)))
+  (xwidget-webkit-scroll-up (get-precision-scroll-page-height)))
 
 (defun xwidget-scroll-down-page()
   (interactive)
-  (xwidget-webkit-scroll-down (get-pixel-scroll-page-height)))
+  (xwidget-webkit-scroll-down (get-precision-scroll-page-height)))
 
 (with-eval-after-load 'xwidget
   (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-scroll-up-scan)

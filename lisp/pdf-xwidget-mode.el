@@ -35,19 +35,19 @@
 
 (defun pdf-xwidget-scroll-up-scan()
   (interactive)
-  (pdf-xwidget-scroll pixel-scroll-scan-height))
+  (pdf-xwidget-scroll percision-scroll-scan-height))
 
 (defun pdf-xwidget-scroll-up-page()
   (interactive)
-  (pdf-xwidget-scroll (get-pixel-scroll-page-height)))
+  (pdf-xwidget-scroll (get-precision-scroll-page-height)))
 
 (defun pdf-xwidget-scroll-down-scan()
   (interactive)
-  (pdf-xwidget-scroll (* -1 pixel-scroll-scan-height)))
+  (pdf-xwidget-scroll (* -1 percision-scroll-scan-height)))
 
 (defun pdf-xwidget-scroll-down-page()
   (interactive)
-  (pdf-xwidget-scroll (* -1 (get-pixel-scroll-page-height))))
+  (pdf-xwidget-scroll (* -1 (get-precision-scroll-page-height))))
 
 ;; pdf xwidget toolbar
 (defvar-local pdf-xwidget-toolbar-show t)

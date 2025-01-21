@@ -3,7 +3,7 @@
   :config
   ;;(setq sideline-backends-left '((sideline-blame . down)))
   (setq sideline-backends-right '((sideline-flymake . down)))
-  (global-sideline-mode 1))
+  :hook (prog-mode . sideline-mode))
 
 ;; (with-eval-after-load 'sideline
 ;;   (defun sideline-truncate-candidate (text)

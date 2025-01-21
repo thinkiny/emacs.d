@@ -411,15 +411,15 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 (defun nov-xwidget-next-scan-or-page-cb(end)
   (if (s-equals-p end "1")
       (nov-xwidget-next-document)
-    (xwidget-webkit-scroll-up pixel-scroll-scan-height)))
+    (xwidget-webkit-scroll-up percision-scroll-scan-height)))
 
 (defun nov-xwidget-scroll-up-page()
   (interactive)
-  (xwidget-webkit-scroll-up (get-pixel-scroll-page-height)))
+  (xwidget-webkit-scroll-up (get-precision-scroll-page-height)))
 
 (defun nov-xwidget-scroll-down-page()
   (interactive)
-  (xwidget-webkit-scroll-down (get-pixel-scroll-page-height)))
+  (xwidget-webkit-scroll-down (get-precision-scroll-page-height)))
 
 (defun nov-xwidget-scroll-up-scan()
   (interactive)
@@ -438,7 +438,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (progn
         (nov-xwidget-previous-document)
         (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-    (xwidget-webkit-scroll-down pixel-scroll-scan-height)))
+    (xwidget-webkit-scroll-down percision-scroll-scan-height)))
 
 (defun nov-xwidget-scroll-down-scan()
   (interactive)

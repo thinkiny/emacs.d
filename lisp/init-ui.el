@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (setq inhibit-startup-message t)
 (setq gnus-inhibit-startup-message t)
 
@@ -36,27 +38,26 @@
 
 ;; scroll functions
 ;; font-height: (/ (plist-get (font-face-attributes (face-attribute 'default :font)) :height) 10)
-(defconst pixel-scroll-scan-height 120)
-(defconst pixel-scroll-not-plain-line-height 120)
-(defconst pixel-scroll-page-lines 20)
+(defconst percision-scroll-scan-height 120)
+(defconst precision-scroll-not-plain-line-height 150)
+(defconst precision-scroll-page-lines 20)
 
-(defun get-pixel-scroll-line-height()
+(defun get-precision-scroll-line-height()
   (frame-char-height))
 
-(defun get-pixel-scroll-page-height()
-  (* pixel-scroll-page-lines (get-pixel-scroll-line-height)))
+(defun get-precision-scroll-page-height()
+  (* precision-scroll-page-lines (get-precision-scroll-line-height)))
 
 (defun is-org-link-shown()
   (ignore-errors
     (and (org-element-property :raw-link (org-element-context))
-           (> (line-pixel-height) (frame-char-height)))))
+         (> (line-pixel-height) (frame-char-height)))))
 
 (defun is-image-shown()
   (plist-get (text-properties-at (point)) 'image-displayer))
 
 (defun not-plain-on-the-point()
-  (or (is-image-shown)
-      (is-org-link-shown)))
+  (or (is-image-shown) (is-org-link-shown)))
 
 (defun not-plain-at-window-start()
   (and (< (window-end) (point-max))
@@ -71,25 +72,129 @@
          (forward-line -1)
          (not-plain-on-the-point))))
 
-(defun pixel-scroll-forward-line()
+(defun precision-scroll--down (delta)
+  "Scroll the current window down by DELTA pixels.
+Note that this function doesn't work if DELTA is larger than or
+equal to the text height of the current window in pixels."
+  (let* ((desired-pos (posn-at-x-y 0 (+ delta
+                                        (window-tab-line-height)
+                                        (window-header-line-height))))
+         (desired-start (posn-point desired-pos))
+         (current-vs (window-vscroll nil t))
+         (start-posn (unless (eq desired-start (window-start))
+                       (posn-at-point desired-start)))
+         (desired-vscroll (if start-posn
+                              (- delta (cdr (posn-x-y start-posn)))
+                            (+ current-vs delta)))
+         (scroll-preserve-screen-position nil)
+         (auto-window-vscroll nil)
+         (new-start-position (if (zerop (window-hscroll))
+                                 desired-start
+                               (save-excursion
+                                 (goto-char desired-start)
+                                 (vertical-motion 1)
+                                 (point)))))
+    (set-window-start nil new-start-position
+                      (not (zerop desired-vscroll)))
+    (set-window-vscroll nil desired-vscroll t t)
+    ;; Constrain point to a location that will not result in
+    ;; recentering, if it is no longer completely visible.
+    (unless (pos-visible-in-window-p (point))
+      ;; If desired-vscroll is 0, target the window start itself.  But
+      ;; in any other case, target the line immediately below the
+      ;; window start, unless that line is itself invisible.  This
+      ;; improves the appearance of the window by maintaining the
+      ;; cursor row in a fully visible state.
+      ;; (if (zerop desired-vscroll)
+      ;;     (goto-char new-start-position)
+      (let ((line-after (save-excursion
+                          ;;(goto-char new-start-position)
+                          (if (zerop (vertical-motion 1))
+                              (progn
+                                (set-window-vscroll nil 0 t t)
+                                nil) ; nil means move to new-start-position.
+                            (point)))))
+        (if (and line-after (< line-after (window-end)))
+            (goto-char line-after))))))
+
+(defun precision-scroll-down (delta)
+  "Scroll the current window down by DELTA pixels."
+  (let ((max-height (1- (window-text-height nil t))))
+    (while (> delta max-height)
+      (precision-scroll--down max-height)
+      (setq delta (- delta max-height)))
+    (precision-scroll--down delta)))
+
+(defun precision-scroll--up (delta)
+  "Scroll the current window up by DELTA pixels.
+Note that this function doesn't work if DELTA is larger than
+the height of the current window."
+  (let* ((edges (window-edges nil t nil t))
+         (max-y (- (nth 3 edges)
+                   (nth 1 edges)))
+         (posn (posn-at-x-y 0 (+ (window-tab-line-height)
+                                 (window-header-line-height)
+                                 (- max-y delta))))
+         (point (posn-point posn)))
+    (let ((current-vscroll (window-vscroll nil t))
+          (wanted-pos (window-start)))
+      (setq delta (- delta current-vscroll))
+      (set-window-vscroll nil 0 t t)
+      (when (> delta 0)
+        (let* ((start (window-start))
+               (dims (window-text-pixel-size nil (cons start (- delta))
+                                             start nil nil nil t))
+               (height (nth 1 dims))
+               (position (nth 2 dims)))
+          (setq wanted-pos position)
+          (when (or (not position) (eq position start))
+            (forward-line -1))
+          (setq delta (- delta height))))
+      (set-window-start nil wanted-pos
+                        (not (zerop delta)))
+      (when (< delta 0)
+        (set-window-vscroll nil (- delta) t t))
+      ;; vscroll and the window start are now set.  Move point to a
+      ;; position where redisplay will not recenter, if it is now
+      ;; outside the window.
+      (unless (pos-visible-in-window-p (point))
+        (let ((up-pos (save-excursion
+                        (goto-char point)
+                        (vertical-motion -1)
+                        (point))))
+          ;; (if (pos-visible-in-window-p up-pos nil t)
+          ;;     (debug-goto-char up-pos)
+          (goto-char (window-start)))))))
+
+(defun precision-scroll-up (delta)
+  "Scroll the current window up by DELTA pixels."
+  (let ((max-height (window-text-height nil t)))
+    (when (> max-height 0)
+      (while (> delta max-height)
+        (precision-scroll--up max-height)
+        (setq delta (- delta max-height)))
+      (precision-scroll--up delta))))
+
+(defun precision-scroll-forward-line()
   (interactive)
   (if (or (not-plain-on-the-point) (not-plain-at-window-start))
-      (pixel-scroll-precision-scroll-down pixel-scroll-not-plain-line-height)
+      (precision-scroll-down precision-scroll-not-plain-line-height)
     (forward-line 1)))
 
-(defun pixel-scroll-backward-line()
+(defun precision-scroll-backward-line()
   (interactive)
   (if (or (not-plain-on-the-point) (not-plain-at-window-end))
-      (pixel-scroll-precision-scroll-up pixel-scroll-not-plain-line-height)
+      ;;(pixel-scroll-precision-scroll-up)
+      (precision-scroll-up precision-scroll-not-plain-line-height)
     (forward-line -1)))
 
-(defun pixel-scroll-up-page()
+(defun precision-scroll-up-page()
   (interactive)
-  (pixel-scroll-precision-scroll-down (get-pixel-scroll-page-height)))
+  (pixel-scroll-precision-scroll-down-page (get-precision-scroll-page-height)))
 
-(defun pixel-scroll-down-page()
+(defun precision-scroll-down-page()
   (interactive)
-  (pixel-scroll-precision-scroll-up (get-pixel-scroll-page-height)))
+  (pixel-scroll-precision-scroll-up-page (get-precision-scroll-page-height)))
 
 ;; border
 (let ((no-border '(internal-border-width . 0)))
