@@ -73,6 +73,8 @@ browser defined by `browse-url-generic-program'."
     (define-key elfeed-show-mode-map (kbd "p") #'precision-scroll-backward-line)
     (define-key elfeed-show-mode-map (kbd "j") #'precision-scroll-forward-line)
     (define-key elfeed-show-mode-map (kbd "k") #'precision-scroll-backward-line)
+    (define-key elfeed-show-mode-map (kbd "h") #'backward-word)
+    (define-key elfeed-show-mode-map (kbd "l") #'forward-word)
     (define-key elfeed-show-mode-map (kbd "w") #'precision-scroll-backward-line)
     (define-key elfeed-show-mode-map (kbd "s") #'precision-scroll-forward-line)
     (define-key elfeed-show-mode-map (kbd "y") #'elfeed-show-yank)

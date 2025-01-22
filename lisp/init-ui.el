@@ -92,6 +92,7 @@ equal to the text height of the current window in pixels."
                                  desired-start
                                (save-excursion
                                  (goto-char desired-start)
+                                 (beginning-of-visual-line)
                                  (vertical-motion 1)
                                  (point)))))
     (set-window-start nil new-start-position
@@ -162,9 +163,7 @@ the height of the current window."
                         (goto-char point)
                         (vertical-motion -1)
                         (point))))
-          ;; (if (pos-visible-in-window-p up-pos nil t)
-          ;;     (debug-goto-char up-pos)
-          (goto-char (window-start)))))))
+          (goto-char up-pos))))))
 
 (defun precision-scroll-up (delta)
   "Scroll the current window up by DELTA pixels."
