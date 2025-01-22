@@ -337,6 +337,10 @@ _k_: delete row   _l_: delete column  _s_: shorten
         org-html-doctype "html5"
         org-support-shift-select t)
 
+  ;; use find-file
+  (setf (alist-get 'file org-link-frame-setup) 'find-file)
+
+  ;; custom links
   (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
   (org-link-set-parameters "chrome"
                            :complete 'org-link-complete-chrome
