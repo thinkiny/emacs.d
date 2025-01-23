@@ -72,120 +72,28 @@
          (forward-line -1)
          (not-plain-on-the-point))))
 
-(defun precision-scroll--down (delta)
-  "Scroll the current window down by DELTA pixels.
-Note that this function doesn't work if DELTA is larger than or
-equal to the text height of the current window in pixels."
-  (let* ((desired-pos (posn-at-x-y 0 (+ delta
-                                        (window-tab-line-height)
-                                        (window-header-line-height))))
-         (desired-start (posn-point desired-pos))
-         (current-vs (window-vscroll nil t))
-         (start-posn (unless (eq desired-start (window-start))
-                       (posn-at-point desired-start)))
-         (desired-vscroll (if start-posn
-                              (- delta (cdr (posn-x-y start-posn)))
-                            (+ current-vs delta)))
-         (scroll-preserve-screen-position nil)
-         (auto-window-vscroll nil)
-         (new-start-position (if (zerop (window-hscroll))
-                                 desired-start
-                               (save-excursion
-                                 (goto-char desired-start)
-                                 (beginning-of-visual-line)
-                                 (vertical-motion 1)
-                                 (point)))))
-    (set-window-start nil new-start-position
-                      (not (zerop desired-vscroll)))
-    (set-window-vscroll nil desired-vscroll t t)
-    ;; Constrain point to a location that will not result in
-    ;; recentering, if it is no longer completely visible.
-    (unless (pos-visible-in-window-p (point))
-      ;; If desired-vscroll is 0, target the window start itself.  But
-      ;; in any other case, target the line immediately below the
-      ;; window start, unless that line is itself invisible.  This
-      ;; improves the appearance of the window by maintaining the
-      ;; cursor row in a fully visible state.
-      ;; (if (zerop desired-vscroll)
-      ;;     (goto-char new-start-position)
-      (let ((line-after (save-excursion
-                          ;;(goto-char new-start-position)
-                          (if (zerop (vertical-motion 1))
-                              (progn
-                                (set-window-vscroll nil 0 t t)
-                                nil) ; nil means move to new-start-position.
-                            (point)))))
-        (if (and line-after (< line-after (window-end)))
-            (goto-char line-after))))))
+(defun not-plain-next-line()
+  (save-excursion
+    (vertical-motion 1)
+    (not-plain-on-the-point)))
 
-(defun precision-scroll-down (delta)
-  "Scroll the current window down by DELTA pixels."
-  (let ((max-height (1- (window-text-height nil t))))
-    (while (> delta max-height)
-      (precision-scroll--down max-height)
-      (setq delta (- delta max-height)))
-    (precision-scroll--down delta)))
-
-(defun precision-scroll--up (delta)
-  "Scroll the current window up by DELTA pixels.
-Note that this function doesn't work if DELTA is larger than
-the height of the current window."
-  (let* ((edges (window-edges nil t nil t))
-         (max-y (- (nth 3 edges)
-                   (nth 1 edges)))
-         (posn (posn-at-x-y 0 (+ (window-tab-line-height)
-                                 (window-header-line-height)
-                                 (- max-y delta))))
-         (point (posn-point posn)))
-    (let ((current-vscroll (window-vscroll nil t))
-          (wanted-pos (window-start)))
-      (setq delta (- delta current-vscroll))
-      (set-window-vscroll nil 0 t t)
-      (when (> delta 0)
-        (let* ((start (window-start))
-               (dims (window-text-pixel-size nil (cons start (- delta))
-                                             start nil nil nil t))
-               (height (nth 1 dims))
-               (position (nth 2 dims)))
-          (setq wanted-pos position)
-          (when (or (not position) (eq position start))
-            (forward-line -1))
-          (setq delta (- delta height))))
-      (set-window-start nil wanted-pos
-                        (not (zerop delta)))
-      (when (< delta 0)
-        (set-window-vscroll nil (- delta) t t))
-      ;; vscroll and the window start are now set.  Move point to a
-      ;; position where redisplay will not recenter, if it is now
-      ;; outside the window.
-      (unless (pos-visible-in-window-p (point))
-        (let ((up-pos (save-excursion
-                        (goto-char point)
-                        (vertical-motion -1)
-                        (point))))
-          (goto-char up-pos))))))
-
-(defun precision-scroll-up (delta)
-  "Scroll the current window up by DELTA pixels."
-  (let ((max-height (window-text-height nil t)))
-    (when (> max-height 0)
-      (while (> delta max-height)
-        (precision-scroll--up max-height)
-        (setq delta (- delta max-height)))
-      (precision-scroll--up delta))))
+(defun not-plain-previous-line()
+  (save-excursion
+    (vertical-motion -1)
+    (not-plain-on-the-point)))
 
 (defun precision-scroll-forward-line()
   (interactive)
-  (if (or (not-plain-on-the-point) (not-plain-at-window-start))
-      (precision-scroll-down precision-scroll-not-plain-line-height)
-    (forward-line 1)))
+  (if (or (not-plain-next-line) (not-plain-at-window-start))
+      (pixel-scroll-precision-scroll-down precision-scroll-not-plain-line-height)
+    (vertical-motion 1)))
 
 (defun precision-scroll-backward-line()
   (interactive)
-  (if (or (not-plain-on-the-point) (not-plain-at-window-end))
+  (if (or (not-plain-previous-line) (not-plain-at-window-end))
       ;;(pixel-scroll-precision-scroll-up)
-      (precision-scroll-up precision-scroll-not-plain-line-height)
-    (forward-line -1)))
+      (pixel-scroll-precision-scroll-up precision-scroll-not-plain-line-height)
+    (vertical-motion -1)))
 
 (defun precision-scroll-up-page()
   (interactive)
@@ -262,7 +170,7 @@ the height of the current window."
  (set-face-attribute 'button nil :background 'unspecified)
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
  (set-face-attribute 'ivy-virtual nil :foreground 'unspecified)
- (set-face-attribute 'variable-pitch-text nil :height 1.0)
+ ;;(set-face-attribute 'variable-pitch-text nil :height 1.0)
  ;;(set-face-attribute 'fringe nil :background nil)
  (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)

@@ -411,4 +411,13 @@ fi"
        :silent-success t
        :on-completion on-completion))))
 
+;; forward-word to beginning
+(defun forward-word-begin (arg)
+  "Move forward a word and end up with the point being at the beginning of the
+next word.  Move point forward ARG words (backward if ARG is negative).
+If ARG is omitted or nil, move point forward one word."
+  (interactive "p")
+  (dotimes (_ (or arg 1))
+    (forward-whitespace 1)))
+
 (provide 'init-editing-utils)
