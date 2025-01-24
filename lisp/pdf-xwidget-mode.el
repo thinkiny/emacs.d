@@ -89,6 +89,20 @@
    (pdf-xwidget-toggle-toolbar-scripts))
   (setq-local pdf-xwidget-toolbar-show (not pdf-xwidget-toolbar-show)))
 
+;; findbar
+(defconst pdf-xwidget-toggle-findbar-script
+  "document.getElementById(\"viewFindButton\").click();")
+
+(defun pdf-xwidget-toggle-findbar-scripts()
+  (if pdf-xwidget-toolbar-show
+      (list pdf-xwidget-toggle-findbar-script)
+    (list pdf-xwidget-show-toolbar-script pdf-xwidget-toggle-findbar-script)))
+
+(defun pdf-xwidget-toggle-findbar()
+  (interactive)
+  (xwidget-execute-scripts
+   (pdf-xwidget-toggle-findbar-scripts))
+  (setq-local pdf-xwidget-toolbar-show t))
 
 (defun pdf-xwidget-reload()
   (interactive)
@@ -110,6 +124,8 @@
 (defvar pdf-xwidget-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") #'pdf-xwidget-toggle-sidebar)
+    (define-key map (kbd "C-s") #'pdf-xwidget-toggle-findbar)
+    (define-key map (kbd "C-r") #'pdf-xwidget-toggle-findbar)
     (define-key map (kbd "n") #'pdf-xwidget-scroll-up-scan)
     (define-key map (kbd "t") #'pdf-xwidget-toggle-toolbar)
     (define-key map (kbd "p") #'pdf-xwidget-scroll-down-scan)
