@@ -37,11 +37,6 @@ Interactively, URL defaults to the string looking like a url around point."
 
 (setq browse-url-browser-function 'xwidget-webkit-browse-open-url)
 
-;; (defun advice/after-xwidget-plus-webkit-browse-url (&rest _)
-;;   "Advice to add switch to window when calling `xwidget-webkit-browse-url'."
-;;   (display-buffer (xwidget-buffer (xwidget-webkit-current-session))))
-;; (advice-add #'xwidget-webkit-browse-url :after #'advice/after-xwidget-plus-webkit-browse-url)
-
 (defun xwidget-webkit-browse (url)
   (interactive "sURL: ")
   (if (cl-search "://" url)
@@ -58,13 +53,11 @@ Interactively, URL defaults to the string looking like a url around point."
 
 ;;; Search text in page
 ;; Initialize last search text length variable when isearch starts
-(defvar xwidget-webkit-isearch-last-length 0)
-(add-hook 'isearch-mode-hook
-          (lambda ()
-            (setq xwidget-webkit-isearch-last-length 0)))
+(defvar-local xwidget-webkit-isearch-last-length 0)
+(defvar-local xwidget-webkit-searching nil)
 
 ;; This is minimal. Regex and incremental search will be nice
-(defvar xwidget-webkit-search-js "
+(defconst xwidget-webkit-search-js "
 var xwSearchForward = %s;
 var xwSearchRepeat = %s;
 var xwSearchString = '%s';
@@ -86,29 +79,35 @@ if (window.getSelection() && !window.getSelection().isCollapsed) {
 window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 ")
 
+(defun xwidget-webkit-search-cb(end)
+  (setq xwidget-webkit-searching nil))
+
 (defun xwidget-webkit-search-fun-function ()
   "Return the function which perform the search in xwidget webkit."
   (lambda (string &optional bound noerror count)
-    (or bound noerror count) ;; Kill warns
-    (let ((current-length (length string))
-          search-forward
-          search-repeat)
-      ;; Forward or backward
-      (if (eq isearch-forward nil)
-          (setq search-forward "false")
-        (setq search-forward "true"))
-      ;; Repeat if search string length not changed
-      (if (eq current-length xwidget-webkit-isearch-last-length)
-          (setq search-repeat "true")
-        (setq search-repeat "false"))
-      (setq xwidget-webkit-isearch-last-length current-length)
-      (xwidget-webkit-execute-script
-       (xwidget-webkit-current-session)
-       (format xwidget-webkit-search-js
-               search-forward
-               search-repeat
-               (regexp-quote string)))
-      (point-min))))
+    (unless xwidget-webkit-searching
+      (setq xwidget-webkit-searching t)
+      (or bound noerror count) ;; Kill warns
+      (let ((current-length (length string))
+            search-forward
+            search-repeat)
+        ;; Forward or backward
+        (if (eq isearch-forward nil)
+            (setq search-forward "false")
+          (setq search-forward "true"))
+        ;; Repeat if search string length not changed
+        (if (eq current-length xwidget-webkit-isearch-last-length)
+            (setq search-repeat "true")
+          (setq search-repeat "false"))
+        (setq xwidget-webkit-isearch-last-length current-length)
+        (xwidget-webkit-execute-script
+         (xwidget-webkit-current-session)
+         (format xwidget-webkit-search-js
+                 search-forward
+                 search-repeat
+                 (regexp-quote string))
+         #'xwidget-webkit-search-cb)
+        (point-min)))))
 
 
 (defvar xwidget-translate-timer nil)
@@ -151,6 +150,8 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (xwidget-webkit-scroll-down (get-precision-scroll-page-height)))
 
 (with-eval-after-load 'xwidget
+  (easy-menu-define nil xwidget-webkit-mode-map "Xwidget WebKit menu."
+    (list "Xwidget WebKit"  :visible nil))
   (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-scroll-up-scan)
   (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-scroll-down-scan)
   (define-key xwidget-webkit-mode-map (kbd "j") 'xwidget-scroll-up-scan)
@@ -164,7 +165,8 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (define-key xwidget-webkit-mode-map (kbd "o") 'open-webpage-in-chrome)
   (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-scroll-up-page)
   ;;(define-key xwidget-webkit-mode-map (kbd "<drag-mouse-1>") #'xwidget-translate-range)
-  ;;(local-set-key (kbd "C-s") #'isearch-forward)
+  (define-key xwidget-webkit-mode-map (kbd "C-s") #'isearch-forward)
+  (define-key xwidget-webkit-mode-map (kbd "C-r") #'isearch-backward)
   ;;(define-key xwidget-webkit-mode-map (kbd "<double-mouse-1>") #'xwidget-translate-range)
   (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range))
 
@@ -175,7 +177,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (defun my-xwidget-webkit-mode-hook()
   ;;(setq-local auto-translate-mouse-selection t)
-  ;;(setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
+  (setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
   (setq-local isearch-lazy-highlight nil)
   (setq-local header-line-format nil)
   (setq-local left-fringe-width 0))
