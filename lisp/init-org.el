@@ -349,7 +349,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (require 'ox-reveal)
   (setq org-reveal-root (expand-file-name "~/.emacs.d/third-parties/reveal.js"))
   (setq org-reveal-theme "league")
-  (require 'ox-gfm)
+  ;; (require 'ox-gfm)
   ;; (org-beamer-mode)
 
   ;; keybindings
@@ -445,7 +445,8 @@ _k_: delete row   _l_: delete column  _s_: shorten
           "bibtex %b"
           "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
           "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-  :hook (org-mode . org2ctex-mode))
+  ;;:hook (org-mode . org2ctex-mode)
+  )
 
 (require 'org-tempo nil 'noerror)
 (require-package 'org-preview-html)
