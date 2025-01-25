@@ -109,7 +109,6 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
          #'xwidget-webkit-search-cb)
         (point-min)))))
 
-
 (defvar xwidget-translate-timer nil)
 (defun xwidget-translate-range()
   (interactive)
@@ -130,8 +129,8 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
     (browse-url-chrome url)
     (quit-window)
     (run-with-timer 0.15 nil
-                         (lambda ()
-                           (select-frame-set-input-focus prev-frame)))))
+                    (lambda ()
+                      (select-frame-set-input-focus prev-frame)))))
 
 (defun xwidget-scroll-up-scan()
   (interactive)
@@ -169,6 +168,9 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (define-key xwidget-webkit-mode-map (kbd "C-r") #'isearch-backward)
   ;;(define-key xwidget-webkit-mode-map (kbd "<double-mouse-1>") #'xwidget-translate-range)
   (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range))
+
+(defun xwidget-execute-script(script)
+  (xwidget-execute-scripts (list script)))
 
 (defun xwidget-execute-scripts(scripts)
   (xwidget-webkit-execute-script

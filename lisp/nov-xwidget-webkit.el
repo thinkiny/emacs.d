@@ -44,6 +44,20 @@ alternative browser function."
   :group 'nov-xwidget
   :type 'directory)
 
+(defun nov-xwidget-get-position-key()
+  (if-let ((url (xwidget-webkit-uri (xwidget-webkit-current-session))))
+      (concat "position-" url)))
+
+(defun nov-xwidget-save-position()
+  (if-let ((key (nov-xwidget-get-position-key)))
+      (xwidget-execute-script
+       (format "window.localStorage.setItem('%s', window.scrollY);" key))))
+
+(defun nov-xwidget-jump-prev-position()
+  (if-let ((key (nov-xwidget-get-position-key)))
+      (xwidget-execute-script
+       (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key))))
+
 (defvar nov-xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") #'nov-xwidget-goto-toc)
@@ -87,7 +101,8 @@ alternative browser function."
           (index (if (integerp nov-documents-index)
                      nov-documents-index
                    0)))
-      (nov-save-place identifier index (point)))))
+      (nov-save-place identifier index (point)))
+    (nov-xwidget-save-position)))
 
 (defun nov-xwidget-save-all ()
   "Delete temporary files of all opened EPUB buffers."
@@ -134,11 +149,11 @@ alternative browser function."
 
 (defun nov-xwidget-remove-calibre-dom (dom)
   (cl-map 'list (lambda(x)
-                      (let* ((cls (dom-attr x 'class))
-                             (new-cls (nov-xwidget-remove-calibre-class cls)))
-                        (dom-set-attribute x 'class new-cls)))
+                  (let* ((cls (dom-attr x 'class))
+                         (new-cls (nov-xwidget-remove-calibre-class cls)))
+                    (dom-set-attribute x 'class new-cls)))
           (dom-elements dom 'class ".*calibre.*"))
-    dom)
+  dom)
 
 (defun nov-xwidget-inject-dom (dom &optional title)
   (if dom
@@ -280,7 +295,9 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
            (file (nov-xwidget-extract-file-name uri))
            (index (nov-xwidget-find-index-by-file file)))
       (if index
-          (setq-local nov-documents-index index))))
+          (setq-local nov-documents-index index))
+      (when (string-equal (nth 3 last-input-event) "load-finished")
+        (nov-xwidget-jump-prev-position))))
   (xwidget-webkit-callback xwidget xwidget-event-type))
 
 (defun nov-xwidget-view ()
@@ -310,8 +327,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
         (setq-local nov-epub-version epub)
         (setq-local nov-temp-dir temp-dir)
         (setq-local nov-metadata metadata)
-        (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name))
-                    )))))
+        (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name)))))))
 
 (defun nov-xwidget-next-document ()
   "Go to the next document and render it."
