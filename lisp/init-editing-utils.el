@@ -381,36 +381,6 @@ With arg N, insert N newlines."
          ([remap dired-do-shell-command] . dwim-shell-command)
          ([remap dired-smart-shell-command] . dwim-shell-command)))
 
-(with-eval-after-load 'dwim-shell-command
-  (require 'dwim-shell-commands)
-  (defun dwim-shell-commands-macos-toggle-menu-bar()
-    "Toggle macOS menu bar."
-    (interactive)
-    (dwim-shell-command-on-marked-files
-     "Toggle menu bar auto-hide."
-     "current_status=$(osascript -e 'tell application \"System Events\" to get autohide menu bar of dock preferences')
-
-if [ \"$current_status\" = \"true\" ]; then
-    osascript -e 'tell application \"System Events\" to set autohide menu bar of dock preferences to false'
-    echo \"Auto-hide menu disabled.\"
-else
-    osascript -e 'tell application \"System Events\" to set autohide menu bar of dock preferences to true'
-    echo \"Auto-hide menu enabled.\"
-fi"
-     :utils "osascript"
-     :silent-success t))
-
-  (defun dwim-shell-commands-macos-show-dock (status on-completion)
-    "Control macOS dock shown."
-    (let ((cmd (if status "true" "false"))
-          (title (if status "Hide" "Show")))
-      (dwim-shell-command-on-marked-files
-       (concat title " dock.")
-       (format "osascript -e 'tell application \"System Events\" to set autohide of dock preferences to %s'" cmd)
-       :utils "osascript"
-       :silent-success t
-       :on-completion on-completion))))
-
 ;; forward-word to beginning
 (defun forward-word-begin (arg)
   "Move forward a word and end up with the point being at the beginning of the

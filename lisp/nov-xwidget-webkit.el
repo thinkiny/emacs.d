@@ -53,10 +53,13 @@ alternative browser function."
       (xwidget-execute-script
        (format "window.localStorage.setItem('%s', window.scrollY);" key))))
 
+(defvar-local nov-xwidget-need-resume-position t)
 (defun nov-xwidget-jump-prev-position()
-  (if-let ((key (nov-xwidget-get-position-key)))
-      (xwidget-execute-script
-       (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key))))
+  (if nov-xwidget-need-resume-position
+      (if-let ((key (nov-xwidget-get-position-key)))
+          (xwidget-execute-script
+           (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key)))
+    (setq nov-xwidget-need-resume-position t)))
 
 (defvar nov-xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))
@@ -250,9 +253,8 @@ NEW-SESSION specifies whether to create a new xwidget-webkit session.
 Interactively, URL defaults to the string looking like a url around point."
   (interactive (progn
                  (require 'browse-url)
-                 (browse-url-interactive-arg "xwidget-webkit URL: "
-                                             ;;(xwidget-webkit-current-url)
-                                             )))
+                 (browse-url-interactive-arg "URL: "
+                                             (xwidget-webkit-current-url))))
   (or (featurep 'xwidget-internal)
       (user-error "Your Emacs was not compiled with xwidgets support"))
   (require 'xwidget)
@@ -425,6 +427,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
                'nov-xwidget-webkit-adjust-size-in-frame))
 
 (defun nov-xwidget-next-scan-or-page-cb(end)
+  (setq nov-xwidget-need-resume-position nil)
   (if (s-equals-p end "1")
       (nov-xwidget-next-document)
     (xwidget-webkit-scroll-up percision-scroll-scan-height)))
@@ -450,6 +453,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 })();" #'nov-xwidget-next-scan-or-page-cb))
 
 (defun nov-xwidget-previous-scan-or-page-cb(end)
+  (setq nov-xwidget-need-resume-position nil)
   (if (s-equals-p end "1")
       (progn
         (nov-xwidget-previous-document)

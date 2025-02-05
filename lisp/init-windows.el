@@ -57,28 +57,22 @@ transpositions to execute in sequence."
     (call-interactively 'shrink-window-horizontally)))
 
 (global-set-key (kbd "C-c TAB") 'crux-transpose-windows)
-(global-set-key (kbd "C-c m m") 'my-toggle-frame-maximized)
 (global-set-key (kbd "C-M-<left>") 'change-window-size-left)
 (global-set-key (kbd "C-M-<right>") 'change-window-size-right)
 (global-set-key (kbd "C-M-<down>") 'change-window-size-down)
 (global-set-key (kbd "C-M-<up>") 'change-window-size-up)
 
 ;; maximize window
-(defun toggle-frame-maximized-callback(buffer _)
-  (kill-buffer buffer)
-  (run-with-timer 0.1 0 #'toggle-frame-maximized))
-
-(defun toggle-frame-maximized-macos(hide-dock)
-  (if hide-dock
-      (dwim-shell-commands-macos-show-dock (not (eq (frame-parameter nil 'fullscreen) 'maximized)) #'toggle-frame-maximized-callback)
-    (toggle-frame-maximized)))
-
 (defun my-toggle-frame-maximized()
   (interactive)
   (if *is-a-mac*
-      (toggle-frame-maximized-macos t)
+      (toggle-frame-maximized-macos)
     (toggle-frame-maximized)))
 
+(defun get-current-frame-maximized()
+  (eq (frame-parameter nil 'fullscreen) 'maximized))
+
+(global-set-key (kbd "C-c m m") 'my-toggle-frame-maximized)
 (global-set-key (kbd "C-c m f") 'toggle-frame-fullscreen)
 
 (require 'project)
