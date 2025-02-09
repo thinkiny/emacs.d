@@ -48,10 +48,14 @@
 (defun get-precision-scroll-page-height()
   (* precision-scroll-page-lines (get-precision-scroll-line-height)))
 
+(defun is-org-link-pic(link)
+  (member (file-name-extension link) '("png" "jpg")))
+
 (defun is-org-link-shown()
   (ignore-errors
-    (and (org-element-property :raw-link (org-element-context))
-         (> (line-pixel-height) (frame-char-height)))))
+    (if-let ((link (org-element-property :raw-link (org-element-context))))
+        (and (is-org-link-pic link)
+             (> (line-pixel-height) (* 2 (frame-char-height)))))))
 
 (defun is-image-shown()
   (plist-get (text-properties-at (point)) 'image-displayer))
