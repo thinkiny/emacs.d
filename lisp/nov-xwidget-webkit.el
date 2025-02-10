@@ -405,6 +405,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   "Go to the TOC index and render the TOC document."
   (interactive)
   (let ((index nov-documents-index))
+    (nov-xwidget-save-position)
     (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))
     (with-current-buffer (buffer-name)
       (setq-local nov-documents-index index))))
