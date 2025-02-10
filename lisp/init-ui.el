@@ -91,14 +91,21 @@
 (defun precision-scroll-forward-line()
   (interactive)
   (if (or (not-plain-next-line) (not-plain-at-window-start))
-      (pixel-scroll-precision-scroll-down precision-scroll-not-plain-line-height)
+      (let ((prev (point)))
+        (ignore-errors
+          (pixel-scroll-precision-scroll-down precision-scroll-not-plain-line-height))
+        (if (eq prev (point))
+            (vertical-motion 2)))
     (vertical-motion 1)))
 
 (defun precision-scroll-backward-line()
   (interactive)
   (if (or (not-plain-previous-line) (not-plain-at-window-end))
-      ;;(pixel-scroll-precision-scroll-up)
-      (pixel-scroll-precision-scroll-up precision-scroll-not-plain-line-height)
+      (let ((prev (point)))
+        (ignore-errors
+          (pixel-scroll-precision-scroll-up precision-scroll-not-plain-line-height))
+        (if (eq prev (point))
+            (vertical-motion -2)))
     (vertical-motion -1)))
 
 (defun precision-scroll-up-page()
