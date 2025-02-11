@@ -153,6 +153,19 @@ and binds some keystroke with `term-raw-map'."
     (let ((current-prefix-arg (/ (window-height) 2)))
       (call-interactively #'next-line)))
 
+  (defun vterm-mouse-set-point (event &optional promote-to-region)
+    "Move point to the position clicked on with the mouse.
+But when clicking to the unused area below the last prompt,
+move the cursor to the prompt area."
+    (interactive "e\np")
+    (mouse-set-point event promote-to-region)
+    (let ((pt (point)))
+      (if (= (count-words pt (point-max)) 0)
+          (vterm-reset-cursor-point)
+        pt))
+      ;; Otherwise it selects text for every other click
+      (keyboard-quit))
+
   (defun vterm--get-directory (path)
     "Get normalized directory to PATH."
     (when path
