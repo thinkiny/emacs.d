@@ -475,38 +475,42 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (setq org-download-annotate-function #'org-download-annotate-empty)
 
   (defun my-org-download-clipboard (&optional basename)
-  "Capture the image from the clipboard and insert the resulting file."
-  (interactive)
-  (let ((org-download-screenshot-method
-         (cl-case system-type
-           (gnu/linux
-            (if (string= "wayland" (getenv "XDG_SESSION_TYPE"))
-                (if (executable-find "wl-paste")
-                    "wl-paste -t image/png > %s"
+    "Capture the image from the clipboard and insert the resulting file."
+    (interactive)
+    (let ((org-download-screenshot-method
+           (cl-case system-type
+             (gnu/linux
+              (if (string= "wayland" (getenv "XDG_SESSION_TYPE"))
+                  (if (executable-find "wl-paste")
+                      "wl-paste -t image/png > %s"
+                    (user-error
+                     "Please install the \"wl-paste\" program included in wl-clipboard"))
+                (if (executable-find "xclip")
+                    "xclip -selection clipboard -t image/png -o > %s"
                   (user-error
-                   "Please install the \"wl-paste\" program included in wl-clipboard"))
-              (if (executable-find "xclip")
-                  "xclip -selection clipboard -t image/png -o > %s"
+                   "Please install the \"xclip\" program"))))
+             ((windows-nt cygwin)
+              (if (executable-find "magick")
+                  "magick convert clipboard: %s"
                 (user-error
-                 "Please install the \"xclip\" program"))))
-           ((windows-nt cygwin)
-            (if (executable-find "magick")
-                "magick convert clipboard: %s"
-              (user-error
-               "Please install the \"magick\" program included in ImageMagick")))
-           ((darwin berkeley-unix)
-            (if (executable-find "pngpaste")
-                "pngpaste %s"
-              (user-error
-               "Please install the \"pngpaste\" program from Homebrew."))))))
-    (org-download-screenshot basename)))
+                 "Please install the \"magick\" program included in ImageMagick")))
+             ((darwin berkeley-unix)
+              (if (executable-find "pngpaste")
+                  "pngpaste %s"
+                (user-error
+                 "Please install the \"pngpaste\" program from Homebrew."))))))
+      (save-excursion
+        (org-download-screenshot basename))))
 
   (defun org-clip-paste()
     (interactive)
     (let ((clip-text (substring-no-properties (gui-get-selection 'CLIPBOARD 'STRING))))
-      (if (s-starts-with? "http" clip-text)
-          (org-cliplink)
-        (my-org-download-clipboard)))))
+      (if clip-text
+          (if (s-starts-with? "http" clip-text)
+              (org-cliplink)
+            (yank))
+        (my-org-download-clipboard))))
+  )
 
 (provide 'init-org)
 ;;; init-org.el ends here

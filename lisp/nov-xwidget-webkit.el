@@ -137,14 +137,29 @@ alternative browser function."
            (dom-elements dom 'href ".*htm.*")))
   dom)
 
+(defun nov-xwidget-inject-head-elems (&optional title)
+  (let ((base `(head nil
+                     (meta ((charset . "utf-8")))
+                     (style nil ,(get-nov-xwidget-style))
+                     (script nil ,nov-xwidget-script))))
+    (if title
+        (append base `((title nil ,title)))
+      base)))
+
+(defun nov-xwidget-inject-new-head (dom &optional title)
+  (dom-add-child-before dom (nov-xwidget-inject-head-elems title)))
+
+(defun nov-xwidget-inject-append-head (head &optional title)
+  (dolist (elm (drop 2 (nov-xwidget-inject-head-elems title)))
+    (dom-append-child
+     head
+     elm)))
+
 (defun nov-xwidget-inject-js-css-dom (dom &optional title)
-  (dom-add-child-before
-   dom
-   `(head nil
-          (meta ((charset . "utf-8")))
-          (title nil ,title)
-          (style nil ,(get-nov-xwidget-style))
-          (script nil ,nov-xwidget-script)))
+  (let ((head (car (dom-by-tag dom 'head))))
+    (if head
+        (nov-xwidget-inject-append-head head title)
+      (nov-xwidget-inject-new-head dom title)))
   dom)
 
 (defun nov-xwidget-remove-calibre-class (cls)
@@ -174,9 +189,10 @@ alternative browser function."
       (make-directory nov-xwidget-inject-output-dir)))
   (let* ((native-path file)
          (output-native-file-name (file-name-nondirectory native-path))
-         (output-native-path (expand-file-name output-native-file-name (if nov-xwidget-debug
-                                                                           nov-xwidget-inject-output-dir
-                                                                         (setq nov-xwidget-inject-output-dir (file-name-directory native-path)))))
+         (output-native-path (expand-file-name output-native-file-name
+                                               (if nov-xwidget-debug
+                                                   nov-xwidget-inject-output-dir
+                                                 (setq nov-xwidget-inject-output-dir (file-name-directory native-path)))))
          ;; create the html if not esists, insert the `nov-xwidget-script' as the html script
          (dom (with-temp-buffer
                 (insert-file-contents native-path)
