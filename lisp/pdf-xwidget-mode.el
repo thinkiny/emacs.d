@@ -104,11 +104,6 @@
    (pdf-xwidget-toggle-findbar-scripts))
   (setq-local pdf-xwidget-toolbar-show t))
 
-(defun pdf-xwidget-reload()
-  (interactive)
-  (xwidget-webkit-reload)
-  (run-with-timer 3 nil #'pdf-xwidget-update-title))
-
 (defun pdf-xwidget-update-title(&optional session)
   (interactive)
   (let* ((xwidget (or session (xwidget-webkit-current-session)))
@@ -132,7 +127,6 @@
     (define-key map (kbd "j") #'pdf-xwidget-scroll-up-scan)
     (define-key map (kbd "k") #'pdf-xwidget-scroll-down-scan)
     (define-key map (kbd "s") #'pdf-xwidget-scroll-up-scan)
-    (define-key map (kbd "u") #'pdf-xwidget-reload)
     (define-key map (kbd "w") #'pdf-xwidget-scroll-down-scan)
     (define-key map (kbd "v") #'pdf-xwidget-scroll-up-page)
     (define-key map (kbd "SPC") #'pdf-xwidget-scroll-up-page)
@@ -148,10 +142,11 @@
 \\{pdf-xwidget-mode-map}"
   :keymap pdf-xwidget-mode-map
   (file-server-start)
-  (let ((url (filer-server-pdf-view-url (buffer-file-name)))
-        (dummy-buf (current-buffer)))
+  (let* ((file-name (buffer-file-name))
+         (url (filer-server-pdf-view-url file-name))
+         (dummy-buf (current-buffer)))
     (xwidget-webkit-new-session url)
-    (run-with-timer 3 nil #'pdf-xwidget-update-title (xwidget-webkit-last-session))
+    (setq-local xwidget-webkit-buffer-name-format (format pdf-xwidget-name-format (file-name-nondirectory file-name)))
     (use-local-map pdf-xwidget-mode-map)
     (read-only-mode)
     (kill-buffer dummy-buf)))
