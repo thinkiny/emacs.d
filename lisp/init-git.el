@@ -16,7 +16,9 @@
         magit-save-repository-buffers nil
         magit-revision-insert-related-refs nil)
   (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
-  (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
+  (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window)
+  (when window-system
+    (setq magit-format-file-function 'magit-format-file-all-the-icons)))
 
 (global-set-key (kbd "C-x g") #'magit-status)
 (ignore-tramp-ssh-control-master 'magit-status)
