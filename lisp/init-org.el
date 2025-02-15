@@ -505,10 +505,8 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (defun org-clip-paste()
     (interactive)
     (let ((clip-text (substring-no-properties (gui-get-selection 'CLIPBOARD 'STRING))))
-      (if clip-text
-          (if (s-starts-with? "http" clip-text)
-              (org-cliplink)
-            (yank))
+      (if (s-starts-with? "http" clip-text)
+          (org-cliplink)
         (my-org-download-clipboard))))
   )
 

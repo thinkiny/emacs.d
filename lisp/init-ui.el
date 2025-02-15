@@ -95,7 +95,7 @@
         (ignore-errors
           (pixel-scroll-precision-scroll-down precision-scroll-not-plain-line-height))
         (if (eq prev (point))
-            (vertical-motion 2)))
+            (vertical-motion 1)))
     (vertical-motion 1)))
 
 (defun precision-scroll-backward-line()
@@ -105,7 +105,7 @@
         (ignore-errors
           (pixel-scroll-precision-scroll-up precision-scroll-not-plain-line-height))
         (if (eq prev (point))
-            (vertical-motion -2)))
+            (vertical-motion -1)))
     (vertical-motion -1)))
 
 (defun precision-scroll-up-page()
