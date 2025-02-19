@@ -3,13 +3,14 @@
   :config
   ;;(setq sideline-backends-left '((sideline-blame . down)))
   (setq sideline-backends-right '((sideline-flymake . down)
-                                  (sideline-eglot . up)))
+                                  ;; (sideline-eglot . up)
+                                  ))
   :hook (prog-mode . sideline-mode))
 
-(use-package sideline-eglot
-  :after sideline
-  :config
-  (setq sideline-eglot-code-actions-prefix ""))
+;; (use-package sideline-eglot
+;;   :after sideline
+;;   :config
+;;   (setq sideline-eglot-code-actions-prefix ""))
 
 ;; (with-eval-after-load 'sideline
 ;;   (defun sideline-truncate-candidate (text)
