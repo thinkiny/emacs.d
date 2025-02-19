@@ -390,4 +390,10 @@ If ARG is omitted or nil, move point forward one word."
   (dotimes (_ (or arg 1))
     (forward-whitespace 1)))
 
+;; direnv
+(use-package direnv
+  :demand t
+  :config
+  (direnv-mode))
+
 (provide 'init-editing-utils)
