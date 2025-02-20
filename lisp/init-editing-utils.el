@@ -394,6 +394,9 @@ If ARG is omitted or nil, move point forward one word."
 (use-package direnv
   :demand t
   :config
-  (direnv-mode))
+  (dolist (hook '(find-file-hook))
+    (add-hook hook
+              (lambda ()
+                (direnv-update-directory-environment)))))
 
 (provide 'init-editing-utils)

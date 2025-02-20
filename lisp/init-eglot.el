@@ -105,6 +105,7 @@
   ;; (eglot--setq-saving eldoc-documentation-functions
   ;;                       '(eglot-signature-eldoc-function
   ;;                         eglot-hover-eldoc-function))
+  (auto-revert-mode)
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format)))
