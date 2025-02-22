@@ -16,9 +16,7 @@
         magit-save-repository-buffers nil
         magit-revision-insert-related-refs nil)
   (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
-  (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window)
-  (when window-system
-    (setq magit-format-file-function 'magit-format-file-all-the-icons)))
+  (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
 
 (global-set-key (kbd "C-x g") #'magit-status)
 (ignore-tramp-ssh-control-master 'magit-status)
@@ -40,6 +38,16 @@
 (with-eval-after-load 'vc
   (define-key vc-prefix-map (kbd "l") 'sanityinc/magit-or-vc-log-file)
   (define-key vc-prefix-map (kbd "f") 'vc-git-grep))
+
+;; smerge-mode
+(use-package smerge-mode
+  :config
+  ;; FIXME
+  (setq smerge-command-prefix "\C-cd")
+  (add-hook 'prog-mode-hook
+            (lambda ()
+              (run-with-timer 1 nil (lambda ()
+                                      (smerge-mode 1))))))
 
 (provide 'init-git)
 ;;; init-git.el ends here

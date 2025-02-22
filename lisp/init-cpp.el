@@ -5,8 +5,8 @@
 (use-package cuda-mode
   :hook (cuda-mode . eglot-ensure))
 
-(use-package bazel :demand t
-  :config
+(use-package bazel)
+(with-eval-after-load 'bazel
   (remove-hook 'project-find-functions #'bazel-find-project))
 
 ;;(use-package bazel-mode

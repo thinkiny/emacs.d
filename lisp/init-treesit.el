@@ -39,8 +39,4 @@
 ;;                        (funcall ts-mode)
 ;;                        (yas-activate-extra-mode (intern (concat (car lang) "-mode")))))))))
 
-(when (and (fboundp 'treesit-available-p) (treesit-available-p))
-  (require 'treesit)
-  (setq treesit-font-lock-level 4))
-
 (provide 'init-treesit)

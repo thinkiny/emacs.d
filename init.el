@@ -21,7 +21,6 @@
 (require 'init-dired)
 (require 'init-whitespace)
 (require 'init-tramp)
-(require 'init-doxymacs)
 (require 'init-treesit)
 (require 'init-org)
 (require 'init-feed)
@@ -69,6 +68,7 @@
 (require 'init-god)
 (require 'init-format)
 (require 'init-platform)
+(require 'init-gptel)
 
 (when (file-exists-p custom-file)
   (load custom-file))
