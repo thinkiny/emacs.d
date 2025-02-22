@@ -39,4 +39,9 @@
   (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
   (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight)))
 
+(use-package cape
+  :init
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file))
+
 (provide 'init-corfu)
