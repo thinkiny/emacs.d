@@ -9,6 +9,9 @@
     (shell-command "open -n -a /Applications/Emacs.app")))
 
 (global-set-key (kbd "C-c C-n") #'new-emacs)
+;; Compatible with dictionary app
+(global-set-key (kbd "M-c") 'kill-ring-save)
+
 (add-hook 'c-mode-common-hook
           (lambda ()
             (local-unset-key (kbd "C-c C-n"))))

@@ -216,7 +216,6 @@ With arg N, insert N newlines."
 (require-package 'json-mode)
 (add-to-list 'auto-mode-alist '("\\.json\\'"  . json-mode))
 
-
 ;; symbol-overlay
 (require-package 'symbol-overlay)
 (global-set-key (kbd "M-i") 'symbol-overlay-put)

@@ -5,6 +5,7 @@
               ("C-c <RET>"  . 'gptel-send-or-query)
               ("C-c y n" . 'gptel-with-option)
               ("C-c y m" . 'gptel-menu)
+              ("C-c y r" . 'gptel-rewrite)
               ("C-c y t" . 'gptel-org-set-topic)
               ("C-c y c" . 'elysium-open))
 
