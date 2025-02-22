@@ -1,10 +1,7 @@
 (require 'nov-xwidget-webkit)
 
-(defvar-local nov-xwidget-need-inject nil)
-
 (defun nov-extract-epub()
   (unless (file-exists-p nov-temp-dir)
-    (setq nov-xwidget-need-inject t)
     (let ((exit-code (nov-unzip-epub nov-temp-dir buffer-file-name)))
       (when (not (integerp exit-code))
         (nov-clean-up)
@@ -52,7 +49,7 @@
               (setq nov-documents-index index)
             (nov-warn "Couldn't restore last position")))))
   (let ((dummy-buf (current-buffer)))
-    (nov-xwidget-inject-all-files nov-xwidget-need-inject)
+    (nov-xwidget-inject-all-files)
     (nov-xwidget-view)
     (read-only-mode)
     (kill-buffer dummy-buf)))

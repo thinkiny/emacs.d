@@ -7,7 +7,9 @@
 (require 'evil-core nil 'noerror)
 
 (defconst nov-xwidget-style 'light)
-(defvar nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
+(defconst nov-xwidget-need-inject t)
+(defconst nov-xwidget-need-remove-override-css t)
+(defconst nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
 (defvar nov-xwidget-cached-style nil)
 
 (defcustom nov-xwidget-script ""
@@ -123,6 +125,28 @@ alternative browser function."
            "html"
            (file-name-extension file))))
 
+;; modify dom functions
+(defun nov-xwidget-is-override-css(node)
+  (string-equal (dom-attr node 'href) "override_v1.css"))
+
+(defun nov-xwidget-remove-override-css(dom)
+  (if nov-xwidget-need-remove-override-css
+      (if-let* ((head (car (dom-by-tag dom 'head)))
+                (node (car (dom-search head 'nov-xwidget-is-override-css))))
+          (dom-remove-node head node)
+        ))
+  dom)
+
+(defun nov-xwidget-remove-calibre-class (cls)
+  (replace-regexp-in-string "calibre[^ ]*" "" cls))
+
+(defun nov-xwidget-remove-calibre-dom (dom)
+  (cl-map 'list (lambda(x)
+                  (let* ((cls (dom-attr x 'class))
+                         (new-cls (nov-xwidget-remove-calibre-class cls)))
+                    (dom-set-attribute x 'class new-cls)))
+          (dom-elements dom 'class ".*calibre.*")))
+
 (defun nov-xwdidget-fix-href-dom (dom)
   (cl-map 'list (lambda(x)
                   (let* ((href (dom-attr x 'href))
@@ -134,8 +158,7 @@ alternative browser function."
            (lambda(x)
              (string-match-p "https?.*"
                              (dom-attr x 'href)))
-           (dom-elements dom 'href ".*htm.*")))
-  dom)
+           (dom-elements dom 'href ".*htm.*"))))
 
 (defun nov-xwidget-inject-head-elems (&optional title)
   (let ((base `(head nil
@@ -155,31 +178,19 @@ alternative browser function."
      head
      elm)))
 
-(defun nov-xwidget-inject-js-css-dom (dom &optional title)
+(defun nov-xwidget-inject-header(dom &optional title)
   (let ((head (car (dom-by-tag dom 'head))))
     (if head
         (nov-xwidget-inject-append-head head title)
-      (nov-xwidget-inject-new-head dom title)))
-  dom)
-
-(defun nov-xwidget-remove-calibre-class (cls)
-  (replace-regexp-in-string "calibre[^ ]*" "" cls))
-
-(defun nov-xwidget-remove-calibre-dom (dom)
-  (cl-map 'list (lambda(x)
-                  (let* ((cls (dom-attr x 'class))
-                         (new-cls (nov-xwidget-remove-calibre-class cls)))
-                    (dom-set-attribute x 'class new-cls)))
-          (dom-elements dom 'class ".*calibre.*"))
-  dom)
+      (nov-xwidget-inject-new-head dom title))))
 
 (defun nov-xwidget-inject-dom (dom &optional title)
-  (if dom
-      (nov-xwidget-inject-js-css-dom
-       (nov-xwidget-remove-calibre-dom
-        (nov-xwdidget-fix-href-dom dom))
-       title)
-    dom))
+  (when dom
+    (nov-xwdidget-fix-href-dom dom)
+    (nov-xwidget-inject-header dom title)
+    (nov-xwidget-remove-calibre-dom dom)
+    (nov-xwidget-remove-override-css dom))
+  dom)
 
 (defun nov-xwidget-inject (file &optional callback)
   "Inject `nov-xwidget-script', `nov-xwidget-style-light', or `nov-xwidget-style-dark' into FILE."
@@ -205,7 +216,7 @@ alternative browser function."
       ;; (encode-coding-region (point-min) (point-max) 'utf-8)
       output-native-path)))
 
-(defun nov-xwidget-inject-all-files(nov-xwidget-need-inject)
+(defun nov-xwidget-inject-all-files()
   "Inject `nov-xwidget-style-dark', `nov-xwidget-style-light', or
 `nov-xwidget-script' to all files in `nov-documents'. It should
 be run once after the epub file is opened, so that it can fix all
