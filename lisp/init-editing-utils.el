@@ -249,10 +249,12 @@ With arg N, insert N newlines."
 
 ;; dict
 (use-package bing-dict
-  :init
+  :demand t
+  :config
+  (setq bing-dict-cache-auto-save t)
   (defun bing-dict-at-point()
     (interactive)
-    (let ((word (if (use-region-p)
+    (let ((word (if (region-active-p)
                     (buffer-substring-no-properties
                      (region-beginning) (region-end))
                   (let ((text (thing-at-point 'word)))
@@ -260,9 +262,6 @@ With arg N, insert N newlines."
       (if word
           (bing-dict-brief word)
         (message "can't find word at point"))))
-  :commands (bing-dict-brief)
-  :config
-  (setq bing-dict-cache-auto-save t)
   :bind (:map global-map
               ("C-,"  . 'bing-dict-at-point)))
 
