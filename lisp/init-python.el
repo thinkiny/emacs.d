@@ -10,16 +10,9 @@
   :custom
   (pyvenv-auto-mode t))
 
-(use-package flymake-ruff)
-(use-package ruff-format)
-
+;; use https://github.com/garyo/lsp-multiplexer/tree/main
 (defun my-python-mode-hook()
-  (eglot-ensure)
-  ;; FIXME
-  (run-with-timer 1 nil (lambda ()
-                          (flymake-ruff-load)
-                          (if eglot-enable-format-at-save
-                              (ruff-format-on-save-mode)))))
+  (eglot-ensure))
 
 (add-hook 'python-ts-mode-hook #'my-python-mode-hook)
 
