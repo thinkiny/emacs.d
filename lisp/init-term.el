@@ -137,7 +137,7 @@ and binds some keystroke with `term-raw-map'."
 
   (defun vterm-copy-text ()
     (interactive)
-    (when mark-active
+    (when (region-active-p)
       (save-excursion
         (vterm-copy-mode 1)
         (kill-ring-save (region-beginning) (region-end))

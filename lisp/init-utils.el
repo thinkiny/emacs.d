@@ -149,4 +149,8 @@
   (ignore-errors
     (apply old-fn args)))
 
+;; dummy func
+(defun dummy-func(&rest _)
+  (interactive))
+
 (provide 'init-utils)

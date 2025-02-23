@@ -3,18 +3,27 @@
 
 (setq-default locate-command "mdfind")
 
-(defun new-emacs ()
+;; start new emacs
+(defun start-new-emacs ()
   (interactive)
   (let ((default-directory temporary-file-directory))
     (shell-command "open -n -a /Applications/Emacs.app")))
 
-(global-set-key (kbd "C-c C-n") #'new-emacs)
-;; Compatible with dictionary app
-(global-set-key (kbd "M-c") 'kill-ring-save)
-
+(global-set-key (kbd "C-c C-n") #'start-new-emacs)
 (add-hook 'c-mode-common-hook
           (lambda ()
             (local-unset-key (kbd "C-c C-n"))))
+
+;; Compatible with dictionary app
+(defun disable-screen-dictionary()
+  (interactive)
+  (global-set-key (kbd "M-c") 'dummy-func))
+
+(defun enable-screen-dictionary()
+  (interactive)
+  (global-set-key (kbd "M-c") 'kill-ring-save))
+
+(enable-screen-dictionary)
 
 ;; ;; Visit files opened outside of Emacs in existing frame, not a new one
 (setq ns-pop-up-frames nil)
