@@ -10,24 +10,21 @@
 (defconst nov-xwidget-need-inject t)
 (defconst nov-xwidget-need-remove-override-css t)
 (defconst nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
-(defvar nov-xwidget-cached-style nil)
 
 (defcustom nov-xwidget-script ""
   "Javascript scripts used to run in the epub file."
   :group 'nov-xwidget
   :type 'string)
 
-(defun nov-xwidget-read-style(file)
+(defun nov-xwidget-style-href(file)
   (let ((path (expand-file-name (format "css/%s" file) user-emacs-directory)))
-    (with-temp-buffer
-      (insert-file-contents path)
-      (buffer-string))))
+    (concat "file://" path)))
 
-(defun nov-xwidget-style-light()
-  (nov-xwidget-read-style "nov-light.css"))
+(defun nov-xwidget-style-href-light()
+  (nov-xwidget-style-href "nov-light.css"))
 
-(defun nov-xwidget-style-dark()
-  (nov-xwidget-read-style "nov-dark.css"))
+(defun nov-xwidget-style-href-dark()
+  (nov-xwidget-style-href "nov-dark.css"))
 
 (defcustom nov-xwidget-browser-function 'nov-xwidget-webkit-browse-url-other-window
   "TODO: xwidget may not work in some systems, set it to an
@@ -87,17 +84,14 @@ alternative browser function."
   :keymap nov-xwidget-webkit-mode-map
   (add-hook 'kill-buffer-hook #'nov-xwidget-save nil t))
 
-(defun get-nov-xwidget-style()
-  (unless nov-xwidget-cached-style
-    (setq nov-xwidget-cached-style
-          (pcase nov-xwidget-style
-            ('light (nov-xwidget-style-light))
-            ('dark (nov-xwidget-style-dark))
-            ('auto (pcase (frame-parameter nil 'background-mode)
-                     ('light (nov-xwidget-style-light))
-                     ('dark (nov-xwidget-style-dark))
-                     (_ (nov-xwidget-style-light)))))))
-  nov-xwidget-cached-style)
+(defun get-nov-xwidget-style-href()
+  (pcase nov-xwidget-style
+    ('light (nov-xwidget-style-href-light))
+    ('dark (nov-xwidget-style-href-dark))
+    ('auto (pcase (frame-parameter nil 'background-mode)
+             ('light (nov-xwidget-style-href-light))
+             ('dark (nov-xwidget-style-href-dark))
+             (_ (nov-xwidget-style-href-light))))))
 
 (defun nov-xwidget-save ()
   "Delete temporary files of the current EPUB buffer."
@@ -133,9 +127,7 @@ alternative browser function."
   (if nov-xwidget-need-remove-override-css
       (if-let* ((head (car (dom-by-tag dom 'head)))
                 (node (car (dom-search head 'nov-xwidget-is-override-css))))
-          (dom-remove-node head node)
-        ))
-  dom)
+          (dom-remove-node head node))))
 
 (defun nov-xwidget-remove-calibre-class (cls)
   (replace-regexp-in-string "calibre[^ ]*" "" cls))
@@ -163,7 +155,9 @@ alternative browser function."
 (defun nov-xwidget-inject-head-elems (&optional title)
   (let ((base `(head nil
                      (meta ((charset . "utf-8")))
-                     (style nil ,(get-nov-xwidget-style))
+                     (link ((rel . "stylesheet")
+                            (type . "text/css")
+                            (href . ,(get-nov-xwidget-style-href))))
                      (script nil ,nov-xwidget-script))))
     (if title
         (append base `((title nil ,title)))
@@ -192,6 +186,41 @@ alternative browser function."
     (nov-xwidget-remove-override-css dom))
   dom)
 
+
+(defun nov-dom-print (dom)
+  "Print DOM at point as HTML/XML.
+If PRETTY, indent the HTML/XML logically.
+If XML, generate XML instead of HTML."
+  (let ((column (current-column)))
+    (insert (format "<%s" (dom-tag dom)))
+    (let ((attr (dom-attributes dom)))
+      (dolist (elem attr)
+        ;; In HTML, these are boolean attributes that should not have
+        ;; an = value.
+        (insert (if (and (memq (car elem)
+                               '(async autofocus autoplay checked
+                                       contenteditable controls default
+                                       defer disabled formNoValidate frameborder
+                                       hidden ismap itemscope loop
+                                       multiple muted nomodule novalidate open
+                                       readonly required reversed
+                                       cscoped selected typemustmatch))
+                         (cdr elem))
+                    (format " %s" (car elem))
+                  (format " %s=\"%s\"" (car elem)
+                          (url-insert-entities-in-string (cdr elem)))))))
+    (let* ((children (dom-children dom))
+           (non-text nil))
+      (if (null children)
+          (insert (format "></%s>" (dom-tag dom)))
+        (insert ">")
+        (dolist (child children)
+          (if (stringp child)
+              (insert (url-insert-entities-in-string child))
+            (setq non-text t)
+            (nov-dom-print child)))
+        (insert (format "</%s>" (dom-tag dom)))))))
+
 (defun nov-xwidget-inject (file &optional callback)
   "Inject `nov-xwidget-script', `nov-xwidget-style-light', or `nov-xwidget-style-dark' into FILE."
   (when nov-xwidget-debug
@@ -212,9 +241,9 @@ alternative browser function."
     (if callback
         (funcall callback new-dom))
     (with-temp-file output-native-path
-      (shr-dom-print new-dom)
-      ;; (encode-coding-region (point-min) (point-max) 'utf-8)
-      output-native-path)))
+      (nov-dom-print new-dom))
+    ;; (encode-coding-region (point-min) (point-max) 'utf-8)
+    output-native-path))
 
 (defun nov-xwidget-inject-all-files()
   "Inject `nov-xwidget-style-dark', `nov-xwidget-style-light', or

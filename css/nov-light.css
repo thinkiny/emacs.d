@@ -23,10 +23,13 @@ pre, tr, td, div.warning {
     font-size: 1em;
     background: #d8dee9;
 }
+pre {
+    margin: 24px 0 !important;
+    padding: 0.75em 1.500em !important;
+}
 th {
     font-size: 1em;
 }
-
 /* Same font for all tags */
 a, em, caption, th, pre, tr, td, code, h1, h2, h3, h4, h5, h6, p, body {
     font-family: "Tabular", "SF Pro","PT Serif","Fira Code",Georgia,Cambria,"Times New Roman",Times,serif !important;
