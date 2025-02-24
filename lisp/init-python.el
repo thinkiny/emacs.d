@@ -6,11 +6,14 @@
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
 (require-package 'pip-requirements)
 
+;; use https://github.com/garyo/lsp-multiplexer/tree/main
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '((python-mode python-ts-mode) .  ("lsp-multiplexer-python"))))
+
 (use-package pyvenv-auto
   :custom
   (pyvenv-auto-mode t))
 
-;; use https://github.com/garyo/lsp-multiplexer/tree/main
 (defun my-python-mode-hook()
   (eglot-ensure))
 
