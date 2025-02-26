@@ -14,17 +14,6 @@
           (lambda ()
             (local-unset-key (kbd "C-c C-n"))))
 
-;; Compatible with dictionary app
-(defun disable-screen-dictionary()
-  (interactive)
-  (global-set-key (kbd "M-c") 'dummy-func))
-
-(defun enable-screen-dictionary()
-  (interactive)
-  (global-set-key (kbd "M-c") 'kill-ring-save))
-
-(enable-screen-dictionary)
-
 ;; ;; Visit files opened outside of Emacs in existing frame, not a new one
 (setq ns-pop-up-frames nil)
 

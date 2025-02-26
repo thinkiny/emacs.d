@@ -2,14 +2,16 @@
   :init
   (setq persp-show-modestring nil)
   (persp-mode)
-  :bind (("C-x p d" . persp-remove-buffer)
-         ("C-x p b" . persp-ivy-switch-buffer)
-         ("C-x p k" . persp-kill-all-buffers)
-         ("C-x p o" . persp-kill-other-buffers))
+  :bind ((:map persp-mode-map
+               ("C-x p d" . persp-remove-buffer)
+               ("C-x p b" . persp-ivy-switch-buffer)
+               ("C-x p c" . persp-close-all-buffers)
+               ("C-x p k" . persp-kill)
+               ("C-x p o" . persp-kill-other-buffers)))
   :custom
   (persp-mode-prefix-key (kbd "C-x p"))
   :config
-  (defun persp-kill-all-buffers ()
+  (defun persp-close-all-buffers ()
     "Kill all buffers in the current perspective excludes the perspective's scratch buffer."
     (interactive)
     (when (y-or-n-p "Are you sure you want to kill all buffers in the current perspective ? ")
