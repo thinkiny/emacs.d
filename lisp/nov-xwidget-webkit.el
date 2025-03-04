@@ -44,8 +44,9 @@ alternative browser function."
   :type 'directory)
 
 (defun nov-xwidget-get-position-key()
-  (if-let ((url (xwidget-webkit-uri (xwidget-webkit-current-session))))
-      (concat "position-" url)))
+  (if-let* ((uri (xwidget-webkit-uri (xwidget-webkit-current-session)))
+            (file (nov-xwidget-extract-file-name uri)))
+      (concat "position-" file)))
 
 (defun nov-xwidget-save-position()
   (if-let ((key (nov-xwidget-get-position-key)))
@@ -337,9 +338,9 @@ Interactively, URL defaults to the string looking like a url around point."
 (defun nov-xwidget-find-index-by-file (file)
   (if file
       (seq-position nov-documents
-                    (url-unhex-string file)
+                    (decode-coding-string (url-unhex-string file) 'utf-8)
                     (lambda (a b)
-                      (string-equal b (cdr a))))))
+                      (string-collate-equalp b (cdr a))))))
 
 (defun nov-xwidget-extract-file-name (uri)
   (if (and uri (string-match "file:///\\([^#]*\\)" uri))
@@ -349,12 +350,11 @@ Interactively, URL defaults to the string looking like a url around point."
   "Callback for xwidgets.
 XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (when (eq xwidget-event-type 'load-changed)
-    (let* ((uri (xwidget-webkit-uri xwidget))
-           (file (nov-xwidget-extract-file-name uri))
-           (index (nov-xwidget-find-index-by-file file)))
-      (if index
-          (setq-local nov-documents-index index))
-      (when (string-equal (nth 3 last-input-event) "load-finished")
+    (when (string-equal (nth 3 last-input-event) "load-finished")
+      (when-let* ((uri (xwidget-webkit-uri xwidget))
+                (file (nov-xwidget-extract-file-name uri))
+                (index (nov-xwidget-find-index-by-file file)))
+        (setq-local nov-documents-index index)
         (nov-xwidget-jump-prev-position))))
   (xwidget-webkit-callback xwidget xwidget-event-type))
 
