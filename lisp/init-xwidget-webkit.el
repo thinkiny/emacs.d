@@ -151,6 +151,19 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 (with-eval-after-load 'xwidget
   (easy-menu-define nil xwidget-webkit-mode-map "Xwidget WebKit menu."
     (list "Xwidget WebKit"  :visible nil))
+
+  (defun xwidget-webkit-show-current-url (url)
+    "Ask xwidget-webkit to browse URL."
+    (interactive (progn
+                   (let ((url (or (xwidget-webkit-uri (xwidget-webkit-current-session)) "")))
+                     (list (read-from-minibuffer "xwidget-webkit URL: " url nil nil nil "")))))
+    (when (stringp url)
+      ;; If it's a "naked url", just try adding https: to it.
+      (unless (string-match "\\`[A-Za-z]+:" url)
+        (setq url (concat "https://" url)))
+      (xwidget-webkit-goto-url url)))
+
+  (define-key xwidget-webkit-mode-map (kbd "g") #'xwidget-webkit-show-current-url)
   (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-scroll-up-scan)
   (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-scroll-down-scan)
   (define-key xwidget-webkit-mode-map (kbd "j") 'xwidget-scroll-up-scan)
@@ -161,7 +174,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (define-key xwidget-webkit-mode-map (kbd "M-v") 'xwidget-scroll-down-page)
   (define-key xwidget-webkit-mode-map (kbd "M-c") 'xwidget-webkit-copy-selection-as-kill)
   (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-webkit-copy-selection-as-kill)
-  (define-key xwidget-webkit-mode-map (kbd "o") 'open-webpage-in-chrome)
+  (define-key xwidget-webkit-mode-map (kbd "O") 'open-webpage-in-chrome)
   (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-scroll-up-page)
   ;;(define-key xwidget-webkit-mode-map (kbd "<drag-mouse-1>") #'xwidget-translate-range)
   (define-key xwidget-webkit-mode-map (kbd "C-s") #'isearch-forward)

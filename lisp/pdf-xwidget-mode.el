@@ -131,6 +131,7 @@
     (define-key map (kbd "v") #'pdf-xwidget-scroll-up-page)
     (define-key map (kbd "SPC") #'pdf-xwidget-scroll-up-page)
     (define-key map (kbd "M-v") 'pdf-xwidget-scroll-down-page)
+    (define-key map (kbd "C-v") 'pdf-xwidget-scroll-up-page)
     (define-key map (kbd "g") #'xwidget-webkit-browse-url)
     (define-key map (kbd "M-c") 'xwidget-webkit-copy-selection-as-kill)
     (define-key map (kbd "M-w") 'xwidget-webkit-copy-selection-as-kill)
