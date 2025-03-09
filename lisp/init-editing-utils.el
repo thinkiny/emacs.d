@@ -323,11 +323,6 @@ With arg N, insert N newlines."
   (setq-local indent-tabs-mode nil)
   (kill-local-variable 'c-basic-offset))
 
-;; smex
-(require-package 'smex)
-(smex-initialize)
-(global-set-key (kbd "M-x") 'smex)
-
 ;; clipetty
 (use-package clipetty
   :ensure t

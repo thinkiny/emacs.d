@@ -23,7 +23,7 @@ function build_pdf_tools() {
 
 function update_lsp_multiplexer() {
     if [ ! -d "lsp-multiplexer" ]; then
-        git clone --branch child-frame-preview https://github.com/aikrahguzar/pdf-tools.git
+        git clone --depth 1 https://github.com/garyo/lsp-multiplexer.git
     else
         pushd lsp-multiplexer
         git pull
