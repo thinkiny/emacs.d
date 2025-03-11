@@ -93,7 +93,7 @@
 
 ;;; Capturing
 (global-set-key (kbd "C-c c") 'org-capture)
-(global-set-key (kbd "C-c a") 'org-agenda)
+;;(global-set-key (kbd "C-c a") 'org-agenda)
 
 (setq org-capture-templates
       `(("t" "todo" entry (file "todo.org")  ; "" => `org-default-notes-file'

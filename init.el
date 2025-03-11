@@ -68,7 +68,7 @@
 (require 'init-god)
 (require 'init-format)
 (require 'init-platform)
-(require 'init-gptel)
+(require 'init-aider)
 
 (when (file-exists-p custom-file)
   (load custom-file))
