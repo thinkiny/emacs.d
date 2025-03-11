@@ -50,9 +50,9 @@
       (and (string-equal a-dir b-dir)
            (< (counsel-mt/get-buf-index-pair a) (counsel-mt/get-buf-index-pair b))))))
 
-(defun counsel-mt/sort-by-dir()
+(defun counsel-mt/list-persp-by-dir()
   "Sort all terminal buffer ordered by current directory"
-  (cl-sort (cl-loop for buf in (buffer-list)
+  (cl-sort (cl-loop for buf in (persp-current-buffers* t)
                     when (and (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
                               (buffer-local-boundp 'counsel-mt-index buf))
                     collect (with-current-buffer buf
@@ -143,7 +143,7 @@
 
 (defun counsel-mt/list ()
   "Counsel source with candidates for all terminal buffers."
-  (cons '("Launch new terminal") (counsel-mt/sort-by-dir)))
+  (cons '("Launch new terminal") (counsel-mt/list-persp-by-dir)))
 
 (defun counsel-term ()
   (interactive)
