@@ -29,10 +29,14 @@
              else do (setq next (+ 1 next))
              finally return next)))
 
+(defun counsel-mt/is-managed(buf)
+  (and (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
+       (buffer-local-boundp 'counsel-mt-index buf)))
+
 (defun counsel-mt/get-next-index()
   (counsel-mt/get-continuation
    (cl-sort (cl-loop for buf in (buffer-list)
-                     when (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
+                     when (counsel-mt/is-managed buf)
                      collect (counsel-mt/get-buf-index buf))
             #'< )))
 
@@ -53,8 +57,7 @@
 (defun counsel-mt/list-persp-by-dir()
   "Sort all terminal buffer ordered by current directory"
   (cl-sort (cl-loop for buf in (persp-current-buffers* t)
-                    when (and (member (buffer-local-value 'major-mode buf) '(eshell-mode term-mode vterm-mode))
-                              (buffer-local-boundp 'counsel-mt-index buf))
+                    when (counsel-mt/is-managed buf)
                     collect (with-current-buffer buf
                               (rename-buffer (format "%s%s" counsel-mt-name-header (counsel-mt/get-dir-with-index)))
                               (cons (counsel-mt/get-dir-with-index) buf)))
