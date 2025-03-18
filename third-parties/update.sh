@@ -40,7 +40,7 @@ wget --no-check-certificate https://raw.githubusercontent.com/jdtsmith/eglot-boo
 wget --no-check-certificate https://raw.githubusercontent.com/gaoDean/org-remoteimg/main/org-remoteimg.el -O org-remoteimg.el
 wget --no-check-certificate https://raw.githubusercontent.com/abo-abo/org-download/refs/heads/master/org-download.el -O org-download.el
 wget --no-check-certificate https://codeberg.org/pranshu/haskell-ts-mode/raw/branch/main/haskell-ts-mode.el -O haskell-ts-mode.el
-wget --no-check-certificate https://raw.githubusercontent.com/garyo/lsp-multiplexer/refs/heads/main/lsp_multiplexer.py -O lsp_multiplexer.py
+#wget --no-check-certificate https://raw.githubusercontent.com/garyo/lsp-multiplexer/refs/heads/main/lsp_multiplexer.py -O lsp_multiplexer.py
 
 # function
 update_lsp_multiplexer
