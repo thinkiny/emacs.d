@@ -1,0 +1,5 @@
+[[servers]]
+command = ["pyright-langserver", "--stdio"]
+
+[[servers]]
+command = ["ruff", "server"]
