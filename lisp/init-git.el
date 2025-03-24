@@ -40,14 +40,14 @@
   (define-key vc-prefix-map (kbd "f") 'vc-git-grep))
 
 ;; smerge-mode
-(use-package smerge-mode
-  :config
-  ;; FIXME
-  (setq smerge-command-prefix "\C-cd")
-  (add-hook 'prog-mode-hook
-            (lambda ()
-              (run-with-timer 1 nil (lambda ()
-                                      (smerge-mode 1))))))
+;; (use-package smerge-mode
+;;   :config
+;;   ;; FIXME
+;;   (setq smerge-command-prefix "\C-cd")
+;;   (add-hook 'prog-mode-hook
+;;             (lambda ()
+;;               (run-with-timer 1 nil (lambda ()
+;;                                       (smerge-mode 1))))))
 
 (provide 'init-git)
 ;;; init-git.el ends here
