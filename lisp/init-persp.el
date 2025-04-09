@@ -4,7 +4,7 @@
   (persp-mode)
   :bind ((:map persp-mode-map
                ("C-x p d" . persp-remove-buffer)
-               ("C-x p b" . persp-ivy-switch-buffer)
+               ("C-x p m" . persp-set-buffer)
                ("C-x p c" . persp-close-all-buffers)
                ("C-x p k" . persp-kill)
                ("C-x p o" . persp-kill-other-buffers)))

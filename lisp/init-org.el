@@ -366,7 +366,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (define-key org-mode-map (kbd "C-c v") #'org-overview)
   (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
   (define-key org-mode-map (kbd "C-c t i") #'org-toggle-inline-images)
-  (define-key org-mode-map (kbd "C-c C-c") #'org-clip-paste)
+  (define-key org-mode-map (kbd "C-c i") #'org-clip-paste)
   (define-key org-mode-map (kbd "C-M-<up>") #'org-up-element)
   (define-key org-mode-map (kbd "M-.") #'org-open-at-point)
   ;;(define-key org-mode-map (kbd "C-c i l") #'org-insert-link)
