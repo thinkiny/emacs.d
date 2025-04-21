@@ -28,7 +28,7 @@
         (beginning-of-line))))
 
 (defun eshell/cdroot ()
-  (when-let ((project-root (projectile-project-root)))
+  (when-let* ((project-root (projectile-project-root)))
     (eshell/cd project-root)))
 
 (defun my-eshell-mode-hook()

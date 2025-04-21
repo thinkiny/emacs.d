@@ -49,14 +49,14 @@ alternative browser function."
       (concat "position-" file)))
 
 (defun nov-xwidget-save-position()
-  (if-let ((key (nov-xwidget-get-position-key)))
+  (if-let* ((key (nov-xwidget-get-position-key)))
       (xwidget-execute-script
        (format "window.localStorage.setItem('%s', window.scrollY);" key))))
 
 (defvar-local nov-xwidget-need-resume-position t)
 (defun nov-xwidget-jump-prev-position()
   (if nov-xwidget-need-resume-position
-      (if-let ((key (nov-xwidget-get-position-key)))
+      (if-let* ((key (nov-xwidget-get-position-key)))
           (xwidget-execute-script
            (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key)))
     (setq nov-xwidget-need-resume-position t)))

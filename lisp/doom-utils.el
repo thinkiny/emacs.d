@@ -55,35 +55,6 @@ DOCSTRING and BODY are as in `defun'.
          (dolist (target (cdr targets))
            (advice-add target (car targets) #',symbol))))))
 
-
-;; switch-to-buffer hook
-(defvar doom-switch-buffer-hook nil
-  "A list of hooks run after changing the current buffer.")
-
-(defvar doom-inhibit-switch-buffer-hooks nil
-  "Letvar for inhibiting `doom-switch-buffer-hook'. Do not set this directly.")
-
-(defun doom-run-switch-buffer-hooks-a (orig-fn buffer-or-name &rest args)
-  (if (or doom-inhibit-switch-buffer-hooks
-          (and buffer-or-name
-               (eq (current-buffer)
-                   (get-buffer buffer-or-name)))
-          (and (eq orig-fn #'switch-to-buffer) (car args)))
-      (apply orig-fn buffer-or-name args)
-    (let ((gc-cons-threshold most-positive-fixnum)
-          (doom-inhibit-switch-buffer-hooks t)
-          (inhibit-redisplay t))
-      (when-let (buffer (apply orig-fn buffer-or-name args))
-        (with-current-buffer (if (windowp buffer)
-                                 (window-buffer buffer)
-                               buffer)
-          (run-hooks 'doom-switch-buffer-hook))
-        buffer))))
-
-(dolist (fn '(switch-to-buffer display-buffer))
-  (advice-add fn :around #'doom-run-switch-buffer-hooks-a))
-
-
 ;;; Mutation
 (defmacro appendq! (sym &rest lists)
   "Append LISTS to SYM in place."

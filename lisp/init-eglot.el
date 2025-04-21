@@ -63,7 +63,7 @@
 
   (defun eglot-disable-format-project()
     (interactive)
-    (when-let ((project-root (projectile-project-root))
+    (when-let* ((project-root (projectile-project-root))
                (file (format "%s.dir-locals.el" project-root)))
       (write-region (format "((%s . ((eglot-enable-format-at-save . nil))))" major-mode) nil file)
       (message (format "write %s" file))))
@@ -77,7 +77,7 @@
     "Reconnect to SERVER.
     INTERACTIVE is t if called interactively."
     (interactive)
-    (when-let (server (eglot-current-server))
+    (when-let* (server (eglot-current-server))
       (when (jsonrpc-running-p server)
         (ignore-errors (eglot-shutdown server t nil nil))))
     (eglot-ensure)))

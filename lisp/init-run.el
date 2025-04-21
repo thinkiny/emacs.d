@@ -50,8 +50,8 @@
 
 (defun refresh-run-output-buffer (buffer-name)
   "Kill buffer and process associated with BUFFER-NAME."
-  (when-let ((buffer (get-buffer buffer-name)))
-    (if-let ((process (get-buffer-process buffer)))
+  (when-let* ((buffer (get-buffer buffer-name)))
+    (if-let* ((process (get-buffer-process buffer)))
         (delete-process process))
     (kill-buffer buffer))
   (generate-new-buffer buffer-name))

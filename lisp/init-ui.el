@@ -53,7 +53,7 @@
 
 (defun is-org-link-shown()
   (ignore-errors
-    (if-let ((link (org-element-property :raw-link (org-element-context))))
+    (if-let* ((link (org-element-property :raw-link (org-element-context))))
         (and (is-org-link-pic link)
              (> (line-pixel-height) (* 2 (frame-char-height)))))))
 

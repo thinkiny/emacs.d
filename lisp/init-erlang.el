@@ -22,7 +22,7 @@
 
 (defun init-erlang-ls()
   (interactive)
-  (when-let ((project-root (projectile-project-root)))
+  (when-let* ((project-root (projectile-project-root)))
     (write-region
      "apps_dirs:
   - \"apps/*\"

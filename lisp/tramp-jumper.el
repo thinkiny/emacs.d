@@ -180,7 +180,7 @@ Operations not mentioned here will be handled by the normal Emacs functions.")
 (defun tramp-jumper-file-name-handler (operation &rest args)
   "Invoke remote-shell Tramp file name handler.
 Fall back to normal file name handler if no Tramp handler exists."
-  (if-let ((fn (assoc operation tramp-jumper-file-name-handler-alist)))
+  (if-let* ((fn (assoc operation tramp-jumper-file-name-handler-alist)))
       (save-match-data (apply (cdr fn) args))
     (tramp-run-real-handler operation args)))
 
