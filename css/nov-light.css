@@ -32,7 +32,7 @@ th {
 }
 /* Same font for all tags */
 a, em, caption, th, pre, tr, td, code, h1, h2, h3, h4, h5, h6, p, body {
-    font-family: "Tabular", "SF Pro","PT Serif","Fira Code",Georgia,Cambria,"Times New Roman",Times,serif !important;
+    font-family: "PT Serif","Fira Code",Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 h1 {
     font-size: 2em !important;
