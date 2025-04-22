@@ -1,4 +1,4 @@
-;;; sow.el --- Variable commands for scrolling the other window.
+;;; sow.el --- Variable commands for scrolling the other window.  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  Andreas Politz
 

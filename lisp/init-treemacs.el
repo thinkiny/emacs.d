@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package treemacs
   :config
   (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)

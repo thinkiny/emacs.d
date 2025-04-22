@@ -1,5 +1,6 @@
 ﻿;; init-org.el --- Org-mode config -*- lexical-binding: t -*-
 
+(use-package async)
 ;; org-roam
 (use-package org-roam
   :bind (("C-c n f" . org-roam-node-find)

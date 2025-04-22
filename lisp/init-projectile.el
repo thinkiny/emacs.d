@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package projectile
   :config
   (setq projectile-globally-ignored-directories

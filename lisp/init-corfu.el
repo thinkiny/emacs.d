@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package corfu
   :custom
   (corfu-auto t)                 ;; Enable auto completion
@@ -21,12 +23,8 @@
 (with-eval-after-load 'eshell
   (add-hook 'eshell-mode-hook (lambda () (setq-local corfu-auto nil))))
 
-(use-package corfu-terminal)
-
 (with-eval-after-load 'corfu
-  (corfu-popupinfo-mode)
-  (unless window-system
-    (corfu-terminal-mode)))
+  (corfu-popupinfo-mode))
 
 (use-package orderless
   :init

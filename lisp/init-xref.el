@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require 'xref)
 
 (setq xref-prompt-for-identifier nil)

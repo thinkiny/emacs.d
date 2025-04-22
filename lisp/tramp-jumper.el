@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (defconst tramp-jumper-method "jssh")
 (defconst tramp-jumper-exec "jssh")
 

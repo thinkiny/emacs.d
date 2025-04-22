@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (when (fboundp 'electric-pair-mode)
   (add-hook 'after-init-hook 'electric-pair-mode))
 ;;----------------------------------------------------------------------------

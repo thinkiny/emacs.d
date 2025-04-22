@@ -118,12 +118,4 @@
  (when (theme-dark-p)
    (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground))))
 
-;; eglot-inactive-regions
-(use-package eglot-inactive-regions
-  :custom
-  (eglot-inactive-regions-style 'darken-foreground)
-  (eglot-inactive-regions-opacity 0.4)
-  :config
-  (eglot-inactive-regions-mode 1))
-
 (provide 'init-eglot)
