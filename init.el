@@ -3,7 +3,6 @@
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "third-parties" user-emacs-directory))
 (defconst custom-file (expand-file-name "custom.el" user-emacs-directory))
-(toggle-debug-on-error)
 
 (require 'init-utils)
 (require 'init-package)

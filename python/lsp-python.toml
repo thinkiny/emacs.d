@@ -1,0 +1,9 @@
+[[servers]]
+command = ["/opt/homebrew/bin/pyright-langserver", "--stdio"]
+
+[[servers]]
+command = ["ruff", "server"]
+
+# Optional: TCP Server
+# [[servers]]
+# url = "tcp://localhost:8080"

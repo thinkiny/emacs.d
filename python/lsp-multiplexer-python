@@ -1,0 +1,2 @@
+#!/bin/bash
+python3 ~/.emacs.d/third-parties/lsp-multiplexer/lsp_multiplexer.py --config ~/.emacs.d/python/lsp-python.toml --stdio
