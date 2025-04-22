@@ -77,7 +77,7 @@
     "Reconnect to SERVER.
     INTERACTIVE is t if called interactively."
     (interactive)
-    (when-let* (server (eglot-current-server))
+    (when-let* ((server (eglot-current-server)))
       (when (jsonrpc-running-p server)
         (ignore-errors (eglot-shutdown server t nil nil))))
     (eglot-ensure)))

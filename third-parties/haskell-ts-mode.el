@@ -1,12 +1,11 @@
 ;;; haskell-ts-mode.el --- A treesit based major mode for haskell -*- lexical-binding:t -*-
 
-;; Copyright (C) 2024  Pranshu Sharma
+;; Copyright (C) 2024, 2025 Pranshu Sharma
 
-
-;; Author: Pranshu Sharma <pranshusharma366 at gmail>
+;; Author: Pranshu Sharma <pranshu@bauherren.ovh>
 ;; URL: https://codeberg.org/pranshu/haskell-ts-mode
 ;; Package-Requires: ((emacs "29.3"))
-;; Version: 1
+;; Version: 1.01
 ;; Keywords: languages, haskell
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -124,6 +123,15 @@ when `haskell-ts-prettify-words' is non-nil.")
    `(((match (guards guard: (boolean (variable) @font-lock-keyword-face)))
       (:match "otherwise" @font-lock-keyword-face)))
 
+   ;; This needs to be positioned above where we apply
+   ;; font-lock-operator-face to comma
+   :language 'haskell
+   :override t
+   :feature 'signature
+   '((signature (function) @haskell-ts--fontify-type)
+     (context (function) @haskell-ts--fontify-type)
+     (signature "::" @font-lock-operator-face))
+
    ;; TODO: It is weird that we use operator face for parenthesses and also for operators.
    ;;   I see two other, possibly better solutions:
    ;;   1. Use delimiter face for parenthesses, ::, -> and similar, and operator face for operators.
@@ -132,7 +140,9 @@ when `haskell-ts-prettify-words' is non-nil.")
    ;;   the end).
    :language 'haskell
    :feature 'operator
-   '((operator) @font-lock-operator-face)
+   :override t
+   '((operator) @font-lock-operator-face
+     "," @font-lock-operator-face)
 
    :language 'haskell
    :feature 'module
@@ -160,14 +170,8 @@ when `haskell-ts-prettify-words' is non-nil.")
    '((type) @font-lock-type-face
      (constructor) @font-lock-type-face
      (declarations (type_synomym (name) @font-lock-type-face))
-     (declarations (data_type name: (name) @font-lock-type-face)))
-
-   :language 'haskell
-   :override t
-   :feature 'signature
-   '((signature (function) @haskell-ts--fontify-type)
-     (context (function) @haskell-ts--fontify-type)
-     (signature "::" @font-lock-operator-face))
+     (declarations (data_type name: (name) @font-lock-type-face))
+     (declarations (newtype name: (name) @font-lock-type-face)))
 
    :language 'haskell
    :feature 'match
@@ -356,6 +360,9 @@ when `haskell-ts-prettify-words' is non-nil.")
             ;; 3. parent
             (_ (treesit-node-start parent))))
         0)
+
+       ((node-is "|") parent 1)
+       
        ;; Backup
        (catch-all parent 2))))
   "\"Simple\" treesit indentation rules for haskell.")
@@ -507,17 +514,24 @@ when `haskell-ts-prettify-words' is non-nil.")
 (defun haskell-ts-defun-name (node)
   (treesit-node-text (treesit-node-child node 0)))
 
-(defun haskell-ts-compile-region-and-go (start end)
-  "Compile the text from START to END in the haskell proc."
-  (interactive "r")
-  (let ((hs (haskell-ts-haskell-session))
-        (str (buffer-substring-no-properties
-              start end)))
-    (comint-send-string hs ":{\n")
-    (comint-send-string
-     hs
-     (replace-regexp-in-string "^:\\}" "\\:}" str nil t))
-    (comint-send-string hs "\n:}\n")))
+(defun haskell-ts-compile-region-and-go ()
+  "Compile the text from START to END in the haskell proc.
+If region is not active, reload the whole file."
+  (interactive)
+  (let ((hs (haskell-ts-haskell-session)))
+    (if (region-active-p)
+        (let ((str (buffer-substring-no-properties
+                    (region-beginning)
+                    (region-end))))
+          (comint-send-string hs ":{\n")
+          (comint-send-string
+           hs
+           ;; Things that may cause problem to ghci need to be
+           ;; escaped.  TODO examine if other lines that start with
+           ;; colons might cause problems
+           (replace-regexp-in-string "^:\\}" "\\:}" str nil t))
+          (comint-send-string hs "\n:}\n"))
+      (comint-send-string hs ":r\n"))))
 
 ;;;###autoload
 (defun run-haskell ()
@@ -526,7 +540,7 @@ when `haskell-ts-prettify-words' is non-nil.")
   (let ((buffer (concat "*" haskell-ts-ghci-buffer-name "*")))
     (pop-to-buffer-same-window
      (if (comint-check-proc buffer)
-         gbuffer
+         buffer
        (make-comint haskell-ts-ghci-buffer-name haskell-ts-ghci nil buffer-file-name)))))
 
 (defun haskell-ts-haskell-session ()
@@ -536,5 +550,9 @@ when `haskell-ts-prettify-words' is non-nil.")
   (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-ts-mode)))
 
 (provide 'haskell-ts-mode)
+
+;; derive from `haskell-mode' on emacs v30+
+(when (functionp 'derived-mode-add-parents)
+  (derived-mode-add-parents 'haskell-ts-mode '(haskell-mode)))
 
 ;;; haskell-ts-mode.el ends here
