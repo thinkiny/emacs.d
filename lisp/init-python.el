@@ -7,8 +7,8 @@
 (require-package 'pip-requirements)
 
 ;; use https://github.com/garyo/lsp-multiplexer/tree/main
-;; (with-eval-after-load 'eglot
-;;   (add-to-list 'eglot-server-programs '((python-mode python-ts-mode) .  ("lsp-multiplexer-python"))))
+(with-eval-after-load 'eglot
+  (set-eglot-server-progam '(python-mode python-ts-mode) '("lsp-multiplexer-python")))
 
 (use-package pyvenv-auto
   :custom

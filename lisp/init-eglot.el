@@ -20,7 +20,7 @@
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
-  (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
+  (define-key eglot-mode-map (kbd "C-c w r") 'eglot-reconnect)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
@@ -71,16 +71,7 @@
   (eglot--code-action eglot-code-action-override "source.overrideMethods")
   (defun eglot-code-actions-current-line()
     (interactive)
-    (eglot-code-actions (line-beginning-position) (line-end-position) nil t))
-
-  (defun eglot-restart-workspace()
-    "Reconnect to SERVER.
-    INTERACTIVE is t if called interactively."
-    (interactive)
-    (when-let* ((server (eglot-current-server)))
-      (when (jsonrpc-running-p server)
-        (ignore-errors (eglot-shutdown server t nil nil))))
-    (eglot-ensure)))
+    (eglot-code-actions (line-beginning-position) (line-end-position) nil t)))
 
 (use-package consult-eglot)
 
@@ -115,7 +106,14 @@
 (ignore-tramp-ssh-control-master #'eglot--connect)
 
 (with-eval-after-load-theme 'eglot
- (when (theme-dark-p)
-   (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground))))
+  (when (theme-dark-p)
+    (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground))))
+
+(defun set-eglot-server-progam (mode cmd)
+  (setq eglot-server-programs (assoc-delete-all mode eglot-server-programs))
+  (if (listp cmd)
+      (push `(,mode ,@cmd) eglot-server-programs)
+    (push `(,mode ,cmd) eglot-server-programs)))
+
 
 (provide 'init-eglot)
