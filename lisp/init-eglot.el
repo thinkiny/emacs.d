@@ -20,46 +20,29 @@
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
-  (define-key eglot-mode-map (kbd "C-c w r") 'eglot-reconnect)
+  (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
-  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
-  (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
+  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line))
 
 (with-eval-after-load 'eglot
   (setq mode-line-misc-info
         (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
   ;; (add-to-list 'mode-line-misc-info
   ;;              `(eglot--managed-mode ("[" eglot--mode-line-format "] ")))
-
-  (if (version< emacs-version "30")
-      (defun eglot-rename-with-current (newname)
-        "Rename the current symbol to NEWNAME."
-        (interactive
-         (let ((curr (thing-at-point 'symbol t)))
-           (list (read-from-minibuffer
-                  (format "Rename `%s' to: " (or curr
-                                                 "unknown symbol"))
-                  curr nil nil nil curr))))
-        (eglot--server-capable-or-lose :renameProvider)
-        (eglot--apply-workspace-edit
-         (jsonrpc-request (eglot--current-server-or-lose)
-                          :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
-                                                 :newName ,newname))
-         this-command))
-    (defun eglot-rename-with-current (newname)
-      "Rename the current symbol to NEWNAME."
-      (interactive
-       (let ((curr (thing-at-point 'symbol t)))
-         (list (read-from-minibuffer
-                (format "Rename `%s' to: " (or curr
-                                               "unknown symbol"))
-                curr nil nil nil curr))))
-      (eglot-server-capable-or-lose :renameProvider)
-      (eglot--apply-workspace-edit
-       (eglot--request (eglot--current-server-or-lose)
-                       :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
-                                              :newName ,newname))
-       this-command)))
+  (defun eglot-rename-with-current (newname)
+    "Rename the current symbol to NEWNAME."
+    (interactive
+     (let ((curr (thing-at-point 'symbol t)))
+       (list (read-from-minibuffer
+              (format "Rename `%s' to: " (or curr
+                                             "unknown symbol"))
+              curr nil nil nil curr))))
+    (eglot-server-capable-or-lose :renameProvider)
+    (eglot--apply-workspace-edit
+     (eglot--request (eglot--current-server-or-lose)
+                     :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
+                                            :newName ,newname))
+     this-command))
 
   (defun eglot-disable-format-project()
     (interactive)
@@ -69,9 +52,46 @@
       (message (format "write %s" file))))
 
   (eglot--code-action eglot-code-action-override "source.overrideMethods")
+
+  (defun eglot-get-code-actions(server beg end &optional action-kind)
+    (interactive)
+    (eglot-server-capable-or-lose :codeActionProvider)
+    (let* ((actions
+            (eglot--request
+             server
+             :textDocument/codeAction
+             (list :textDocument (eglot--TextDocumentIdentifier)
+                   :range (list :start (eglot--pos-to-lsp-position beg)
+                                :end (eglot--pos-to-lsp-position end))
+                 :context
+                 `(:diagnostics
+                   [,@(cl-loop for diag in (flymake-diagnostics beg end)
+                               when (cdr (assoc 'eglot-lsp-diag
+                                                (eglot--diag-data diag)))
+                               collect it)]
+                   ,@(when action-kind `(:only [,action-kind])))))))
+      (cl-loop for a across actions
+               when (or (not action-kind)
+                        ;; github#847
+                        (string-prefix-p action-kind (plist-get a :kind)))
+               collect a)))
+
   (defun eglot-code-actions-current-line()
     (interactive)
-    (eglot-code-actions (line-beginning-position) (line-end-position) nil t)))
+    (let* ((server (eglot--current-server-or-lose)))
+      (eglot--read-execute-code-action
+       (or (eglot-get-code-actions server nil nil)
+           (eglot-get-code-actions server (line-beginning-position) (line-end-position)))
+       server nil)))
+
+  (defun eglot-restart-workspace()
+     "Reconnect to SERVER.
+     INTERACTIVE is t if called interactively."
+     (interactive)
+     (when-let* ((server (eglot-current-server)))
+       (when (jsonrpc-running-p server)
+         (ignore-errors (eglot-shutdown server t nil nil))))
+     (eglot-ensure)))
 
 (use-package consult-eglot)
 
