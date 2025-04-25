@@ -22,7 +22,8 @@
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
   (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
-  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line))
+  (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
+  (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
   (setq mode-line-misc-info
@@ -53,36 +54,18 @@
 
   (eglot--code-action eglot-code-action-override "source.overrideMethods")
 
-  (defun eglot-get-code-actions(server beg end &optional action-kind)
-    (interactive)
-    (eglot-server-capable-or-lose :codeActionProvider)
-    (let* ((actions
-            (eglot--request
-             server
-             :textDocument/codeAction
-             (list :textDocument (eglot--TextDocumentIdentifier)
-                   :range (list :start (eglot--pos-to-lsp-position beg)
-                                :end (eglot--pos-to-lsp-position end))
-                 :context
-                 `(:diagnostics
-                   [,@(cl-loop for diag in (flymake-diagnostics beg end)
-                               when (cdr (assoc 'eglot-lsp-diag
-                                                (eglot--diag-data diag)))
-                               collect it)]
-                   ,@(when action-kind `(:only [,action-kind])))))))
-      (cl-loop for a across actions
-               when (or (not action-kind)
-                        ;; github#847
-                        (string-prefix-p action-kind (plist-get a :kind)))
-               collect a)))
+  (defun eglot-first-error-current-line()
+    (if-let* ((digs (flymake-diagnostics (line-beginning-position) (line-end-position))))
+        (seq-find
+         (lambda (x) (eq (flymake-diagnostic-type x) 'eglot-error))
+         digs)))
 
   (defun eglot-code-actions-current-line()
     (interactive)
-    (let* ((server (eglot--current-server-or-lose)))
-      (eglot--read-execute-code-action
-       (or (eglot-get-code-actions server nil nil)
-           (eglot-get-code-actions server (line-beginning-position) (line-end-position)))
-       server nil)))
+    (when-let* ((dig (eglot-first-error-current-line))
+                (beg (flymake--diag-beg dig))
+                (end (flymake--diag-end dig)))
+      (eglot-code-actions beg end nil t)))
 
   (defun eglot-restart-workspace()
      "Reconnect to SERVER.

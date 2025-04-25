@@ -15,7 +15,8 @@
   (pyvenv-auto-mode t))
 
 (defun my-python-mode-hook()
-  (eglot-ensure))
+  (eglot-ensure)
+  (format-all-mode))
 
 (add-hook 'python-ts-mode-hook #'my-python-mode-hook)
 
