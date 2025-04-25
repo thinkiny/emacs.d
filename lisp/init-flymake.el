@@ -9,6 +9,7 @@
 (with-eval-after-load 'flymake
   ;;(setq flymake-show-diagnostics-at-end-of-line t)
   (setq flymake-indicator-type nil)
+  (setq flymake-fringe-indicator-position nil)
   (setq flymake-mode-line-counter-format
   '(":["
     flymake-mode-line-error-counter
