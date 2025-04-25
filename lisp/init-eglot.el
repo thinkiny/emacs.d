@@ -54,15 +54,20 @@
 
   (eglot--code-action eglot-code-action-override "source.overrideMethods")
 
-  (defun eglot-first-error-current-line()
+  (defun eglot-first-flymake-current-line()
     (if-let* ((digs (flymake-diagnostics (line-beginning-position) (line-end-position))))
-        (seq-find
-         (lambda (x) (eq (flymake-diagnostic-type x) 'eglot-error))
-         digs)))
+        (car (seq-sort-by
+              (lambda (x)
+                (pcase (flymake-diagnostic-type x)
+                  ('eglot-error 0)
+                  ('error 0)
+                  (_ 1)))
+              '<
+              digs))))
 
   (defun eglot-code-actions-current-line()
     (interactive)
-    (when-let* ((dig (eglot-first-error-current-line))
+    (when-let* ((dig (eglot-first-flymake-current-line))
                 (beg (flymake--diag-beg dig))
                 (end (flymake--diag-end dig)))
       (eglot-code-actions beg end nil t)))
