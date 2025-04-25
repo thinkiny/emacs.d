@@ -195,8 +195,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (setq-local ignore-mouse-down-event t)
   (setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
   (setq-local isearch-lazy-highlight nil)
-  (setq-local header-line-format nil)
-  (setq-local left-fringe-width 0))
+  (setq-local header-line-format nil))
 
 (add-hook 'xwidget-webkit-mode-hook #'my-xwidget-webkit-mode-hook)
 
