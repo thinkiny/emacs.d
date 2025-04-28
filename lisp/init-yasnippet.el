@@ -19,4 +19,5 @@
 ;;      (define-key yas-keymap (kbd "C-f") 'yas-next-field)
 ;;      (define-key yas-keymap (kbd "C-b") 'yas-prev-field)))
 
+
 (provide 'init-yasnippet)

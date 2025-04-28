@@ -20,6 +20,22 @@
   (global-corfu-mode)
   (global-set-key (kbd "M-/") 'completion-at-point))
 
+(use-package orderless
+  :config
+  (setq completion-styles '(orderless basic))
+  (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
+  (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))
+  (orderless-define-completion-style orderless+initialism
+    (orderless-matching-styles '(orderless-initialism
+                                 orderless-literal
+                                 orderless-regexp)))
+
+  (setq completion-category-overrides
+        '((command (styles orderless+initialism))
+          (symbol (styles orderless+initialism))
+          (variable (styles orderless+initialism))
+          (file (styles basic partical-completion)))))
+
 (with-eval-after-load 'eshell
   (add-hook 'eshell-mode-hook (lambda () (setq-local corfu-auto nil))))
 

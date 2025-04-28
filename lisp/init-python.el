@@ -14,9 +14,16 @@
   :custom
   (pyvenv-auto-mode t))
 
+(use-package sphinx-doc
+  :config
+  (setq sphinx-doc-include-types t)
+  (define-key sphinx-doc-mode-map (kbd "C-c d i") #'sphinx-doc))
+
 (defun my-python-mode-hook()
+  (setq-local eglot-enable-format-at-save nil)
+  (sphinx-doc-mode)
   (eglot-ensure)
-  (format-all-mode))
+  (toggle-format-all-mode))
 
 (add-hook 'python-ts-mode-hook #'my-python-mode-hook)
 

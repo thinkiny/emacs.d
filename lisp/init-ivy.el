@@ -125,8 +125,8 @@
   (require-package 'ivy-posframe)
   (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-bottom-center)))
   (setq ivy-posframe-parameters
-        '((left-fringe . 8)
-          (right-fringe . 8)))
+        '((left-fringe . 4)
+          (right-fringe . 4)))
   (ivy-posframe-mode 1))
 
 (if window-system
