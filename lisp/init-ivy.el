@@ -114,24 +114,19 @@
           (push `(,candidate . ,location) collection)))
       (nreverse collection))))
 
-;; smex
-(defun use-smex()
-  (require-package 'smex)
-  (smex-initialize)
-  (global-set-key (kbd "M-x") 'smex))
 
 ;; ivy-posframe
-(defun use-ivy-posframe()
-  (require-package 'ivy-posframe)
-  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-bottom-center)))
-  (setq ivy-posframe-parameters
-        '((left-fringe . 4)
-          (right-fringe . 4)))
-  (ivy-posframe-mode 1))
+(require-package 'ivy-posframe)
+(setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-bottom-center)))
+(setq ivy-posframe-parameters
+      '((left-fringe . 4)
+        (right-fringe . 4)))
+(ivy-posframe-mode 1)
 
-(if window-system
-    (use-ivy-posframe)
-  (use-smex))
+;; smex
+(require-package 'smex)
+(smex-initialize)
+(global-set-key (kbd "M-x") 'smex)
 
 (provide 'init-ivy)
 ;;; init-ivy.el ends here
