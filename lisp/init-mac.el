@@ -64,8 +64,8 @@ fi"
 
   (defun dwim-shell-commands-show-dock-macos (status on-completion)
     "Control macOS dock shown."
-    (let ((cmd (if status "false" "true"))
-          (title (if status "Show" "Hide")))
+    (let ((cmd (if status "true" "false"))
+          (title (if status "Hide" "Show")))
       (dwim-shell-command-on-marked-files
        (concat title " dock.")
        (format "osascript -e 'tell application \"System Events\" to set autohide of dock preferences to %s'" cmd)
@@ -78,6 +78,15 @@ fi"
 (defun get-dock-autohide-macos()
   (string-equal "true\n" (shell-command-to-string "osascript -e 'tell application \"System Events\" to get autohide of dock preferences'")))
 
+(defconst dock-autohide-macos-at-start (get-dock-autohide-macos))
+(defun restore-dock-autohide-macos()
+  (interactive)
+  (unless (eq dock-autohide-macos-at-start (get-dock-autohide-macos))
+    (dwim-shell-commands-show-dock-macos dock-autohide-macos-at-start nil)
+    (sit-for 0.5)))
+
+(add-hook 'kill-emacs-hook #'restore-dock-autohide-macos)
+
 (defun toggle-frame-maximized-macos-callback(buffer _)
   (kill-buffer buffer)
   (run-with-timer 0.1 0 #'toggle-frame-maximized))
@@ -88,10 +97,10 @@ fi"
     (if frame-status
         (if dock-autohide-macos
             (toggle-frame-maximized)
-          (dwim-shell-commands-show-dock-macos t #'toggle-frame-maximized-macos-callback))
+          (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback))
       (setq dock-autohide-macos dock-status)
       (if dock-status
           (toggle-frame-maximized)
-        (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback)))))
+        (dwim-shell-commands-show-dock-macos t #'toggle-frame-maximized-macos-callback)))))
 
 (provide 'init-mac)
