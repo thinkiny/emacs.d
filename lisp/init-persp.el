@@ -21,10 +21,11 @@
                unless (eq buf (get-buffer (persp-scratch-buffer)))
                do (kill-buffer buf))))
 
-  (defun set-new-presp-dir-to-home(&rest _)
-    (setq default-directory "~/"))
+  (defun set-new-presp-dir-to-home(orig &rest args)
+    (let ((default-directory "~/"))
+      (apply orig args)))
 
-  (advice-add 'persp-new :before #'set-new-presp-dir-to-home)
+  (advice-add 'persp-new :around #'set-new-presp-dir-to-home)
 
   (setq persp-modestring-short t)
   (setq persp-state-default-file (expand-file-name "persp.state" user-emacs-directory))

@@ -146,6 +146,7 @@
   (let* ((file-name (buffer-file-name))
          (url (filer-server-pdf-view-url file-name))
          (dummy-buf (current-buffer)))
+    (setq default-directory (file-name-directory file-name))
     (xwidget-webkit-new-session url)
     (setq-local xwidget-webkit-buffer-name-format (format pdf-xwidget-name-format (file-name-nondirectory file-name)))
     (use-local-map pdf-xwidget-mode-map)
