@@ -12,18 +12,24 @@
 ;;   :config
 ;;   (setq sideline-eglot-code-actions-prefix ""))
 
-;; (with-eval-after-load 'sideline
-;;   (defun sideline-truncate-candidate (text)
-;;     (let ((max-width (window-width)))
-;;       (if (> (string-width text) max-width)
-;;           (substring text 0 (- max-width 3))
-;;         text)))
+(with-eval-after-load 'sideline
+  (defun sideline-truncate-candidate (text)
+    (let ((max-width (window-width)))
+      (if (> (string-width text) max-width)
+          (substring text 0 (- max-width 3))
+        text)))
 
-;;   (defun advice/filter-sideline--create-ov(args)
-;;     (setf (nth 1 args) (sideline-truncate-candidate (nth 1 args)))
-;;     args)
+  (defun sideline-basedpyright-update (text)
+    (if (eq major-mode 'python-ts-mode)
+        (replace-regexp-in-string "basedpyright \\[\\w+\\]: \\(.*\\)" "\\1" text)
+      ;;(replace-regexp-in-string "basedpyright \\[\\(\\w+\\)\\]: \\(.*\\)" "\\2, \\1" text)
+      text))
 
-;;   (advice-add 'sideline--create-ov :filter-args #'advice/filter-sideline--create-ov))
+  (defun advice/filter-sideline--create-ov(args)
+    (setf (nth 1 args) (sideline-basedpyright-update (nth 1 args)))
+    args)
+
+  (advice-add 'sideline--create-ov :filter-args #'advice/filter-sideline--create-ov))
 
 (use-package sideline-flymake
   :config
