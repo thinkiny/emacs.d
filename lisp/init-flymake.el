@@ -30,7 +30,7 @@
         (flymake--delete-overlay ov)))))
 
 (defun my-flymake-mode-hook()
-  ;;(remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t)
+  (remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t)
   ;;(remove-hook 'after-change-functions 'flymake-after-change-function t)
   ;;(add-hook 'after-change-functions #'clear-flymake-from-current-line t)
   (define-key flymake-mode-map (kbd "C-c e l") #'flymake-show-buffer-diagnostics)

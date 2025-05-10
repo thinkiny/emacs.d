@@ -48,7 +48,7 @@
   (defun eglot-disable-format-project()
     (interactive)
     (when-let* ((project-root (projectile-project-root))
-               (file (format "%s.dir-locals.el" project-root)))
+                (file (format "%s.dir-locals.el" project-root)))
       (write-region (format "((%s . ((eglot-enable-format-at-save . nil))))" major-mode) nil file)
       (message (format "write %s" file))))
 
@@ -73,13 +73,14 @@
       (eglot-code-actions beg end nil t)))
 
   (defun eglot-restart-workspace()
-     "Reconnect to SERVER.
+    "Reconnect to SERVER.
      INTERACTIVE is t if called interactively."
-     (interactive)
-     (when-let* ((server (eglot-current-server)))
-       (when (jsonrpc-running-p server)
-         (ignore-errors (eglot-shutdown server t nil nil))))
-     (eglot-ensure)))
+    (interactive)
+    (when-let* ((server (eglot-current-server)))
+      (when (jsonrpc-running-p server)
+        (ignore-errors (eglot-shutdown server t nil nil))))
+    (eglot-ensure))
+  )
 
 (use-package consult-eglot)
 
@@ -114,8 +115,8 @@
 (ignore-tramp-ssh-control-master #'eglot--connect)
 
 (with-eval-after-load-theme 'eglot
-  (when (theme-dark-p)
-    (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground))))
+                            (when (theme-dark-p)
+                              (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground))))
 
 (defun set-eglot-server-progam (mode cmd)
   (setq eglot-server-programs (assoc-delete-all mode eglot-server-programs))

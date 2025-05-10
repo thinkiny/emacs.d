@@ -39,7 +39,7 @@
       (so-long-mode)
     (eglot-ensure)))
 
-(add-hook 'js-mode-hook #'my-js-mode-hook)
-(add-hook 'typescript-mode-hook #'eglot-ensure)
+;; (add-hook 'js-mode-hook #'my-js-mode-hook)
+;; (add-hook 'typescript-mode-hook #'eglot-ensure)
 
 (provide 'init-js)
