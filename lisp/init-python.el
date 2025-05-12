@@ -24,10 +24,12 @@
   (setq-local eglot-enable-format-at-save nil)
   (toggle-format-all-mode)
   (setq-default eglot-workspace-configuration
-                '(:basedpyright.analysis (:diagnosticSeverityOverrides (:strictListInference :json-false
-                                                                        :strictDictionaryInference :json-false
-                                                                        :strictSetInference :json-false
-                                                                        :reportTypedDictNotRequiredAccess :json-false)
+                '(:basedpyright.analysis (:diagnosticSeverityOverrides (:strictListInference "none"
+                                                                        :strictDictionaryInference "none"
+                                                                        :strictSetInference "none"
+                                                                        :reportMissingTypeStubs "none"
+                                                                        :reportExplicitAny "none"
+                                                                        :reportTypedDictNotRequiredAccess "none")
                                           :useLibraryCodeForTypes t
                                           :diagnosticMode "workspace"
                                           :autoSearchPaths t))))
