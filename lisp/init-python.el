@@ -28,7 +28,11 @@
                                                                         :strictDictionaryInference "none"
                                                                         :strictSetInference "none"
                                                                         :reportMissingTypeStubs "none"
+                                                                        :reportUnknownParameterType "none"
+                                                                        :reportUnknownVariableType "none"
                                                                         :reportExplicitAny "none"
+                                                                        :reportOptionalMemberAccess "warning"
+                                                                        :reportOptionalSubscript "warning"
                                                                         :reportTypedDictNotRequiredAccess "none")
                                           :useLibraryCodeForTypes t
                                           :diagnosticMode "workspace"
