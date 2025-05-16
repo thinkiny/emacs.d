@@ -185,8 +185,6 @@ move the cursor to the prompt area."
             (setq directory (file-name-as-directory path))))
         directory)))
 
-  (define-key vterm-mode-map (kbd "M-p") 'vterm-send-up)
-  (define-key vterm-mode-map (kbd "M-n") 'vterm-send-down)
   (define-key vterm-mode-map (kbd "M-w") 'vterm-copy-text)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'vterm-move-down)
