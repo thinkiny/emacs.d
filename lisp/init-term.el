@@ -185,6 +185,13 @@ move the cursor to the prompt area."
             (setq directory (file-name-as-directory path))))
         directory)))
 
+  (advice-add 'set-window-vscroll :after
+              (defun me/vterm-toggle-scroll (&rest _)
+                (when (eq major-mode 'vterm-mode)
+                  (if (> (window-end) (buffer-size))
+                      (when vterm-copy-mode (vterm-copy-mode-done nil))
+                    (vterm-copy-mode 1)))))
+
   (define-key vterm-mode-map (kbd "M-w") 'vterm-copy-text)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'vterm-move-down)

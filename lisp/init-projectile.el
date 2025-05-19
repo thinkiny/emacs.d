@@ -41,7 +41,7 @@
   ;;     t))
 
   ;; don't use file-truename
-  (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
+  ;; (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
   (unbind-key (kbd "C-c p t") 'projectile-mode-map)
   (diminish 'projectile-mode)
 

@@ -88,25 +88,21 @@
 (with-eval-after-load 'org-agenda
   (unless (file-directory-p org-directory)
     (mkdir org-directory))
+
   (add-hook 'org-agenda-mode-hook
             (lambda () (add-hook 'window-configuration-change-hook 'org-agenda-align-tags nil t))))
 
 
 ;;; Capturing
 (global-set-key (kbd "C-c c") 'org-capture)
-;;(global-set-key (kbd "C-c a") 'org-agenda)
+(global-set-key (kbd "C-c g") 'org-agenda)
 
 (setq org-capture-templates
-      `(("t" "todo" entry (file "todo.org")  ; "" => `org-default-notes-file'
-         "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n")
-        ("n" "note" entry (file "note.org")
-         "* %? :NOTE:\n%U\n%a\n" :clock-resume t)
-        ("i" "interview" entry (file "interview.org")
-         "* %? %T\n** pros\n** cons\n")
-        ("w" "work" entry (file "work.org")
-         "* %?")
-        ("m" "meeting" entry (file "meeting.org")
-         "* %? %T")))
+      `(("t" "todo" entry (file "")  ; "" => `org-default-notes-file'
+         "* NEXT %?\nSCHEDULED: %T\n")
+        ("n" "note" entry (file "")
+         "* %? :NOTE:\n%U\n%a\n")
+        ))
 
 ;;; Refiling
 (setq org-refile-use-cache nil)
@@ -152,12 +148,19 @@
       (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!/!)")
               (sequence "PROJECT(p)" "|" "DONE(d!/!)" "CANCELLED(c@/!)")
               (sequence "WAITING(w@/!)" "DELEGATED(e!)" "HOLD(h)" "|" "CANCELLED(c@/!)")))
-      org-todo-repeat-to-state "NEXT")
+      org-todo-repeat-to-state t)
 
 (setq org-todo-keyword-faces
       (quote (("NEXT" :inherit warning)
               ("PROJECT" :inherit font-lock-string-face))))
 
+(add-hook 'org-after-todo-state-change-hook
+          'org-clock-todo-change)
+
+(defun org-clock-todo-change ()
+  (if (string= org-state "NEXT")
+      (org-clock-in)
+    (org-clock-out)))
 
 
 ;;; Agenda views
@@ -324,10 +327,13 @@ _k_: delete row   _l_: delete column  _s_: shorten
   ;; Various preferences
   (setq org-log-done t
         org-edit-timestamp-down-means-later t
+        org-hide-emphasis-markers t
+        org-catch-invisible-edits 'show
         org-export-coding-system 'utf-8
         org-fast-tag-selection-single-key 'expert
-        org-cycle-include-plain-lists 'integrate
         org-html-validation-link nil
+        org-export-kill-product-buffer-when-displayed t
+        org-cycle-include-plain-lists 'integrate
         org-src-fontify-natively t
         org-src-tab-acts-natively t
         org-src-preserve-indentation nil
@@ -336,6 +342,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
         org-export-time-stamp-file nil
         org-html-html5-fancy t
         org-html-doctype "html5"
+        org-default-notes-file (convert-standard-filename "~/org/inbox.org")
         org-support-shift-select t)
 
   ;; use find-file

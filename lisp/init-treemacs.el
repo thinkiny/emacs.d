@@ -62,11 +62,11 @@
   :after treemacs magit
   :ensure t)
 
-(ignore-file-truename 'treemacs--read-first-project-path
-                      'treemacs-do-add-project-to-workspace
-                      'treemacs--current-builtin-project-function
-                      'treemacs--expand-root-node
-                      'treemacs--expand-dir-node)
+;; (ignore-file-truename 'treemacs--read-first-project-path
+;;                       'treemacs-do-add-project-to-workspace
+;;                       'treemacs--current-builtin-project-function
+;;                       'treemacs--expand-root-node
+;;                       'treemacs--expand-dir-node)
 
 (defun treemacs-custom-filter (file _)
   (or (string-equal ".cache" file)

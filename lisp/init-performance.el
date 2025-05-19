@@ -1,11 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 
-(use-package gcmh
-  :demand t
-  :config
-  (setq gcmh-low-cons-threshold (* 32 1024 1024)
-        gcmh-high-cons-threshold (* 512 1024 1024))
-  (gcmh-mode 1))
+;; (use-package gcmh
+;;   :demand t
+;;   :config
+;;   (setq gcmh-low-cons-threshold (* 32 1024 1024)
+;;         gcmh-high-cons-threshold (* 512 1024 1024))
+;;   (gcmh-mode 1))
 ;; (setq gc-cons-threshold (* 4 1024 1024 1024)) ;; 4GiB of RAM
 
 (defvar my/gc-timer nil
