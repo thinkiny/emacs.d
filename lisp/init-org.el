@@ -99,9 +99,11 @@
 
 (setq org-capture-templates
       `(("t" "todo" entry (file "")  ; "" => `org-default-notes-file'
-         "* NEXT %?\nSCHEDULED: %T\n")
-        ("n" "note" entry (file "")
-         "* %? :NOTE:\n%U\n%a\n")
+         "* TODO %?\nSCHEDULED: %T\n" :clock-resume t)
+        ("d" "doing" entry (file "")  ; "" => `org-default-notes-file'
+         "* NEXT %?\nSCHEDULED: %T\n" :clock-in t :clock-resume t)
+        ("n" "note" entry (file "note.org")
+         "* %? :NOTE:\n%U\n%a\n" :clock-resume t)
         ))
 
 ;;; Refiling

@@ -2,6 +2,7 @@
 
 (setq inhibit-startup-message t)
 (setq gnus-inhibit-startup-message t)
+(setq redisplay-dont-pause t)
 
 (when (fboundp 'tab-bar-mode)
   (tab-bar-mode -1)

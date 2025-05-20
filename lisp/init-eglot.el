@@ -82,8 +82,6 @@
     (eglot-ensure))
   )
 
-(use-package consult-eglot)
-
 ;; format
 (defvar-local eglot-enable-format-at-save t)
 (put 'eglot-enable-format-at-save 'safe-local-variable #'always)
