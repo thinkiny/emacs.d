@@ -11,9 +11,11 @@
 (when window-system
   (tool-bar-mode -1)
   (menu-bar-mode -1)
-  (set-fringe-mode '(0 . 1))
   (scroll-bar-mode -1)
   (setq mouse-avoidance-mode 'animate))
+
+(with-eval-after-load 'fringe
+  (set-fringe-mode '(0 . 1)))
 
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)
@@ -117,8 +119,8 @@
   (add-to-list 'initial-frame-alist no-border))
 
 ;; icons
-(use-package all-the-icons)
-(use-package all-the-icons-dired)
+(require-package 'all-the-icons)
+(require-package 'all-the-icons-dired)
 
 (when window-system
   ;; (window-divider-mode)
@@ -132,11 +134,11 @@
 (setq doom-themes-enable-bold t
       doom-themes-enable-italic nil
       doom-opera-brighter-modeline t
-      doom-themes-treemacs-theme "doom-colors"
+      ;; doom-themes-treemacs-theme "doom-colors"
       doom-themes-treemacs-enable-variable-pitch nil)
 ;;(doom-themes-visual-bell-config)
 (doom-themes-org-config)
-(doom-themes-treemacs-config)
+;; (doom-themes-treemacs-config)
 (with-eval-after-load 'treemacs
   (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
 
@@ -196,7 +198,7 @@
     :ensure t
     :demand t
     :config
-    (setq cnfonts-use-face-font-rescale t)
+    ;;(setq cnfonts-use-face-font-rescale t)
     (cnfonts-enable)
     (unbind-all-keys cnfonts-mode-map)))
 
