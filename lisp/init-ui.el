@@ -134,12 +134,14 @@
 (setq doom-themes-enable-bold t
       doom-themes-enable-italic nil
       doom-opera-brighter-modeline t
-      ;; doom-themes-treemacs-theme "doom-colors"
-      doom-themes-treemacs-enable-variable-pitch nil)
-;;(doom-themes-visual-bell-config)
-(doom-themes-org-config)
-;; (doom-themes-treemacs-config)
+      doom-themes-treemacs-theme "doom-colors")
+
+(with-eval-after-load 'org
+  ;;(doom-themes-visual-bell-config)
+  (doom-themes-org-config))
+
 (with-eval-after-load 'treemacs
+  (doom-themes-treemacs-config)
   (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
 
 ;; frame transparency

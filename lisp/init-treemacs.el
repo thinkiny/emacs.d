@@ -4,7 +4,7 @@
   :config
   (setq treemacs-file-event-delay              5000
         treemacs-file-follow-delay             1
-        treemacs-no-png-images                 t
+;;        treemacs-no-png-images                 t
         treemacs-position                      'right
         treemacs-silent-filewatch              t
         treemacs-silent-refresh                t
