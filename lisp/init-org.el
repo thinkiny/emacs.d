@@ -27,7 +27,7 @@
         org-roam-ui-follow t
         org-roam-ui-update-on-save t
         org-roam-ui-open-on-start t
-        org-roam-ui-browser-function #'browse-url-firefox))
+        org-roam-ui-browser-function #'browse-url-chromium))
 
 ;; org-modern
 (use-package org-modern)

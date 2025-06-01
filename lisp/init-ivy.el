@@ -40,6 +40,7 @@
   (setq-default counsel-mode-override-describe-bindings t)
   (setq counsel-preselect-current-file t)
   (add-to-list 'ivy-more-chars-alist '(counsel-ag . 2))
+  (add-to-list 'ivy-more-chars-alist '(counsel-rg . 2))
   (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
   (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache$" ".metals$" "bazel-.*" ".o$" ".elc$" ".so$")))
 
@@ -57,8 +58,6 @@
   (global-set-key (kbd "C-c s t") 'counsel-ag-filetype)
   (counsel-mode))
 
-(use-package counsel-projectile
-  :init (counsel-projectile-mode))
 
 (use-package ivy-hydra)
 

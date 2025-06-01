@@ -30,6 +30,7 @@
                                                                         :reportMissingTypeStubs "none"
                                                                         :reportUnknownParameterType "none"
                                                                         :reportUnknownVariableType "none"
+                                                                        :strictGenericNarrowing "none"
                                                                         :reportExplicitAny "none"
                                                                         :reportOptionalMemberAccess "warning"
                                                                         :reportOptionalSubscript "warning"

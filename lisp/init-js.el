@@ -42,4 +42,11 @@
 ;; (add-hook 'js-mode-hook #'my-js-mode-hook)
 ;; (add-hook 'typescript-mode-hook #'eglot-ensure)
 
+(defun my-json-mode-hook()
+  (whitespace-cleanup-mode -1))
+
+(add-auto-mode 'json-mode "\\.json")
+(add-hook 'json-mode-hook #'my-json-mode-hook)
+
+
 (provide 'init-js)

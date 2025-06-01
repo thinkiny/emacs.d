@@ -52,12 +52,12 @@
               )))
 
 ;; ignore homedir
-(defun my-projectile-ignore-homedir (dir)
-  (if (and dir (equal dir (expand-file-name "~/")))
-      nil
-    dir))
+;; (defun my-projectile-ignore-homedir (dir)
+;;   (if (and dir (equal dir (expand-file-name "~/")))
+;;       nil
+;;     dir))
 
-(advice-add 'projectile-locate-dominating-file :filter-return #'my-projectile-ignore-homedir)
+;; (advice-add 'projectile-locate-dominating-file :filter-return #'my-projectile-ignore-homedir)
 
 ;; (defun my-project-ignore-homedir (project)
 ;;   (if (and project
@@ -125,5 +125,24 @@
   (add-hook 'ag-search-finished-hook
             (lambda ()
               (pop-to-buffer next-error-last-buffer))))
+
+(defun get-default-args-for-ripgrep()
+  (pcase (file-name-extension (buffer-file-name))
+    ("go" "-tgo")
+    ("py" "-tpython")
+    ("js" "-tjs")
+    ("cc" "-tcpp")
+    (_ "")))
+
+(defun counsel-projectile-rg-default()
+  (interactive)
+  (counsel-projectile-rg (get-default-args-for-ripgrep)))
+
+(use-package counsel-projectile
+  :init (counsel-projectile-mode)
+  :bind (:map
+         projectile-mode-map
+         ("C-c p s s" . #'counsel-projectile-rg-default)))
+
 
 (provide 'init-projectile)
