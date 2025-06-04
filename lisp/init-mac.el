@@ -74,7 +74,6 @@ fi"
        :on-completion on-completion))))
 
 ;; maximize window
-(defvar dock-autohide-macos nil)
 (defun get-dock-autohide-macos()
   (string-equal "true\n" (shell-command-to-string "osascript -e 'tell application \"System Events\" to get autohide of dock preferences'")))
 
@@ -95,10 +94,9 @@ fi"
   (let ((frame-status (get-current-frame-maximized))
         (dock-status (get-dock-autohide-macos)))
     (if frame-status
-        (if dock-autohide-macos
-            (toggle-frame-maximized)
-          (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback))
-      (setq dock-autohide-macos dock-status)
+        (if dock-status
+            (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback)
+          (toggle-frame-maximized))
       (if dock-status
           (toggle-frame-maximized)
         (dwim-shell-commands-show-dock-macos t #'toggle-frame-maximized-macos-callback)))))
