@@ -30,7 +30,7 @@
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
    (format
-    "document.getElementById(\"viewerContainer\").scrollBy({top: %d, behavior: 'smooth'})"
+    "document.getElementById(\"viewerContainer\").scrollBy({top: %d, behavior: 'instant'})"
     pixels)))
 
 (defun pdf-xwidget-scroll-up-scan()

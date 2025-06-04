@@ -483,19 +483,25 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (add-to-list 'window-size-change-functions
                'nov-xwidget-webkit-adjust-size-in-frame))
 
+
+(defun nov-xwidget-webkit-scroll (arg)
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   (format "window.scrollBy({top: %d, behavior: 'instant'});" arg)))
+
 (defun nov-xwidget-next-scan-or-page-cb(end)
   (setq nov-xwidget-need-resume-position nil)
   (if (s-equals-p end "1")
       (nov-xwidget-next-document)
-    (xwidget-webkit-scroll-up percision-scroll-scan-height)))
+    (nov-xwidget-webkit-scroll percision-scroll-scan-height)))
 
 (defun nov-xwidget-scroll-up-page()
   (interactive)
-  (xwidget-webkit-scroll-up (get-precision-scroll-page-height)))
+  (nov-xwidget-webkit-scroll (get-precision-scroll-page-height)))
 
 (defun nov-xwidget-scroll-down-page()
   (interactive)
-  (xwidget-webkit-scroll-down (get-precision-scroll-page-height)))
+  (nov-xwidget-webkit-scroll (* -1 (get-precision-scroll-page-height))))
 
 (defun nov-xwidget-scroll-up-scan()
   (interactive)
@@ -515,7 +521,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (progn
         (nov-xwidget-previous-document)
         (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-    (xwidget-webkit-scroll-down percision-scroll-scan-height)))
+    (nov-xwidget-webkit-scroll (* -1 percision-scroll-scan-height))))
 
 (defun nov-xwidget-scroll-down-scan()
   (interactive)

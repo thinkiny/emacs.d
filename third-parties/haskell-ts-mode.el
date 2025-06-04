@@ -5,7 +5,7 @@
 ;; Author: Pranshu Sharma <pranshu@bauherren.ovh>
 ;; URL: https://codeberg.org/pranshu/haskell-ts-mode
 ;; Package-Requires: ((emacs "29.3"))
-;; Version: 1.01
+;; Version: 1.2.1
 ;; Keywords: languages, haskell
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -64,16 +64,33 @@
                  (const :tag "High Highlighting" 3)
                  (const :tag "Maximum Highlighting" 4)))
 
+(defcustom haskell-ts-prettify-symbols nil
+  "Prettify some symbol combinations to unicode symbols.
+This will concat `haskell-ts-prettify-symbols-alist' to
+`prettify-symbols-alist' in `haskell-ts-mode'."
+  :type 'boolean)
+
 (defcustom haskell-ts-prettify-words nil
   "Prettify some words to unicode symbols.
 This will concat `haskell-ts-prettify-words-alist' to
 `prettify-symbols-alist' in `haskell-ts-mode'."
   :type 'boolean)
 
+(defcustom haskell-ts-format-command "ormolu --stdin-input-file %s"
+  "The command used to call the formatter.  The input is given as the
+standard input.  This string is passed to `format', with the one
+argument being the `buffer-file-name'."
+  :type 'string)
+
+(defface haskell-constructor-face
+  '((t :inherit font-lock-type-face))
+  "Face used to highlight Haskell constructors."
+  :group 'haskell-appearance)
+
 (defvar haskell-ts-font-lock-feature-list
   `((comment str pragma parens)
     (type definition function args module import operator)
-    (match keyword)
+    (match keyword constructors)
     (otherwise signature type-sig)))
 
 (defvar haskell-ts-prettify-symbols-alist
@@ -86,8 +103,6 @@ This will concat `haskell-ts-prettify-words-alist' to
     (">=" . "≥")
     ("/<" . "≮")
     ("/>" . "≯")
-    ("&&" . "∧")
-    ("||" . "∨")
     ("==" . "≡"))
   "`prettify-symbols-alist' for `haskell-ts-mode'.
 This variable contains all the symbol for `haskell-ts-mode' to unicode
@@ -105,7 +120,9 @@ alternative unicode character.")
     ("intersection"     . "∩")
     ("isSubsetOf"       . "⊆")
     ("isProperSubsetOf" . "⊂")
-    ("mempty"           . "∅"))
+    ("mempty"           . "∅")
+    ("&&" . "∧")
+    ("||" . "∨"))
   "Additional symbols to prettify for `haskell-ts-mode'.
 This is added to `prettify-symbols-alist' for `haskell-ts-mode' buffers
 when `haskell-ts-prettify-words' is non-nil.")
@@ -132,25 +149,13 @@ when `haskell-ts-prettify-words' is non-nil.")
      (context (function) @haskell-ts--fontify-type)
      (signature "::" @font-lock-operator-face))
 
-   ;; TODO: It is weird that we use operator face for parenthesses and also for operators.
-   ;;   I see two other, possibly better solutions:
-   ;;   1. Use delimiter face for parenthesses, ::, -> and similar, and operator face for operators.
-   ;;   2. Keep using operator face for parenthesses and co, but use
-   ;;   function call face for operators (since they are functions at
-   ;;   the end).
-   :language 'haskell
-   :feature 'operator
-   :override t
-   '((operator) @font-lock-operator-face
-     "," @font-lock-operator-face)
-
    :language 'haskell
    :feature 'module
    '((module (module_id) @font-lock-type-face))
 
    :language 'haskell
    :feature 'import
-   '((import ["qualified" "as"] @font-lock-keyword-face))
+   '((import ["qualified" "as" "hiding"] @font-lock-keyword-face))
 
    :language 'haskell
    :feature 'type-sig
@@ -167,11 +172,23 @@ when `haskell-ts-prettify-words' is non-nil.")
 
    :language 'haskell
    :feature 'type
-   '((type) @font-lock-type-face
-     (constructor) @font-lock-type-face
+   :override t
+   '((type) @font-lock-type-face)
+
+   :language 'haskell
+   :feature 'constructors
+   :override t
+   '((constructor) @haskell-constructor-face
+     (data_constructor
+      (prefix field: (_) @haskell-constructor-face))
+     (newtype_constructor field: (_) @haskell-constructor-face)
      (declarations (type_synomym (name) @font-lock-type-face))
      (declarations (data_type name: (name) @font-lock-type-face))
-     (declarations (newtype name: (name) @font-lock-type-face)))
+     (declarations (newtype name: (name) @font-lock-type-face))
+     (deriving "deriving" @font-lock-keyword-face
+               classes: (_) @haskell-constructor-face)
+     (deriving_instance "deriving" @font-lock-keyword-face
+                        name: (_) @haskell-constructor-face))
 
    :language 'haskell
    :feature 'match
@@ -181,6 +198,7 @@ when `haskell-ts-prettify-words' is non-nil.")
      (match ("->" @font-lock-doc-face)))
 
    :language 'haskell
+   :override t
    :feature 'comment
    `(((comment) @font-lock-comment-face)
      ((haddock) @font-lock-doc-face))
@@ -201,7 +219,7 @@ when `haskell-ts-prettify-words' is non-nil.")
    :language 'haskell
    :feature 'parens
    :override t
-   `(["(" ")" "[" "]"] @font-lock-operator-face
+   `(["(" ")" "[" "]"] @font-lock-bracket-face
      (infix operator: (_) @font-lock-operator-face))
 
    :language 'haskell
@@ -211,7 +229,13 @@ when `haskell-ts-prettify-words' is non-nil.")
      (function (infix (operator)  @font-lock-function-name-face))
      (function (infix (infix_id (variable) @font-lock-function-name-face)))
      (bind :anchor (_) @haskell-ts--fontify-params)
-     (function arrow: _ @font-lock-operator-face)))
+     (function arrow: _ @font-lock-operator-face))
+
+   :language 'haskell
+   :feature 'operator
+   :override t
+   `((operator) @font-lock-operator-face
+     ["=" "," "=>"] @font-lock-operator-face))
   "The treesitter font lock settings for haskell.")
 
 (defun haskell-ts--stand-alone-parent (_ parent bol)
@@ -222,7 +246,7 @@ when `haskell-ts-prettify-words' is non-nil.")
                (or (looking-back "^[ \t]*" (line-beginning-position))
                    (member
                     type
-                    '("when" "where" "do" "let" "local_binds" "function"))))
+                    '("when" "do" "let" "local_binds" "function"))))
           (treesit-node-start parent)
         (haskell-ts--stand-alone-parent 1 (funcall
                                            (if bol #'treesit-node-parent #'identity)
@@ -267,7 +291,7 @@ when `haskell-ts-prettify-words' is non-nil.")
        ((node-is "^infix$") ,parent-first-child 0)
 
        ;; Lambda
-       ((parent-is "^lambda\\(_case\\)?$") standalone-parent 2)
+       ((parent-is "^lambda$") standalone-parent 2)
 
        ((parent-is "^class_declarations$") prev-sibling 0)
 
@@ -286,7 +310,7 @@ when `haskell-ts-prettify-words' is non-nil.")
        ((node-is "^then$") parent 2)
        ((node-is "^else$") parent 2)
 
-       ((parent-is "^apply$") haskell-ts--stand-alone-parent 1)
+       ((parent-is "^apply$") haskell-ts--stand-alone-parent 2)
        ((node-is "^quasiquote$") grand-parent 2)
        ((parent-is "^quasiquote_body$") (lambda (_ _ c) c) 0)
        ((lambda (node parent bol)
@@ -306,7 +330,9 @@ when `haskell-ts-prettify-words' is non-nil.")
           (save-excursion
             (goto-char (line-beginning-position 0))
             (back-to-indentation)
-            (point)))
+            (if (looking-at "\n")
+                0
+              (point))))
         0)
 
        ((parent-is "^data_constructors$") parent 0)
@@ -317,10 +343,13 @@ when `haskell-ts-prettify-words' is non-nil.")
             (while (string= "comment" (treesit-node-type n))
               (setq n (treesit-node-prev-sibling n)))
             (string= "where" (treesit-node-type n))))
+        (lambda (node parent bol)
+          (save-excursion
+            (goto-char (treesit-node-start (treesit-node-prev-sibling node)))
+            (back-to-indentation)
+            (point)))
+        2)
 
-        (lambda (_ b _)
-          (+ 1 (treesit-node-start (treesit-node-prev-sibling b))))
-        3)
        ((parent-is "local_binds\\|instance_declarations") ,p-prev-sib 0)
 
        ;; Match
@@ -330,8 +359,8 @@ when `haskell-ts-prettify-words' is non-nil.")
                              (treesit-node-type (funcall ,p-n-prev node)))))
         standalone-parent 2)
 
-       ((node-is "match") ,p-prev-sib 0)
-       ((parent-is "match") standalone-parent 2)
+       ((node-is "match") ,p-prev-sib 1)
+       ((parent-is "match") haskell-ts--stand-alone-parent 2)
 
        ((parent-is "^haskell$") column-0 0)
        ((parent-is "^declarations$") column-0 0)
@@ -342,7 +371,7 @@ when `haskell-ts-prettify-words' is non-nil.")
         (lambda (_ b _) (treesit-node-start (treesit-node-prev-sibling b)))
         0)
        ((n-p-gp nil "signature" "foreign_import") grand-parent 3)
-       ((parent-is "^case$") standalone-parent 4)
+       ((parent-is "^\\(lambda_\\)?case$") parent 2)
        ((node-is "^alternatives$")
         (lambda (_ b _)
           (treesit-node-start (treesit-node-child b 0)))
@@ -362,7 +391,10 @@ when `haskell-ts-prettify-words' is non-nil.")
         0)
 
        ((node-is "|") parent 1)
-       
+
+       ;; Signature
+       ((n-p-gp nil "function" "function\\|signature") parent -3)
+
        ;; Backup
        (catch-all parent 2))))
   "\"Simple\" treesit indentation rules for haskell.")
@@ -420,7 +452,8 @@ when `haskell-ts-prettify-words' is non-nil.")
 (defvar-keymap  haskell-ts-mode-map
   :doc "Keymap for haskell-ts-mode."
   "C-c C-c" #'haskell-ts-compile-region-and-go
-  "C-c C-r" #'run-haskell)
+  "C-c C-r" #'run-haskell
+  "C-c C-f" #'haskell-ts-format)
 
 ;;;###autoload
 (define-derived-mode haskell-ts-mode prog-mode "haskell ts mode"
@@ -436,10 +469,11 @@ when `haskell-ts-prettify-words' is non-nil.")
   (when haskell-ts-use-indent
     (setq-local treesit-simple-indent-rules haskell-ts-indent-rules)
     (setq-local indent-tabs-mode nil))
+  (setq-local electric-indent-functions '(haskell-ts-indent-after-newline))
   ;; Comment
   (setq-local comment-start "-- ")
   (setq-local comment-use-syntax t)
-  (setq-local comment-start-skip "\\(?: \\|^\\)-+")
+  (setq-local comment-start-skip "\\(?: \\|^\\)--+")
   ;; Electric
   (setq-local electric-pair-pairs
               '((?` . ?`) (?\( . ?\)) (?{ . ?}) (?\" . ?\") (?\[ . ?\])))
@@ -454,7 +488,8 @@ when `haskell-ts-prettify-words' is non-nil.")
                       (and (not (string-match haskell-ts--ignore-types (treesit-node-type node)))
                            (string= "declarations" (treesit-node-type (treesit-node-parent node)))))))
   (setq-local prettify-symbols-alist
-              (append haskell-ts-prettify-symbols-alist
+              (append (and haskell-ts-prettify-symbols
+                           haskell-ts-prettify-symbols-alist)
                       (and haskell-ts-prettify-words
                            haskell-ts-prettify-words-alist)))
 
@@ -473,6 +508,15 @@ when `haskell-ts-prettify-words' is non-nil.")
   (setq-local treesit-font-lock-feature-list
               haskell-ts-font-lock-feature-list)
   (treesit-major-mode-setup))
+
+(defun haskell-ts-indent-after-newline (c)
+  (when (eq c ?\n)
+    (let ((previous-line-width
+           (save-excursion
+             (goto-char (line-end-position 0))
+             (current-column))))
+      (insert (make-string previous-line-width ?\s))))
+  nil)
 
 (defun haskell-ts--fontify-func (node face)
   (if (string= "variable" (treesit-node-type node))
@@ -514,15 +558,15 @@ when `haskell-ts-prettify-words' is non-nil.")
 (defun haskell-ts-defun-name (node)
   (treesit-node-text (treesit-node-child node 0)))
 
-(defun haskell-ts-compile-region-and-go ()
+(defun haskell-ts-compile-region-and-go (start end)
   "Compile the text from START to END in the haskell proc.
 If region is not active, reload the whole file."
-  (interactive)
+  (interactive (if (region-active-p)
+                   (list (region-beginning) (region-end))
+                 (list (point-min) (point-max))))
   (let ((hs (haskell-ts-haskell-session)))
     (if (region-active-p)
-        (let ((str (buffer-substring-no-properties
-                    (region-beginning)
-                    (region-end))))
+        (let ((str (buffer-substring-no-properties start end)))
           (comint-send-string hs ":{\n")
           (comint-send-string
            hs
@@ -532,6 +576,41 @@ If region is not active, reload the whole file."
            (replace-regexp-in-string "^:\\}" "\\:}" str nil t))
           (comint-send-string hs "\n:}\n"))
       (comint-send-string hs ":r\n"))))
+
+(defun haskell-ts-current-function-bound ()
+  "Get start and end point of current funciton."
+  (let (start end)
+    (save-excursion
+      (mark-defun)
+      (setq start (region-beginning))
+      (setq end (region-end))
+      (deactivate-mark))
+    (list start end)))
+
+(defun haskell-ts-format (start end)
+  "Format haskell code.
+
+If region is active, format the code using the comand specified in
+`haskell-ts-format-command'.  Otherwise, format the current function."
+  (interactive
+   (if (region-active-p)
+       (list (region-beginning) (region-end))
+     (haskell-ts-current-function-bound)))
+  (let ((file (or buffer-file-name (error "Need to be visiting a file")))
+        (ra (region-active-p)))
+    (save-excursion
+      (goto-char start)
+      (while (looking-at "[ \t]*$")
+        (goto-char (line-beginning-position 2)))
+      (setq start (point)))
+    (shell-command-on-region start
+                             end
+                             (format haskell-ts-format-command file)
+                             nil
+                             t)
+    (message "Formatted succesefully.")
+    (unless ra
+      (pulse-momentary-highlight-region (region-beginning) (region-end)))))
 
 ;;;###autoload
 (defun run-haskell ()
