@@ -115,12 +115,9 @@
 
 
 ;; ivy-posframe
-(require-package 'ivy-posframe)
-(setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-bottom-center)))
-(setq ivy-posframe-parameters
-      '((left-fringe . 4)
-        (right-fringe . 4)))
-(ivy-posframe-mode 1)
+;; (require-package 'ivy-posframe)
+;; (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-bottom-center)))
+;; (ivy-posframe-mode 1)
 
 ;; smex
 (require-package 'smex)
