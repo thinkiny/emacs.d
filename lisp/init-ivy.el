@@ -10,6 +10,7 @@
                 ivy-count-format ""
                 ivy-wrap t
                 enable-recursive-minibuffers t
+                ivy-case-fold-search-default t
                 ivy-use-selectable-prompt t)
   (define-key ivy-minibuffer-map (kbd "<up>") #'ivy-previous-line-or-history)
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)

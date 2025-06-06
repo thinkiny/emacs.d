@@ -128,14 +128,15 @@
 
 (defun get-default-args-for-ripgrep()
   (let ((file-name (buffer-file-name)))
-    (if file-name
-        (pcase (file-name-extension file-name)
-          ("go" "-tgo")
-          ("py" "-tpython")
-          ("js" "-tjs")
-          ("cc" "-tcpp")
-          (_ ""))
-      "")))
+    (concat (if file-name
+                (pcase (file-name-extension file-name)
+                  ("go" "-tgo")
+                  ("py" "-tpython")
+                  ("js" "-tjs")
+                  ("cc" "-tcpp")
+                  (_ ""))
+              "")
+            " -i")))
 
 (defun counsel-projectile-rg-default()
   (interactive)
