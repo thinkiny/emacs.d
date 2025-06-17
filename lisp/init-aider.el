@@ -5,7 +5,7 @@
               ("C-c y" . aidermacs-transient-menu))
   :config
   (aidermacs-setup-minor-mode)
-  (setq aidermacs-use-architect-mode t)
+  (setq aidermacs-use-architect-mode nil)
   (setq aidermacs-backend 'vterm))
 
 (provide 'init-aider)
