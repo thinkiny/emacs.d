@@ -182,13 +182,13 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   ;;(define-key xwidget-webkit-mode-map (kbd "<double-mouse-1>") #'xwidget-translate-range)
   (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range))
 
-(defun xwidget-execute-script(script)
-  (xwidget-execute-scripts (list script)))
-
 (defun xwidget-execute-scripts(scripts)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
    (format "(function() { %s })();" (string-join scripts "\n"))))
+
+(defun xwidget-execute-script(script)
+  (xwidget-execute-scripts (list script)))
 
 (defun my-xwidget-webkit-mode-hook()
   ;;(setq-local auto-translate-mouse-selection t)

@@ -45,20 +45,30 @@ alternative browser function."
 
 (defun nov-xwidget-get-position-key()
   (if-let* ((uri (xwidget-webkit-uri (xwidget-webkit-current-session)))
-            (file (nov-xwidget-extract-file-name uri)))
-      (concat "position-" file)))
+            (url (url-generic-parse-url uri))
+            (decode-url (url-unhex-string (url-filename url))))
+      (concat "epub-pos-"
+              (string-trim-left decode-url (concat "/" nov-xwidget-cache-dir "/")))))
 
 (defun nov-xwidget-save-position()
+  (interactive)
   (if-let* ((key (nov-xwidget-get-position-key)))
       (xwidget-execute-script
        (format "window.localStorage.setItem('%s', window.scrollY);" key))))
 
+(defun nov-xwidget-reset-position()
+  (interactive)
+  (if-let* ((key (nov-xwidget-get-position-key)))
+      (xwidget-execute-script
+       (format "window.localStorage.removeItem('%s');" key))))
+
 (defvar-local nov-xwidget-need-resume-position t)
 (defun nov-xwidget-jump-prev-position()
+  (interactive)
   (if nov-xwidget-need-resume-position
-      (if-let* ((key (nov-xwidget-get-position-key)))
-          (xwidget-execute-script
-           (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key)))
+      (when-let* ((key (nov-xwidget-get-position-key)))
+        (xwidget-execute-script
+         (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key)))
     (setq nov-xwidget-need-resume-position t)))
 
 (defvar nov-xwidget-webkit-mode-map
@@ -103,12 +113,6 @@ alternative browser function."
                    0)))
       (nov-save-place identifier index (point)))
     (nov-xwidget-save-position)))
-
-(defun nov-xwidget-save-all ()
-  "Delete temporary files of all opened EPUB buffers."
-  (dolist (buffer (buffer-list))
-    (with-current-buffer buffer
-      (nov-xwidget-save))))
 
 (defun nov-xwidget-fix-file-path (file)
   "Fix the FILE path by prefix _."
@@ -330,7 +334,7 @@ Interactively, URL defaults to the string looking like a url around point."
   (let* ((docs nov-documents)
          (path (cdr (aref docs index))))
     (if (eq index nov-toc-id)
-        (nov-xwidget-webkit-find-file (nov-xwidget--write-toc) nil t)
+        (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))
       (nov-xwidget-webkit-find-file path))
     (with-current-buffer (buffer-name)
       (setq-local nov-documents-index index))))
@@ -352,10 +356,10 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (when (eq xwidget-event-type 'load-changed)
     (when (string-equal (nth 3 last-input-event) "load-finished")
       (when-let* ((uri (xwidget-webkit-uri xwidget))
-                (file (nov-xwidget-extract-file-name uri))
-                (index (nov-xwidget-find-index-by-file file)))
-        (setq-local nov-documents-index index)
-        (nov-xwidget-jump-prev-position))))
+                  (file (nov-xwidget-extract-file-name uri)))
+        (nov-xwidget-jump-prev-position)
+        (if-let ((index (nov-xwidget-find-index-by-file file)))
+            (setq-local nov-documents-index index)))))
   (xwidget-webkit-callback xwidget xwidget-event-type))
 
 (defun nov-xwidget-view ()
@@ -462,9 +466,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (interactive)
   (let ((index nov-documents-index))
     (nov-xwidget-save-position)
-    (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))
-    (with-current-buffer (buffer-name)
-      (setq-local nov-documents-index index))))
+    (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))))
 
 ;; Window size change functions; this arrangement below is not ideal, as it basically replicates the code in xwidget-webkit.el, which changes the size of the xwidget *if* the window's mode is xwidget-webkit-mode.
 ;; In the future, xwidget-webkit should accomodate generalized "windows containing a webkit instance" rather than just xwidget-webkit-mode specifically for this.

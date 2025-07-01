@@ -16,7 +16,6 @@
 
 (define-derived-mode nov-xwidget-mode special-mode "EPUB"
   "Major mode for reading EPUB documents"
-  (add-hook 'kill-emacs-hook 'nov-xwidget-save-all nil t)
   (when (not buffer-file-name)
     (error "EPUB must be associated with file"))
   (when (not nov-unzip-program)
