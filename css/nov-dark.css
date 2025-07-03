@@ -26,7 +26,7 @@ pre, tr, td, div.warning {
 }
 pre {
     margin: 10px 0 !important;
-    padding: 0.75em 1.500em !important;
+    padding: 0.75em 0.75em !important;
 }
 th {
     font-size: 1em;
@@ -77,4 +77,13 @@ body a{
 body img {
     max-width: 100% !important;
     filter: brightness(.8) contrast(1.2);
+}
+
+dl.calloutlist p:first-child {
+    margin-top: 25px !important;
+}
+
+dd p {
+    text-align: left !important;
+    margin-bottom: 25px !important;
 }
