@@ -358,7 +358,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (when-let* ((uri (xwidget-webkit-uri xwidget))
                   (file (nov-xwidget-extract-file-name uri)))
         (nov-xwidget-jump-prev-position)
-        (if-let ((index (nov-xwidget-find-index-by-file file)))
+        (if-let* ((index (nov-xwidget-find-index-by-file file)))
             (setq-local nov-documents-index index)))))
   (xwidget-webkit-callback xwidget xwidget-event-type))
 
