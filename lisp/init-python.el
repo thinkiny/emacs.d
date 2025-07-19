@@ -24,21 +24,10 @@
   (setq-local eglot-enable-format-at-save nil)
   (toggle-format-all-mode)
   (setq-default eglot-workspace-configuration
-                '(:basedpyright.analysis (:diagnosticSeverityOverrides (:strictListInference "none"
-                                                                        :strictDictionaryInference "none"
-                                                                        :strictSetInference "none"
-                                                                        :reportMissingTypeStubs "none"
-                                                                        :reportUnknownParameterType "none"
-                                                                        :reportUnknownVariableType "none"
-                                                                        :reportAny "none"
-                                                                        :reportUnknownArgumentType "none"
-                                                                        :reportUnknownMemberType "none"
-                                                                        :reportMissingTypeArgument "none"
-                                                                        :strictGenericNarrowing "none"
-                                                                        :reportExplicitAny "none"
-                                                                        :reportOptionalMemberAccess "warning"
+                '(:basedpyright.analysis (:typeCheckingMode "standard"
+                                          :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
                                                                         :reportOptionalSubscript "warning"
-                                                                        :reportTypedDictNotRequiredAccess "none")
+                                                                        :reportTypedDictNotRequiredAccess "warning")
                                           :useLibraryCodeForTypes t
                                           :diagnosticMode "workspace"
                                           :autoSearchPaths t))))
