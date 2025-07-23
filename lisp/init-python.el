@@ -27,6 +27,7 @@
                 '(:basedpyright.analysis (:typeCheckingMode "standard"
                                           :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
                                                                         :reportOptionalSubscript "warning"
+                                                                        :reportReturnType "warning"
                                                                         :reportTypedDictNotRequiredAccess "warning")
                                           :useLibraryCodeForTypes t
                                           :diagnosticMode "workspace"

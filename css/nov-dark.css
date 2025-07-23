@@ -11,18 +11,19 @@ body {
     top: 30% !important;
     transform: translate(-50%, -55%) !important;
 }
-p {
-    text-align: left !important;
-    line-height: 1.3 !important;
-    margin-bottom: 25px !important;
-}
 h1, h2, h3, h4, h5, h6 {
     /*color: #d4d4d4 !important;*/
     border-bottom: 0px solid #d4d4d4 !important;
 }
+p {
+    font-size: 1em !important;
+}
 pre, tr, td, div.warning {
-    font-size: 1em;
+    font-size: 1em !important;
     background: #272c35;
+}
+span {
+    font-size: 1em !important;
 }
 pre {
     margin: 10px 0 !important;
@@ -73,12 +74,10 @@ body p.title  {
 body a{
     color: #809fff !important;
 }
-
 body img {
     max-width: 100% !important;
     filter: brightness(.8) contrast(1.2);
 }
-
 dl.calloutlist p:first-child {
     margin-top: 25px !important;
 }
