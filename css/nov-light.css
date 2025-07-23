@@ -66,9 +66,9 @@ code {
 :root {
     color-scheme: light; /* both supported */
 }
-body img {
-    max-width: 100% !important;
-}
+/* body img { */
+/*     max-width: 100% !important; */
+/* } */
 dl.calloutlist p:first-child {
     margin-top: 25px !important;
 }

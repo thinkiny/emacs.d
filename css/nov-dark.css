@@ -74,14 +74,13 @@ body p.title  {
 body a{
     color: #809fff !important;
 }
-body img {
-    max-width: 100% !important;
-    filter: brightness(.8) contrast(1.2);
-}
+/* body img { */
+/*     max-width: 100% !important; */
+/*     filter: brightness(.8) contrast(1.2); */
+/* } */
 dl.calloutlist p:first-child {
     margin-top: 25px !important;
 }
-
 dd p {
     text-align: left !important;
     margin-bottom: 25px !important;

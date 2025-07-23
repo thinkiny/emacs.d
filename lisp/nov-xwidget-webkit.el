@@ -511,7 +511,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
    "(function () {
-    if (document.body.clientHeight + window.scrollY >= document.body.scrollHeight) {
+    if (document.documentElement.scrollTop + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
         return \"1\";
     } else {
         return \"0\";
