@@ -246,6 +246,7 @@ If XML, generate XML instead of HTML."
     (if callback
         (funcall callback new-dom))
     (with-temp-file output-native-path
+      (insert "<!DOCTYPE html>\n")
       (nov-dom-print new-dom))
     ;; (encode-coding-region (point-min) (point-max) 'utf-8)
     output-native-path))
