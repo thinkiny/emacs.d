@@ -1,13 +1,15 @@
 ;; -*- lexical-binding: t; -*-
 
 (require-package 'ace-window)
+(require-package 'transpose-frame)
 
 (global-set-key (kbd "C-x o") 'ace-window)
-(global-set-key (kbd "C-x x")  'ace-swap-window)
-(global-set-key (kbd "C-c [")  'windmove-left)
+(global-set-key (kbd "C-x x") 'ace-swap-window)
+(global-set-key (kbd "C-c x") 'transpose-frame)
+(global-set-key (kbd "C-c [") 'windmove-left)
 (global-set-key (kbd "C-c ]") 'windmove-right)
-(global-set-key (kbd "C-c k")    'windmove-up)
-(global-set-key (kbd "C-c j")  'windmove-down)
+(global-set-key (kbd "C-c k") 'windmove-up)
+(global-set-key (kbd "C-c j") 'windmove-down)
 
 (defun crux-transpose-windows (arg)
   "Transpose the buffers shown in two windows.
