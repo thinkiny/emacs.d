@@ -447,6 +447,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
                   (libxml-parse-html-region (point-min) (point-max))))
            (new-dom (nov-xwidget-inject-dom dom "TOC")))
       (with-temp-file html-path
+        (insert "<!DOCTYPE html>\n")
         (shr-dom-print new-dom)
         html-path))))
 
@@ -467,7 +468,8 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (interactive)
   (let ((index nov-documents-index))
     (nov-xwidget-save-position)
-    (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))))
+    (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))
+    (setq-local nov-documents-index nov-toc-id)))
 
 ;; Window size change functions; this arrangement below is not ideal, as it basically replicates the code in xwidget-webkit.el, which changes the size of the xwidget *if* the window's mode is xwidget-webkit-mode.
 ;; In the future, xwidget-webkit should accomodate generalized "windows containing a webkit instance" rather than just xwidget-webkit-mode specifically for this.
@@ -511,7 +513,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
    "(function () {
-    if (document.documentElement.scrollTop + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
+    if (document.documentElement.clientHeight + document.documentElement.scrollTop >= document.documentElement.scrollHeight) {
         return \"1\";
     } else {
         return \"0\";

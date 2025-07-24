@@ -20,7 +20,7 @@
 (defun markdown-live-preview-window-xwidgets (file)
   "Preview FILE with eww.
 To be used with `markdown-live-preview-window-function'."
-  (xwidget-webkit-browse-url (concat "file://" file))
+  (xwidget-webkit-browse-url (concat "file://" file) t)
   (xwidget-buffer (xwidget-webkit-current-session)))
 
 (setq markdown-live-preview-window-function #'markdown-live-preview-window-xwidgets)
