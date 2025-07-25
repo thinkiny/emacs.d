@@ -64,8 +64,8 @@ fi"
 
   (defun dwim-shell-commands-show-dock-macos (status on-completion)
     "Control macOS dock shown."
-    (let ((cmd (if status "true" "false"))
-          (title (if status "Hide" "Show")))
+    (let ((cmd (if status "false" "true" ))
+          (title (if status "Show" "Hide")))
       (dwim-shell-command-on-marked-files
        (concat title " dock.")
        (format "osascript -e 'tell application \"System Events\" to set autohide of dock preferences to %s'" cmd)
@@ -90,15 +90,22 @@ fi"
   (kill-buffer buffer)
   (run-with-timer 0.1 0 #'toggle-frame-maximized))
 
+(defun is-on-mac-screen()
+  (string= (frame-monitor-attribute 'name) "Built-in Retina Display"))
+
 (defun toggle-frame-maximized-macos()
   (let ((frame-status (get-current-frame-maximized))
         (dock-status (get-dock-autohide-macos)))
     (if frame-status
         (if dock-status
-            (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback)
+            ;; show
+            (dwim-shell-commands-show-dock-macos t #'toggle-frame-maximized-macos-callback)
           (toggle-frame-maximized))
       (if dock-status
           (toggle-frame-maximized)
-        (dwim-shell-commands-show-dock-macos t #'toggle-frame-maximized-macos-callback)))))
+        (if (is-on-mac-screen)
+            ;; show
+            (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback)
+          (toggle-frame-maximized))))))
 
 (provide 'init-mac)
