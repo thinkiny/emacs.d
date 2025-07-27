@@ -1,7 +1,6 @@
 body {
     writing-mode: horizontal-tb;
     font-size: 20px !important;
-    text-align: left !important;
     width: 95% !important;
     height: 50% !important;
     position: absolute !important;
@@ -11,6 +10,10 @@ body {
 }
 p {
     font-size: 1em !important;
+    text-align: left !important;
+}
+table {
+    margin-left: 0 !important;
 }
 pre, tr, td, div.warning {
     font-size: 1em !important;
