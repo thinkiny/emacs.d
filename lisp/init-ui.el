@@ -250,10 +250,13 @@
 (defun projectile-project-name-optional()
   "Return project name.
  If PROJECT is not specified acts on the current project."
-  (let ((project-root (projectile-project-root)))
-    (if project-root
-        (funcall projectile-project-name-function project-root)
-      "")))
+  (unless (boundp 'current-project-name)
+    (let ((project-root (projectile-project-root)))
+      (setq-local current-project-name
+                  (if project-root
+                      (funcall projectile-project-name-function project-root)
+                    ""))))
+  current-project-name)
 
 (defun project-name-mode-line ()
   (cond
@@ -273,8 +276,6 @@
   (if (bound-and-true-p flymake-mode)
       (flymake--mode-line-counters) ""))
 
-(setq-default auto-revert-check-vc-info t)
-(setq-default auto-revert-interval 3)
 (setq-default mode-line-format
               '((:eval (mode-line-linum))
                 " "
