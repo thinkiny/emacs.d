@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: exit
+# key: ex
+# --
+
+def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool | None:
+        $1

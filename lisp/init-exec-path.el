@@ -7,11 +7,18 @@
   :demand t
   :config
   (setq exec-path-from-shell-arguments '("-l"))
+  (dolist (var '("SSH_AUTH_SOCK"
+                 "SSH_AGENT_PID"
+                 "GPG_AGENT_INFO"
+                 "LANG"
+                 "LC_CTYPE"
+                 "JAVA_HOME"
+                 "ANTHROPIC_BASE_URL"
+                 "ANTHROPIC_AUTH_TOKEN"
+                 "ANTHROPIC_MODEL"
+                 "ANTHROPIC_SMALL_FAST_MODEL"))
+    (add-to-list 'exec-path-from-shell-variables var))
   (exec-path-from-shell-initialize))
-
-(with-eval-after-load 'exec-path-from-shell
-  (dolist (var '("SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO" "LANG" "LC_CTYPE" "JAVA_HOME"))
-    (add-to-list 'exec-path-from-shell-variables var)))
 
 (provide 'init-exec-path)
 ;;; init-exec-path.el ends here
