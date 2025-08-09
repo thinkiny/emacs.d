@@ -141,9 +141,13 @@ This command currently blocks the UI, sorry."
     (interactive)
     (lsp-sql-execute-query command (point-min) (point-max))))
 
+(with-eval-after-load 'eglot
+  (require 'eglot-sqls)
+  (add-to-list 'eglot-server-programs
+               '(sql-mode . (eglot-sqls "sqls"))))
+
 (defun my-sql-hook()
-  (setq-local lsp-enable-format-at-save nil)
-  (lsp-later)
+  (eglot-ensure)
   (local-set-key (kbd "C-c C-t") #'align-create-table)
   (local-set-key (kbd "C-c C-f") #'sqlformat)
   (local-set-key (kbd "C-x C-e") #'lsp-sql-execute-current)

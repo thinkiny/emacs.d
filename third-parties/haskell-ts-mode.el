@@ -5,7 +5,7 @@
 ;; Author: Pranshu Sharma <pranshu@bauherren.ovh>
 ;; URL: https://codeberg.org/pranshu/haskell-ts-mode
 ;; Package-Requires: ((emacs "29.3"))
-;; Version: 1.2.1
+;; Version: 1.3.2
 ;; Keywords: languages, haskell
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,11 @@
   "The command to be called to run ghci."
   :type 'string)
 
-(defcustom haskell-ts-ghci-buffer-name "Inferior Haskell"
+(defcustom haskell-ts-ghci-switches nil
+  "Arguments passwed to `haskell-ts-ghci'."
+  :type 'string)
+
+(defcustom haskell-ts-ghci-buffer-name "*Inferior Haskell*"
   "Buffer name for the ghci prcoess."
   :type 'string)
 
@@ -238,23 +242,34 @@ when `haskell-ts-prettify-words' is non-nil.")
      ["=" "," "=>"] @font-lock-operator-face))
   "The treesitter font lock settings for haskell.")
 
-(defun haskell-ts--stand-alone-parent (_ parent bol)
+(defun haskell-ts--stand-alone-parent (_ parent _ &optional last_non_paren first)
   (save-excursion
     (goto-char (treesit-node-start parent))
-    (let ((type (treesit-node-type parent)))
-      (if (and (not bol)
-               (or (looking-back "^[ \t]*" (line-beginning-position))
-                   (member
-                    type
-                    '("when" "do" "let" "local_binds" "function"))))
-          (treesit-node-start parent)
-        (haskell-ts--stand-alone-parent 1 (funcall
-                                           (if bol #'treesit-node-parent #'identity)
-                                           (treesit-node-parent parent))
-                                        nil)))))
+    (let* ((type (treesit-node-type parent))
+           (res (if (or (and first
+                             (member
+                              type
+                              '("when" "do" "let_in" "local_binds" "function")))
+                        (looking-back "^[ \t]*" (line-beginning-position)))
+                    (treesit-node-start (if (and (string= "parens" type) last_non_paren)
+                                            last_non_paren
+                                          parent))
+                  (haskell-ts--stand-alone-parent 1
+                                                  (treesit-node-parent parent)
+                                                  nil
+                                                  (if (string= "parens" type)
+                                                      last_non_paren
+                                                    parent)
+                                                  t))))
+      ;; This is an astronomically huge hack.  The kind where if you
+      ;; took it you wouldn't be able to walk for several days after,
+      ;; no homo
+      (if (string= type "conditional")
+          (+ 2 res)
+        res))))
 
 (defvar haskell-ts--ignore-types
-  (regexp-opt '("comment" "cpp" "haddock"))
+  (regexp-opt '("comment" "cpp" "haddock" ";"))
   "Node types that will be ignored by indentation.")
 
 (defvar haskell-ts-indent-rules
@@ -287,18 +302,19 @@ when `haskell-ts-prettify-words' is non-nil.")
                              (setq node (treesit-node-parent node))))
               (setq first-inf node))
             (funcall ,parent-first-child nil first-inf nil)))
-        0)
-       ((node-is "^infix$") ,parent-first-child 0)
+        2)
+       ((parent-is "^infix$") parent 2)
+       ((node-is "^infix$") standalone-parent 2)
 
        ;; Lambda
-       ((parent-is "^lambda$") standalone-parent 2)
+       ((parent-is "^lambda$") haskell-ts--stand-alone-parent 2)
 
        ((parent-is "^class_declarations$") prev-sibling 0)
 
        ((node-is "^where$") parent 2)
 
        ;; in
-       ((node-is "^in$") parent 0)
+       ((node-is "^in$") parent 1)
 
        ((parent-is "qualifiers") parent 0)
 
@@ -306,9 +322,21 @@ when `haskell-ts-prettify-words' is non-nil.")
        ((node-is "^]$") parent 0)
        ((parent-is "^list$") standalone-parent 2)
 
-       ;; If then else
-       ((node-is "^then$") parent 2)
-       ((node-is "^else$") parent 2)
+       ;; Parens
+       ((node-is "^)$") parent 0)
+
+       ;; Structs
+       ((parent-is "^field$") standalone-parent 2)
+       ((node-is "^}$")
+        (lambda (_ parent bol)
+          (let ((sib (treesit-node-child parent 0)))
+            (while (and sib (not (string= (treesit-node-type sib)
+                                          "{"))) ; } Srry for ocd
+              (setq sib (treesit-node-next-sibling sib)))
+            (if sib
+                (treesit-node-start sib)
+              bol)))
+        0)
 
        ((parent-is "^apply$") haskell-ts--stand-alone-parent 2)
        ((node-is "^quasiquote$") grand-parent 2)
@@ -319,7 +347,7 @@ when `haskell-ts-prettify-words' is non-nil.")
               (setq n (treesit-node-prev-sibling n)))
             (string= "do" (treesit-node-type n))))
         haskell-ts--stand-alone-parent
-        3)
+        2)
        ((parent-is "^do$") ,p-prev-sib 0)
 
        ((parent-is "^alternatives$") ,p-prev-sib 0)
@@ -338,29 +366,34 @@ when `haskell-ts-prettify-words' is non-nil.")
        ((parent-is "^data_constructors$") parent 0)
 
        ;; where
-       ((lambda (node _ _)
-          (let ((n (treesit-node-prev-sibling node)))
-            (while (string= "comment" (treesit-node-type n))
-              (setq n (treesit-node-prev-sibling n)))
-            (string= "where" (treesit-node-type n))))
-        (lambda (node parent bol)
-          (save-excursion
-            (goto-char (treesit-node-start (treesit-node-prev-sibling node)))
-            (back-to-indentation)
-            (point)))
-        2)
+       ((node-is "local_binds") ,p-prev-sib 2)
+       
 
        ((parent-is "local_binds\\|instance_declarations") ,p-prev-sib 0)
 
+       ;; Conditionals This builds up on the hackiness of what happens
+       ;; in haskell-ts--stand-alone-parent
+       ((node-is "^then$") parent 2)
+       ((node-is "^else$") parent 2)
+       ((parent-is "^conditional$") parent 4)
+
+       ;; let.  It is important this one is in the bottom.
+       ((lambda (_ p _)
+          (let ((gp "let_in"))
+            (or (string= gp (treesit-node-type p))
+                (string= gp (treesit-node-type (treesit-node-parent p))))))
+        haskell-ts--stand-alone-parent 2)
+
+       
        ;; Match
        ((lambda (node _ _)
           (and (string= "match" (treesit-node-type node))
                (string-match (regexp-opt '("patterns" "variable"))
                              (treesit-node-type (funcall ,p-n-prev node)))))
-        standalone-parent 2)
+        parent 2)
 
-       ((node-is "match") ,p-prev-sib 1)
-       ((parent-is "match") haskell-ts--stand-alone-parent 2)
+       ((node-is "^match$") ,p-prev-sib 1)
+       ((parent-is "^match$") haskell-ts--stand-alone-parent 2)
 
        ((parent-is "^haskell$") column-0 0)
        ((parent-is "^declarations$") column-0 0)
@@ -371,7 +404,7 @@ when `haskell-ts-prettify-words' is non-nil.")
         (lambda (_ b _) (treesit-node-start (treesit-node-prev-sibling b)))
         0)
        ((n-p-gp nil "signature" "foreign_import") grand-parent 3)
-       ((parent-is "^\\(lambda_\\)?case$") parent 2)
+       ((parent-is "^\\(lambda_\\)?case$") haskell-ts--stand-alone-parent 2)
        ((node-is "^alternatives$")
         (lambda (_ b _)
           (treesit-node-start (treesit-node-child b 0)))
@@ -390,7 +423,8 @@ when `haskell-ts-prettify-words' is non-nil.")
             (_ (treesit-node-start parent))))
         0)
 
-       ((node-is "|") parent 1)
+       ;; TODO: I reckon this needs a variable
+       ((node-is "^|$") parent 0)
 
        ;; Signature
        ((n-p-gp nil "function" "function\\|signature") parent -3)
@@ -616,14 +650,22 @@ If region is active, format the code using the comand specified in
 (defun run-haskell ()
   "Run an inferior Haskell process."
   (interactive)
-  (let ((buffer (concat "*" haskell-ts-ghci-buffer-name "*")))
+  (let ((buffer (get-buffer-create haskell-ts-ghci-buffer-name))
+        (ghci haskell-ts-ghci)
+        (switches haskell-ts-ghci-switches))
     (pop-to-buffer-same-window
      (if (comint-check-proc buffer)
          buffer
-       (make-comint haskell-ts-ghci-buffer-name haskell-ts-ghci nil buffer-file-name)))))
+       (with-current-buffer buffer
+         (apply 'make-comint-in-buffer
+                "Haskell"
+                buffer
+                ghci
+                nil
+                switches))))))
 
 (defun haskell-ts-haskell-session ()
-  (get-buffer-process (concat "*" haskell-ts-ghci-buffer-name "*")))
+  (get-buffer-process haskell-ts-ghci-buffer-name))
 
 (when (treesit-ready-p 'haskell)
   (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-ts-mode)))
