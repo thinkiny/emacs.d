@@ -45,8 +45,8 @@
 (defun my-json-mode-hook()
   (whitespace-cleanup-mode -1))
 
-(add-auto-mode 'json-mode "\\.json")
-(add-hook 'json-mode-hook #'my-json-mode-hook)
+(add-auto-mode 'json-ts-mode "\\.json")
+(add-hook 'json-ts-mode #'my-json-mode-hook)
 
 
 (provide 'init-js)

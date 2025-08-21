@@ -166,6 +166,7 @@
 (require-package 'cloud-theme)
 (require-package 'modus-themes)
 (require-package 'ef-themes)
+
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))

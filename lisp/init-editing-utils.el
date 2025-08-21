@@ -401,4 +401,7 @@ If ARG is omitted or nil, move point forward one word."
 (with-eval-after-load 'sgml-mode
   (unbind-key (kbd "C-c ]") 'sgml-mode-map))
 
+;; yaml
+(add-auto-mode 'yaml-ts-mode "\\.yml\\.erb\\'")
+
 (provide 'init-editing-utils)
