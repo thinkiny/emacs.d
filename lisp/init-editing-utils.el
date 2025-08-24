@@ -394,14 +394,4 @@ If ARG is omitted or nil, move point forward one word."
               (lambda ()
                 (direnv-update-directory-environment)))))
 
-;; jinja
-(use-package jinja2-mode)
-(add-to-list 'auto-mode-alist '("\\.jinja\\'" . jinja2-mode))
-
-(with-eval-after-load 'sgml-mode
-  (unbind-key (kbd "C-c ]") 'sgml-mode-map))
-
-;; yaml
-(add-auto-mode 'yaml-ts-mode "\\.yml\\.erb\\'")
-
 (provide 'init-editing-utils)
