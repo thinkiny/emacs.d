@@ -9,6 +9,7 @@
   :hook (eglot-managed-mode . my-eglot-mode-hook)
   :config
   (setq eglot-events-buffer-size 0)
+  (setq eglot-code-action-indications nil)
   (setq eglot-events-buffer-config '(:size 0 :format full))
   (setq eglot-extend-to-xref t)
   (setq eglot-autoshutdown t)
@@ -113,8 +114,8 @@
 (ignore-tramp-ssh-control-master #'eglot--connect)
 
 (with-eval-after-load-theme 'eglot
-                            (when (theme-dark-p)
-                              (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground))))
+                            ;;(when (theme-dark-p)
+                            (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))
 
 (defun set-eglot-server-progam (mode cmd)
   (setq eglot-server-programs (assoc-delete-all mode eglot-server-programs))

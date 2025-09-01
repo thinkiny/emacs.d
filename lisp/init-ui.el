@@ -270,7 +270,8 @@
    (t (projectile-project-name-optional))))
 
 (defun persp-with-project-name-mode-line()
-  `("[" ,(persp-current-name) "] " ,(project-name-mode-line)))
+  (if (fboundp 'persp-current-name)
+      `("[" ,(persp-current-name) "] " ,(project-name-mode-line))))
 
 
 (defun my-flymake-mode-line-counters ()
