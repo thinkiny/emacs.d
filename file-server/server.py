@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from zipfile import ZipFile
 import sys, os
@@ -23,5 +23,5 @@ def extractPdfJs():
 
 if __name__ == '__main__':
     extractPdfJs()
-    httpd = HTTPServer(('localhost', int(sys.argv[1])), CORSRequestHandler)
+    httpd = ThreadingHTTPServer(('localhost', int(sys.argv[1])), CORSRequestHandler)
     httpd.serve_forever()

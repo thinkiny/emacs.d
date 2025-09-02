@@ -163,9 +163,10 @@
       (customize-save-variable 'frame-transparency value))))
 
 ;; themes
-(require-package 'cloud-theme)
 (require-package 'modus-themes)
 (require-package 'ef-themes)
+(require-package 'inkpot-theme)
+;; (setq inkpot-theme-use-black-background t)
 
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
