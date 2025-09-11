@@ -4,9 +4,7 @@
 (setq eglot-java-server-install-dir (concat user-emacs-directory "java/eclipse.jdt.ls"))
 (setq eglot-java-eclipse-jdt-cache-directory "~/.emacs.d/eglot-eclipse-jdt-cache")
 (setq eglot-java-eclipse-jdt-args
-      `("-XX:+UseG1GC"
-        "-Xms100m"
-        "-XX:MaxGCPauseMillis=50"
+      `("-Xms100m"
         "-Dsun.zip.disableMemoryMapping=true"
         "--add-modules=ALL-SYSTEM"
         "--add-opens=java.base/java.util=ALL-UNNAMED"

@@ -97,10 +97,10 @@
   (interactive)
   (whitespace-cleanup-mode 0)
   (remove-hook 'before-save-hook 'eglot-format-buffer t)
-  (if (bound-and-true-p format-all-mode)
-      (remove-hook 'before-save-hook
-                   'format-all--buffer-from-hook
-                   'local))
+  ;; (if (bound-and-true-p format-all-mode)
+  ;;     (remove-hook 'before-save-hook
+  ;;                  'format-all--buffer-from-hook
+  ;;                  'local))
   (setq-local eglot-enable-format-at-save nil))
 
 ;; (advice-add #'eglot--sig-info :around #'advice/ignore-errors)
