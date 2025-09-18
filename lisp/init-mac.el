@@ -2,6 +2,7 @@
 (setq mac-command-modifier 'meta)
 
 (setq-default locate-command "mdfind")
+(setq ns-use-thin-smoothing t)
 
 ;; start new emacs
 (defun start-new-emacs ()

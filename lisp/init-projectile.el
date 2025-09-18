@@ -16,6 +16,7 @@
           "*\\.svn$"
           "*\\.hg$"
           "*\\.bzr$"
+          "*\\.venv$"
           "aarch64-darwin"
           "build"
           "target"
@@ -147,33 +148,5 @@
   :bind (:map
          projectile-mode-map
          ("C-c p s s" . #'counsel-projectile-rg-default)))
-
-
-;; store xref per project
-(defvar projectile-params--store (make-hash-table :test 'equal)
-  "The store of project parameters.")
-
-(defun projectile-param-get-parameter (param)
-  "Return project parameter PARAM, or nil if unset."
-  (let ((key (cons (projectile-project-name) param)))
-    (gethash key projectile-params--store nil)))
-
-(defun projectile-param-set-parameter (param value)
-  "Set the project parameter PARAM to VALUE."
-  (let ((key (cons (projectile-project-name) param)))
-    (puthash key value projectile-params--store))
-  value)
-
-(defun projectile-param-xref-history (&optional new-value)
-  "Return project-local xref history for the current projectile.
-
-Override existing value with NEW-VALUE if it's set."
-  (if new-value
-      (projectile-param-set-parameter 'xref--history new-value)
-    (or (projectile-param-get-parameter 'xref--history)
-        (projectile-param-set-parameter 'xref--history (xref--make-xref-history)))))
-
-
-(setq xref-history-storage #'projectile-param-xref-history)
 
 (provide 'init-projectile)
