@@ -129,21 +129,6 @@
               (unless (file-remote-p default-directory)
                 (all-the-icons-dired-mode)))))
 
-;; doom-themes
-(require-package 'doom-themes)
-(setq doom-themes-enable-bold t
-      doom-themes-enable-italic nil
-      doom-opera-brighter-modeline t
-      doom-themes-treemacs-theme "doom-colors")
-
-(with-eval-after-load 'org
-  ;;(doom-themes-visual-bell-config)
-  (doom-themes-org-config))
-
-(with-eval-after-load 'treemacs
-  (doom-themes-treemacs-config)
-  (remove-hook 'treemacs-mode-hook #'doom-themes-hide-modeline))
-
 ;; frame transparency
 (defcustom frame-transparency 100
   "The Transparency of frame"

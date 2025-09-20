@@ -50,7 +50,9 @@
       (string-equal "bazel-out" file)))
 
 (with-eval-after-load 'treemacs
-  ;;(set-face-attribute 'treemacs-root-face nil :height 1.0)
+  (set-face-attribute 'treemacs-root-face nil :height 1.0)
+  (require 'doom-themes-ext-treemacs)
+  (doom-themes-treemacs-config)
   (push #'treemacs-custom-filter treemacs-ignored-file-predicates)
   (add-to-list 'treemacs-pre-file-insert-predicates #'treemacs-is-file-git-ignored?)
   (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action))
