@@ -78,7 +78,7 @@ body a{
     color: #809fff !important;
 }
 body img {
-    max-width: 100% !important;
+    max-width: 80%;
     /*filter: brightness(.8) contrast(1.2); */
 }
 dl.calloutlist p:first-child {

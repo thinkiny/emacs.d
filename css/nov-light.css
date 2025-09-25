@@ -70,7 +70,7 @@ code {
     color-scheme: light; /* both supported */
 }
 body img {
-    max-width: 100% !important;
+    max-width: 80%;
 }
 dl.calloutlist p:first-child {
     margin-top: 25px !important;

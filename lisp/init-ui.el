@@ -306,6 +306,11 @@
             ;;:update-fn #'counsel--update-theme-action
             ))
 
+(defun set-default-theme()
+  (interactive)
+  (if-let* ((current-theme (car custom-enabled-themes)))
+      (customize-save-variable 'default-theme current-theme)))
+
 ;; hide-mode-line
 (require-package 'hide-mode-line)
 
