@@ -93,7 +93,8 @@ alternative browser function."
   "Major mode for reading epub files.
 \\{nov-xwidget-webkit-mode-map}"
   :keymap nov-xwidget-webkit-mode-map
-  (add-hook 'kill-buffer-hook #'nov-xwidget-save nil t))
+  (add-hook 'kill-buffer-hook #'nov-xwidget-save nil t)
+  (add-hook 'kill-emacs-hook #'nov-xwidget-save nil t))
 
 (defun get-nov-xwidget-style-href()
   (pcase nov-xwidget-style
