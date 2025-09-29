@@ -55,7 +55,7 @@ object UpdateMetals {
     }
 
     s"""./coursier bootstrap
-      --java-opt -XX:+UseG1GC
+      --java-opt -XX:+UseZGC
       --java-opt -XX:+UseStringDeduplication
       --java-opt -Xss8m
       --java-opt -Xms256m
@@ -69,6 +69,11 @@ object UpdateMetals {
   }
 
   def main(args: Array[String]): Unit = {
+    if (args.size == 1) {
+       updateMetals(args(0))
+       return
+    } 
+
     val current = getCurrentVersion().getOrElse("")
     getLatestVersion() match {
       case Some(latest) => {

@@ -5,7 +5,7 @@
 ;; Author: Pranshu Sharma <pranshu@bauherren.ovh>
 ;; URL: https://codeberg.org/pranshu/haskell-ts-mode
 ;; Package-Requires: ((emacs "29.3"))
-;; Version: 1.3.2
+;; Version: 1.3.4
 ;; Keywords: languages, haskell
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -57,7 +57,7 @@
   "Buffer name for the ghci prcoess."
   :type 'string)
 
-(defcustom haskell-ts-use-indent t
+(defcustom haskell-ts-use-indent nil
   "Set to non-nil to use the indentation provided by haskell-ts-mode"
   :type 'boolean)
 
@@ -185,7 +185,7 @@ when `haskell-ts-prettify-words' is non-nil.")
    '((constructor) @haskell-constructor-face
      (data_constructor
       (prefix field: (_) @haskell-constructor-face))
-     (newtype_constructor field: (_) @haskell-constructor-face)
+     (newtype_constructor field: (field (name)) @haskell-constructor-face)
      (declarations (type_synomym (name) @font-lock-type-face))
      (declarations (data_type name: (name) @font-lock-type-face))
      (declarations (newtype name: (name) @font-lock-type-face))
@@ -264,9 +264,12 @@ when `haskell-ts-prettify-words' is non-nil.")
       ;; This is an astronomically huge hack.  The kind where if you
       ;; took it you wouldn't be able to walk for several days after,
       ;; no homo
-      (if (string= type "conditional")
-          (+ 2 res)
-        res))))
+      (let ((adjustments '(("conditional" . 2)
+                           ("local_binds" . 1))))
+        (if-let* ((offset (assoc-string type adjustments)))
+            (+ (cdr offset) res)
+          res)
+        ))))
 
 (defvar haskell-ts--ignore-types
   (regexp-opt '("comment" "cpp" "haddock" ";"))
@@ -363,12 +366,13 @@ when `haskell-ts-prettify-words' is non-nil.")
               (point))))
         0)
 
-       ((parent-is "^data_constructors$") parent 0)
+       ((node-is "^data_constructors$") parent 4)
+       ((node-is "^data_constructor$") parent 0)
+       ((n-p-gp "^\|$" "^data_constructors$" nil) parent -2)
 
        ;; where
        ((node-is "local_binds") ,p-prev-sib 2)
        
-
        ((parent-is "local_binds\\|instance_declarations") ,p-prev-sib 0)
 
        ;; Conditionals This builds up on the hackiness of what happens
@@ -392,7 +396,7 @@ when `haskell-ts-prettify-words' is non-nil.")
                              (treesit-node-type (funcall ,p-n-prev node)))))
         parent 2)
 
-       ((node-is "^match$") ,p-prev-sib 1)
+       ((node-is "^match$") ,p-prev-sib 0)
        ((parent-is "^match$") haskell-ts--stand-alone-parent 2)
 
        ((parent-is "^haskell$") column-0 0)
@@ -427,7 +431,7 @@ when `haskell-ts-prettify-words' is non-nil.")
        ((node-is "^|$") parent 0)
 
        ;; Signature
-       ((n-p-gp nil "function" "function\\|signature") parent -3)
+       ((n-p-gp nil "function" "function\\|signature") parent 0)
 
        ;; Backup
        (catch-all parent 2))))
