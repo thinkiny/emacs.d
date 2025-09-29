@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (defvar nov-use-xwidget t)
 
 (require 'init-nov)

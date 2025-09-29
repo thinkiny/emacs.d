@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package eshell-up
   :commands eshell-up eshell-up-peek
   :config

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package nov
   :config
   (add-hook 'nov-mode-hook 'my-nov-mode-hook))

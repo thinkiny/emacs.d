@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 ;; Remote Directory Tracking: https://www.emacswiki.org/emacs/AnsiTermHints#h5o-5
 ;; term-mode key-bindings
 

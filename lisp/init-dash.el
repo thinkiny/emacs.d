@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package counsel-dash
   :config
   (setq dash-docs-enable-debugging nil)

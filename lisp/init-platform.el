@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (if *is-a-mac*
     (require 'init-mac))
 

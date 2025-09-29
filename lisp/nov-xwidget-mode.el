@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require 'nov-xwidget-webkit)
 
 (defun nov-extract-epub()
