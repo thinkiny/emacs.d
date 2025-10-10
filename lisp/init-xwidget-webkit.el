@@ -14,6 +14,7 @@
   (let ((buffer (and xwidget-webkit-browse-session (xwidget-buffer xwidget-webkit-browse-session))))
     (and (buffer-live-p buffer) buffer)))
 
+
 (defun xwidget-webkit-browse-open-url (url &optional rest)
   "Ask xwidget-webkit to browse URL.
 NEW-SESSION specifies whether to create a new xwidget-webkit session.
@@ -37,8 +38,12 @@ Interactively, URL defaults to the string looking like a url around point."
 
 (setq browse-url-browser-function 'xwidget-webkit-browse-open-url)
 
+(defun xwidget-get-file-url ()
+  (if (s-ends-with? ".html" (buffer-file-name))
+      (list (concat "file://" (buffer-file-name)))))
+
 (defun xwidget-webkit-browse (url)
-  (interactive "sURL: ")
+  (interactive (list (read-string "URL: " (xwidget-get-file-url))))
   (if (cl-search "://" url)
       (xwidget-webkit-browse-open-url url)
     (xwidget-webkit-browse-open-url (concat "http://" url))))
