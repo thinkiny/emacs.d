@@ -85,7 +85,7 @@ fi"
 (defun restore-dock-autohide-macos()
   (interactive)
   (unless (eq dock-autohide-macos-at-start (get-dock-autohide-macos))
-    (dwim-shell-commands-show-dock-macos dock-autohide-macos-at-start nil)
+    (dwim-shell-commands-show-dock-macos (not dock-autohide-macos-at-start) nil)
     (sit-for 0.5)))
 
 (add-hook 'kill-emacs-hook #'restore-dock-autohide-macos)
