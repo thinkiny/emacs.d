@@ -12,6 +12,7 @@
 
 ;; dockerfile
 (use-package dockerfile-mode)
+(add-auto-mode 'dockerfile-mode "Dockerfile*")
 
 ;; jinja
 (use-package jinja2-mode)

@@ -27,6 +27,7 @@
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
+  (setq completion-category-defaults nil)
   (setq mode-line-misc-info
         (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
   ;; (add-to-list 'mode-line-misc-info
@@ -110,12 +111,18 @@
   ;; (eglot--setq-saving eldoc-documentation-functions
   ;;                       '(eglot-signature-eldoc-function
   ;;                         eglot-hover-eldoc-function))
+  (setq-local completion-at-point-functions
+              (list
+               #'cape-file
+               #'eglot-completion-at-point))
+
   (auto-revert-mode)
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format)))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
+(advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
 
 (with-eval-after-load-theme 'eglot
                             ;;(when (theme-dark-p)

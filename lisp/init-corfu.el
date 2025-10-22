@@ -4,7 +4,7 @@
   :custom
   (corfu-auto t)                 ;; Enable auto completion
   (corfu-cycle t)
-  (corfu-auto-delay 0.4)
+  (corfu-auto-delay 0.2)
   (corfu-auto-prefix 2)
   (corfu-quit-no-match 'separator)
   (corfu-preview-current nil)
@@ -34,7 +34,9 @@
         '((command (styles orderless+initialism))
           (symbol (styles orderless+initialism))
           (variable (styles orderless+initialism))
-          (file (styles basic partical-completion)))))
+          (file (styles basic partical-completion))
+          (eglot (styles orderless))
+          (eglot-capf (styles orderless)))))
 
 (with-eval-after-load 'eshell
   (add-hook 'eshell-mode-hook (lambda () (setq-local corfu-auto nil))))
