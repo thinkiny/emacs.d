@@ -400,7 +400,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
      (ruby . t)
      (screen . nil)
      ;;     (scala . t)
-     (,(if (locate-library "ob-sh") 'sh 'shell) . t)
+     (shell . t)
      (sql . t)
      (sqlite . t))))
 
