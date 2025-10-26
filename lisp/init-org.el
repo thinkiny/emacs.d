@@ -30,7 +30,9 @@
         org-roam-ui-browser-function #'browse-url-chromium))
 
 ;; org-modern
-(use-package org-modern)
+(use-package org-modern
+  :hook (org-mode .  org-modern-mode))
+
 (with-eval-after-load 'org
   ;; auto download
   (require 'org-remoteimg)
@@ -63,7 +65,6 @@
   ;; Ellipsis styling
   (setq org-ellipsis "…")
   (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
-  (global-org-modern-mode)
   (org-roam-db-autosync-mode))
 
 ;; ;; org-appear
