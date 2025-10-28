@@ -48,13 +48,9 @@
 
 
 (defun my-go-mode-hook()
-  (setq-default eglot-workspace-configuration
-                '((:gopls .
-                          ((staticcheck . t)
-                           (analyses .
-                                     ((unusedparams . t)
-                                      (unusedvariable . t)
-                                      (nilness . t)))))))
+  (setq eglot-workspace-configuration `((:gopls . ((staticcheck . t)
+                                                   (analyses . ((ST1003 . :json-false)))))))
+
   (eglot-ensure)
   (subword-mode)
 

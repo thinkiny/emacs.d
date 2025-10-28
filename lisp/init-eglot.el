@@ -14,6 +14,7 @@
   (setq eglot-extend-to-xref t)
   (setq eglot-autoshutdown t)
   (setq eglot-prefer-plaintext t)
+  (setq eglot-sync-connect nil)
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
                                             :documentOnTypeFormattingProvider))
   (setq jsonrpc-default-request-timeout 15)

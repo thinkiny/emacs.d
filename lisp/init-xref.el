@@ -64,6 +64,48 @@
 (global-set-key (kbd "M-]") #'xref-go-forward)
 (global-set-key (kbd "M-,") #'xref-find-references)
 
+
+;; projectile && eglot
+(defun get-xref-eglot-project()
+  (if (bound-and-true-p eglot--managed-mode)
+      (if-let* ((server (eglot-current-server)))
+          (eglot--project server))))
+
+(defun get-xref-elisp-project()
+  (if (eq major-mode 'emacs-lisp-mode)
+      "elisp"))
+
+(defun get-xref-project()
+  (or
+   (get-xref-elisp-project)
+   (get-xref-eglot-project)
+   (projectile-project-name)))
+
+(defvar projectile-params--store (make-hash-table :test 'equal)
+  "The store of project parameters.")
+
+(defun projectile-param-get-parameter (param)
+  "Return project parameter PARAM, or nil if unset."
+  (let ((key (cons (get-xref-project) param)))
+    (gethash key projectile-params--store nil)))
+
+(defun projectile-param-set-parameter (param value)
+  "Set the project parameter PARAM to VALUE."
+  (let ((key (cons (get-xref-project) param)))
+    (puthash key value projectile-params--store))
+  value)
+
+(defun projectile-param-xref-history (&optional new-value)
+  "Return project-local xref history for the current projectile.
+
+Override existing value with NEW-VALUE if it's set."
+  (if new-value
+      (projectile-param-set-parameter 'xref--history new-value)
+    (or (projectile-param-get-parameter 'xref--history)
+        (projectile-param-set-parameter 'xref--history (xref--make-xref-history)))))
+
+(setq xref-history-storage #'projectile-param-xref-history)
+
 ;; dumb-jump
 (use-package dumb-jump
   :demand t
