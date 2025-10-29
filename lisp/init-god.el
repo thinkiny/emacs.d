@@ -6,7 +6,7 @@
   (define-key god-local-mode-map (kbd ".") #'xref-find-definitions)
   (define-key god-local-mode-map (kbd ",") #'xref-find-references)
   (define-key god-local-mode-map (kbd "g") #'counsel-imenu)
-  (define-key god-local-mode-map (kbd "j") #'forward-line)
+  (define-key god-local-mode-map (kbd "j") #'next-line)
   (define-key god-local-mode-map (kbd "k") #'previous-line)
   (define-key god-local-mode-map (kbd "h") #'backward-char)
   (define-key god-local-mode-map (kbd "l") #'forward-char)
@@ -32,7 +32,7 @@
 
 (advice-add #'god-mode-all :after #'god-global-mode-report)
 
-(global-set-key (kbd "M-g i") #'god-local-mode)
+(global-set-key (kbd "M-g l") #'god-local-mode)
 (global-set-key (kbd "M-'") #'god-mode-all)
 
 (provide 'init-god)

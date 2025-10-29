@@ -23,14 +23,14 @@
 (defun set-python-eglot-workspace()
   (setq-local eglot-enable-format-at-save nil)
   (toggle-format-all-mode)
-  (setq eglot-workspace-configuration '(:basedpyright.analysis (:typeCheckingMode "standard"
-                                        :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
-                                                                      :reportOptionalSubscript "warning"
-                                                                      :reportReturnType "warning"
-                                                                      :reportTypedDictNotRequiredAccess "warning")
-                                        :useLibraryCodeForTypes t
-                                        :diagnosticMode "workspace"
-                                        :autoSearchPaths t))))
+  (setq-default eglot-workspace-configuration `(:basedpyright.analysis (:typeCheckingMode "standard"
+                                                                        :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
+                                                                                                      :reportOptionalSubscript "warning"
+                                                                                                      :reportReturnType "warning"
+                                                                                                      :reportTypedDictNotRequiredAccess "warning")
+                                                                        :useLibraryCodeForTypes t
+                                                                        :diagnosticMode "workspace"
+                                                                        :autoSearchPaths t))))
 
 (defun my-python-mode-hook()
   (sphinx-doc-mode)

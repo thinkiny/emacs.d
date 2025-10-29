@@ -385,6 +385,11 @@ If ARG is omitted or nil, move point forward one word."
   (dotimes (_ (or arg 1))
     (forward-whitespace 1)))
 
+(defun backward-symbol(arg)
+  (interactive "p")
+  (or arg (setq arg 1))
+  (forward-symbol (* -1 arg)))
+
 ;; direnv
 (use-package direnv
   :demand t
