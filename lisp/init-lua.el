@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (maybe-require-package 'lua-mode)
 (maybe-require-package 'ruby-end)
 

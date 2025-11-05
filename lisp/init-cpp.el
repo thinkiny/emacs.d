@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require-package 'cff)
 (require-package 'cmake-mode)
 (require-package 'disaster)

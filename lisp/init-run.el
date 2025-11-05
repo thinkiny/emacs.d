@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (defun load-run-conf-from-file (file)
   (if (file-exists-p file)
       (deserialize-from-file file)

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package scala-ts-mode)
 
 (with-eval-after-load 'eglot

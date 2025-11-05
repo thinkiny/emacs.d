@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require 'haskell-ts-mode)
 
 (with-eval-after-load 'eglot

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (maybe-require-package 'web-mode)
 (maybe-require-package 'zencoding-mode)
 

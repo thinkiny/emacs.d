@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (setq auto-mode-alist
       (append '(("SConstruct\\'" . python-ts-mode)
                 ("SConscript\\'" . python-ts-mode))

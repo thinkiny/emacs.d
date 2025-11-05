@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require-package 'java-snippets)
 (require-package 'groovy-mode)
 (require-package 'java-ts-mode)

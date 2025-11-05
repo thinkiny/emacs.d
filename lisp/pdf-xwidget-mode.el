@@ -1,4 +1,4 @@
-;;; pdf-xwidget-mode
+;;; pdf-xwidget-mode  -*- lexical-binding: t; -*-
 
 (defconst pdf-xwidget-name-format "*PDF: %s")
 

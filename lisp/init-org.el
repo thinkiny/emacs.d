@@ -65,7 +65,8 @@
   ;; Ellipsis styling
   (setq org-ellipsis "…")
   (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
-  (org-roam-db-autosync-mode))
+  ;;(org-roam-db-autosync-mode)
+  )
 
 ;; ;; org-appear
 (use-package org-appear

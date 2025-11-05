@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require-package 'typescript-mode)
 
 (with-eval-after-load 'eglot

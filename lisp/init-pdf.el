@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require 'pdf-xwidget-mode)
 (add-auto-mode 'pdf-xwidget-mode "\\.pdf$")
 

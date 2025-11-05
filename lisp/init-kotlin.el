@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package kotlin-mode
   :mode "\\.k\\(ts\\|t\\)$"
   :config

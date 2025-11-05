@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package erlang
   :mode (("\\.erl?$" . erlang-mode)
          ("rebar\\.config$" . erlang-mode)

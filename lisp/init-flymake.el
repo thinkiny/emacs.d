@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (add-to-list 'display-buffer-alist
                `(,(rx bos "*Flymake diagnostics")
                  (display-buffer-reuse-window

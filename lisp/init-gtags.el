@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package gtags-mode
   :commands (gtags-mode))
 

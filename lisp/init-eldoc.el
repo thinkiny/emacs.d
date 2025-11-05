@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package eldoc
   :config
   (setq eldoc-echo-area-use-multiline-p 0.5)

@@ -1,4 +1,4 @@
-;;; init-eglot
+;;; init-eglot  -*- lexical-binding: t; -*-
 
 (with-eval-after-load 'jsonrpc
   (setq jsonrpc-inhibit-debug-on-error t)

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require-package 'yasnippet)
 (require-package 'yasnippet-snippets)
 (add-hook 'after-init-hook 'yas-global-mode)

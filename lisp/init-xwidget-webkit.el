@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (defgroup xwidget-webkit '() "xwidget webkit" :group 'tools)
 (defcustom xwidget-webkit-urls '()
   "Specify xwidgets webkit URLS."
