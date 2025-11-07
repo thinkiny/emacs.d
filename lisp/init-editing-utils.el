@@ -31,7 +31,8 @@
               warning-minimum-level :error
               select-safe-coding-system-function nil
               enable-local-eval t
-              line-number-mode t)
+              line-number-mode -1
+              )
 
 (put 'erase-buffer 'disabled nil)
 (delete-selection-mode 1)

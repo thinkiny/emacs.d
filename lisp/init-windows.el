@@ -10,6 +10,7 @@
 (global-set-key (kbd "C-c ]") 'windmove-right)
 (global-set-key (kbd "C-c k") 'windmove-up)
 (global-set-key (kbd "C-c j") 'windmove-down)
+(global-set-key (kbd "C-x c c") 'clone-indirect-buffer)
 
 (defun crux-transpose-windows (arg)
   "Transpose the buffers shown in two windows.
