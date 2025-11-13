@@ -29,10 +29,17 @@ pre {
 th {
     font-size: 1em;
 }
+
+
 /* Same font for all tags */
-a, em, caption, th, pre, tr, td, code, h1, h2, h3, h4, h5, h6, p, body {
+pre, code {
+    font-family: "JetBrains Mono", "IBM Plex Mono", "Monaco";
+}
+
+a, em, caption, th, tr, td, h1, h2, h3, h4, h5, h6, p, body {
     font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
+
 h1 {
     font-size: 2em !important;
     color: #2e3440 !important;
