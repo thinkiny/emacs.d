@@ -12,8 +12,6 @@
 (cl-defmethod project-root ((project (head go-module)))
   (cdr project))
 
-;; (add-hook 'project-find-functions #'project-find-go-module)
-
 ;; (defun lsp-enable-go-bazel()
 ;;   (interactive)
 ;;   (setq-local lsp-go-env (make-hash-table))
@@ -22,15 +20,18 @@
 ;;   (puthash "GOPACKAGESDRIVER" (concat (projectile-project-root) "/gopackagesdriver.sh") lsp-go-env)
 ;;   (my-lsp-workspace-restart))
 
+(defun go-get-tag-name(name)
+  (string-inflection-snake-case-function name))
+
 (defun go-insert-generate-tag (name)
   (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
     (if (string-match "^\\s-+\\(\\S-+\\)\\s-+\\S-+$" line)
-        (let ((json-tag (format "  `%s:\"%s%s\"`"
-                                name
-                                (downcase (substring (match-string 1 line) 0 1))
-                                (substring (match-string 1 line) 1))))
+        (let ((tag (format "  `%s:\"%s\"`"
+                           name
+                           (go-get-tag-name (match-string 1 line)))))
+
           (end-of-line)
-          (insert json-tag)))))
+          (insert tag)))))
 
 (defun go-generate-tag (name)
   (save-excursion
@@ -51,6 +52,7 @@
 
 (defun my-go-mode-hook()
   (setq-default eglot-workspace-configuration `((:gopls . ((staticcheck . t)
+                                                           (usePlaceholders . t)
                                                            (analyses . ((ST1003 . :json-false)))))))
 
   (eglot-ensure)

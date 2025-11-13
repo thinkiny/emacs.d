@@ -400,4 +400,8 @@ If ARG is omitted or nil, move point forward one word."
               (lambda ()
                 (direnv-update-directory-environment)))))
 
+;; string-inflection
+(require-package 'string-inflection)
+(require 'string-inflection)
+
 (provide 'init-editing-utils)

@@ -28,7 +28,6 @@
   (define-key projectile-command-map (kbd "u") #'projectile-revert-project-buffers)
   (setq projectile-completion-system 'ivy)
   (setq projectile-enable-caching t)
-  ;;(setq projectile-auto-update-cache nil)
   (setq projectile-dynamic-mode-line nil)
   (setq projectile-indexing-method 'hybrid)
   (setq projectile-show-menu nil)
