@@ -9,16 +9,15 @@
 
 (defun sanityinc/show-trailing-whitespace ()
   "Enable display of trailing whitespace in this buffer."
-  (setq-local show-trailing-whitespace t))
+  (setq-local show-trailing-whitespace t)
+  (whitespace-cleanup-mode))
 
 (dolist (hook '(prog-mode-hook text-mode-hook conf-mode-hook maven-pom-mode shell-script-mode snippet-mode))
   (add-hook hook 'sanityinc/show-trailing-whitespace))
 
 (require-package 'whitespace-cleanup-mode)
-(add-hook 'prog-mode-hook 'global-whitespace-cleanup-mode)
 
 (with-eval-after-load 'whitespace-cleanup-mode
-  (add-to-list 'whitespace-cleanup-mode-ignore-modes 'xwidget-webkit-mode)
   (diminish 'whitespace-cleanup-mode))
 
 (setq whitespace-cleanup-mode-only-if-initially-clean nil)
