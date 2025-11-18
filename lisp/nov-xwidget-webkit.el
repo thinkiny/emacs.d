@@ -68,8 +68,8 @@ alternative browser function."
   (if nov-xwidget-need-resume-position
       (when-let* ((key (nov-xwidget-get-position-key)))
         (xwidget-execute-script
-         (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key)))
-    (setq nov-xwidget-need-resume-position t)))
+         (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key))))
+  (setq nov-xwidget-need-resume-position t))
 
 (defvar nov-xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))
@@ -360,6 +360,8 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (when-let* ((uri (xwidget-webkit-uri xwidget))
                   (file (nov-xwidget-extract-file-name uri)))
         (nov-xwidget-jump-prev-position)
+        (if (eq nov-documents-index nov-toc-id)
+            (setq nov-xwidget-need-resume-position nil))
         (if-let* ((index (nov-xwidget-find-index-by-file file)))
             (setq-local nov-documents-index index)))))
   (xwidget-webkit-callback xwidget xwidget-event-type))
