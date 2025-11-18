@@ -18,13 +18,6 @@
       (so-long-mode)
     (eglot-ensure)))
 
-;; (add-hook 'js-mode-hook #'my-js-mode-hook)
-;; (add-hook 'typescript-mode-hook #'eglot-ensure)
-;; (add-hook 'json-ts-mode #'my-json-mode-hook)
-
-(defun my-json-mode-hook()
-  (whitespace-cleanup-mode -1))
-
 (add-auto-mode 'json-ts-mode "\\.json")
 (add-auto-mode 'js-ts-mode "\\.js\\'" "\\.mjs\\'")
 

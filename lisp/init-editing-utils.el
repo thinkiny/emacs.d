@@ -327,9 +327,9 @@ With arg N, insert N newlines."
   (kill-local-variable 'c-basic-offset))
 
 ;; clipetty
-(use-package clipetty
-  :ensure t
-  :hook (after-init . global-clipetty-mode))
+;; (use-package clipetty
+;;   :ensure t
+;;   :hook (after-init . global-clipetty-mode))
 
 ;; ;; nxml-mode
 (with-eval-after-load 'nxml-mode

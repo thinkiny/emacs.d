@@ -197,35 +197,34 @@ alternative browser function."
   "Print DOM at point as HTML/XML.
 If PRETTY, indent the HTML/XML logically.
 If XML, generate XML instead of HTML."
-  (let ((column (current-column)))
-    (insert (format "<%s" (dom-tag dom)))
-    (let ((attr (dom-attributes dom)))
-      (dolist (elem attr)
-        ;; In HTML, these are boolean attributes that should not have
-        ;; an = value.
-        (insert (if (and (memq (car elem)
-                               '(async autofocus autoplay checked
-                                       contenteditable controls default
-                                       defer disabled formNoValidate frameborder
-                                       hidden ismap itemscope loop
-                                       multiple muted nomodule novalidate open
-                                       readonly required reversed
-                                       cscoped selected typemustmatch))
-                         (cdr elem))
-                    (format " %s" (car elem))
-                  (format " %s=\"%s\"" (car elem)
-                          (url-insert-entities-in-string (cdr elem)))))))
-    (let* ((children (dom-children dom))
-           (non-text nil))
-      (if (null children)
-          (insert (format "></%s>" (dom-tag dom)))
-        (insert ">")
-        (dolist (child children)
-          (if (stringp child)
-              (insert (url-insert-entities-in-string child))
-            (setq non-text t)
-            (nov-dom-print child)))
-        (insert (format "</%s>" (dom-tag dom)))))))
+  (insert (format "<%s" (dom-tag dom)))
+  (let ((attr (dom-attributes dom)))
+    (dolist (elem attr)
+      ;; In HTML, these are boolean attributes that should not have
+      ;; an = value.
+      (insert (if (and (memq (car elem)
+                             '(async autofocus autoplay checked
+                                     contenteditable controls default
+                                     defer disabled formNoValidate frameborder
+                                     hidden ismap itemscope loop
+                                     multiple muted nomodule novalidate open
+                                     readonly required reversed
+                                     cscoped selected typemustmatch))
+                       (cdr elem))
+                  (format " %s" (car elem))
+                (format " %s=\"%s\"" (car elem)
+                        (url-insert-entities-in-string (cdr elem)))))))
+  (let* ((children (dom-children dom))
+         (non-text nil))
+    (if (null children)
+        (insert (format "></%s>" (dom-tag dom)))
+      (insert ">")
+      (dolist (child children)
+        (if (stringp child)
+            (insert (url-insert-entities-in-string child))
+          (setq non-text t)
+          (nov-dom-print child)))
+      (insert (format "</%s>" (dom-tag dom))))))
 
 (defun nov-xwidget-inject (file &optional callback)
   "Inject `nov-xwidget-script', `nov-xwidget-style-light', or `nov-xwidget-style-dark' into FILE."

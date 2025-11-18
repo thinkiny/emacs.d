@@ -18,10 +18,12 @@
 (add-hook 'prog-mode-hook 'global-whitespace-cleanup-mode)
 
 (with-eval-after-load 'whitespace-cleanup-mode
+  (add-to-list 'whitespace-cleanup-mode-ignore-modes 'xwidget-webkit-mode)
   (diminish 'whitespace-cleanup-mode))
 
 (setq whitespace-cleanup-mode-only-if-initially-clean nil)
 (global-set-key [remap just-one-space] 'cycle-spacing)
+
 
 
 (provide 'init-whitespace)
