@@ -18,7 +18,7 @@
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
                                             :documentOnTypeFormattingProvider))
   (setq jsonrpc-default-request-timeout 15)
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
@@ -33,21 +33,6 @@
         (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
   ;; (add-to-list 'mode-line-misc-info
   ;;              `(eglot--managed-mode ("[" eglot--mode-line-format "] ")))
-  (defun eglot-rename-with-current (newname)
-    "Rename the current symbol to NEWNAME."
-    (interactive
-     (let ((curr (thing-at-point 'symbol t)))
-       (list (read-from-minibuffer
-              (format "Rename `%s' to: " (or curr
-                                             "unknown symbol"))
-              curr nil nil nil curr))))
-    (eglot-server-capable-or-lose :renameProvider)
-    (eglot--apply-workspace-edit
-     (eglot--request (eglot--current-server-or-lose)
-                     :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
-                                            :newName ,newname))
-     this-command))
-
   (defun eglot-disable-format-project()
     (interactive)
     (when-let* ((project-root (projectile-project-root))
