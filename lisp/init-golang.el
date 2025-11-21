@@ -51,13 +51,8 @@
 
 
 (defun my-go-mode-hook()
-  (setq-default eglot-workspace-configuration `((:gopls . ((staticcheck . t)
-                                                           (usePlaceholders . t)
-                                                           (analyses . ((ST1003 . :json-false)))))))
-
   (eglot-ensure)
   (subword-mode)
-
   (define-key go-mode-map (kbd "C-c g j") #'go-generate-tag-json)
   (define-key go-mode-map (kbd "C-c g f") #'go-generate-tag-form))
 

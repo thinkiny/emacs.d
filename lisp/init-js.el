@@ -2,21 +2,26 @@
 
 (require-package 'typescript-mode)
 
+(setq ts-lsp-modes '(js-mode js-ts-mode tsx-ts-mode typescript-ts-mode typescript-mode))
+
 (with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '((js-ts-mode typescript-mode (typescript-ts-base-mode :language-id "typescript")) . (eglot-deno "deno" "lsp")))
+  (set-eglot-server-progam ts-lsp-modes
+                           '("typescript-language-server" "--stdio"
+                             :initializationOptions
+                             (:preferences
+                              (:importModuleSpecifierPreference "relative"
+                                                                :allowRenameOfImportPath t
+                                                                :includeInlayEnumMemberValueHints t
+                                                                :includeInlayFunctionLikeReturnTypeHints t
+                                                                :includeInlayFunctionParameterTypeHints t
+                                                                :includeInlayParameterNameHints "all" ; "none" | "literals" | "all"
+                                                                :includeInlayParameterNameHintsWhenArgumentMatchesName t
+                                                                :includeInlayPropertyDeclarationTypeHints t
+                                                                :includeInlayVariableTypeHints t
+                                                                :includeInlayVariableTypeHintsWhenTypeMatchesName t)))))
 
-  (defclass eglot-deno (eglot-lsp-server) ()
-    :documentation "A custom class for deno lsp.")
-
-  (cl-defmethod eglot-initialization-options ((server eglot-deno))
-    "Passes through required deno initialization options"
-    (list :enable t
-          :lint t)))
-
-(defun my-js-mode-hook ()
-  (if (string= "json" (file-name-extension (buffer-file-name)))
-      (so-long-mode)
-    (eglot-ensure)))
+(dolist (hook (mapcar #'derived-mode-hook-name ts-lsp-modes))
+  (add-hook hook 'eglot-ensure))
 
 (add-auto-mode 'json-ts-mode "\\.json")
 (add-auto-mode 'js-ts-mode "\\.js\\'" "\\.mjs\\'")

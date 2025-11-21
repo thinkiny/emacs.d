@@ -21,22 +21,10 @@
   (setq sphinx-doc-include-types t)
   (define-key sphinx-doc-mode-map (kbd "C-c d i") #'sphinx-doc))
 
-
-(defun set-python-eglot-workspace()
-  (setq-local eglot-enable-format-at-save nil)
-  (toggle-format-all-mode)
-  (setq-default eglot-workspace-configuration `(:basedpyright.analysis (:typeCheckingMode "standard"
-                                                                        :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
-                                                                                                      :reportOptionalSubscript "warning"
-                                                                                                      :reportReturnType "warning"
-                                                                                                      :reportTypedDictNotRequiredAccess "warning")
-                                                                        :useLibraryCodeForTypes t
-                                                                        :diagnosticMode "workspace"
-                                                                        :autoSearchPaths t))))
-
 (defun my-python-mode-hook()
   (sphinx-doc-mode)
-  (set-python-eglot-workspace)
+  (setq-local eglot-enable-format-at-save nil)
+  (toggle-format-all-mode)
   (eglot-ensure))
 
 (add-hook 'python-ts-mode-hook #'my-python-mode-hook)

@@ -28,6 +28,18 @@
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
+  (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
+                                                        :usePlaceholders t
+                                                        :analyses  (:ST1003 :json-false))
+                                                :basedpyright.analysis (:typeCheckingMode "standard"
+                                                                        :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
+                                                                                                      :reportOptionalSubscript "warning"
+                                                                                                      :reportReturnType "warning"
+                                                                                                      :reportTypedDictNotRequiredAccess "warning")
+                                                                        :useLibraryCodeForTypes t
+                                                                        :diagnosticMode "workspace"
+                                                                        :autoSearchPaths t)))
+
   (setq completion-category-defaults nil)
   (setq mode-line-misc-info
         (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
