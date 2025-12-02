@@ -44,16 +44,13 @@
 
   (setq nov-file-name (buffer-file-name)) ; kept for compatibility reasons
   (setq-local bookmark-make-record-function 'nov-bookmark-make-record)
-  (let ((place (nov-saved-place (cdr (assq 'identifier nov-metadata)))))
-    (if place
-        (let ((index (cdr (assq 'index place)))
-              (point (cdr (assq 'point place))))
-          (if (nov--index-valid-p nov-documents index)
-              (setq nov-documents-index index)
-            (nov-warn "Couldn't restore last position")))))
-  (let ((dummy-buf (current-buffer)))
+  (let* ((init-buf (current-buffer))
+         (place (nov-saved-place (cdr (assq 'identifier nov-metadata))))
+         (index (cdr (assq 'index place))))
+    (if index
+        (setq nov-documents-index index))
     (nov-xwidget-view)
-    (read-only-mode)
-    (kill-buffer dummy-buf)))
+    (kill-buffer init-buf)))
+
 
 (provide 'nov-xwidget-mode)

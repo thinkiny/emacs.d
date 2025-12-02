@@ -34,12 +34,6 @@
   (setq projectile-file-exists-remote-cache-expire nil)
   (projectile-mode)
 
-  ;; (defun need_find_project()
-  ;;   (if (file-remote-p default-directory)
-  ;;       (with-parsed-tramp-file-name default-directory dir
-  ;;         (s-starts-with? "/home/" dir-localname))
-  ;;     t))
-
   ;; don't use file-truename
   ;; (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
   (unbind-key (kbd "C-c p t") 'projectile-mode-map)
@@ -51,13 +45,10 @@
               (advice-remove 'delete-file #'delete-file-projectile-remove-from-cache)
               )))
 
-;; ignore homedir
-;; (defun my-projectile-ignore-homedir (dir)
-;;   (if (and dir (equal dir (expand-file-name "~/")))
-;;       nil
-;;     dir))
-
-;; (advice-add 'projectile-locate-dominating-file :filter-return #'my-projectile-ignore-homedir)
+;; ignore tramp
+(advice-add 'projectile-project-root :before-while
+  (lambda (&optional dir)
+    (not (file-remote-p (or dir default-directory)))))
 
 ;; (defun my-project-ignore-homedir (project)
 ;;   (if (and project

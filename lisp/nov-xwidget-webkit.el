@@ -26,20 +26,8 @@
 (defun nov-xwidget-style-href-dark()
   (nov-xwidget-style-href "nov-dark.css"))
 
-(defcustom nov-xwidget-browser-function 'nov-xwidget-webkit-browse-url-other-window
-  "TODO: xwidget may not work in some systems, set it to an
-alternative browser function."
-  :group 'nov-xwidget
-  :type browse-url--browser-defcustom-type)
-
 (defcustom nov-xwidget-debug nil
   "Enable the debug feature."
-  :group 'nov-xwidget
-  :type 'directory)
-
-(defcustom nov-xwidget-inject-output-dir
-  (expand-file-name (concat user-emacs-directory ".cache/nov-xwidget/"))
-  "The nov-xwidget injected output html directory."
   :group 'nov-xwidget
   :type 'directory)
 
@@ -228,16 +216,9 @@ If XML, generate XML instead of HTML."
 
 (defun nov-xwidget-inject (file &optional callback)
   "Inject `nov-xwidget-script', `nov-xwidget-style-light', or `nov-xwidget-style-dark' into FILE."
-  (when nov-xwidget-debug
-    ;; create the nov-xwidget-inject-output-dir if not exists
-    (unless (file-exists-p nov-xwidget-inject-output-dir)
-      (make-directory nov-xwidget-inject-output-dir)))
   (let* ((native-path file)
          (output-native-file-name (file-name-nondirectory native-path))
-         (output-native-path (expand-file-name output-native-file-name
-                                               (if nov-xwidget-debug
-                                                   nov-xwidget-inject-output-dir
-                                                 (setq nov-xwidget-inject-output-dir (file-name-directory native-path)))))
+         (output-native-path (expand-file-name output-native-file-name (file-name-directory native-path)))
          ;; create the html if not esists, insert the `nov-xwidget-script' as the html script
          (dom (with-temp-buffer
                 (insert-file-contents native-path)
@@ -277,39 +258,19 @@ also run it after modifing `nov-xwidget-style-dark',
 
 (defun nov-xwidget-webkit-find-file (file &optional arg new-session)
   "Open a FILE with xwidget webkit."
-  (interactive
-   (list
-    (pcase major-mode
-      ('nov-mode
-       (cdr (aref nov-documents nov-documents-index)))
-      (_
-       (read-file-name "Webkit find file: ")))
-    current-prefix-arg))
-  (let* ((path (replace-regexp-in-string
-                " "
-                "%20"
-                (concat
-                 "file:///"
-                 file)))
-         (final-path (if (string-equal (file-name-extension file) "ncx")
-                         "about:blank"
-                       path)))
-    ;; workaround to view in windows
-    ;; TODO it is able to support to browse in external browser
-    ;; after supporting more advance html/style/scripts
-    (cond
-     ((eq nov-xwidget-browser-function 'nov-xwidget-webkit-browse-url-other-window)
-      (nov-xwidget-webkit-browse-url-other-window final-path new-session 'switch-to-buffer)
-      (unless (eq major-mode 'nov-xwidget-webkit-mode)
-        (nov-xwidget-webkit-mode)))
-     (t (funcall nov-xwidget-browser-function final-path)))))
+  (if (string-equal "xhtml" (file-name-extension file))
+    (setq file (format "%s%s.html"
+                       (or (file-name-directory file) "")
+                       (file-name-base file))))
+  (let* ((path (concat "file:///" file)))
+    (nov-xwidget-webkit-browse-url path new-session 'switch-to-buffer)))
 
 (defun nov-xwidget-list-source-file ()
   "Open the source file."
-  (interactive nil xwidget-webkit-mode)
+  (interactive nil nov-xwidget-webkit-mode)
   (find-file-other-window (cdr (aref nov-documents nov-documents-index))))
 
-(defun nov-xwidget-webkit-browse-url-other-window (url &optional new-session switch-buffer-fun)
+(defun nov-xwidget-webkit-browse-url (url &optional new-session switch-buffer-fun)
   "Ask xwidget-webkit to browse URL.
 NEW-SESSION specifies whether to create a new xwidget-webkit session.
 Interactively, URL defaults to the string looking like a url around point."
@@ -317,19 +278,15 @@ Interactively, URL defaults to the string looking like a url around point."
                  (require 'browse-url)
                  (browse-url-interactive-arg "URL: "
                                              (xwidget-webkit-current-url))))
-  (or (featurep 'xwidget-internal)
-      (user-error "Your Emacs was not compiled with xwidgets support"))
-  (require 'xwidget)
-  (when (stringp url)
-    (if new-session
-        (progn
-          (switch-to-buffer (xwidget-webkit--create-new-session-buffer url #'nov-xwidget-webkit-callback))
-          (xwidget-webkit-goto-uri (xwidget-webkit-last-session) url))
+  (if new-session
       (progn
-        (xwidget-webkit-goto-url url)
-        (if switch-buffer-fun
-            (funcall switch-buffer-fun (xwidget-buffer (xwidget-webkit-current-session)))
-          (pop-to-buffer (xwidget-buffer (xwidget-webkit-current-session))))))))
+        (switch-to-buffer (xwidget-webkit--create-new-session-buffer url #'nov-xwidget-webkit-callback))
+        (xwidget-webkit-goto-uri (xwidget-webkit-last-session) url))
+    (progn
+      (xwidget-webkit-goto-url url)
+      (if switch-buffer-fun
+          (funcall switch-buffer-fun (xwidget-buffer (xwidget-webkit-current-session)))
+        (pop-to-buffer (xwidget-buffer (xwidget-webkit-current-session)))))))
 
 (defun nov-xwidget-view-index(index)
   (let* ((docs nov-documents)
@@ -337,8 +294,7 @@ Interactively, URL defaults to the string looking like a url around point."
     (if (eq index nov-toc-id)
         (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))
       (nov-xwidget-webkit-find-file path))
-    (with-current-buffer (buffer-name)
-      (setq-local nov-documents-index index))))
+    (setq-local nov-documents-index index)))
 
 (defun nov-xwidget-find-index-by-file (file)
   (if file
@@ -383,26 +339,31 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (nov-xwidget-webkit-find-file file nil t))
 
     ;; save nov related local variables
-    (when (eq nov-xwidget-browser-function 'nov-xwidget-webkit-browse-url-other-window)
-      (with-current-buffer (xwidget-buffer (xwidget-webkit-current-session))
-        ;;(setq-local imenu-create-index-function 'my-nov-imenu-create-index)
-        (setq-local nov-documents docs)
-        (setq-local nov-documents-index index)
-        (setq-local nov-toc-id toc)
-        (setq-local nov-epub-version epub)
-        (setq-local nov-temp-dir temp-dir)
-        (setq-local nov-metadata metadata)
-        (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name)))))))
+    (with-current-buffer (xwidget-buffer (xwidget-webkit-current-session))
+      ;;(setq-local imenu-create-index-function 'my-nov-imenu-create-index)
+      (nov-xwidget-webkit-mode)
+      (setq-local nov-documents docs)
+      (setq-local nov-documents-index index)
+      (setq-local nov-toc-id toc)
+      (setq-local nov-epub-version epub)
+      (setq-local nov-temp-dir temp-dir)
+      (setq-local nov-metadata metadata)
+      (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name)))
+      )))
 
 (defun nov-xwidget-next-document ()
   "Go to the next document and render it."
   (interactive)
+  (unless (integerp nov-documents-index)
+    (setq nov-documents-index 0))
   (when (< nov-documents-index (1- (length nov-documents)))
     (nov-xwidget-view-index (1+ nov-documents-index))))
 
 (defun nov-xwidget-previous-document ()
   "Go to the previous document and render it."
   (interactive)
+  (unless (integerp nov-documents-index)
+    (setq nov-documents-index 0))
   (when (> nov-documents-index 0)
     (nov-xwidget-view-index (1- nov-documents-index))))
 
