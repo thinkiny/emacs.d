@@ -9,6 +9,7 @@ body {
     transform: translate(-50%, -55%) !important;
 }
 p {
+    line-height: 2em !important;
     font-size: 1em !important;
     text-align: left !important;
 }
@@ -33,13 +34,12 @@ th {
 
 /* Same font for all tags */
 pre, code {
+    font-size: 1em !important;
     font-family: "JetBrains Mono", "IBM Plex Mono", "Monaco";
 }
-
 a, em, caption, th, tr, td, h1, h2, h3, h4, h5, h6, p, body {
     font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
-
 h1 {
     font-size: 2em !important;
     color: #2e3440 !important;
@@ -69,9 +69,6 @@ h6 {
     font-size: 1em !important;
     color: #2e3440 !important;
     margin-bottom: 10px !important;
-}
-code {
-    font-size: 1em !important;
 }
 :root {
     color-scheme: light; /* both supported */
