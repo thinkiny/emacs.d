@@ -314,26 +314,4 @@
 ;; hide-mode-line
 (require-package 'hide-mode-line)
 
-;; mouse bindings
-(defvar-local ignore-mouse-down-event nil)
-
-(defun my-mouse-drag-region(event)
-  (interactive "e")
-  (unless ignore-mouse-down-event
-    (funcall-interactively #'mouse-drag-region event)))
-
-(defun my-mouse-set-point(event &optional promote-to-region)
-  (interactive "e\np")
-  (unless ignore-mouse-down-event
-    (funcall-interactively #'mouse-set-point event promote-to-region)))
-
-(defun my-mouse-set-region(event)
-  (interactive "e")
-  (unless ignore-mouse-down-event
-    (funcall-interactively #'mouse-set-region event)))
-
-(global-set-key [down-mouse-1]	#'my-mouse-drag-region)
-(global-set-key [mouse-1]	#'my-mouse-set-point)
-(global-set-key [drag-mouse-1]	#'my-mouse-set-region)
-
 (provide 'init-ui)

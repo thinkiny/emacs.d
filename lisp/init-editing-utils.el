@@ -267,6 +267,7 @@ With arg N, insert N newlines."
   :bind (:map global-map
               ("C-,"  . 'bing-dict-at-point)))
 
+;; translation
 (defvar-local auto-translate-mouse-selection nil)
 (defun translate-mouse-selection()
   (interactive)
@@ -274,6 +275,7 @@ With arg N, insert N newlines."
     (if (eq major-mode 'nov-xwidget-webkit-mode)
         (xwidget-translate-range)
       (bing-dict-at-point))))
+
 (advice-add #'mouse-set-region-1 :after #'translate-mouse-selection)
 
 ;; view-mode
