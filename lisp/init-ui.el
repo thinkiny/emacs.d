@@ -143,13 +143,14 @@
       (customize-save-variable 'frame-transparency value))))
 
 ;; themes
+(add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
+
 (require-package 'modus-themes)
 (require-package 'ef-themes)
 
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
-(add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
 (defcustom default-theme 'modus-operandi
   "The current theme"
@@ -177,10 +178,9 @@
 ;;fonts
 (when window-system
   (use-package cnfonts
-    :ensure t
     :demand t
     :config
-    ;;(setq cnfonts-use-face-font-rescale t)
+    (setq cnfonts-use-face-font-rescale t)
     (cnfonts-enable)
     (unbind-all-keys cnfonts-mode-map)))
 
@@ -196,7 +196,7 @@
 (when window-system
   (if (> (x-display-pixel-width) 1280)
       (set-large-frame-size)
-    (set-small-frame-size))))
+    (set-small-frame-size)))
 
 ;;mode line
 (setq mode-line-percent-position nil)
