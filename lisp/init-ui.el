@@ -120,14 +120,9 @@
 
 ;; icons
 (require-package 'all-the-icons)
-(require-package 'all-the-icons-dired)
-
+(require-package 'treemacs-icons-dired)
 (when window-system
-  ;; (window-divider-mode)
-  (add-hook 'dired-mode-hook
-            (lambda ()
-              (unless (file-remote-p default-directory)
-                (all-the-icons-dired-mode)))))
+  (treemacs-icons-dired-mode))
 
 ;; frame transparency
 (defcustom frame-transparency 100
@@ -198,13 +193,10 @@
   (add-to-list 'default-frame-alist (cons 'width 80))
   (add-to-list 'default-frame-alist (cons 'height 30)))
 
-(defun adjust-frame-size ()
-  (when window-system
-    (if (> (x-display-pixel-width) 1280)
-        (set-large-frame-size)
-      (set-small-frame-size))))
-
-(adjust-frame-size)
+(when window-system
+  (if (> (x-display-pixel-width) 1280)
+      (set-large-frame-size)
+    (set-small-frame-size))))
 
 ;;mode line
 (setq mode-line-percent-position nil)
