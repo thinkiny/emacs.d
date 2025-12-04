@@ -16,7 +16,7 @@ p {
 table {
     margin-left: 0 !important;
 }
-pre, tr, td, div.warning {
+tr, td, div.warning {
     font-size: 1em !important;
     background: #d8dee9;
 }
@@ -24,18 +24,16 @@ span {
     font-size: 1em !important;
 }
 pre {
-    margin: 10px 0 !important;
-    padding: 0.75em 0.75em !important;
+    padding: 0.5em 0.5em !important;
 }
 th {
     font-size: 1em;
 }
 
-
 /* Same font for all tags */
 pre, code {
     font-size: 1em !important;
-    font-family: "JetBrains Mono", "IBM Plex Mono", "Monaco";
+    font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
 }
 a, em, caption, th, tr, td, h1, h2, h3, h4, h5, h6, p, body {
     font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
@@ -76,10 +74,15 @@ h6 {
 body img {
     max-width: 80%;
 }
+
+/* custom css */
 dl.calloutlist p:first-child {
     margin-top: 25px !important;
 }
 dd p {
     text-align: left !important;
     margin-bottom: 25px !important;
+}
+code.inlineCode {
+    white-space: normal !important;
 }
