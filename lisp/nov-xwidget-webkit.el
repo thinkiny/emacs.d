@@ -103,8 +103,15 @@
       (nov-save-place identifier index (point)))
     (nov-xwidget-save-position)))
 
-(defun nov-xwidget-fix-file-path (file)
-  "Fix the FILE path by prefix _."
+;; modify dom functions
+(defun nov-xwidget-unify-filepath (file)
+  (if (string-equal "xhtml" (file-name-extension file))
+      (format "%s%s.html"
+              (or (file-name-directory file) "")
+              (file-name-base file))
+    file))
+
+(defun nov-xwidget-fix-dom-href (file)
   (format "%s%s.%s"
           (or (file-name-directory file) "")
           (file-name-base file)
@@ -113,7 +120,6 @@
            "html"
            (file-name-extension file))))
 
-;; modify dom functions
 (defun nov-xwidget-is-override-css(node)
   (string-equal (dom-attr node 'href) "override_v1.css"))
 
@@ -136,7 +142,7 @@
 (defun nov-xwdidget-fix-href-dom (dom)
   (cl-map 'list (lambda(x)
                   (let* ((href (dom-attr x 'href))
-                         (new-href (nov-xwidget-fix-file-path href)))
+                         (new-href (nov-xwidget-fix-dom-href href)))
                     (dom-set-attribute x 'href new-href)))
           ;; all elements that not start with http or https,
           ;; but matches htm.*
@@ -179,7 +185,6 @@
     (nov-xwidget-remove-calibre-dom dom)
     (nov-xwidget-remove-override-css dom))
   dom)
-
 
 (defun nov-dom-print (dom)
   "Print DOM at point as HTML/XML.
@@ -245,12 +250,8 @@ also run it after modifing `nov-xwidget-style-dark',
        (lambda (document i)
          (let* ((file (cdr document))
                 (new-file file))
-           (when (string-equal "xhtml" (file-name-extension file))
-             (setq new-file (format "%s%s.html"
-                                    (or (file-name-directory file) "")
-                                    (file-name-base file)))
-             (if (file-exists-p file)
-                 (rename-file file new-file)))
+           (setq new-file (nov-xwidget-unify-filepath file))
+           (rename-file file new-file)
            (if nov-xwidget-need-inject
                (nov-xwidget-inject new-file))
            (aset nov-documents i (cons (car document) new-file))))
@@ -258,12 +259,10 @@ also run it after modifing `nov-xwidget-style-dark',
 
 (defun nov-xwidget-webkit-find-file (file &optional arg new-session)
   "Open a FILE with xwidget webkit."
-  (if (string-equal "xhtml" (file-name-extension file))
-    (setq file (format "%s%s.html"
-                       (or (file-name-directory file) "")
-                       (file-name-base file))))
-  (let* ((path (concat "file:///" file)))
-    (nov-xwidget-webkit-browse-url path new-session 'switch-to-buffer)))
+  (setq file (nov-xwidget-unify-filepath file))
+  (let* ((path (nov-xwidget-unify-filepath file))
+         (url (concat "file:///" file)))
+    (nov-xwidget-webkit-browse-url url new-session 'switch-to-buffer)))
 
 (defun nov-xwidget-list-source-file ()
   "Open the source file."
@@ -301,11 +300,15 @@ Interactively, URL defaults to the string looking like a url around point."
       (seq-position nov-documents
                     (decode-coding-string (url-unhex-string file) 'utf-8)
                     (lambda (a b)
-                      (string-collate-equalp b (cdr a))))))
+                      (string-collate-equalp b (nov-xwidget-unify-filepath (cdr a)))))))
 
-(defun nov-xwidget-extract-file-name (uri)
+(defun nov-xwidget-extract-file (uri)
   (if (and uri (string-match "file:///\\([^#]*\\)" uri))
       (match-string 1 uri)))
+
+(defun nov-xwidget-dont-jump(uri)
+  (or (eq nov-documents-index nov-toc-id)
+      (s-contains? "#" uri)))
 
 (defun nov-xwidget-webkit-callback (xwidget xwidget-event-type)
   "Callback for xwidgets.
@@ -313,10 +316,9 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (when (eq xwidget-event-type 'load-changed)
     (when (string-equal (nth 3 last-input-event) "load-finished")
       (when-let* ((uri (xwidget-webkit-uri xwidget))
-                  (file (nov-xwidget-extract-file-name uri)))
-        (nov-xwidget-jump-prev-position)
-        (if (eq nov-documents-index nov-toc-id)
-            (setq nov-xwidget-need-resume-position nil))
+                  (file (nov-xwidget-extract-file uri)))
+        (unless (nov-xwidget-dont-jump uri)
+          (nov-xwidget-jump-prev-position))
         (if-let* ((index (nov-xwidget-find-index-by-file file)))
             (setq-local nov-documents-index index)))))
   (xwidget-webkit-callback xwidget xwidget-event-type))
@@ -431,8 +433,8 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (interactive)
   (let ((index nov-documents-index))
     (nov-xwidget-save-position)
-    (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))
-    (setq-local nov-documents-index nov-toc-id)))
+    (setq-local nov-documents-index nov-toc-id)
+    (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))))
 
 ;; Window size change functions; this arrangement below is not ideal, as it basically replicates the code in xwidget-webkit.el, which changes the size of the xwidget *if* the window's mode is xwidget-webkit-mode.
 ;; In the future, xwidget-webkit should accomodate generalized "windows containing a webkit instance" rather than just xwidget-webkit-mode specifically for this.
