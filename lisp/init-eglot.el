@@ -18,7 +18,7 @@
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
                                             :documentOnTypeFormattingProvider))
   (setq jsonrpc-default-request-timeout 15)
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
@@ -29,8 +29,8 @@
 
 (with-eval-after-load 'eglot
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
-                                                        :usePlaceholders t
-                                                        :analyses  (:ST1003 :json-false))
+                                                                      :usePlaceholders t
+                                                                      :analyses  (:ST1003 :json-false))
                                                 :basedpyright.analysis (:typeCheckingMode "standard"
                                                                         :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
                                                                                                       :reportOptionalSubscript "warning"
@@ -80,6 +80,21 @@
       (when (jsonrpc-running-p server)
         (ignore-errors (eglot-shutdown server t nil nil))))
     (eglot-ensure))
+
+  (defun eglot-rename-with-current (newname)
+    "Rename the current symbol to NEWNAME."
+    (interactive
+     (let ((curr (thing-at-point 'symbol t)))
+       (list (read-from-minibuffer
+              (format "Rename `%s' to: " (or curr
+                                             "unknown symbol"))
+              curr nil nil nil curr))))
+    (eglot-server-capable-or-lose :renameProvider)
+    (eglot--apply-workspace-edit
+     (eglot--request (eglot--current-server-or-lose)
+                     :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
+                                            :newName ,newname))
+     this-command))
   )
 
 ;; format
