@@ -105,11 +105,12 @@
 
 ;; modify dom functions
 (defun nov-xwidget-unify-filepath (file)
-  (if (string-equal "xhtml" (file-name-extension file))
-      (format "%s%s.html"
+  (pcase (file-name-extension file)
+    ("xhtml" (format "%s%s.html"
               (or (file-name-directory file) "")
-              (file-name-base file))
-    file))
+              (file-name-base file)))
+    ("ncx" nov-xwidget-toc-path)
+    (_ file)))
 
 (defun nov-xwidget-fix-dom-href (file)
   (format "%s%s.%s"
@@ -251,7 +252,8 @@ also run it after modifing `nov-xwidget-style-dark',
          (let* ((file (cdr document))
                 (new-file file))
            (setq new-file (nov-xwidget-unify-filepath file))
-           (rename-file file new-file)
+           (unless (file-exists-p new-file)
+             (rename-file file new-file))
            (if nov-xwidget-need-inject
                (nov-xwidget-inject new-file))
            (aset nov-documents i (cons (car document) new-file))))
@@ -290,9 +292,7 @@ Interactively, URL defaults to the string looking like a url around point."
 (defun nov-xwidget-view-index(index)
   (let* ((docs nov-documents)
          (path (cdr (aref docs index))))
-    (if (eq index nov-toc-id)
-        (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))
-      (nov-xwidget-webkit-find-file path))
+    (nov-xwidget-webkit-find-file path)
     (setq-local nov-documents-index index)))
 
 (defun nov-xwidget-find-index-by-file (file)
@@ -333,17 +333,15 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
          (metadata nov-metadata)
          (temp-dir nov-temp-dir)
          (file (cdr (aref docs index)))
-         (epub-file-name nov-file-name))
+         (epub-file-name nov-file-name)
+         (toc-path nov-xwidget-toc-path))
 
-    ;; open the html file
-    (if (eq toc index)
-        (nov-xwidget-webkit-find-file (nov-xwidget--write-toc) nil t)
-      (nov-xwidget-webkit-find-file file nil t))
-
+    (nov-xwidget-webkit-find-file file nil t)
     ;; save nov related local variables
     (with-current-buffer (xwidget-buffer (xwidget-webkit-current-session))
       ;;(setq-local imenu-create-index-function 'my-nov-imenu-create-index)
       (nov-xwidget-webkit-mode)
+      (setq-local nov-xwidget-toc-path toc-path)
       (setq-local nov-documents docs)
       (setq-local nov-documents-index index)
       (setq-local nov-toc-id toc)
@@ -413,12 +411,10 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
            (new-dom (nov-xwidget-inject-dom dom "TOC")))
       (with-temp-file html-path
         (insert "<!DOCTYPE html>\n")
-        (shr-dom-print new-dom)
-        html-path))))
+        (shr-dom-print new-dom)))))
 
-(defun nov-xwidget--write-toc()
-  (let* ((docs nov-documents)
-         (epub nov-epub-version)
+(defun nov-xwidget-write-toc(docs)
+  (let* ((epub nov-epub-version)
          (ncxp (version< nov-epub-version "3.0"))
          (index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id))))
          (path (cdr (aref docs index)))
@@ -434,7 +430,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (let ((index nov-documents-index))
     (nov-xwidget-save-position)
     (setq-local nov-documents-index nov-toc-id)
-    (nov-xwidget-webkit-find-file (nov-xwidget--write-toc))))
+    (nov-xwidget-webkit-find-file nov-xwidget-toc-path)))
 
 ;; Window size change functions; this arrangement below is not ideal, as it basically replicates the code in xwidget-webkit.el, which changes the size of the xwidget *if* the window's mode is xwidget-webkit-mode.
 ;; In the future, xwidget-webkit should accomodate generalized "windows containing a webkit instance" rather than just xwidget-webkit-mode specifically for this.

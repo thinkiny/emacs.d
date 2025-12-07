@@ -39,8 +39,9 @@
     (setq nov-metadata (nov-content-metadata content))
     (setq nov-documents (apply 'vector (nov-content-files work-dir content)))
     (setq nov-documents-index 0)
-    (if need-inject
-        (nov-xwidget-inject-all-files)))
+    (setq nov-xwidget-toc-path (nov-xwidget-write-toc nov-documents))
+    (when need-inject
+      (nov-xwidget-inject-all-files)))
 
   (setq nov-file-name (buffer-file-name)) ; kept for compatibility reasons
   (setq-local bookmark-make-record-function 'nov-bookmark-make-record)
