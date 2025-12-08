@@ -8,6 +8,7 @@
         treemacs-position                      'right
         treemacs-silent-filewatch              t
         treemacs-silent-refresh                t
+        treemacs-persist-file                  (expand-file-name "cache/treemacs-persist" user-emacs-directory)
         treemacs-follow-after-init             t
         treemacs-space-between-root-nodes      nil
         treemacs-width                         40)
