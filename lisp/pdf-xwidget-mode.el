@@ -118,6 +118,7 @@
 
 (defvar pdf-xwidget-mode-map
   (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map xwidget-webkit-mode-map)
     (define-key map (kbd "o") #'pdf-xwidget-toggle-sidebar)
     (define-key map (kbd "C-s") #'pdf-xwidget-toggle-findbar)
     (define-key map (kbd "C-r") #'pdf-xwidget-toggle-findbar)

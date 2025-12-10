@@ -272,13 +272,6 @@ also run it after modifing `nov-xwidget-style-dark',
   (find-file-other-window (cdr (aref nov-documents nov-documents-index))))
 
 (defun nov-xwidget-webkit-browse-url (url &optional new-session switch-buffer-fun)
-  "Ask xwidget-webkit to browse URL.
-NEW-SESSION specifies whether to create a new xwidget-webkit session.
-Interactively, URL defaults to the string looking like a url around point."
-  (interactive (progn
-                 (require 'browse-url)
-                 (browse-url-interactive-arg "URL: "
-                                             (xwidget-webkit-current-url))))
   (if new-session
       (progn
         (switch-to-buffer (xwidget-webkit--create-new-session-buffer url #'nov-xwidget-webkit-callback))
