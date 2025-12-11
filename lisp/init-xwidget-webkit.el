@@ -194,6 +194,6 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (add-hook 'xwidget-webkit-mode-hook #'my-xwidget-webkit-mode-hook)
 
-(global-set-key (kbd "C-x /") #'xwidget-webkit-browse)
+(global-set-key (kbd "C-x / /") #'xwidget-webkit-browse)
 
 (provide 'init-xwidget-webkit)

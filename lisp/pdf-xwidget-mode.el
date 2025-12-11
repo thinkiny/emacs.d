@@ -149,7 +149,7 @@
 
 (defun pdf-xwidget-open(&optional open-file)
   (interactive)
-  (let* ((file (or open-file (read-from-minibuffer "pdf link: ")))
+  (let* ((file (or open-file (read-from-minibuffer "open pdf: ")))
          (url (filer-server-pdf-view-url file))
          (name (filer-server-pdf-view-name file))
          (dir (file-name-directory file)))
@@ -160,12 +160,13 @@
     (use-local-map pdf-xwidget-mode-map)))
 
 (define-derived-mode pdf-xwidget-mode special-mode "PDF"
-  "Major mode for reading pdf files.
-\\{pdf-xwidget-mode-map}"
+  "Major mode for reading pdf files."
   (file-server-start)
   (let* ((init-buf (current-buffer)))
     (pdf-xwidget-open (buffer-file-name))
     (kill-buffer init-buf)))
+
+(global-set-key (kbd "C-x / p") #'pdf-xwidget-open)
 
 (provide 'pdf-xwidget-mode)
 ;;; pdf-xwidget.el ends here
