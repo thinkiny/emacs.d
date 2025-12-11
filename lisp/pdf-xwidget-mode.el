@@ -16,6 +16,9 @@
     (sit-for 1)))
 
 (defun filer-server-pdf-view-url (file)
+  (unless (s-starts-with? "/" file)
+    (setq file (concat "/" file)))
+
   (format "http://localhost:%s%s/pdfjs/web/viewer.html?file=%s"
           file-server-port
           file-server-dir
@@ -24,6 +27,11 @@
            "http://localhost:%s%s"
            file-server-port
            file))))
+
+(defun filer-server-pdf-view-name (file)
+  (if (s-starts-with? "http" file)
+      file
+    (file-name-nondirectory file)))
 
 ;; pdf xwidget scroll
 (defun pdf-xwidget-scroll(pixels)
@@ -139,20 +147,25 @@
     map)
   "Keymap for `pdf-xwidget-mode-map'.")
 
+(defun pdf-xwidget-open(&optional open-file)
+  (interactive)
+  (let* ((file (or open-file (read-from-minibuffer "pdf link: ")))
+         (url (filer-server-pdf-view-url file))
+         (name (filer-server-pdf-view-name file))
+         (dir (file-name-directory file)))
+    (xwidget-webkit-new-session url)
+    (if (file-directory-p dir)
+        (setq default-directory dir))
+    (setq-local xwidget-webkit-buffer-name-format (format pdf-xwidget-name-format name))
+    (use-local-map pdf-xwidget-mode-map)))
+
 (define-derived-mode pdf-xwidget-mode special-mode "PDF"
   "Major mode for reading pdf files.
 \\{pdf-xwidget-mode-map}"
-  :keymap pdf-xwidget-mode-map
   (file-server-start)
-  (let* ((file-name (buffer-file-name))
-         (url (filer-server-pdf-view-url file-name))
-         (dummy-buf (current-buffer)))
-    (setq default-directory (file-name-directory file-name))
-    (xwidget-webkit-new-session url)
-    (setq-local xwidget-webkit-buffer-name-format (format pdf-xwidget-name-format (file-name-nondirectory file-name)))
-    (use-local-map pdf-xwidget-mode-map)
-    (read-only-mode)
-    (kill-buffer dummy-buf)))
+  (let* ((init-buf (current-buffer)))
+    (pdf-xwidget-open (buffer-file-name))
+    (kill-buffer init-buf)))
 
 (provide 'pdf-xwidget-mode)
 ;;; pdf-xwidget.el ends here

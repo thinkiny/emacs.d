@@ -51,7 +51,8 @@
     (if index
         (setq nov-documents-index index))
     (nov-xwidget-view)
-    (kill-buffer init-buf)))
+    (kill-buffer init-buf)
+    ))
 
 
 (provide 'nov-xwidget-mode)
