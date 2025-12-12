@@ -12,6 +12,12 @@
 ;;(with-eval-after-load 'eglot
 ;;  (set-eglot-server-progam '(python-mode python-ts-mode) '("lsp-multiplexer-python")))
 
+;; use https://github.com/joaotavora/rassumfrassum
+(with-eval-after-load 'eglot
+  ;; pip install rassumfrassum
+  ;; rass-python: rass -- pyrefly lsp  -- ruff server
+  (set-eglot-server-progam '(python-mode python-ts-mode) '("rass-python")))
+
 (use-package pyvenv-auto
   :custom
   (pyvenv-auto-mode t))
@@ -23,8 +29,8 @@
 
 (defun my-python-mode-hook()
   (sphinx-doc-mode)
-  (setq-local eglot-enable-format-at-save nil)
-  (toggle-format-all-mode)
+  ;; (setq-local eglot-enable-format-at-save nil)
+  ;; (toggle-format-all-mode)
   (eglot-ensure))
 
 (add-hook 'python-ts-mode-hook #'my-python-mode-hook)

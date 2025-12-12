@@ -397,6 +397,7 @@ If ARG is omitted or nil, move point forward one word."
 (use-package direnv
   :demand t
   :config
+  (setq direnv-always-show-summary nil)
   (dolist (hook '(find-file-hook))
     (add-hook hook
               (lambda ()
