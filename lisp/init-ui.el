@@ -15,7 +15,8 @@
   (setq mouse-avoidance-mode 'animate))
 
 (with-eval-after-load 'fringe
-  (set-fringe-mode '(1 . 0)))
+  ;; (set-fringe-mode '(1 . 0))
+  (set-fringe-mode '(nil . 0)))
 
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)

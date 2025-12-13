@@ -9,10 +9,10 @@
                  (window-height   . 0.30)))
 
 (with-eval-after-load 'flymake
-  ;;(setq flymake-show-diagnostics-at-end-of-line t)
-  (setq flymake-indicator-type nil)
-  (setq flymake-fringe-indicator-position nil)
-  (setq flymake-margin-indicator-position nil)
+  ;; (setq flymake-show-diagnostics-at-end-of-line t)
+  ;; (setq flymake-indicator-type 'auto)
+  ;; (setq flymake-fringe-indicator-position 'left-fringe)
+  ;; (setq flymake-margin-indicator-position nil)
   (setq flymake-mode-line-counter-format
   '(":["
     flymake-mode-line-error-counter

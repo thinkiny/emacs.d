@@ -9,11 +9,6 @@
                                   ))
   :hook (prog-mode . sideline-mode))
 
-;; (use-package sideline-eglot
-;;   :after sideline
-;;   :config
-;;   (setq sideline-eglot-code-actions-prefix ""))
-
 (with-eval-after-load 'sideline
   (defun sideline-truncate-candidate (text)
     (let ((max-width (window-width)))
@@ -31,7 +26,8 @@
     (setf (nth 1 args) (sideline-basedpyright-update (nth 1 args)))
     args)
 
-  (advice-add 'sideline--create-ov :filter-args #'advice/filter-sideline--create-ov))
+  ;; (advice-add 'sideline--create-ov :filter-args #'advice/filter-sideline--create-ov)
+  )
 
 (use-package sideline-flymake
   :config
