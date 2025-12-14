@@ -14,9 +14,16 @@
   (scroll-bar-mode -1)
   (setq mouse-avoidance-mode 'animate))
 
+;; fringe
+(defun set-fringe-based-on-mode(&optional window)
+  (if (derived-mode-p 'xwidget-webkit-mode)
+      (set-window-fringes nil 0)
+    (set-window-fringes nil nil)))
+
 (with-eval-after-load 'fringe
   ;; (set-fringe-mode '(1 . 0))
-  (set-fringe-mode '(nil . 0)))
+  (set-fringe-mode '(nil . 0))
+  (add-hook 'window-configuration-change-hook #'set-fringe-based-on-mode))
 
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)
@@ -165,7 +172,7 @@
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
  (set-face-attribute 'ivy-virtual nil :foreground 'unspecified)
  ;;(set-face-attribute 'variable-pitch-text nil :height 1.0)
- ;;(set-face-attribute 'fringe nil :background nil)
+ (set-face-attribute 'fringe nil :background nil)
  (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
    ;;(set-face-attribute 'default nil :foreground "#C4C4C4")
