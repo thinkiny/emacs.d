@@ -10,7 +10,7 @@
   (interactive)
   (unless (get-process "file-server")
     (set-process-sentinel
-     (start-process "file-server" nil "python3" (concat file-server-dir "/server.py") file-server-port)
+     (start-process "file-server" "*file-server*" "python3" (concat file-server-dir "/server.py") file-server-port)
      (lambda (process event)
        (message (format "%s: %s" process event))))
     (sit-for 1)))
@@ -149,6 +149,7 @@
 
 (defun pdf-xwidget-open(&optional open-file)
   (interactive)
+  (file-server-start)
   (let* ((file (or open-file (read-from-minibuffer "open pdf: ")))
          (url (filer-server-pdf-view-url file))
          (name (filer-server-pdf-view-name file))
@@ -161,7 +162,6 @@
 
 (define-derived-mode pdf-xwidget-mode special-mode "PDF"
   "Major mode for reading pdf files."
-  (file-server-start)
   (let* ((init-buf (current-buffer)))
     (pdf-xwidget-open (buffer-file-name))
     (kill-buffer init-buf)))

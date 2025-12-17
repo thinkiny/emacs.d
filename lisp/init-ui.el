@@ -25,6 +25,7 @@
   (set-fringe-mode '(nil . 0))
   (add-hook 'window-configuration-change-hook #'set-fringe-based-on-mode))
 
+;; line display params
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)
 (setq-default line-number-display-limit-width 2000000)
@@ -155,6 +156,7 @@
 
 (require-package 'modus-themes)
 (require-package 'ef-themes)
+(require-package 'inkpot-theme)
 
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
