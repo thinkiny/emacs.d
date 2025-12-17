@@ -16,16 +16,26 @@
   (let ((buffer (and xwidget-webkit-browse-session (xwidget-buffer xwidget-webkit-browse-session))))
     (and (buffer-live-p buffer) buffer)))
 
+(defun xwidget-get-current-url()
+  (if (derived-mode-p 'xwidget-webkit-mode)
+      (when-let* ((session (xwidget-webkit-current-session))
+                  (url (xwidget-webkit-uri session)))
+        url)))
+
+
+(defun xwidget-get-file-url ()
+  (if (s-ends-with? ".html" (buffer-file-name))
+      (concat "file://" (buffer-file-name))))
 
 (defun xwidget-webkit-browse-open-url (url &optional rest)
   "Ask xwidget-webkit to browse URL.
 NEW-SESSION specifies whether to create a new xwidget-webkit session.
 Interactively, URL defaults to the string looking like a url around point."
   (interactive (progn
-                 (require 'browse-url)
-                 (browse-url-interactive-arg "xwidget-webkit URL: ")))
-  (or (featurep 'xwidget-internal)
-      (user-error "Your Emacs was not compiled with xwidgets support"))
+                 (list
+                  (read-string "open URL: "
+                               (or (xwidget-get-current-url)
+                                   (xwidget-get-file-url))))))
   (when (stringp url)
     ;; If it's a "naked url", just try adding https: to it.
     (unless (string-match "\\`[A-Za-z]+:" url)
@@ -39,16 +49,6 @@ Interactively, URL defaults to the string looking like a url around point."
         (setq xwidget-webkit-browse-session (xwidget-webkit-last-session))))))
 
 (setq browse-url-browser-function 'xwidget-webkit-browse-open-url)
-
-(defun xwidget-get-file-url ()
-  (if (s-ends-with? ".html" (buffer-file-name))
-      (list (concat "file://" (buffer-file-name)))))
-
-(defun xwidget-webkit-browse (url)
-  (interactive (list (read-string "URL: " (xwidget-get-file-url))))
-  (if (cl-search "://" url)
-      (xwidget-webkit-browse-open-url url)
-    (xwidget-webkit-browse-open-url (concat "http://" url))))
 
 ;; xwwp-follow-link
 (use-package xwwp-follow-link-ivy
@@ -159,7 +159,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (easy-menu-define nil xwidget-webkit-mode-map "Xwidget WebKit menu."
     (list "Xwidget WebKit"  :visible nil))
 
-  (define-key xwidget-webkit-mode-map (kbd "g") #'xwidget-webkit-browse-url)
+  (define-key xwidget-webkit-mode-map (kbd "g") #'xwidget-webkit-browse-open-url)
   (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-scroll-up-scan)
   (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-scroll-down-scan)
   (define-key xwidget-webkit-mode-map (kbd "j") 'xwidget-scroll-up-scan)
@@ -194,6 +194,6 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (add-hook 'xwidget-webkit-mode-hook #'my-xwidget-webkit-mode-hook)
 
-(global-set-key (kbd "C-x / /") #'xwidget-webkit-browse)
+(global-set-key (kbd "C-x / /") #'xwidget-webkit-browse-open-url)
 
 (provide 'init-xwidget-webkit)

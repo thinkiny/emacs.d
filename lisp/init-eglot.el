@@ -85,10 +85,10 @@
     "Rename the current symbol to NEWNAME."
     (interactive
      (let ((curr (thing-at-point 'symbol t)))
-       (list (read-from-minibuffer
+       (list (read-string
               (format "Rename `%s' to: " (or curr
                                              "unknown symbol"))
-              curr nil nil nil curr))))
+              curr))))
     (eglot-server-capable-or-lose :renameProvider)
     (eglot--apply-workspace-edit
      (eglot--request (eglot--current-server-or-lose)
