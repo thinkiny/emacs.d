@@ -40,23 +40,22 @@
   :config
   (setq-default counsel-mode-override-describe-bindings t)
   (setq counsel-preselect-current-file t)
-  (add-to-list 'ivy-more-chars-alist '(counsel-ag . 2))
   (add-to-list 'ivy-more-chars-alist '(counsel-rg . 2))
   (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
   (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache$" ".metals$" "bazel-.*" ".o$" ".elc$" ".so$")))
 
-  (defun counsel-ag-here()
+  (defun counsel-rg-here()
     (interactive)
-    (counsel-ag "" default-directory))
+    (counsel-rg "" default-directory))
 
-  (defun counsel-ag-filetype(type)
+  (defun counsel-rg-filetype(type)
     (interactive (list (read-string "Search file type: ")))
-    (counsel-ag "" default-directory (concat "--" type)))
+    (counsel-rg "" default-directory (concat "-t" type)))
 
   (global-set-key (kbd "C-c l") 'counsel-imenu)
   (global-set-key (kbd "C-c s s") 'counsel-ag)
-  (global-set-key (kbd "C-c s .") 'counsel-ag-here)
-  (global-set-key (kbd "C-c s t") 'counsel-ag-filetype)
+  (global-set-key (kbd "C-c s d") 'counsel-rg-here)
+  (global-set-key (kbd "C-c s t") 'counsel-rg-filetype)
   (counsel-mode))
 
 
