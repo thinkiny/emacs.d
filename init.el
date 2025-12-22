@@ -70,8 +70,7 @@
 (require 'init-god)
 (require 'init-format)
 (require 'init-platform)
-;;(require 'init-aider)
-(require 'init-claude)
+(require 'init-ai)
 
 (when (file-exists-p custom-file)
   (load custom-file))

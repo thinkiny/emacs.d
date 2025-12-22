@@ -46,12 +46,13 @@
   :group 'langs)
 
 (defcustom haskell-ts-ghci "ghci"
-  "The command to be called to run ghci."
+  "The name or path program to be called to run the ghci repl.  Any
+arguments to be passed should be added `haskell-ts-ghci-switches`."
   :type 'string)
 
 (defcustom haskell-ts-ghci-switches nil
-  "Arguments passwed to `haskell-ts-ghci'."
-  :type 'string)
+  "Arguments to be passed to `haskell-ts-ghci'."
+  :type '(repeat string))
 
 (defcustom haskell-ts-ghci-buffer-name "*Inferior Haskell*"
   "Buffer name for the ghci prcoess."
@@ -79,12 +80,6 @@ This will concat `haskell-ts-prettify-symbols-alist' to
 This will concat `haskell-ts-prettify-words-alist' to
 `prettify-symbols-alist' in `haskell-ts-mode'."
   :type 'boolean)
-
-(defcustom haskell-ts-format-command "ormolu --stdin-input-file %s"
-  "The command used to call the formatter.  The input is given as the
-standard input.  This string is passed to `format', with the one
-argument being the `buffer-file-name'."
-  :type 'string)
 
 (defface haskell-constructor-face
   '((t :inherit font-lock-type-face))
@@ -135,7 +130,7 @@ when `haskell-ts-prettify-words' is non-nil.")
   (treesit-font-lock-rules
    :language 'haskell
    :feature 'keyword
-   `(["module" "import" "data" "let" "where" "case" "type"
+   `(["module" "import" "data" "let" "where" "case" "type" "family"
       "if" "then" "else" "of" "do" "in" "instance" "class" "newtype"]
      @font-lock-keyword-face)
    :language 'haskell
@@ -143,9 +138,12 @@ when `haskell-ts-prettify-words' is non-nil.")
    :override t
    `(((match (guards guard: (boolean (variable) @font-lock-keyword-face)))
       (:match "otherwise" @font-lock-keyword-face)))
+   
+   :language 'haskell
+   :feature 'type
+   :override t
+   '((type) @font-lock-type-face)
 
-   ;; This needs to be positioned above where we apply
-   ;; font-lock-operator-face to comma
    :language 'haskell
    :override t
    :feature 'signature
@@ -173,11 +171,6 @@ when `haskell-ts-prettify-words' is non-nil.")
      (function (infix right_operand: (_) @haskell-ts--fontify-arg))
      (generator :anchor (_) @haskell-ts--fontify-arg)
      (patterns) @haskell-ts--fontify-arg)
-
-   :language 'haskell
-   :feature 'type
-   :override t
-   '((type) @font-lock-type-face)
 
    :language 'haskell
    :feature 'constructors
@@ -478,6 +471,7 @@ when `haskell-ts-prettify-words' is non-nil.")
      (text "string")))
   "`treesit-thing-settings' for `haskell-ts-mode'.")
 
+;; TODO make into a currying function
 (defmacro haskell-ts-imenu-name-function (check-func)
   `(lambda (node)
      (let ((nn (treesit-node-child node 0 node)))
@@ -490,8 +484,7 @@ when `haskell-ts-prettify-words' is non-nil.")
 (defvar-keymap  haskell-ts-mode-map
   :doc "Keymap for haskell-ts-mode."
   "C-c C-c" #'haskell-ts-compile-region-and-go
-  "C-c C-r" #'run-haskell
-  "C-c C-f" #'haskell-ts-format)
+  "C-c C-r" #'run-haskell)
 
 ;;;###autoload
 (define-derived-mode haskell-ts-mode prog-mode "haskell ts mode"
@@ -537,9 +530,12 @@ when `haskell-ts-prettify-words' is non-nil.")
                      ,(haskell-ts-imenu-name-function #'haskell-ts-imenu-func-node-p))
                 ("Signatures.." haskell-ts-imenu-sig-node-p nil
                  ,(haskell-ts-imenu-name-function #'haskell-ts-imenu-sig-node-p))
-                ("Data..." haskell-ts-imenu-data-type-p nil
-                 (lambda (node)
-                   (treesit-node-text (treesit-node-child node 1))))))
+                (nil haskell-ts-imenu-data-type-p nil
+                     (lambda (node)
+                       (treesit-node-text (treesit-node-child node 1) t)))
+                (nil haskell-ts-imenu-typealias-type-p nil
+                     (lambda (node)
+                       (treesit-node-text (treesit-node-child node 1) t)))))
   ;; font-lock
   (setq-local treesit-font-lock-level haskell-ts-font-lock-level)
   (setq-local treesit-font-lock-settings haskell-ts-font-lock)
@@ -591,7 +587,10 @@ when `haskell-ts-prettify-words' is non-nil.")
   (haskell-ts-imenu-node-p "signature" node))
 
 (defun haskell-ts-imenu-data-type-p (node)
-  (haskell-ts-imenu-node-p "data_type" node))
+  (haskell-ts-imenu-node-p "data_type\\|newtype" node))
+
+(defun haskell-ts-imenu-typealias-type-p (node)
+  (haskell-ts-imenu-node-p "type_synomym" node))
 
 (defun haskell-ts-defun-name (node)
   (treesit-node-text (treesit-node-child node 0)))
@@ -624,31 +623,6 @@ If region is not active, reload the whole file."
       (setq end (region-end))
       (deactivate-mark))
     (list start end)))
-
-(defun haskell-ts-format (start end)
-  "Format haskell code.
-
-If region is active, format the code using the comand specified in
-`haskell-ts-format-command'.  Otherwise, format the current function."
-  (interactive
-   (if (region-active-p)
-       (list (region-beginning) (region-end))
-     (haskell-ts-current-function-bound)))
-  (let ((file (or buffer-file-name (error "Need to be visiting a file")))
-        (ra (region-active-p)))
-    (save-excursion
-      (goto-char start)
-      (while (looking-at "[ \t]*$")
-        (goto-char (line-beginning-position 2)))
-      (setq start (point)))
-    (shell-command-on-region start
-                             end
-                             (format haskell-ts-format-command file)
-                             nil
-                             t)
-    (message "Formatted succesefully.")
-    (unless ra
-      (pulse-momentary-highlight-region (region-beginning) (region-end)))))
 
 ;;;###autoload
 (defun run-haskell ()
