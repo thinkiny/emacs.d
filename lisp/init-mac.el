@@ -34,7 +34,7 @@
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (after-load-theme
  (if (theme-dark-p)
-    (add-to-list 'default-frame-alist '(ns-appearance . dark))
+     (add-to-list 'default-frame-alist '(ns-appearance . dark))
    (add-to-list 'default-frame-alist '(ns-appearance . light))))
 
 (setq ns-use-proxy-icon nil)
@@ -111,5 +111,17 @@ fi"
             ;; show
             (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback)
           (toggle-frame-maximized))))))
+
+;; italic font
+(defun set-italic-font-if-available(&rest args)
+  (when-let* ((font (font-face-attributes (face-attribute 'italic :font)))
+              (family (plist-get font :family))
+              (italic-famlily (concat family " Italic")))
+
+    (if (member italic-famlily (font-family-list))
+        (set-face-attribute 'italic nil :family italic-famlily))))
+
+(if window-system
+    (advice-add #'cnfonts-set-font :after #'set-italic-font-if-available))
 
 (provide 'init-mac)

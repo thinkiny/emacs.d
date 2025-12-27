@@ -191,7 +191,7 @@
     :demand t
     :config
     (setq cnfonts-use-face-font-rescale t)
-    (cnfonts-enable)
+    (cnfonts-mode)
     (unbind-all-keys cnfonts-mode-map)))
 
 ;;size
