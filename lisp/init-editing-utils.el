@@ -401,7 +401,8 @@ If ARG is omitted or nil, move point forward one word."
   (dolist (hook '(find-file-hook))
     (add-hook hook
               (lambda ()
-                (direnv-update-directory-environment)))))
+                (unless (file-remote-p default-directory)
+                  (direnv-update-directory-environment))))))
 
 ;; string-inflection
 (require-package 'string-inflection)

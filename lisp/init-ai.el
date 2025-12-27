@@ -15,8 +15,8 @@
   :config
   (claude-code-ide-emacs-tools-setup)
   (setq claude-code-ide-diagnostics-backend 'flymake)
-  (setq claude-code-ide-window-side 'bottom
-        claude-code-ide-window-height 10))
+  (setq claude-code-ide-window-side 'right
+        claude-code-ide-window-width 50))
 
 (use-package agent-shell
   :bind (:map global-map
