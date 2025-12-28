@@ -64,9 +64,4 @@
 
 (require 'tramp-jumper)
 
-(defun get-local-path(file-path)
-  (if (file-remote-p file-path)
-      (file-remote-p file-path 'localname)
-    file-path))
-
 (provide 'init-tramp)

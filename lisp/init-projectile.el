@@ -45,7 +45,7 @@
               (advice-remove 'delete-file #'delete-file-projectile-remove-from-cache)
               )))
 
-;; ignore tramp
+;; tramp
 ;; (defvar-local projectile-project-root-enable-tramp nil)
 ;; (defun projectile-project-root-before(&optional dir)
 ;;    (let ((target-dir (or dir default-directory)))
@@ -55,6 +55,42 @@
 
 ;; (advice-add 'projectile-project-root :before-while #'projectile-project-root-before)
 
+(defcustom known-tramp-projects nil
+  "List of known TRAMP project root paths.
+Each element should be a string representing a project root directory path."
+  :type '(repeat string)
+  :group 'projectile)
+
+(defun find-longest-matching-project (directory projects)
+  "Find the longest matching project path from PROJECTS that is a prefix of DIRECTORY.
+Returns the matching project path or nil if no match is found."
+  (let ((best-match nil)
+        (best-length 0))
+    (dolist (project projects)
+      (when (and (stringp project)
+                 (string-prefix-p project directory)
+                 (> (length project) best-length))
+        (setq best-match project
+              best-length (length project))))
+    best-match))
+
+(defun projectile-project-root-around-advice (orig-fun &rest args)
+  (let ((current-dir (or (car args) default-directory)))
+    (if (file-remote-p current-dir)
+        (let ((cached-project (find-longest-matching-project current-dir known-tramp-projects)))
+          (if cached-project
+              cached-project
+            (let ((project-root (apply orig-fun args)))
+              (when project-root
+                (unless (member project-root known-tramp-projects)
+                  (push project-root known-tramp-projects)
+                  (customize-save-variable 'known-tramp-projects known-tramp-projects)))
+              project-root)))
+      (apply orig-fun args))))
+
+(advice-add 'projectile-project-root :around #'projectile-project-root-around-advice)
+
+;; other functions
 (defun projectile-kill-not-project-buffers ()
   "Kill buffers not belongs to this project including dired-mode buffer"
   (interactive)
