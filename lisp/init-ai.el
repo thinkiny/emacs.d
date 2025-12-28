@@ -8,25 +8,36 @@
 ;;   (setq aidermacs-default-chat-mode 'architect)
 ;;   (setq aidermacs-backend 'vterm))
 
-(use-package claude-code-ide :ensure t
+(use-package claude-code-ide
+  :ensure t
   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
   :bind (:map global-map
-              ("C-c y c" . claude-code-ide-menu))
+              ("C-c y" . claude-code-ide-menu))
   :config
-  (claude-code-ide-emacs-tools-setup)
-  (setq claude-code-ide-diagnostics-backend 'flymake)
+  (setq claude-code-ide-vterm-render-delay 0.5)
+  (setq claude-code-ide-use-side-window nil)
+  ;; (setq claude-code-ide-cli-path "claude-remote")
+  (add-to-list 'display-buffer-alist
+               '("\\*claude-code*"
+                 (display-buffer-in-side-window)
+                 (side . right)
+                 (window-width . 0.5)))
+  (setq claude-code-ide-debug t)
   (setq claude-code-ide-window-side 'right
-        claude-code-ide-window-width 50))
+        claude-code-ide-window-width 55)
+  ;; (setq claude-code-ide-terminal-backend 'eat)
+  (setq claude-code-ide-diagnostics-backend 'flymake)
+  (claude-code-ide-emacs-tools-setup))
 
-(use-package agent-shell
-  :bind (:map global-map
-              ("C-c y a" . agent-shell-cursor-start-agent))
-  :config
-  (setq agent-shell-header-style nil)
-  (setq agent-shell-show-welcome-message nil)
-  (setq agent-shell-cursor-environment
-        (agent-shell-make-environment-variables
-         "HTTP_PROXY" "http://127.0.0.1:1087"
-         "HTTPS_PROXY" "http://127.0.0.1:1087")))
+;; (use-package agent-shell
+;;   :bind (:map global-map
+;;               ("C-c y a" . agent-shell-cursor-start-agent))
+;;   :config
+;;   (setq agent-shell-header-style nil)
+;;   (setq agent-shell-show-welcome-message nil)
+;;   (setq agent-shell-cursor-environment
+;;         (agent-shell-make-environment-variables
+;;          "HTTP_PROXY" "http://127.0.0.1:1087"
+;;          "HTTPS_PROXY" "http://127.0.0.1:1087")))
 
 (provide 'init-ai)

@@ -46,17 +46,14 @@
               )))
 
 ;; ignore tramp
-(advice-add 'projectile-project-root :before-while
-  (lambda (&optional dir)
-    (not (file-remote-p (or dir default-directory)))))
+;; (defvar-local projectile-project-root-enable-tramp nil)
+;; (defun projectile-project-root-before(&optional dir)
+;;    (let ((target-dir (or dir default-directory)))
+;;      (if (file-remote-p target-dir)
+;;          projectile-project-root-enable-tramp
+;;        t)))
 
-;; (defun my-project-ignore-homedir (project)
-;;   (if (and project
-;;            (equal (expand-file-name (nth 2 project)) (expand-file-name "~/")))
-;;       nil
-;;     project))
-;; (advice-add 'project-try-vc :filter-return #'my-project-ignore-homedir)
-
+;; (advice-add 'projectile-project-root :before-while #'projectile-project-root-before)
 
 (defun projectile-kill-not-project-buffers ()
   "Kill buffers not belongs to this project including dired-mode buffer"

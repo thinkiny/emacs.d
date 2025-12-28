@@ -10,9 +10,9 @@
 (setq tramp-default-method "ssh")
 (setq tramp-verbose 0)
 (setq tramp-copy-size-limit (* 2 1024 1024))
+(setq remote-file-name-inhibit-cache 600)
 ;; (setq vc-ignore-dir-regexp (format "\\(%s\\)\\|\\(%s\\)" vc-ignore-dir-regexp tramp-file-name-regexp))
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
-(setq remote-file-name-inhibit-cache 600)
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 (add-to-list 'backup-directory-alist
              (cons tramp-file-name-regexp nil))
@@ -63,5 +63,10 @@
                  (tramp-copy-recursive       t))))
 
 (require 'tramp-jumper)
+
+(defun get-local-path(file-path)
+  (if (file-remote-p file-path)
+      (file-remote-p file-path 'localname)
+    file-path))
 
 (provide 'init-tramp)
