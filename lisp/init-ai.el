@@ -8,6 +8,20 @@
 ;;   (setq aidermacs-default-chat-mode 'architect)
 ;;   (setq aidermacs-backend 'vterm))
 
+
+;; claude-wrapper
+;; if [[ -n "$CLAUDE_CODE_SSE_PORT" ]]; then
+;;   lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
+;;   if [[ -f $lock ]]; then
+;;     sed -ri 's/"pid":[0-9]+/"pid":'$$'/' $lock
+;;     claude ${1+"$@"}
+;;   else
+;;    claude $@
+;;   fi
+;; else
+;;    claude $@
+;; fi
+
 (use-package claude-code-ide
   :ensure t
   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
@@ -21,7 +35,7 @@
                '("\\*claude-code*"
                  (display-buffer-in-side-window)
                  (side . right)
-                 (window-width . 0.5)))
+                 (window-width . 0.3)))
   (setq claude-code-ide-debug t)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 55)

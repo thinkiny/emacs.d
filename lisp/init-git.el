@@ -13,8 +13,11 @@
   (setq transient-default-level 5
         magit-diff-refine-hunk t
         magit-auto-revert-mode nil
+        magit-refresh-status-buffer nil
         magit-save-repository-buffers nil
-        magit-revision-insert-related-refs nil)
+        magit-branch-direct-configure nil
+        magit-revision-insert-related-refs nil
+        magit-tramp-pipe-stty-settings 'pty)
   (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
   (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
 

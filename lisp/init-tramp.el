@@ -9,8 +9,23 @@
 (setq tramp-use-scp-direct-remote-copying t)
 (setq tramp-default-method "ssh")
 (setq tramp-verbose 0)
-(setq tramp-copy-size-limit (* 2 1024 1024))
+(setq tramp-copy-size-limit (* 1024 1024))
 (setq remote-file-name-inhibit-cache 600)
+
+;; enable tramp-direct-async-process
+(connection-local-set-profile-variables
+ 'remote-direct-async-process
+ '((tramp-direct-async-process . t)))
+
+(connection-local-set-profiles
+ '(:application tramp :protocol "scp")
+ 'remote-direct-async-process)
+
+;; remove compilation-mode-hook
+(with-eval-after-load 'tramp
+  (with-eval-after-load 'compile
+    (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
+
 ;; (setq vc-ignore-dir-regexp (format "\\(%s\\)\\|\\(%s\\)" vc-ignore-dir-regexp tramp-file-name-regexp))
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
@@ -63,5 +78,46 @@
                  (tramp-copy-recursive       t))))
 
 (require 'tramp-jumper)
+
+
+;; tramp-hlo
+(use-package tramp-hlo
+  :ensure t
+  :config
+  (tramp-hlo-setup)
+  )
+
+;; tramp caches
+(defgroup tramp-caches ()
+  "Caching system for remote file operations."
+  :group 'tramp)
+
+(defun cache-tramp-remote (key cache-symbol orig-fn &rest args)
+  "Cache a value if the key is a remote path.
+KEY is the cache key (usually a file path).
+CACHE-SYMBOL is the symbol holding the cache alist.
+ORIG-FN is the original function to call if cache miss.
+ARGS are the arguments to pass to ORIG-FN."
+  ;;(prin1 (list key cache-symbol args))
+  (if (and key (file-remote-p default-directory))
+      (let ((cache-value (symbol-value cache-symbol)))
+        (if-let ((cached-entry (assoc key cache-value)))
+            (cdr cached-entry)
+          (let ((result (apply orig-fn args)))
+            ;; Update the customizable variable
+            (customize-save-variable cache-symbol
+                                     (cons (cons key result) cache-value))
+            result)))
+    (apply orig-fn args)))
+
+;; cache all git candidates in the current project
+(defcustom counsel-git-cands-tramp-cache nil
+  "Cache 'counsel-git-cands'."
+  :type '(alist :key-type string :value-type sexp)
+  :group 'tramp-caches)
+
+(defun cache-tramp-counsel-git-cands (orig dir)
+  (cache-tramp-remote (magit-toplevel dir) 'counsel-git-cands-tramp-cache orig dir))
+(advice-add 'counsel-git-cands :around #'cache-tramp-counsel-git-cands)
 
 (provide 'init-tramp)

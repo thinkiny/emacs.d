@@ -24,17 +24,17 @@ focus, and only once."
 
 ;; (add-function :after after-focus-change-function #'my/garbage-collect-on-focus-lost)
 
-(defun profile-cpu-start ()
+(defun profile-user-start ()
   (interactive)
-  (profiler-start 'cpu))
+  (profiler-start 'cpu+mem))
 
-(defun profile-cpu-stop()
+(defun profile-user-stop()
   (interactive)
   (profiler-stop)
   (profiler-report))
 
-(global-set-key (kbd "C-x c s") #'profile-cpu-start)
-(global-set-key (kbd "C-x c r") #'profile-cpu-stop)
+(global-set-key (kbd "C-x c s") #'profile-user-start)
+(global-set-key (kbd "C-x c r") #'profile-user-stop)
 
 (defun increase-profile-cpu-line-width (&optional arg)
   (interactive "ncpu format width: ")

@@ -45,51 +45,6 @@
               (advice-remove 'delete-file #'delete-file-projectile-remove-from-cache)
               )))
 
-;; tramp
-;; (defvar-local projectile-project-root-enable-tramp nil)
-;; (defun projectile-project-root-before(&optional dir)
-;;    (let ((target-dir (or dir default-directory)))
-;;      (if (file-remote-p target-dir)
-;;          projectile-project-root-enable-tramp
-;;        t)))
-
-;; (advice-add 'projectile-project-root :before-while #'projectile-project-root-before)
-
-(defcustom known-tramp-projects nil
-  "List of known TRAMP project root paths.
-Each element should be a string representing a project root directory path."
-  :type '(repeat string)
-  :group 'projectile)
-
-(defun find-longest-matching-project (directory projects)
-  "Find the longest matching project path from PROJECTS that is a prefix of DIRECTORY.
-Returns the matching project path or nil if no match is found."
-  (let ((best-match nil)
-        (best-length 0))
-    (dolist (project projects)
-      (when (and (stringp project)
-                 (string-prefix-p project directory)
-                 (> (length project) best-length))
-        (setq best-match project
-              best-length (length project))))
-    best-match))
-
-(defun projectile-project-root-around-advice (orig-fun &rest args)
-  (let ((current-dir (or (car args) default-directory)))
-    (if (file-remote-p current-dir)
-        (let ((cached-project (find-longest-matching-project current-dir known-tramp-projects)))
-          (if cached-project
-              cached-project
-            (let ((project-root (apply orig-fun args)))
-              (when project-root
-                (unless (member project-root known-tramp-projects)
-                  (push project-root known-tramp-projects)
-                  (customize-save-variable 'known-tramp-projects known-tramp-projects)))
-              project-root)))
-      (apply orig-fun args))))
-
-(advice-add 'projectile-project-root :around #'projectile-project-root-around-advice)
-
 ;; other functions
 (defun projectile-kill-not-project-buffers ()
   "Kill buffers not belongs to this project including dired-mode buffer"
@@ -171,5 +126,53 @@ Returns the matching project path or nil if no match is found."
   :bind (:map
          projectile-mode-map
          ("C-c p s s" . #'counsel-projectile-rg-default)))
+
+;; tramp
+;; (defun projectile-project-root-before(&optional dir)
+;;    (let ((target-dir (or dir default-directory)))
+;;      (not (file-remote-p target-dir))))
+;; (advice-add 'projectile-project-root :before-while #'projectile-project-root-before)
+
+;; cache projectile-root
+(defcustom projectile-known-tramp-cache nil
+  "List of known TRAMP project root paths.
+Each element should be a string representing a project root directory path."
+  :type '(repeat string)
+  :group 'projectile)
+
+(defun find-longest-matching-project (directory projects)
+  "Find the longest matching project path from PROJECTS that is a prefix of DIRECTORY.
+Returns the matching project path or nil if no match is found."
+  (let ((best-match nil)
+        (best-length 0))
+    (dolist (project projects)
+      (when (and (stringp project)
+                 (string-prefix-p project directory)
+                 (> (length project) best-length))
+        (setq best-match project
+              best-length (length project))))
+    best-match))
+
+(defcustom projectile-root-stop-paths nil
+  "List of directory paths where projectile should stop searching for project roots."
+  :type '(repeat string)
+  :group 'projectile)
+
+(defun projectile-project-root-around-advice (orig-fun &rest args)
+  (let ((current-dir (or (car args) default-directory)))
+    (unless (member current-dir projectile-root-stop-paths)
+      (if (file-remote-p current-dir)
+          (let ((cached-project (find-longest-matching-project current-dir projectile-known-tramp-cache)))
+            (if cached-project
+                cached-project
+              (let ((project-root (apply orig-fun args)))
+                (when project-root
+                  (unless (member project-root projectile-known-tramp-cache)
+                    (push project-root projectile-known-tramp-cache)
+                    (customize-save-variable 'projectile-known-tramp-cache projectile-known-tramp-cache)))
+                project-root)))
+        (apply orig-fun args)))))
+
+(advice-add 'projectile-project-root :around #'projectile-project-root-around-advice)
 
 (provide 'init-projectile)

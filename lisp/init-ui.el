@@ -130,7 +130,12 @@
 ;; icons
 (require-package 'all-the-icons)
 (require-package 'treemacs-icons-dired)
+
 (when window-system
+  ;; (with-eval-after-load 'treemacs-icons-dired
+  (defun treemacs-icons-dired--display-before()
+    (not (file-remote-p default-directory)))
+  (advice-add 'treemacs-icons-dired--display :before-while #'treemacs-icons-dired--display-before)
   (treemacs-icons-dired-mode))
 
 ;; frame transparency
@@ -174,7 +179,7 @@
  (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")
  (set-face-attribute 'ivy-virtual nil :foreground 'unspecified)
  ;;(set-face-attribute 'variable-pitch-text nil :height 1.0)
- (set-face-attribute 'fringe nil :background nil)
+ (set-face-attribute 'fringe nil :background 'unspecified)
  (when (theme-dark-p)
    (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic)
    ;;(set-face-attribute 'default nil :foreground "#C4C4C4")
