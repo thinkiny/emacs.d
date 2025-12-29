@@ -15,6 +15,7 @@
         magit-auto-revert-mode nil
         magit-refresh-status-buffer nil
         magit-save-repository-buffers nil
+        magit-commit-show-diff nil
         magit-branch-direct-configure nil
         magit-revision-insert-related-refs nil
         magit-tramp-pipe-stty-settings 'pty)

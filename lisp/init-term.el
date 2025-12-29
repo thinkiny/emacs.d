@@ -2,10 +2,6 @@
 ;; Remote Directory Tracking: https://www.emacswiki.org/emacs/AnsiTermHints#h5o-5
 ;; term-mode key-bindings
 
-(with-eval-after-load 'x-win
-  (defun emacs-session-save ()
-    ()))
-
 (defcustom term-unbind-key-list
   '("C-z" "C-x" "C-c" "C-h" "C-y" "<ESC>")
   "The key list that will need to be unbind."
@@ -131,6 +127,7 @@ and binds some keystroke with `term-raw-map'."
   :commands (vterm-mode vterm)
   :config
   (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash -l"))
+  (ignore-tramp-ssh-control-master 'vterm)
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 60)
   (setq vterm-max-scrollback 5000)

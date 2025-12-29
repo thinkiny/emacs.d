@@ -3,8 +3,8 @@
 (use-package gcmh
    :demand t
    :config
-;;   (setq gcmh-low-cons-threshold (* 32 1024 1024)
-;;         gcmh-high-cons-threshold (* 128 1024 1024))
+   (setq gcmh-low-cons-threshold (* 16 1024 1024)
+         gcmh-high-cons-threshold (* 2048 1024 1024))
    (gcmh-mode 1))
 ;; (setq gc-cons-threshold (* 4 1024 1024 1024)) ;; 4GiB of RAM
 
@@ -26,7 +26,7 @@ focus, and only once."
 
 (defun profile-user-start ()
   (interactive)
-  (profiler-start 'cpu+mem))
+  (profiler-start 'cpu))
 
 (defun profile-user-stop()
   (interactive)

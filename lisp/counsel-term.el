@@ -4,6 +4,7 @@
 
 (require 'cl-lib)
 (require 'tramp)
+(require 'vterm)
 
 (defvar counsel-mt-shell-type 'vterm)
 (defconst counsel-mt-name-header "*TERM-")
@@ -160,7 +161,7 @@
                           (counsel-mt/launch))))
             :caller 'counsel-term))
 
-(ignore-tramp-ssh-control-master 'counsel-mt/launch)
+;; (ignore-tramp-ssh-control-master 'counsel-mt/launch)
 (ignore-tramp-ssh-control-master 'completion-at-point)
 
 (provide 'counsel-term)

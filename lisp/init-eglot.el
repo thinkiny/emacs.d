@@ -16,7 +16,8 @@
   (setq eglot-prefer-plaintext t)
   (setq eglot-sync-connect nil)
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
-                                            :documentOnTypeFormattingProvider))
+                                            :documentOnTypeFormattingProvider
+                                            :documentRangeFormattingProvider))
   (setq jsonrpc-default-request-timeout 15)
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
@@ -28,9 +29,10 @@
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
+  (require 'eglot-hover)
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
-                                                                      :usePlaceholders t
-                                                                      :analyses  (:ST1003 :json-false))
+                                                        :usePlaceholders t
+                                                        :analyses  (:ST1003 :json-false))
                                                 :basedpyright.analysis (:typeCheckingMode "standard"
                                                                         :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
                                                                                                       :reportOptionalSubscript "warning"
@@ -124,12 +126,17 @@
   ;; (eglot--setq-saving eldoc-documentation-functions
   ;;                       '(eglot-signature-eldoc-function
   ;;                         eglot-hover-eldoc-function))
+  (when (file-remote-p default-directory)
+    (make-variable-buffer-local 'eglot-ignored-server-capabilities)
+    (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider))
+
   (setq-local completion-at-point-functions
               (list
                #'cape-file
                #'eglot-completion-at-point))
 
   (auto-revert-mode)
+  (eglot-hover-mode)
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format)))
@@ -170,6 +177,5 @@ COMMAND is a string as advertised by the server. No arguments are passed."
                             (or (cl-coerce commands 'list) '())
                             nil nil))))
   (eglot-execute (eglot-current-server) (list :command command)))
-
 
 (provide 'init-eglot)

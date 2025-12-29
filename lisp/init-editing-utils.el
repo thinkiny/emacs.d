@@ -408,4 +408,21 @@ If ARG is omitted or nil, move point forward one word."
 (require-package 'string-inflection)
 (require 'string-inflection)
 
+;; ediff-no-confirm
+(with-eval-after-load 'ediff-util
+  (defun ediff-quit(reverse-default-keep-variants)
+  "Remove y-or-n-p in edifff-util."
+  (interactive "P")
+  (ediff-barf-if-not-control-buffer)
+  (let ((ctl-buf (current-buffer))
+    (ctl-frm (selected-frame))
+    (minibuffer-auto-raise t))
+    (progn
+      (setq this-command 'ediff-quit) ; bug#38219
+      (set-buffer ctl-buf)
+      (ediff-really-quit reverse-default-keep-variants))
+      (select-frame ctl-frm)
+      (raise-frame ctl-frm))))
+
+
 (provide 'init-editing-utils)

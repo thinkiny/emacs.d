@@ -24,22 +24,22 @@
 
 (use-package claude-code-ide
   :ensure t
-  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
+  :vc (:url "https://github.com/thinkiny/claude-code-ide.el" :rev :newest)
   :bind (:map global-map
               ("C-c y" . claude-code-ide-menu))
   :config
   (setq claude-code-ide-vterm-render-delay 0.5)
-  (setq claude-code-ide-use-side-window nil)
-  ;; (setq claude-code-ide-cli-path "claude-remote")
-  (add-to-list 'display-buffer-alist
-               '("\\*claude-code*"
-                 (display-buffer-in-side-window)
-                 (side . right)
-                 (window-width . 0.3)))
-  (setq claude-code-ide-debug t)
+  (setq claude-code-ide-terminal-initialization-delay 1)
+  ;; (setq claude-code-ide-use-side-window nil)
+  ;; (add-to-list 'display-buffer-alist
+  ;;              '("\\*claude-code*"
+  ;;                (display-buffer-in-side-window)
+  ;;                (side . right)
+  ;;                (window-width . 0.5)))
+  ;; (setq claude-code-ide-debug t)
+  (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-window-side 'right
-        claude-code-ide-window-width 55)
-  ;; (setq claude-code-ide-terminal-backend 'eat)
+        claude-code-ide-window-width 80)
   (setq claude-code-ide-diagnostics-backend 'flymake)
   (claude-code-ide-emacs-tools-setup))
 

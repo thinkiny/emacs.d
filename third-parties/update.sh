@@ -37,6 +37,13 @@ function update_repo() {
     popd
 }
 
+function update_lsp() {
+    go install golang.org/x/tools/gopls@latest
+    #npm update -g
+    pipx upgrade pyrefly
+    pipx upgrade rassumfrassum
+}
+
 wget --no-check-certificate https://raw.githubusercontent.com/google/styleguide/gh-pages/google-c-style.el -O google-c-style.el
 wget --no-check-certificate https://raw.githubusercontent.com/canatella/use-theme/master/use-theme.el -O use-theme.el
 
@@ -48,7 +55,9 @@ wget --no-check-certificate https://raw.githubusercontent.com/abo-abo/org-downlo
 wget --no-check-certificate https://codeberg.org/pranshu/haskell-ts-mode/raw/branch/main/haskell-ts-mode.el -O haskell-ts-mode.el
 #wget --no-check-certificate https://raw.githubusercontent.com/bobrowadam/.emacs.d/refs/heads/main/modules/eglot-sqls.el  -O eglot-sqls.el
 #wget --no-check-certificate https://raw.githubusercontent.com/garyo/lsp-multiplexer/refs/heads/main/lsp_multiplexer.py -O lsp_multiplexer.py
+wget --no-check-certificate https://codeberg.org/slotThe/eglot-hover/raw/branch/main/eglot-hover.el -O eglot-hover.el
 
 # update-repo
-update_lsp_multiplexer
+# update_lsp_multiplexer
 update_repo ~/.emacs.d/elpa/claude-code-ide/
+update_lsp

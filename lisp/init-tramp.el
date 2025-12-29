@@ -2,14 +2,14 @@
 
 (require 'tramp)
 (setq tramp-allow-unsafe-temporary-files t)
-(setq enable-remote-dir-locals t)
+(setq enable-remote-dir-locals nil)
 (setq remote-file-name-inhibit-locks t)
 (setq remote-file-name-inhibit-auto-save-visited t)
 (setq remote-file-name-inhibit-auto-save t)
 (setq tramp-use-scp-direct-remote-copying t)
 (setq tramp-default-method "ssh")
 (setq tramp-verbose 0)
-(setq tramp-copy-size-limit (* 1024 1024))
+(setq tramp-copy-size-limit (* 2 1024 1024))
 (setq remote-file-name-inhibit-cache 600)
 
 ;; enable tramp-direct-async-process
@@ -58,24 +58,24 @@
   (dolist (func funcs)
     (advice-add func :around #'advice/ignore-tramp-ssh-control-master)))
 
-(with-eval-after-load 'tramp-sh
-  (setq tramp-default-remote-shell "/bin/bash")
-  (add-to-list 'tramp-methods
-               `("ssh"
-                 (tramp-login-program        "ssh")
-                 (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
-                                              ("-e" "none") ("%h") ))
-                 (tramp-async-args           (("-q")))
-                 (tramp-direct-async         ("-t" "-t"))
-                 (tramp-remote-shell         ,tramp-default-remote-shell)
-                 (tramp-remote-shell-login   ("-l"))
-                 (tramp-remote-shell-args    ("-c"))
-                 (tramp-copy-program         "scp")
-                 (tramp-copy-args            (("-P" "%p") ("-p" "%k")
-                                              ("%x") ("%y") ("%z")
-                                              ("-q") ("-r") ("%c")))
-                 (tramp-copy-keep-date       t)
-                 (tramp-copy-recursive       t))))
+;; (with-eval-after-load 'tramp-sh
+;;   (setq tramp-default-remote-shell "/bin/bash")
+;;   (add-to-list 'tramp-methods
+;;                `("ssh"
+;;                  (tramp-login-program        "ssh")
+;;                  (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
+;;                                               ("-e" "none") ("%h") ))
+;;                  (tramp-async-args           (("-q")))
+;;                  (tramp-direct-async         ("-t" "-t"))
+;;                  (tramp-remote-shell         ,tramp-default-remote-shell)
+;;                  (tramp-remote-shell-login   ("-l"))
+;;                  (tramp-remote-shell-args    ("-c"))
+;;                  (tramp-copy-program         "scp")
+;;                  (tramp-copy-args            (("-P" "%p") ("-p" "%k")
+;;                                               ("%x") ("%y") ("%z")
+;;                                               ("-q") ("-r") ("%c")))
+;;                  (tramp-copy-keep-date       t)
+;;                  (tramp-copy-recursive       t))))
 
 (require 'tramp-jumper)
 
@@ -84,15 +84,31 @@
 (use-package tramp-hlo
   :ensure t
   :config
-  (tramp-hlo-setup)
-  )
+  (tramp-hlo-setup))
 
 ;; tramp caches
 (defgroup tramp-caches ()
   "Caching system for remote file operations."
   :group 'tramp)
 
-(defun cache-tramp-remote (key cache-symbol orig-fn &rest args)
+(defun cache-tramp-from-strings(key cache-symbol orig-fn &rest args)
+  "Cache a value if the key is a remote path.
+KEY is the cache key (usually a file path).
+CACHE-SYMBOL is the symbol holding the cache alist.
+ORIG-FN is the original function to call if cache miss.
+ARGS are the arguments to pass to ORIG-FN."
+  (if (and key (file-remote-p default-directory))
+      (if-let* ((cache-value (symbol-value cache-symbol))
+                (cached (find-longest-matching-string key cache-value)))
+          cached
+        (let ((result (apply orig-fn args)))
+          (when result
+            (push result cache-value)
+            (customize-save-variable cache-symbol cache-value))
+          result))
+    (apply orig-fn args)))
+
+(defun cache-tramp-from-kv(key cache-symbol orig-fn &rest args)
   "Cache a value if the key is a remote path.
 KEY is the cache key (usually a file path).
 CACHE-SYMBOL is the symbol holding the cache alist.
@@ -100,24 +116,27 @@ ORIG-FN is the original function to call if cache miss.
 ARGS are the arguments to pass to ORIG-FN."
   ;;(prin1 (list key cache-symbol args))
   (if (and key (file-remote-p default-directory))
-      (let ((cache-value (symbol-value cache-symbol)))
-        (if-let ((cached-entry (assoc key cache-value)))
-            (cdr cached-entry)
-          (let ((result (apply orig-fn args)))
-            ;; Update the customizable variable
-            (customize-save-variable cache-symbol
-                                     (cons (cons key result) cache-value))
-            result)))
+      (if-let* ((cache-value (symbol-value cache-symbol))
+                (cached-entry (assoc key cache-value)))
+          (cdr cached-entry)
+        (let ((result (apply orig-fn args)))
+          ;; Update the customizable variable
+          (customize-save-variable cache-symbol
+                                   (cons (cons key result) cache-value))
+            result))
     (apply orig-fn args)))
 
-;; cache all git candidates in the current project
-(defcustom counsel-git-cands-tramp-cache nil
-  "Cache 'counsel-git-cands'."
-  :type '(alist :key-type string :value-type sexp)
+;; cache magit top level
+(defcustom magit-toplevel-tramp-cache nil
+  "Cache 'magit-toplevel'."
+  :type '(repeat string)
   :group 'tramp-caches)
 
-(defun cache-tramp-counsel-git-cands (orig dir)
-  (cache-tramp-remote (magit-toplevel dir) 'counsel-git-cands-tramp-cache orig dir))
-(advice-add 'counsel-git-cands :around #'cache-tramp-counsel-git-cands)
+(defun cache-tramp-magit-toplevel (orig &optional directory)
+  (cache-tramp-from-strings
+   (expand-file-name (or directory default-directory))
+   'magit-toplevel-tramp-cache orig directory))
+(advice-add 'magit-toplevel :around #'cache-tramp-magit-toplevel)
+
 
 (provide 'init-tramp)

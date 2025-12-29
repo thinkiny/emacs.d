@@ -153,4 +153,16 @@
 (defun dummy-func(&rest _)
   (interactive))
 
+;; find-longest-matching-string
+(defun find-longest-matching-string(str str-list)
+  "Find the longest matching string from STR-LIST that is a prefix of STR."
+  (let ((best-match nil)
+        (best-length 0))
+    (dolist (str-item str-list)
+      (when (and (string-prefix-p str-item str)
+                 (> (length str-item) best-length))
+        (setq best-match str-item
+              best-length (length str-item))))
+    best-match))
+
 (provide 'init-utils)

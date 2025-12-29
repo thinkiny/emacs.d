@@ -140,19 +140,6 @@ Each element should be a string representing a project root directory path."
   :type '(repeat string)
   :group 'projectile)
 
-(defun find-longest-matching-project (directory projects)
-  "Find the longest matching project path from PROJECTS that is a prefix of DIRECTORY.
-Returns the matching project path or nil if no match is found."
-  (let ((best-match nil)
-        (best-length 0))
-    (dolist (project projects)
-      (when (and (stringp project)
-                 (string-prefix-p project directory)
-                 (> (length project) best-length))
-        (setq best-match project
-              best-length (length project))))
-    best-match))
-
 (defcustom projectile-root-stop-paths nil
   "List of directory paths where projectile should stop searching for project roots."
   :type '(repeat string)
@@ -162,16 +149,15 @@ Returns the matching project path or nil if no match is found."
   (let ((current-dir (or (car args) default-directory)))
     (unless (member current-dir projectile-root-stop-paths)
       (if (file-remote-p current-dir)
-          (let ((cached-project (find-longest-matching-project current-dir projectile-known-tramp-cache)))
-            (if cached-project
-                cached-project
-              (let ((project-root (apply orig-fun args)))
-                (when project-root
-                  (unless (member project-root projectile-known-tramp-cache)
-                    (push project-root projectile-known-tramp-cache)
-                    (customize-save-variable 'projectile-known-tramp-cache projectile-known-tramp-cache)))
-                project-root)))
-        (apply orig-fun args)))))
+          (if-let* ((cached-project (find-longest-matching-string current-dir projectile-known-tramp-cache)))
+              cached-project
+            (let ((project-root (apply orig-fun args)))
+              (when project-root
+                (unless (member project-root projectile-known-tramp-cache)
+                  (push project-root projectile-known-tramp-cache)
+                  (customize-save-variable 'projectile-known-tramp-cache projectile-known-tramp-cache)))
+              project-root)))
+      (apply orig-fun args))))
 
 (advice-add 'projectile-project-root :around #'projectile-project-root-around-advice)
 
