@@ -193,6 +193,7 @@ move the cursor to the prompt area."
 
   (advice-add 'set-window-vscroll :after #'my/vterm-toggle-scroll)
 
+  ;; key bindings
   (define-key vterm-mode-map (kbd "M-w") 'vterm-copy-text)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'vterm-move-down)

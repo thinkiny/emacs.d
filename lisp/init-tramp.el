@@ -9,6 +9,7 @@
 (setq tramp-use-scp-direct-remote-copying t)
 (setq tramp-default-method "ssh")
 (setq tramp-verbose 0)
+(setq tramp-chunksize 2048)
 (setq tramp-copy-size-limit (* 2 1024 1024))
 (setq remote-file-name-inhibit-cache 600)
 
@@ -21,22 +22,11 @@
  '(:application tramp :protocol "scp")
  'remote-direct-async-process)
 
-;; remove compilation-mode-hook
-(with-eval-after-load 'tramp
-  (with-eval-after-load 'compile
-    (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
-
 ;; (setq vc-ignore-dir-regexp (format "\\(%s\\)\\|\\(%s\\)" vc-ignore-dir-regexp tramp-file-name-regexp))
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 (add-to-list 'backup-directory-alist
              (cons tramp-file-name-regexp nil))
-
-;; (with-eval-after-load 'tramp-sh
-;;   (setq tramp-sh-file-name-handler-alist
-;;         (cl-remove-if (lambda (x)
-;;                         (member (car x) '(lock-file unlock-file file-locked-p)))
-;;                       tramp-sh-file-name-handler-alist)))
 
 (setq debug-ignored-errors
       (cons 'remote-file-error debug-ignored-errors))
@@ -91,7 +81,7 @@
   "Caching system for remote file operations."
   :group 'tramp)
 
-(defun cache-tramp-from-strings(key cache-symbol orig-fn &rest args)
+(defun cache-tramp-from-matching(key cache-symbol orig-fn &rest args)
   "Cache a value if the key is a remote path.
 KEY is the cache key (usually a file path).
 CACHE-SYMBOL is the symbol holding the cache alist.
@@ -99,7 +89,7 @@ ORIG-FN is the original function to call if cache miss.
 ARGS are the arguments to pass to ORIG-FN."
   (if (and key (file-remote-p default-directory))
       (if-let* ((cache-value (symbol-value cache-symbol))
-                (cached (find-longest-matching-string key cache-value)))
+                (cached (find-longest-matching key cache-value)))
           cached
         (let ((result (apply orig-fn args)))
           (when result
@@ -108,13 +98,29 @@ ARGS are the arguments to pass to ORIG-FN."
           result))
     (apply orig-fn args)))
 
+(defun cache-tramp-from-matching-value(key cache-symbol orig-fn &rest args)
+  "Cache a value if the key is a remote path.
+KEY is the cache key (usually a file path).
+CACHE-SYMBOL is the symbol holding the cache alist.
+ORIG-FN is the original function to call if cache miss.
+ARGS are the arguments to pass to ORIG-FN."
+  (if (and key (file-remote-p default-directory))
+      (if-let* ((cache-value (symbol-value cache-symbol))
+                (cached-result (find-longest-matching-value key cache-value)))
+          cached-result
+        (let ((result (apply orig-fn args)))
+          ;; Update the customizable variable
+          (customize-save-variable cache-symbol
+                                   (cons (cons key result) cache-value))
+            result))
+    (apply orig-fn args)))
+
 (defun cache-tramp-from-kv(key cache-symbol orig-fn &rest args)
   "Cache a value if the key is a remote path.
 KEY is the cache key (usually a file path).
 CACHE-SYMBOL is the symbol holding the cache alist.
 ORIG-FN is the original function to call if cache miss.
 ARGS are the arguments to pass to ORIG-FN."
-  ;;(prin1 (list key cache-symbol args))
   (if (and key (file-remote-p default-directory))
       (if-let* ((cache-value (symbol-value cache-symbol))
                 (cached-entry (assoc key cache-value)))
@@ -125,18 +131,5 @@ ARGS are the arguments to pass to ORIG-FN."
                                    (cons (cons key result) cache-value))
             result))
     (apply orig-fn args)))
-
-;; cache magit top level
-(defcustom magit-toplevel-tramp-cache nil
-  "Cache 'magit-toplevel'."
-  :type '(repeat string)
-  :group 'tramp-caches)
-
-(defun cache-tramp-magit-toplevel (orig &optional directory)
-  (cache-tramp-from-strings
-   (expand-file-name (or directory default-directory))
-   'magit-toplevel-tramp-cache orig directory))
-(advice-add 'magit-toplevel :around #'cache-tramp-magit-toplevel)
-
 
 (provide 'init-tramp)

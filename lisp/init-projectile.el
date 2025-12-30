@@ -138,18 +138,25 @@
   "List of known TRAMP project root paths.
 Each element should be a string representing a project root directory path."
   :type '(repeat string)
-  :group 'projectile)
+  :group 'tramp-caches)
 
 (defcustom projectile-root-stop-paths nil
   "List of directory paths where projectile should stop searching for project roots."
   :type '(repeat string)
   :group 'projectile)
 
+(defcustom projectile-root-ignore-paths nil
+  "List of directory paths where projectile should stop searching for project roots."
+  :type '(repeat string)
+  :group 'projectile)
+
 (defun projectile-project-root-around-advice (orig-fun &rest args)
   (let ((current-dir (or (car args) default-directory)))
-    (unless (member current-dir projectile-root-stop-paths)
+    (if (or (find-longest-matching current-dir projectile-root-ignore-paths)
+            (member current-dir projectile-root-stop-paths))
+        nil
       (if (file-remote-p current-dir)
-          (if-let* ((cached-project (find-longest-matching-string current-dir projectile-known-tramp-cache)))
+          (if-let* ((cached-project (find-longest-matching current-dir projectile-known-tramp-cache)))
               cached-project
             (let ((project-root (apply orig-fun args)))
               (when project-root

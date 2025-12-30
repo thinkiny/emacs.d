@@ -29,7 +29,6 @@
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
-  (require 'eglot-hover)
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
                                                         :usePlaceholders t
                                                         :analyses  (:ST1003 :json-false))
@@ -136,7 +135,7 @@
                #'eglot-completion-at-point))
 
   (auto-revert-mode)
-  (eglot-hover-mode)
+  ;; (eglot-hover-mode)
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format)))
@@ -145,7 +144,6 @@
 (advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
 
 (with-eval-after-load-theme 'eglot
-                            ;;(when (theme-dark-p)
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))
 
 (defun set-eglot-server-progam (mode cmd)

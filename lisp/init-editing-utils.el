@@ -417,12 +417,11 @@ If ARG is omitted or nil, move point forward one word."
   (let ((ctl-buf (current-buffer))
     (ctl-frm (selected-frame))
     (minibuffer-auto-raise t))
-    (progn
-      (setq this-command 'ediff-quit) ; bug#38219
-      (set-buffer ctl-buf)
-      (ediff-really-quit reverse-default-keep-variants))
-      (select-frame ctl-frm)
-      (raise-frame ctl-frm))))
+    (setq this-command 'ediff-quit) ; bug#38219
+    (set-buffer ctl-buf)
+    (ediff-really-quit reverse-default-keep-variants)
+    (select-frame ctl-frm)
+    (raise-frame ctl-frm))))
 
 
 (provide 'init-editing-utils)

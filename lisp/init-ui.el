@@ -240,15 +240,16 @@
 
 ;; project-name in mode-line
 (defun projectile-project-name-optional()
-  "Return project name.
- If PROJECT is not specified acts on the current project."
-  (unless (boundp 'current-project-name)
-    (let ((project-root (projectile-project-root)))
-      (setq-local current-project-name
-                  (if project-root
-                      (funcall projectile-project-name-function project-root)
-                    ""))))
-  current-project-name)
+  "Return project name. If PROJECT is not specified acts on the current project."
+  (unless (file-remote-p default-directory)
+    (if (boundp 'current-project-name)
+        current-project-name
+      (let ((project-root (projectile-project-root)))
+        (setq-local current-project-name
+                    (if project-root
+                        (funcall projectile-project-name-function project-root)
+                      ""))
+        current-project-name))))
 
 (defun project-name-mode-line ()
   (cond

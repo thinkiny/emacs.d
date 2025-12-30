@@ -153,16 +153,34 @@
 (defun dummy-func(&rest _)
   (interactive))
 
-;; find-longest-matching-string
-(defun find-longest-matching-string(str str-list)
+;; find-longest-matching
+(defun find-longest-matching(str str-list)
   "Find the longest matching string from STR-LIST that is a prefix of STR."
-  (let ((best-match nil)
-        (best-length 0))
-    (dolist (str-item str-list)
-      (when (and (string-prefix-p str-item str)
-                 (> (length str-item) best-length))
-        (setq best-match str-item
-              best-length (length str-item))))
-    best-match))
+  (when str-list
+    (let ((best-match nil)
+          (best-length 0))
+      (dolist (str-item str-list)
+        (when (and (string-prefix-p str-item str)
+                   (> (length str-item) best-length))
+          (setq best-match str-item
+                best-length (length str-item))))
+      best-match)))
+
+(defun find-longest-matching-value(target alist)
+  "Find the longest key in ALIST that matches TARGET and return its value.
+Returns nil if no key matches TARGET or if ALIST is empty."
+  (when alist
+    (let ((longest-pair nil)  ; Starts as nil
+          (longest-length 0))
+      (dolist (pair alist)
+        (let* ((key (car pair))
+               (key-length (length key)))
+          (when (and (string-prefix-p key target)
+                     (> key-length longest-length))
+            (setq longest-length key-length)
+            (setq longest-pair pair))))
+      (when longest-pair
+        (cdr longest-pair)))))
+
 
 (provide 'init-utils)
