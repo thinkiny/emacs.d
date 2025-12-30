@@ -73,6 +73,7 @@
 ;; tramp-hlo
 (use-package tramp-hlo
   :ensure t
+  :demand t
   :config
   (tramp-hlo-setup))
 

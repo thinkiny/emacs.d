@@ -4,7 +4,7 @@
   :custom
   (corfu-auto t)                 ;; Enable auto completion
   (corfu-cycle t)
-  (corfu-auto-delay 0.2)
+  (corfu-auto-delay 0.3)
   (corfu-auto-prefix 2)
   (corfu-quit-no-match 'separator)
   (corfu-preview-current nil)

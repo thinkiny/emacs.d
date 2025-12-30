@@ -78,6 +78,7 @@
      INTERACTIVE is t if called interactively."
     (interactive)
     (when-let* ((server (eglot-current-server)))
+      (flymake-mode -1)
       (when (jsonrpc-running-p server)
         (ignore-errors (eglot-shutdown server t nil nil))))
     (eglot-ensure))
@@ -104,19 +105,18 @@
 
 (defun eglot-enable-format ()
   (interactive)
-  (whitespace-cleanup-mode 1)
-  (add-hook 'before-save-hook 'eglot-format-buffer nil t)
-  (setq-local eglot-enable-format-at-save t))
+  (setq-local eglot-enable-format-at-save t)
+  (add-hook 'before-save-hook 'eglot-format-buffer nil t))
 
 (defun eglot-disable-format ()
   (interactive)
-  (whitespace-cleanup-mode 0)
+  (setq-local eglot-enable-format-at-save nil)
   (remove-hook 'before-save-hook 'eglot-format-buffer t)
   ;; (if (bound-and-true-p format-all-mode)
   ;;     (remove-hook 'before-save-hook
   ;;                  'format-all--buffer-from-hook
   ;;                  'local))
-  (setq-local eglot-enable-format-at-save nil))
+  )
 
 ;; (advice-add #'eglot--sig-info :around #'advice/ignore-errors)
 ;; (advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
