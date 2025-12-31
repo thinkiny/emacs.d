@@ -28,8 +28,8 @@
 ;;locale
 (require 'init-utf8)
 
-(if window-system
-    (menu-bar-mode t))
+(when window-system
+  (enable-menu-bar-mode))
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (after-load-theme

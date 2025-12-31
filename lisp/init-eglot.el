@@ -134,7 +134,7 @@
                #'cape-file
                #'eglot-completion-at-point))
 
-  (auto-revert-mode)
+  ;; (auto-revert-mode)
   ;; (eglot-hover-mode)
   (if eglot-enable-format-at-save
       (eglot-enable-format)

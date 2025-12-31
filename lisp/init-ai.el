@@ -28,8 +28,8 @@
   :bind (:map global-map
               ("C-c y" . claude-code-ide-menu))
   :config
-  (setq claude-code-ide-vterm-render-delay 0.5)
   (setq claude-code-ide-terminal-initialization-delay 1)
+  (setq claude-code-ide-vterm-render-delay 0.05)
   ;; (setq claude-code-ide-use-side-window nil)
   ;; (add-to-list 'display-buffer-alist
   ;;              '("\\*claude-code*"

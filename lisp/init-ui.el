@@ -10,9 +10,16 @@
 
 (when window-system
   (tool-bar-mode -1)
-  (menu-bar-mode -1)
   (scroll-bar-mode -1)
-  (setq mouse-avoidance-mode 'animate))
+  (menu-bar-mode -1))
+
+;; menu-bar
+(defun enable-menu-bar-mode()
+  (menu-bar-mode)
+  (global-unset-key [menu-bar buffer])
+  (remove-hook 'menu-bar-update-hook 'menu-bar-update-buffers)
+  (with-eval-after-load 'imenu
+    (remove-hook 'menu-bar-update-hook 'imenu-update-menubar)))
 
 ;; fringe
 (defun set-fringe-based-on-mode(&optional window)
@@ -36,9 +43,10 @@
 (global-set-key (kbd "C-x c v") #'customize-variable)
 (global-set-key (kbd "C-x c g") #'customize-group)
 
-;; scroll
+;; mouse && scroll
 (when window-system
   (pixel-scroll-precision-mode)
+  (setq mouse-avoidance-mode 'animate)
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
   (setq mouse-wheel-progressive-speed nil)
   (setq mouse-wheel-follow-mouse 't)

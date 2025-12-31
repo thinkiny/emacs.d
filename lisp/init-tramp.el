@@ -11,7 +11,7 @@
 (setq tramp-verbose 0)
 (setq tramp-chunksize 2048)
 (setq tramp-copy-size-limit (* 2 1024 1024))
-(setq remote-file-name-inhibit-cache 600)
+(setq remote-file-name-inhibit-cache nil)
 
 ;; enable tramp-direct-async-process
 (connection-local-set-profile-variables
@@ -21,15 +21,12 @@
 (connection-local-set-profiles
  '(:application tramp :protocol "scp")
  'remote-direct-async-process)
-
-;; (setq vc-ignore-dir-regexp (format "\\(%s\\)\\|\\(%s\\)" vc-ignore-dir-regexp tramp-file-name-regexp))
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 (add-to-list 'backup-directory-alist
              (cons tramp-file-name-regexp nil))
 
-(setq debug-ignored-errors
-      (cons 'remote-file-error debug-ignored-errors))
+(setq debug-ignored-errors (cons 'remote-file-error debug-ignored-errors))
 
 (defvar tramp-ssh-controlmaster-options)
 (setq tramp-ssh-controlmaster-options (concat
@@ -48,27 +45,7 @@
   (dolist (func funcs)
     (advice-add func :around #'advice/ignore-tramp-ssh-control-master)))
 
-;; (with-eval-after-load 'tramp-sh
-;;   (setq tramp-default-remote-shell "/bin/bash")
-;;   (add-to-list 'tramp-methods
-;;                `("ssh"
-;;                  (tramp-login-program        "ssh")
-;;                  (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
-;;                                               ("-e" "none") ("%h") ))
-;;                  (tramp-async-args           (("-q")))
-;;                  (tramp-direct-async         ("-t" "-t"))
-;;                  (tramp-remote-shell         ,tramp-default-remote-shell)
-;;                  (tramp-remote-shell-login   ("-l"))
-;;                  (tramp-remote-shell-args    ("-c"))
-;;                  (tramp-copy-program         "scp")
-;;                  (tramp-copy-args            (("-P" "%p") ("-p" "%k")
-;;                                               ("%x") ("%y") ("%z")
-;;                                               ("-q") ("-r") ("%c")))
-;;                  (tramp-copy-keep-date       t)
-;;                  (tramp-copy-recursive       t))))
-
-(require 'tramp-jumper)
-
+(ignore-tramp-ssh-control-master 'save-buffer)
 
 ;; tramp-hlo
 (use-package tramp-hlo
@@ -132,5 +109,7 @@ ARGS are the arguments to pass to ORIG-FN."
                                    (cons (cons key result) cache-value))
             result))
     (apply orig-fn args)))
+
+(require 'tramp-jumper)
 
 (provide 'init-tramp)

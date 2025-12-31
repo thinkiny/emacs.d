@@ -11,7 +11,6 @@
               vc-ignore-dir-regexp
               tramp-file-name-regexp)))
 
-
 (use-package magit
   :demand t
   :config
