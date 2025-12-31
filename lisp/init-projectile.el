@@ -31,6 +31,7 @@
   (setq projectile-dynamic-mode-line nil)
   (setq projectile-indexing-method 'hybrid)
   (setq projectile-show-menu nil)
+  (setq projectile-enable-caching 'persistent)
   (setq projectile-file-exists-remote-cache-expire nil)
   (projectile-mode)
 
