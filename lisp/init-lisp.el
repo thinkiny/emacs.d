@@ -166,17 +166,10 @@ there is no current file, eval the current buffer."
 
 (maybe-require-package 'cask-mode)
 
-;; (use-package erefactor
-;;   :bind (:map emacs-lisp-mode-map
-;;               ("C-c r" . #'erefactor-rename-symbol-in-buffer))
-;;   :config
-;;   ;; disable erefactor-lhl--start
-;;   (defun erefactor-lhl--start())
-;;   (unless (fboundp 'flymake-safe-delete-file)
-;;     (defun flymake-safe-delete-file (file-name)
-;;       (when (and file-name (file-exists-p file-name))
-;;         (delete-file file-name)
-;;         ;; (flymake-log 1 "deleted file %s" file-name)
-;;         ))))
+(use-package erefactor
+  :bind (:map emacs-lisp-mode-map
+              ("C-c r" . #'erefactor-rename-symbol-in-buffer)))
+
+;; (use-package elisp-def)
 
 (provide 'init-lisp)

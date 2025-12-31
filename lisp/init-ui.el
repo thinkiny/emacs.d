@@ -1,8 +1,8 @@
 ;; -*- lexical-binding: t -*-
 
+;;; Code:
 (setq inhibit-startup-message t)
 (setq gnus-inhibit-startup-message t)
-(setq redisplay-dont-pause t)
 
 (when (fboundp 'tab-bar-mode)
   (tab-bar-mode -1)
@@ -222,6 +222,8 @@
     (set-small-frame-size)))
 
 ;;mode line
+(use-package mode-line-idle
+  :commands (mode-line-idle))
 (setq mode-line-percent-position nil)
 (setq-default mode-line-buffer-identification
               (propertized-buffer-identification "%b"))
@@ -240,39 +242,30 @@
 
 (defun mode-line-linum()
   "Display line number."
-  (cond ((eq 'pdf-view-mode major-mode) (mode-line-pdfview-page-number))
-        ((eq 'doc-view-mode major-mode) (mode-line-docview-page-number))
-        ((eq 'nov-mode major-mode) (modeline-nov-document-index))
-        ((member major-mode '(eshell-mode term-mode xwidget-webkit-mode)) "")
-        (t (format-mode-line " %l:%C"))))
+  (cond
+   ;; ((eq 'pdf-view-mode major-mode) (mode-line-pdfview-page-number))
+   ;; ((eq 'doc-view-mode major-mode) (mode-line-docview-page-number))
+   ;; ((eq 'nov-mode major-mode) (modeline-nov-document-index))
+   ((eq 'nov-xwidget-webkit-mode major-mode) (modeline-nov-document-index))
+   ((derived-mode-p 'special-mode) "")
+   (t (format-mode-line " %l:%C"))))
 
 ;; project-name in mode-line
-(defun projectile-project-name-optional()
-  "Return project name. If PROJECT is not specified acts on the current project."
-  (unless (file-remote-p default-directory)
-    (if (boundp 'current-project-name)
-        current-project-name
-      (let ((project-root (projectile-project-root)))
-        (setq-local current-project-name
-                    (if project-root
-                        (funcall projectile-project-name-function project-root)
-                      ""))
-        current-project-name))))
-
-(defun project-name-mode-line ()
-  (cond
-   ((bound-and-true-p eglot--managed-mode) (propertize
-                                            (eglot-project-nickname (eglot-current-server))
-                                            'face 'eglot-mode-line
-                                            'keymap (let ((map (make-sparse-keymap)))
-                                                      (define-key map [mode-line down-mouse-1] eglot-menu)
-                                                      map)))
-   (t (projectile-project-name-optional))))
+(defvar-local mode-line-project-name nil)
+(defun mode-line-projectile-project-name()
+  "Return project name."
+  (if mode-line-project-name
+      mode-line-project-name
+    (setq mode-line-project-name "")
+    (unless (file-remote-p default-directory)
+      (if-let* ((project-root (projectile-project-root))
+                (project-name (funcall projectile-project-name-function project-root)))
+          (setq mode-line-project-name project-name)))
+      mode-line-project-name))
 
 (defun persp-with-project-name-mode-line()
   (if (fboundp 'persp-current-name)
-      `("[" ,(persp-current-name) "] " ,(project-name-mode-line))))
-
+      `("[" ,(persp-current-name) "] " ,(mode-line-projectile-project-name))))
 
 (defun my-flymake-mode-line-counters ()
   (if (bound-and-true-p flymake-mode)
@@ -282,19 +275,13 @@
               '((:eval (mode-line-linum))
                 " "
                 "%b"
-                ;;" ["
-                ;; mode-name
-                ;;minor-mode-alist
-                ;; "] "
-                ;; global-mode-string
-                ;; " "
-                (:eval (my-flymake-mode-line-counters))
+                (:eval (mode-line-idle 1.0 '(:eval (my-flymake-mode-line-counters)) ""))
                 " "
-                (:eval (persp-with-project-name-mode-line))
-                " "
-                mode-line-misc-info
+                (:eval (mode-line-idle 1.5 '(:eval (persp-with-project-name-mode-line)) ""))
+                ;;mode-line-misc-info
                 ))
 
+;; counsel theme
 (defun counsel--load-theme-action (x)
   "Disable current themes and load theme X."
   (condition-case nil

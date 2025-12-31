@@ -41,11 +41,9 @@
                                                                         :diagnosticMode "workspace"
                                                                         :autoSearchPaths t)))
 
-  (setq completion-category-defaults nil)
+  ;;(setq completion-category-defaults nil)
   (setq mode-line-misc-info
         (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
-  ;; (add-to-list 'mode-line-misc-info
-  ;;              `(eglot--managed-mode ("[" eglot--mode-line-format "] ")))
   (defun eglot-disable-format-project()
     (interactive)
     (when-let* ((project-root (projectile-project-root))
