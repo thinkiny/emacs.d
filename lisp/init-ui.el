@@ -140,7 +140,6 @@
 (require-package 'treemacs-icons-dired)
 
 (when window-system
-  ;; (with-eval-after-load 'treemacs-icons-dired
   (defun treemacs-icons-dired--display-before()
     (not (file-remote-p default-directory)))
   (advice-add 'treemacs-icons-dired--display :before-while #'treemacs-icons-dired--display-before)
@@ -166,15 +165,14 @@
 
 ;; themes
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-
 (require-package 'modus-themes)
 (require-package 'ef-themes)
-(require-package 'inkpot-theme)
 
 (with-eval-after-load 'modus-themes
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
 
+;; default-theme
 (defcustom default-theme 'modus-operandi
   "The current theme"
   :group 'faces)
@@ -223,7 +221,9 @@
 
 ;;mode line
 (use-package mode-line-idle
-  :commands (mode-line-idle))
+  :commands (mode-line-idle)
+  :config
+  (ignore-tramp-ssh-control-master 'mode-line-idle--timer-callback))
 (setq mode-line-percent-position nil)
 (setq-default mode-line-buffer-identification
               (propertized-buffer-identification "%b"))
@@ -246,8 +246,8 @@
    ;; ((eq 'pdf-view-mode major-mode) (mode-line-pdfview-page-number))
    ;; ((eq 'doc-view-mode major-mode) (mode-line-docview-page-number))
    ;; ((eq 'nov-mode major-mode) (modeline-nov-document-index))
-   ((eq 'nov-xwidget-webkit-mode major-mode) (modeline-nov-document-index))
    ((derived-mode-p 'special-mode) "")
+   ((eq 'nov-xwidget-webkit-mode major-mode) (modeline-nov-document-index))
    (t (format-mode-line " %l:%C"))))
 
 ;; project-name in mode-line
@@ -307,7 +307,7 @@
             ;;:update-fn #'counsel--update-theme-action
             ))
 
-(defun set-default-theme()
+(defun set-current-theme-default()
   (interactive)
   (if-let* ((current-theme (car custom-enabled-themes)))
       (customize-save-variable 'default-theme current-theme)))

@@ -6,6 +6,7 @@
 
 (require 'init-utils)
 (require 'init-package)
+(require 'init-tramp)
 (require 'init-ui)
 (require 'init-performance)
 (require 'init-exec-path)
@@ -22,7 +23,6 @@
 (require 'init-yasnippet)
 (require 'init-dired)
 (require 'init-whitespace)
-(require 'init-tramp)
 (require 'init-treesit)
 (require 'init-org)
 (require 'init-feed)
