@@ -101,15 +101,23 @@
 (defvar-local eglot-enable-format-at-save t)
 (put 'eglot-enable-format-at-save 'safe-local-variable #'always)
 
+(defun eglot-format-buffer-and-revert()
+  "Format whole buffer and revert."
+  (interactive)
+  (eglot-format)
+  (run-at-time 1 nil
+               (lambda ()
+                 (revert-buffer t t t))))
+
 (defun eglot-enable-format ()
   (interactive)
   (setq-local eglot-enable-format-at-save t)
-  (add-hook 'before-save-hook 'eglot-format-buffer nil t))
+  (add-hook 'before-save-hook 'eglot-format-buffer-and-revert nil t))
 
 (defun eglot-disable-format ()
   (interactive)
   (setq-local eglot-enable-format-at-save nil)
-  (remove-hook 'before-save-hook 'eglot-format-buffer t)
+  (remove-hook 'before-save-hook 'eglot-format-buffer-and-revert t)
   ;; (if (bound-and-true-p format-all-mode)
   ;;     (remove-hook 'before-save-hook
   ;;                  'format-all--buffer-from-hook
@@ -128,9 +136,9 @@
     (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider))
 
   (setq-local completion-at-point-functions
-              (list
-               #'cape-file
-               #'eglot-completion-at-point))
+              (list (cape-capf-super
+                     #'cape-file
+                     #'eglot-completion-at-point)))
 
   ;; (auto-revert-mode)
   ;; (eglot-hover-mode)

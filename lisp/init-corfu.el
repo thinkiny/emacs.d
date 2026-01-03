@@ -4,14 +4,12 @@
   :custom
   (corfu-auto t)                 ;; Enable auto completion
   (corfu-cycle t)
-  (corfu-auto-delay 0.3)
+  (corfu-auto-delay 0.4)
   (corfu-auto-prefix 2)
   (corfu-quit-no-match 'separator)
   (corfu-preview-current nil)
   (corfu-separator ?\s)          ;; Orderless field separator
-  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+  (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
   ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
   ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
   ;; (corfu-echo-documentation nil) ;; Disable documentation in the echo area
@@ -21,6 +19,7 @@
   (global-set-key (kbd "M-/") 'completion-at-point))
 
 (use-package orderless
+  :demand t
   :config
   (setq completion-styles '(orderless basic))
   (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
@@ -28,15 +27,17 @@
   (orderless-define-completion-style orderless+initialism
     (orderless-matching-styles '(orderless-initialism
                                  orderless-literal
-                                 orderless-regexp)))
+                                 orderless-regexp))))
 
+(with-eval-after-load 'minibuffer
   (setq completion-category-overrides
         '((command (styles orderless+initialism))
           (symbol (styles orderless+initialism))
           (variable (styles orderless+initialism))
           (file (styles basic partical-completion))
           (eglot (styles orderless))
-          (eglot-capf (styles orderless)))))
+          (eglot-capf (styles orderless))
+          )))
 
 (with-eval-after-load 'eshell
   (add-hook 'eshell-mode-hook (lambda () (setq-local corfu-auto nil))))

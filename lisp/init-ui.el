@@ -221,9 +221,8 @@
 
 ;;mode line
 (use-package mode-line-idle
-  :commands (mode-line-idle)
-  :config
-  (ignore-tramp-ssh-control-master 'mode-line-idle--timer-callback))
+  :commands (mode-line-idle))
+
 (setq mode-line-percent-position nil)
 (setq-default mode-line-buffer-identification
               (propertized-buffer-identification "%b"))
@@ -246,7 +245,7 @@
    ;; ((eq 'pdf-view-mode major-mode) (mode-line-pdfview-page-number))
    ;; ((eq 'doc-view-mode major-mode) (mode-line-docview-page-number))
    ;; ((eq 'nov-mode major-mode) (modeline-nov-document-index))
-   ((derived-mode-p 'special-mode) "")
+   ((derived-mode-p '(special-mode vterm-mode)) "")
    ((eq 'nov-xwidget-webkit-mode major-mode) (modeline-nov-document-index))
    (t (format-mode-line " %l:%C"))))
 

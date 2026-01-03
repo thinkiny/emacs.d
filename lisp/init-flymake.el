@@ -14,6 +14,7 @@
   ;; (setq flymake-fringe-indicator-position 'left-fringe)
   ;; (setq flymake-margin-indicator-position nil)
   (setq flymake-no-changes-timeout 1)
+  (setq flymake-start-on-save-buffer nil)
   (setq flymake-mode-line-counter-format
   '(":["
     flymake-mode-line-error-counter

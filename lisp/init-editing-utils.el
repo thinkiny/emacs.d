@@ -11,6 +11,7 @@
               case-fold-search t
               visible-bell nil
               tab-width 4
+              auto-revert-interval 2
               make-backup-files nil
               auto-save-default nil
               indent-tabs-mode nil
@@ -292,7 +293,6 @@ With arg N, insert N newlines."
   ;; experience in them, at least. It will remain off in `so-long-mode',
   ;; however, because long files have a far bigger impact on Emacs performance.
   (delq! 'font-lock-mode so-long-minor-modes)
-  (delq! 'display-line-numbers-mode so-long-minor-modes)
   (delq! 'buffer-read-only so-long-variable-overrides 'assq)
   ;; ...but at least reduce the level of syntax highlighting
   (add-to-list 'so-long-variable-overrides '(font-lock-maximum-decoration . 1))
@@ -423,5 +423,11 @@ If ARG is omitted or nil, move point forward one word."
     (select-frame ctl-frm)
     (raise-frame ctl-frm))))
 
+;; jit-lock
+(setq font-lock-support-mode 'lazy-lock-mode)
+(setq jit-lock-stealth-time 1.25)
+(setq jit-lock-stealth-nice 1)
+(setq jit-lock-defer-time 0.5)
+(setq jit-lock-chunk-size 4096)
 
 (provide 'init-editing-utils)

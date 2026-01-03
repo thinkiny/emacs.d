@@ -6,7 +6,6 @@
    (setq gcmh-low-cons-threshold (* 16 1024 1024)
          gcmh-high-cons-threshold (* 2048 1024 1024))
    (gcmh-mode 1))
-;; (setq gc-cons-threshold (* 4 1024 1024 1024)) ;; 4GiB of RAM
 
 (defvar my/gc-timer nil
   "Timer for garbage collection. See

@@ -23,7 +23,8 @@
         magit-revision-insert-related-refs nil
         magit-tramp-pipe-stty-settings 'pty)
 
-  (define-key magit-status-mode-map (kbd "R") 'magit-rsync-from-src)
+  (define-key magit-status-mode-map (kbd "C-c f") 'magit-rsync-from-src)
+  (define-key magit-status-mode-map (kbd "C-c t") 'magit-rsync-to-src)
   (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
   (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
 
@@ -53,10 +54,48 @@ Example: /ssh:user@host:/path/to/dir -> user@host:/path/to/dir"
           (if (string= method "ssh")
               (let ((effective-user (or user (user-login-name))))
                 (concat effective-user "@" host ":" localname))
-            ;; For non-ssh methods, return original path
             tramp-path))
-      ;; Not a TRAMP path, return as-is (likely local path)
-      tramp-path))
+    tramp-path))
+
+(defun magit-rsync-to-src()
+  "Find matching entry in `magit-toplevel-tramp-cache` and run rsync.
+Looks for an entry where the value matches current project root,
+then syncs from the key (source) to the value (destination)."
+  (interactive)
+  (let ((matching-entry nil))
+    (dolist (entry magit-toplevel-tramp-cache)
+      (when (string= (cdr entry) (magit-toplevel))
+        (setq matching-entry entry)
+        (cl-return)))
+
+    (if matching-entry
+        (magit-run-rsync (cdr matching-entry) (car matching-entry)))))
+
+(defun magit-run-rsync(src-tramp dest-tramp)
+  "Run rsync from SRC-TRAMP to DEST-TRAMP ."
+  (interactive)
+  (when-let* ((src-rsync (tramp-to-rsync-address src-tramp))
+              (dest-rsync (tramp-to-rsync-address dest-tramp)))
+    (let* ((rsync-cmd (list "rsync" "-avur" "--delete" "--exclude" ".git/"
+                            src-rsync dest-rsync))
+           (magit-buffer (current-buffer))
+           (buffer (get-buffer-create "*magit-rsync*")))
+
+      (with-current-buffer buffer
+        (erase-buffer)
+        (insert (mapconcat #'identity rsync-cmd " "))
+        (let ((exit-code (apply 'call-process
+                                "rsync" nil t nil
+                                (cdr rsync-cmd))))
+          (cond
+           ((= exit-code 0)
+            (message (format "sync %s => %s success" src-rsync dest-rsync))
+            (with-current-buffer magit-buffer
+              (magit-refresh-buffer))
+            (when (buffer-live-p buffer)
+              (kill-buffer buffer)))
+           (t
+            (display-buffer buffer))))))))
 
 (defun magit-rsync-from-src()
   "Find matching entry in `magit-toplevel-tramp-cache` and run rsync.
@@ -70,29 +109,7 @@ then syncs from the key (source) to the value (destination)."
         (cl-return)))
 
     (if matching-entry
-        (when-let* ((src-tramp (car matching-entry))
-                    (dest-tramp (cdr matching-entry))
-                    (src-rsync (tramp-to-rsync-address src-tramp))
-                    (dest-rsync (tramp-to-rsync-address dest-tramp)))
-
-          (let* ((rsync-cmd (list "rsync" "-avur" "--delete" "--exclude" ".git/"
-                                  src-rsync dest-rsync))
-                 (magit-buffer (current-buffer))
-                 (buffer (get-buffer-create "*magit-rsync*")))
-            (with-current-buffer buffer
-              (erase-buffer)
-              (insert (mapconcat #'identity rsync-cmd " "))
-              (let ((exit-code (apply 'call-process
-                                      "rsync" nil t nil
-                                      (cdr rsync-cmd))))
-                (cond
-                 ((= exit-code 0)
-                  (with-current-buffer magit-buffer
-                    (magit-refresh-buffer))
-                  (when (buffer-live-p buffer)
-                    (kill-buffer buffer)))
-                 (t
-                  (display-buffer buffer))))))))))
+        (magit-run-rsync (car matching-entry) (cdr matching-entry)))))
 
 (advice-add 'magit-toplevel :around #'cache-tramp-magit-toplevel)
 
@@ -113,14 +130,7 @@ then syncs from the key (source) to the value (destination)."
   (define-key vc-prefix-map (kbd "f") 'vc-git-grep))
 
 ;; smerge-mode
-(use-package smerge-mode
-  :config
-  ;; FIXME
-  (setq smerge-command-prefix "\C-cd")
-  (add-hook 'prog-mode-hook
-            (lambda ()
-              (run-with-timer 1 nil (lambda ()
-                                      (smerge-mode 1))))))
+(use-package smerge-mode)
 
 (provide 'init-git)
 ;;; init-git.el ends here

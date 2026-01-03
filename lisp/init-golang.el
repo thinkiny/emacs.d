@@ -49,6 +49,9 @@
   (interactive)
   (go-generate-tag "form"))
 
+;; (with-eval-after-load 'eglot
+;;   ;; rass-golang: rass -- gopls -- golangci-lint-langserver
+;;   (set-eglot-server-progam '(go-mode go-ts-mode) '("rass-golang")))
 
 (defun my-go-mode-hook()
   (eglot-ensure)
@@ -59,6 +62,7 @@
 (with-eval-after-load 'go-ts-mode
   (setq go-ts-mode-indent-offset 4))
 
+(add-auto-mode 'go-ts-mode "\\.go")
 (add-hook 'go-mode-hook #'my-go-mode-hook)
 (add-hook 'go-ts-mode-hook #'my-go-mode-hook)
 
