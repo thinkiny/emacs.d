@@ -9,8 +9,9 @@
 (setq tramp-use-scp-direct-remote-copying t)
 (setq tramp-default-method "ssh")
 (setq tramp-verbose 0)
-(setq tramp-chunksize 2048)
-(setq tramp-copy-size-limit (* 2 1024 1024))
+(setq tramp-chunksize nil)
+(setq tramp-inline-compress-start-size (* 8 1024 1024))
+(setq tramp-copy-size-limit (* 4 1024 1024))
 (setq remote-file-name-inhibit-cache nil)
 
 ;; enable tramp-direct-async-process
@@ -45,8 +46,6 @@
   (dolist (func funcs)
     (advice-add func :around #'advice/ignore-tramp-ssh-control-master)))
 
-(ignore-tramp-ssh-control-master 'save-buffer)
-
 ;; tramp-hlo
 (use-package tramp-hlo
   :ensure t
@@ -72,7 +71,9 @@ ARGS are the arguments to pass to ORIG-FN."
         (let ((result (apply orig-fn args)))
           (when result
             (push result cache-value)
-            (customize-save-variable cache-symbol cache-value))
+            (if (custom-variable-p cache-symbol)
+                (customize-save-variable cache-symbol cache-value)
+              (set cache-symbol cache-value)))
           result))
     (apply orig-fn args)))
 
@@ -86,10 +87,11 @@ ARGS are the arguments to pass to ORIG-FN."
       (if-let* ((cache-value (symbol-value cache-symbol))
                 (cached-result (find-longest-matching-value key cache-value)))
           cached-result
-        (let ((result (apply orig-fn args)))
-          ;; Update the customizable variable
-          (customize-save-variable cache-symbol
-                                   (cons (cons key result) cache-value))
+        (let* ((result (apply orig-fn args))
+               (new-cache (cons (cons key result) cache-value)))
+          (if (custom-variable-p cache-symbol)
+              (customize-save-variable cache-symbol new-cache)
+            (set cache-symbol new-cache))
             result))
     (apply orig-fn args)))
 
@@ -103,10 +105,11 @@ ARGS are the arguments to pass to ORIG-FN."
       (if-let* ((cache-value (symbol-value cache-symbol))
                 (cached-entry (assoc key cache-value)))
           (cdr cached-entry)
-        (let ((result (apply orig-fn args)))
-          ;; Update the customizable variable
-          (customize-save-variable cache-symbol
-                                   (cons (cons key result) cache-value))
+        (let* ((result (apply orig-fn args))
+               (new-cache (cons (cons key result) cache-value)))
+          (if (custom-variable-p cache-symbol)
+              (customize-save-variable cache-symbol new-cache)
+            (set cache-symbol new-cache))
             result))
     (apply orig-fn args)))
 

@@ -1,11 +1,12 @@
 ;; -*- lexical-binding: t; -*-
 
 (use-package gcmh
-   :demand t
-   :config
-   (setq gcmh-low-cons-threshold (* 16 1024 1024)
-         gcmh-high-cons-threshold (* 2048 1024 1024))
-   (gcmh-mode 1))
+  :demand t
+  :config
+  (setq gcmh-high-cons-threshold (* 512 1024 1024))
+  (setq gcmh-low-cons-threshold (* 64 1024 1024))
+  (setq gcmh-idle-delay 5)
+  (gcmh-mode 1))
 
 (defvar my/gc-timer nil
   "Timer for garbage collection. See

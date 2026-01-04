@@ -105,9 +105,12 @@
   "Format whole buffer and revert."
   (interactive)
   (eglot-format)
-  (run-at-time 1 nil
-               (lambda ()
-                 (revert-buffer t t t))))
+  ;; (if (file-remote-p default-directory)
+  ;;     (run-at-time 1 nil
+  ;;                  (lambda ()
+  ;;                    (revert-buffer t t t)))
+  ;; )
+  )
 
 (defun eglot-enable-format ()
   (interactive)
@@ -135,6 +138,8 @@
     (make-variable-buffer-local 'eglot-ignored-server-capabilities)
     (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider))
 
+  (remove-hook 'before-save-hook #'eglot--signal-textDocument/willSave t)
+  (remove-hook 'after-save-hook #'eglot--signal-textDocument/didSave t)
   (setq-local completion-at-point-functions
               (list (cape-capf-super
                      #'cape-file
@@ -181,5 +186,15 @@ COMMAND is a string as advertised by the server. No arguments are passed."
                             (or (cl-coerce commands 'list) '())
                             nil nil))))
   (eglot-execute (eglot-current-server) (list :command command)))
+
+;; tramp
+(defvar eglot-uri-to-path-tramp-cache nil)
+(defun cache-tramp-eglot-uri-to-path(orig &optional uri)
+  (cache-tramp-from-kv uri
+                       'eglot-uri-to-path-tramp-cache
+                       orig
+                       uri))
+
+(advice-add 'eglot-uri-to-path :around #'cache-tramp-eglot-uri-to-path)
 
 (provide 'init-eglot)

@@ -34,7 +34,7 @@
 ;; cache magit top level
 (defcustom magit-toplevel-tramp-cache nil
   "Cache 'magit-toplevel'."
-  :type '(alist :key-type string :value-type sexp)
+  :type '(alist :key-type string :value-type string)
   :group 'tramp-caches)
 
 (defun cache-tramp-magit-toplevel (orig &optional directory)

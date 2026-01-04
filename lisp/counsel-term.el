@@ -162,7 +162,6 @@
             :caller 'counsel-term))
 
 (ignore-tramp-ssh-control-master 'counsel-mt/launch)
-(ignore-tramp-ssh-control-master 'completion-at-point)
 
 (provide 'counsel-term)
 ;;; counsel-term.el ends here
