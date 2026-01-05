@@ -16,37 +16,38 @@
   (let ((buffer (and xwidget-webkit-browse-session (xwidget-buffer xwidget-webkit-browse-session))))
     (and (buffer-live-p buffer) buffer)))
 
-(defun xwidget-get-current-url()
+(defun xwidget-webkit-get-current-url()
   (if (derived-mode-p 'xwidget-webkit-mode)
       (when-let* ((session (xwidget-webkit-current-session))
                   (url (xwidget-webkit-uri session)))
         url)))
 
-
-(defun xwidget-get-file-url ()
+(defun xwidget-webkit-get-file-url ()
   (if (s-ends-with? ".html" (buffer-file-name))
       (concat "file://" (buffer-file-name))))
 
-(defun xwidget-webkit-browse-open-url (url &optional rest)
-  "Ask xwidget-webkit to browse URL.
-NEW-SESSION specifies whether to create a new xwidget-webkit session.
-Interactively, URL defaults to the string looking like a url around point."
+(defun xwidget-webkit-create-or-goto-url(url)
+  (let ((buffer (xwidget-webkit-get-browse-buffer)))
+    (if buffer
+        (progn
+          (xwidget-webkit-goto-uri xwidget-webkit-browse-session url)
+          (switch-to-buffer buffer))
+      (xwidget-webkit-new-session url)
+      (setq xwidget-webkit-browse-session (xwidget-webkit-last-session)))))
+
+(defun xwidget-webkit-browse-open-url(url)
+  "Ask xwidget-webkit to browse URL."
   (interactive (progn
                  (list
                   (read-string "open URL: "
-                               (or (xwidget-get-current-url)
-                                   (xwidget-get-file-url))))))
+                               (or (xwidget-webkit-get-current-url)
+                                   (xwidget-webkit-get-file-url))))))
   (when (stringp url)
-    ;; If it's a "naked url", just try adding https: to it.
     (unless (string-match "\\`[A-Za-z]+:" url)
       (setq url (concat "https://" url)))
-    (let ((buffer (xwidget-webkit-get-browse-buffer)))
-      (if buffer
-          (progn
-            (xwidget-webkit-goto-uri xwidget-webkit-browse-session url)
-            (switch-to-buffer buffer))
-        (xwidget-webkit-new-session url)
-        (setq xwidget-webkit-browse-session (xwidget-webkit-last-session))))))
+    (if (s-starts-with? "https://arxiv.org/pdf" url)
+        (funcall 'pdf-xwidget-open url)
+      (xwidget-webkit-create-or-goto-url url))))
 
 (setq browse-url-browser-function 'xwidget-webkit-browse-open-url)
 

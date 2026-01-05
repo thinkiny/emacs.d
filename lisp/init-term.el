@@ -127,7 +127,7 @@ and binds some keystroke with `term-raw-map'."
   :commands (vterm-mode vterm)
   :config
   (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash -l"))
-  (ignore-tramp-ssh-control-master 'vterm)
+  (ignore-tramp-ssh-control-master 'vterm-mode)
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 60)
   (setq vterm-max-scrollback 5000)
