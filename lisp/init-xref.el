@@ -2,6 +2,10 @@
 
 (require 'xref)
 
+(global-set-key (kbd "M-[") #'xref-go-back)
+(global-set-key (kbd "M-]") #'xref-go-forward)
+(global-set-key (kbd "M-,") #'xref-find-references)
+
 (setq xref-prompt-for-identifier nil)
 (defun xref-find-last-match(marker)
   (let ((idx (- (ring-length xref--marker-ring) 1))
@@ -57,13 +61,9 @@
   (interactive)
   (setq xref--marker-ring (make-ring xref-marker-ring-length)))
 
+
 ;;(advice-add 'counsel-imenu-action :before #'xref-push-marker-stack-once)
 ;;(advice-add 'minibuffer-keyboard-quit :before #'xref-pop-marker-stack-maybe)
-
-(global-set-key (kbd "M-[") #'xref-go-back)
-(global-set-key (kbd "M-]") #'xref-go-forward)
-(global-set-key (kbd "M-,") #'xref-find-references)
-
 
 ;; projectile && eglot
 (defun get-xref-eglot-project()

@@ -74,8 +74,7 @@
 (use-package ivy-xref
   :after ivy
   :init
-  (when (>= emacs-major-version 27)
-    (setq xref-show-definitions-function #'ivy-xref-show-defs))
+  (setq xref-show-definitions-function #'ivy-xref-show-defs)
   (setq xref-show-xrefs-function 'ivy-xref-show-xrefs)
   (setq ivy-xref-use-file-path t)
   :config
@@ -112,7 +111,6 @@
                    summary))))
           (push `(,candidate . ,location) collection)))
       (nreverse collection))))
-
 
 ;; ivy-posframe
 ;; (require-package 'ivy-posframe)

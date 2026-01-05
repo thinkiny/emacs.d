@@ -11,7 +11,7 @@
               case-fold-search t
               visible-bell nil
               tab-width 4
-              auto-revert-interval 2
+              auto-revert-interval 3
               make-backup-files nil
               auto-save-default nil
               indent-tabs-mode nil
@@ -411,17 +411,17 @@ If ARG is omitted or nil, move point forward one word."
 ;; ediff-no-confirm
 (with-eval-after-load 'ediff-util
   (defun ediff-quit(reverse-default-keep-variants)
-  "Remove y-or-n-p in edifff-util."
-  (interactive "P")
-  (ediff-barf-if-not-control-buffer)
-  (let ((ctl-buf (current-buffer))
-    (ctl-frm (selected-frame))
-    (minibuffer-auto-raise t))
-    (setq this-command 'ediff-quit) ; bug#38219
-    (set-buffer ctl-buf)
-    (ediff-really-quit reverse-default-keep-variants)
-    (select-frame ctl-frm)
-    (raise-frame ctl-frm))))
+    "Remove y-or-n-p in edifff-util."
+    (interactive "P")
+    (ediff-barf-if-not-control-buffer)
+    (let ((ctl-buf (current-buffer))
+          (ctl-frm (selected-frame))
+          (minibuffer-auto-raise t))
+      (setq this-command 'ediff-quit) ; bug#38219
+      (set-buffer ctl-buf)
+      (ediff-really-quit reverse-default-keep-variants)
+      (select-frame ctl-frm)
+      (raise-frame ctl-frm))))
 
 ;; jit-lock
 (setq font-lock-support-mode 'lazy-lock-mode)
@@ -429,5 +429,56 @@ If ARG is omitted or nil, move point forward one word."
 (setq jit-lock-stealth-nice 1)
 (setq jit-lock-defer-time 0.5)
 (setq jit-lock-chunk-size 4096)
+
+;; async save buffer when in tramp
+(defun save-buffer-async--rsync-save (file-name vec)
+  "Save buffer asynchronously using rsync for SSH-based TRAMP files.
+FILE-NAME is the remote file path, VEC is the parsed TRAMP vector."
+  (let* ((buffer (current-buffer))
+         (coding (or buffer-file-coding-system 'utf-8-unix))
+         (temp-file (make-temp-file "emacs-rsync-"))
+         (rsync-dest (tramp-vec-to-rsync-address vec)))
+    (ignore-errors
+      (run-hooks 'before-save-hook))
+    (let ((coding-system-for-write coding))
+      (write-region (point-min) (point-max) temp-file nil 'quiet))
+    (let ((process (start-process "rsync-save" nil
+                                  "rsync" "-az" "--inplace"
+                                  temp-file rsync-dest)))
+      (set-process-sentinel
+       process
+       (lambda (_ event)
+         (unwind-protect
+             (when (buffer-live-p buffer)
+               (with-current-buffer buffer
+                 (cond
+                  ((string-match "finished" event)
+                   (set-buffer-modified-p nil)
+                   (set-visited-file-modtime)
+                   (run-hooks 'after-save-hook)
+                   (message "Wrote %s" file-name))
+                  (t
+                   (message "Rsync save error: %s" (string-trim event))))))
+           (delete-file temp-file)))))))
+
+(defun save-buffer-async ()
+  "Save buffer asynchronously for SSH-based TRAMP files.
+Use rsync for SSH-based TRAMP methods, regular save-buffer for
+local files and non-SSH TRAMP methods."
+  (interactive)
+  (cond
+   ((not (buffer-file-name)) nil)
+   ((not (buffer-modified-p)) nil)
+   ((file-remote-p (buffer-file-name))
+    (let* ((file-name (buffer-file-name))
+           (vec (tramp-dissect-file-name file-name))
+           (method (tramp-file-name-method vec)))
+      (if (member method '("ssh" "sshx" "scp" "rsync"))
+          (save-buffer-async--rsync-save file-name vec)
+        (save-buffer))))
+   (t
+    (save-buffer))))
+
+(global-set-key (kbd "C-x C-s") 'save-buffer-async)
 
 (provide 'init-editing-utils)

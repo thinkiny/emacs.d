@@ -6,12 +6,12 @@
 (setq remote-file-name-inhibit-locks t)
 (setq remote-file-name-inhibit-auto-save-visited t)
 (setq remote-file-name-inhibit-auto-save t)
-(setq tramp-use-scp-direct-remote-copying t)
+;; (setq tramp-use-scp-direct-remote-copying t)
 (setq tramp-default-method "ssh")
 (setq tramp-verbose 0)
 (setq tramp-chunksize nil)
-(setq tramp-inline-compress-start-size (* 8 1024 1024))
-(setq tramp-copy-size-limit (* 4 1024 1024))
+(setq tramp-inline-compress-start-size (* 2 1024 1024))
+(setq tramp-copy-size-limit (* 1024 1024))
 (setq remote-file-name-inhibit-cache nil)
 
 ;; enable tramp-direct-async-process
@@ -22,13 +22,17 @@
 (connection-local-set-profiles
  '(:application tramp :protocol "scp")
  'remote-direct-async-process)
+
+(with-eval-after-load 'tramp
+  (with-eval-after-load 'compile
+    (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
+
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 (add-to-list 'backup-directory-alist
              (cons tramp-file-name-regexp nil))
 
 (setq debug-ignored-errors (cons 'remote-file-error debug-ignored-errors))
-
 (defvar tramp-ssh-controlmaster-options)
 (setq tramp-ssh-controlmaster-options (concat
                                        "-o ControlPath=/tmp/ssh-ControlPath-%%r@%%h:%%p "
@@ -114,5 +118,26 @@ ARGS are the arguments to pass to ORIG-FN."
     (apply orig-fn args)))
 
 (require 'tramp-jumper)
+
+;; tramp to rsync
+(defun tramp-vec-to-rsync-address (vec)
+  "Build rsync destination string from TRAMP vector VEC."
+  (let ((user (tramp-file-name-user vec))
+        (host (tramp-file-name-host vec))
+        (remote-path (tramp-file-name-localname vec)))
+    (if user
+        (format "%s@%s:%s" user host remote-path)
+      (format "%s:%s" host remote-path))))
+
+(defun tramp-to-rsync-address (tramp-path)
+  "Convert TRAMP-PATH to rsync address format.
+Example: /ssh:user@host:/path/to/dir -> user@host:/path/to/dir"
+  (if (tramp-tramp-file-p tramp-path)
+        (let* ((parsed (tramp-dissect-file-name tramp-path))
+               (method (tramp-file-name-method parsed)))
+          (if (string= method "ssh")
+              (tramp-vec-to-rsync-address parsed)
+            tramp-path))
+    tramp-path))
 
 (provide 'init-tramp)

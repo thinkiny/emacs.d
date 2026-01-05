@@ -256,11 +256,11 @@
   (if mode-line-project-name
       mode-line-project-name
     (setq mode-line-project-name "")
-    (unless (file-remote-p default-directory)
+    (unless (tramp-tramp-file-p default-directory)
       (if-let* ((project-root (projectile-project-root))
                 (project-name (funcall projectile-project-name-function project-root)))
           (setq mode-line-project-name project-name)))
-      mode-line-project-name))
+    mode-line-project-name))
 
 (defun persp-with-project-name-mode-line()
   (if (fboundp 'persp-current-name)
@@ -274,9 +274,9 @@
               '((:eval (mode-line-linum))
                 " "
                 "%b"
-                (:eval (mode-line-idle 1.0 '(:eval (my-flymake-mode-line-counters)) ""))
+                (:eval (mode-line-idle 1.0 '(:eval (my-flymake-mode-line-counters)) "" :interrupt t))
                 " "
-                (:eval (mode-line-idle 1.5 '(:eval (persp-with-project-name-mode-line)) ""))
+                (:eval (mode-line-idle 1.5 '(:eval (persp-with-project-name-mode-line)) "" :interrupt t))
                 ;;mode-line-misc-info
                 ))
 

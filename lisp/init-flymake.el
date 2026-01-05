@@ -1,27 +1,29 @@
 ;; -*- lexical-binding: t; -*-
 
-(add-to-list 'display-buffer-alist
-               `(,(rx bos "*Flymake diagnostics")
-                 (display-buffer-reuse-window
-                  display-buffer-in-side-window)
-                 (side            . bottom)
-                 (reusable-frames . visible)
-                 (window-height   . 0.30)))
+(require 'flymake)
+(setq flymake-start-on-flymake-mode nil)
+(setq flymake-start-on-save-buffer nil)
+;; (setq flymake-show-diagnostics-at-end-of-line t)
+;; (setq flymake-indicator-type 'auto)
+;; (setq flymake-fringe-indicator-position 'left-fringe)
+;; (setq flymake-margin-indicator-position nil)
+(setq flymake-no-changes-timeout 1)
+(setq flymake-mode-line-counter-format
+      '(":["
+        flymake-mode-line-error-counter
+        flymake-mode-line-warning-counter
+        flymake-mode-line-note-counter "]"))
 
-(with-eval-after-load 'flymake
-  ;; (setq flymake-show-diagnostics-at-end-of-line t)
-  ;; (setq flymake-indicator-type 'auto)
-  ;; (setq flymake-fringe-indicator-position 'left-fringe)
-  ;; (setq flymake-margin-indicator-position nil)
-  (setq flymake-no-changes-timeout 1)
-  (setq flymake-start-on-save-buffer nil)
-  (setq flymake-mode-line-counter-format
-  '(":["
-    flymake-mode-line-error-counter
-    flymake-mode-line-warning-counter
-    flymake-mode-line-note-counter "]"))
-  (easy-menu-define nil flymake-mode-map nil
-    (list "Flymake" :visible nil)))
+(easy-menu-define nil flymake-mode-map nil
+  (list "Flymake" :visible nil))
+
+(add-to-list 'display-buffer-alist
+             `(,(rx bos "*Flymake diagnostics")
+               (display-buffer-reuse-window
+                display-buffer-in-side-window)
+               (side            . bottom)
+               (reusable-frames . visible)
+               (window-height   . 0.30)))
 
 (defun clear-flymake-from-current-line(start stop pre-change-len)
   ;;(mapc #'flymake--delete-overlay (flymake--really-all-overlays))

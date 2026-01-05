@@ -43,15 +43,4 @@
   (setq claude-code-ide-diagnostics-backend 'flymake)
   (claude-code-ide-emacs-tools-setup))
 
-;; (use-package agent-shell
-;;   :bind (:map global-map
-;;               ("C-c y a" . agent-shell-cursor-start-agent))
-;;   :config
-;;   (setq agent-shell-header-style nil)
-;;   (setq agent-shell-show-welcome-message nil)
-;;   (setq agent-shell-cursor-environment
-;;         (agent-shell-make-environment-variables
-;;          "HTTP_PROXY" "http://127.0.0.1:1087"
-;;          "HTTPS_PROXY" "http://127.0.0.1:1087")))
-
 (provide 'init-ai)

@@ -195,11 +195,11 @@ and binds some keystroke with `term-raw-map'."
     (when (eq major-mode 'vterm-mode)
       (if (>= (window-end) (buffer-size))
           (when vterm-copy-mode
-            (vterm-copy-mode-done nil)
-            (end-of-buffer))
+            (vterm-copy-mode-done nil))
         (vterm-copy-mode 1))))
 
-  (advice-add 'set-window-vscroll :after #'my/vterm-toggle-scroll))
+  ;;(advice-add 'set-window-vscroll :after #'my/vterm-toggle-scroll)
+  )
 
 ;; counsel-term
 (require 'counsel-term)

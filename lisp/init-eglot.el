@@ -101,26 +101,15 @@
 (defvar-local eglot-enable-format-at-save t)
 (put 'eglot-enable-format-at-save 'safe-local-variable #'always)
 
-(defun eglot-format-buffer-and-revert()
-  "Format whole buffer and revert."
-  (interactive)
-  (eglot-format)
-  ;; (if (file-remote-p default-directory)
-  ;;     (run-at-time 1 nil
-  ;;                  (lambda ()
-  ;;                    (revert-buffer t t t)))
-  ;; )
-  )
-
 (defun eglot-enable-format ()
   (interactive)
   (setq-local eglot-enable-format-at-save t)
-  (add-hook 'before-save-hook 'eglot-format-buffer-and-revert nil t))
+  (add-hook 'before-save-hook 'eglot-format-buffer -10 t))
 
 (defun eglot-disable-format ()
   (interactive)
   (setq-local eglot-enable-format-at-save nil)
-  (remove-hook 'before-save-hook 'eglot-format-buffer-and-revert t)
+  (remove-hook 'before-save-hook 'eglot-format-buffer t)
   ;; (if (bound-and-true-p format-all-mode)
   ;;     (remove-hook 'before-save-hook
   ;;                  'format-all--buffer-from-hook
@@ -138,6 +127,7 @@
     (make-variable-buffer-local 'eglot-ignored-server-capabilities)
     (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider))
 
+  ;;(remove-hook 'after-save-hook #'flymake-after-save-hook t)
   (remove-hook 'before-save-hook #'eglot--signal-textDocument/willSave t)
   (remove-hook 'after-save-hook #'eglot--signal-textDocument/didSave t)
   (setq-local completion-at-point-functions
@@ -152,7 +142,7 @@
     (eglot-disable-format)))
 
 (ignore-tramp-ssh-control-master #'eglot--connect)
-(advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
+;;(advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
 
 (with-eval-after-load-theme 'eglot
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))

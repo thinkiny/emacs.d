@@ -9,7 +9,7 @@
   (corfu-quit-no-match 'separator)
   (corfu-preview-current nil)
   (corfu-separator ?\s)          ;; Orderless field separator
-  (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
   ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
   ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
   ;; (corfu-echo-documentation nil) ;; Disable documentation in the echo area
