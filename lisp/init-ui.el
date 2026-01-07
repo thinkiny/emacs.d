@@ -220,9 +220,6 @@
     (set-small-frame-size)))
 
 ;;mode line
-(use-package mode-line-idle
-  :commands (mode-line-idle))
-
 (setq mode-line-percent-position nil)
 (setq-default mode-line-buffer-identification
               (propertized-buffer-identification "%b"))
@@ -274,10 +271,17 @@
               '((:eval (mode-line-linum))
                 " "
                 "%b"
-                (:eval (mode-line-idle 1.0 '(:eval (my-flymake-mode-line-counters)) "" :interrupt t))
+                ;;" ["
+                ;; mode-name
+                ;;minor-mode-alist
+                ;; "] "
+                ;; global-mode-string
+                ;; " "
+                (:eval (my-flymake-mode-line-counters))
                 " "
-                (:eval (mode-line-idle 1.5 '(:eval (persp-with-project-name-mode-line)) "" :interrupt t))
-                ;;mode-line-misc-info
+                (:eval (persp-with-project-name-mode-line))
+                ;; " "
+                ;; mode-line-misc-info
                 ))
 
 ;; counsel theme

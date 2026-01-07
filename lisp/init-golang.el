@@ -58,8 +58,8 @@
 (defun my-go-mode-hook()
   (eglot-ensure)
   (subword-mode)
-  (define-key go-mode-map (kbd "C-c g j") #'go-generate-tag-json)
-  (define-key go-mode-map (kbd "C-c g f") #'go-generate-tag-form))
+  (define-key go-ts-mode-map (kbd "C-c g j") #'go-generate-tag-json)
+  (define-key go-ts-mode-map (kbd "C-c g f") #'go-generate-tag-form))
 
 (with-eval-after-load 'go-ts-mode
   (setq go-ts-mode-indent-offset 4))

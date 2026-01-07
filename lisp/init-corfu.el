@@ -21,22 +21,24 @@
 (use-package orderless
   :demand t
   :config
-  (setq completion-styles '(orderless basic))
-  ;; (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
-  ;; (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))
+  (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
+  (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))
   (orderless-define-completion-style orderless+initialism
     (orderless-matching-styles '(orderless-initialism
                                  orderless-literal
-                                 orderless-regexp))))
+                                 ;;orderless-regexp
+                                 )))
+  )
 
 (with-eval-after-load 'minibuffer
+  ;;(setq completion-styles '(orderless basic))
   (setq completion-category-overrides
         '((command (styles orderless+initialism))
           (symbol (styles orderless+initialism))
           (variable (styles orderless+initialism))
-          (file (styles basic partical-completion))
-          (eglot (styles orderless))
-          (eglot-capf (styles orderless))
+          (file (styles partical-completion))
+          ;; (eglot (styles orderless))
+          ;; (eglot-capf (styles orderless))
           )))
 
 (with-eval-after-load 'eshell

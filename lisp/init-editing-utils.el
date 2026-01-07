@@ -433,17 +433,20 @@ If ARG is omitted or nil, move point forward one word."
 ;; async save buffer when in tramp
 (defun save-buffer-async--rsync-save (file-name vec)
   "Save buffer asynchronously using rsync for SSH-based TRAMP files.
-FILE-NAME is the remote file path, VEC is the parsed TRAMP vector."
+  FILE-NAME is the remote file path, VEC is the parsed TRAMP vector."
   (let* ((buffer (current-buffer))
          (coding (or buffer-file-coding-system 'utf-8-unix))
          (temp-file (make-temp-file "emacs-rsync-"))
-         (rsync-dest (tramp-vec-to-rsync-address vec)))
-    (ignore-errors
-      (run-hooks 'before-save-hook))
+         (rsync-dest (tramp-vec-to-rsync-address vec))
+         (mod-time (current-time))
+         (tick (buffer-modified-tick)))
+    (condition-case err
+        (run-hooks 'before-save-hook)
+      (error (message "before-save-hook error: %s" err)))
     (let ((coding-system-for-write coding))
       (write-region (point-min) (point-max) temp-file nil 'quiet))
     (let ((process (start-process "rsync-save" nil
-                                  "rsync" "-az" "--inplace"
+                                  "rsync" "-a" "--inplace"
                                   temp-file rsync-dest)))
       (set-process-sentinel
        process
@@ -451,20 +454,21 @@ FILE-NAME is the remote file path, VEC is the parsed TRAMP vector."
          (unwind-protect
              (when (buffer-live-p buffer)
                (with-current-buffer buffer
-                 (cond
-                  ((string-match "finished" event)
-                   (set-buffer-modified-p nil)
-                   (set-visited-file-modtime)
-                   (run-hooks 'after-save-hook)
-                   (message "Wrote %s" file-name))
-                  (t
-                   (message "Rsync save error: %s" (string-trim event))))))
-           (delete-file temp-file)))))))
+                 (if (string-match-p "finished" event)
+                     (progn
+                       (set-visited-file-modtime mod-time)
+                       ;; Only clear modified flag if buffer unchanged during save
+                       (when (= tick (buffer-modified-tick))
+                         (set-buffer-modified-p nil))
+                       (run-hooks 'after-save-hook)
+                       (message "Wrote %s" file-name))
+                   (message "Rsync save error: %s" (string-trim event)))))
+           (ignore-errors (delete-file temp-file))))))))
 
 (defun save-buffer-async ()
   "Save buffer asynchronously for SSH-based TRAMP files.
-Use rsync for SSH-based TRAMP methods, regular save-buffer for
-local files and non-SSH TRAMP methods."
+  Use rsync for SSH-based TRAMP methods, regular save-buffer for
+  local files and non-SSH TRAMP methods."
   (interactive)
   (cond
    ((not (buffer-file-name)) nil)

@@ -15,6 +15,7 @@
   (setq eglot-autoshutdown t)
   (setq eglot-prefer-plaintext t)
   (setq eglot-sync-connect nil)
+  (setq eglot-send-changes-idle-time 2)
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
                                             :documentOnTypeFormattingProvider
                                             :documentRangeFormattingProvider))
@@ -127,9 +128,7 @@
     (make-variable-buffer-local 'eglot-ignored-server-capabilities)
     (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider))
 
-  ;;(remove-hook 'after-save-hook #'flymake-after-save-hook t)
   (remove-hook 'before-save-hook #'eglot--signal-textDocument/willSave t)
-  (remove-hook 'after-save-hook #'eglot--signal-textDocument/didSave t)
   (setq-local completion-at-point-functions
               (list (cape-capf-super
                      #'cape-file
@@ -141,8 +140,7 @@
       (eglot-enable-format)
     (eglot-disable-format)))
 
-(ignore-tramp-ssh-control-master #'eglot--connect)
-;;(advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
+
 
 (with-eval-after-load-theme 'eglot
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))

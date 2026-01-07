@@ -148,8 +148,8 @@ Each element should be a string representing a project root directory path."
 
 (defconst projectile-current-user-home (expand-file-name "~/"))
 (defun projectile-stop-at-home(dir)
-  (if-let ((remote-home (file-remote-p dir "~/")))
-      (string-equal dir remote-home)
+  (if (file-remote-p dir)
+      (string-equal dir (concat (file-remote-p dir) "~/"))
     (string-equal dir projectile-current-user-home)))
 
 (defun projectile-project-root-around-advice (orig-fun &rest args)

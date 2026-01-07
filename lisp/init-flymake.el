@@ -25,7 +25,7 @@
                (reusable-frames . visible)
                (window-height   . 0.30)))
 
-(defun clear-flymake-from-current-line(start stop pre-change-len)
+(defun flymake-clear-current-line(start stop pre-change-len)
   ;;(mapc #'flymake--delete-overlay (flymake--really-all-overlays))
   (when flymake-show-diagnostics-at-end-of-line
     (when-let* ((start (line-end-position))
@@ -35,6 +35,13 @@
                          (overlays-in start end))))
       (dolist (ov eolovs)
         (flymake--delete-overlay ov)))))
+
+(defun flymake-clear-current-buffer()
+  "Clear all Flymake diagnostic overlays in current buffer."
+  (interactive)
+  (dolist (ov (overlays-in (point-min) (point-max)))
+    (when (overlay-get ov 'flymake-diagnostic)
+      (delete-overlay ov))))
 
 (defun my-flymake-mode-hook()
   (remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t)
