@@ -30,12 +30,12 @@
   :config
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-vterm-render-delay 0.05)
-  ;; (setq claude-code-ide-use-side-window nil)
-  ;; (add-to-list 'display-buffer-alist
-  ;;              '("\\*claude-code*"
-  ;;                (display-buffer-in-side-window)
-  ;;                (side . right)
-  ;;                (window-width . 0.5)))
+  (setq claude-code-ide-use-side-window nil)
+  (add-to-list 'display-buffer-alist
+               '("\\*claude-code*"
+                 (display-buffer-in-side-window)
+                 (side . right)
+                 (window-width . 0.5)))
   ;; (setq claude-code-ide-debug t)
   (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-window-side 'right

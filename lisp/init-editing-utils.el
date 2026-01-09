@@ -424,7 +424,7 @@ If ARG is omitted or nil, move point forward one word."
       (raise-frame ctl-frm))))
 
 ;; jit-lock
-(setq font-lock-support-mode 'lazy-lock-mode)
+;; (setq font-lock-support-mode 'jit-lock-mode)
 (setq jit-lock-stealth-time 1.25)
 (setq jit-lock-stealth-nice 1)
 (setq jit-lock-defer-time 0.5)
