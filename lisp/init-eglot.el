@@ -20,7 +20,7 @@
                                             :documentOnTypeFormattingProvider
                                             :documentRangeFormattingProvider))
   (setq jsonrpc-default-request-timeout 15)
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-with-current)
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
@@ -82,20 +82,20 @@
         (ignore-errors (eglot-shutdown server t nil nil))))
     (eglot-ensure))
 
-  (defun eglot-rename-with-current (newname)
-    "Rename the current symbol to NEWNAME."
-    (interactive
-     (let ((curr (thing-at-point 'symbol t)))
-       (list (read-string
-              (format "Rename `%s' to: " (or curr
-                                             "unknown symbol"))
-              curr))))
+  (cl-defun eglot--rename-interactive (&aux region)
     (eglot-server-capable-or-lose :renameProvider)
-    (eglot--apply-workspace-edit
-     (eglot--request (eglot--current-server-or-lose)
-                     :textDocument/rename `(,@(eglot--TextDocumentPositionParams)
-                                            :newName ,newname))
-     this-command))
+    (let* ((probe (eglot--request (eglot--current-server-or-lose)
+                                  :textDocument/prepareRename
+                                  (eglot--TextDocumentPositionParams)))
+           (def
+            (cond ((null probe) (user-error "[eglot] Can't rename here"))
+                  ((plist-get probe :placeholder))
+                  ((plist-get probe :defaultBehavior) (thing-at-point 'symbol t))
+                  ((setq region (eglot-range-region probe))
+                   (buffer-substring-no-properties (car region) (cdr region))))))
+      (list (read-from-minibuffer
+             (format "Rename `%s' to: " (or def "unknown symbol"))
+             def nil nil nil def))))
   )
 
 ;; format

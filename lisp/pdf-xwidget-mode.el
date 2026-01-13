@@ -155,6 +155,7 @@
     (if (file-directory-p dir)
         (setq default-directory dir))
     (setq-local xwidget-webkit-buffer-name-format (format pdf-xwidget-name-format name))
+    (setq-local cursor-type nil)
     (use-local-map pdf-xwidget-mode-map)))
 
 (define-derived-mode pdf-xwidget-mode special-mode "PDF"

@@ -425,9 +425,9 @@ If ARG is omitted or nil, move point forward one word."
 
 ;; jit-lock
 ;; (setq font-lock-support-mode 'jit-lock-mode)
-(setq jit-lock-stealth-time 1.25)
+(setq jit-lock-stealth-time 1)
 (setq jit-lock-stealth-nice 1)
-(setq jit-lock-defer-time 0.5)
+(setq jit-lock-defer-time 0)
 (setq jit-lock-chunk-size 4096)
 
 ;; async save buffer when in tramp
