@@ -125,7 +125,8 @@ https://github.com/emacs-lsp/lsp-mode/pull/1740."
 (define-minor-mode eglot-hover-mode
   "Improve eglot's hover information."
   :lighter " eglot-hover"
-  (unless (eglot-managed-p)
+  (when (and eglot-hover-mode (not (eglot-managed-p)))
+    (setq eglot-hover-mode nil)
     (user-error "eglot-hover-mode requires eglot to be running."))
   (if eglot-hover-mode
       (advice-add 'eglot-hover-eldoc-function :override #'eglot-hover--eldoc-function)

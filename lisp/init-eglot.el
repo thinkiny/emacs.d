@@ -30,6 +30,7 @@
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
 
 (with-eval-after-load 'eglot
+  ;;(require 'eglot-hover)
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
                                                         :usePlaceholders t
                                                         :analyses  (:ST1003 :json-false))

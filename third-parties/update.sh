@@ -19,14 +19,14 @@ ELPA_DIR="${HOME}/.emacs.d/elpa"
 
 # Repositories to download
 FILE_URLS=(
+    # "https://raw.githubusercontent.com/canatella/use-theme/master/use-theme.el"
+    # "https://raw.githubusercontent.com/jdtsmith/eglot-booster/main/eglot-booster.el"
+    "https://codeberg.org/slotThe/eglot-hover/raw/branch/main/eglot-hover.el"
     "https://raw.githubusercontent.com/google/styleguide/gh-pages/google-c-style.el"
-    "https://raw.githubusercontent.com/canatella/use-theme/master/use-theme.el"
     "https://raw.githubusercontent.com/007kevin/pdf-view-restore/master/pdf-view-restore.el"
-    "https://raw.githubusercontent.com/jdtsmith/eglot-booster/main/eglot-booster.el"
     "https://raw.githubusercontent.com/gaoDean/org-remoteimg/main/org-remoteimg.el"
     "https://raw.githubusercontent.com/abo-abo/org-download/refs/heads/master/org-download.el"
     "https://codeberg.org/pranshu/haskell-ts-mode/raw/branch/main/haskell-ts-mode.el"
-    "https://codeberg.org/slotThe/eglot-hover/raw/branch/main/eglot-hover.el"
 )
 
 # Build PDF tools
@@ -109,16 +109,32 @@ update_files() {
 main() {
     cd "$SCRIPT_DIR"
 
-    # Download files
-    update_files
+    # Check for command line arguments
+    if [[ $# -eq 0 ]]; then
+        # No arguments - run full update
+        echo "Running full update..."
 
-    # Optional operations (commented out by default)
-    # build_pdf_tools
-    # update_lsp_multiplexer
+        # Download files
+        update_files
 
-    # Update repositories
-    update_lsp
-    update_repo "${ELPA_DIR}/claude-code-ide"
+        # Optional operations (commented out by default)
+        # build_pdf_tools
+        # update_lsp_multiplexer
+
+        # Update repositories
+        update_lsp
+        update_repo "${ELPA_DIR}/claude-code-ide"
+    else
+        case $1 in
+            lsp)
+                update_lsp
+                ;;
+            *)
+                echo "Unknown option: $1"
+                exit 1
+                ;;
+        esac
+    fi
 }
 
 # Run main function
