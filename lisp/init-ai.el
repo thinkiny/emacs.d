@@ -8,7 +8,6 @@
 ;;   (setq aidermacs-default-chat-mode 'architect)
 ;;   (setq aidermacs-backend 'vterm))
 
-
 ;; claude-wrapper
 ;; if [[ -n "$CLAUDE_CODE_SSE_PORT" ]]; then
 ;;   lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
@@ -30,6 +29,7 @@
   :config
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-vterm-render-delay 0.05)
+  (setq claude-code-ide-terminal-backend 'eat)
   (setq claude-code-ide-use-side-window nil)
   (add-to-list 'display-buffer-alist
                '("\\*claude-code*"
@@ -42,5 +42,18 @@
         claude-code-ide-window-width 80)
   (setq claude-code-ide-diagnostics-backend 'flymake)
   (claude-code-ide-emacs-tools-setup))
+
+(use-package agent-shell
+  :bind (:map global-map
+              ("C-c a s" . agent-shell-cursor-start-agent))
+  :config
+  (setq agent-shell-header-style nil)
+  (setq agent-shell-show-welcome-message nil)
+  (setq agent-shell-cursor-environment
+        (agent-shell-make-environment-variables
+         "HTTP_PROXY" "http://127.0.0.1:1087"
+         "HTTPS_PROXY" "http://127.0.0.1:1087"
+         :inherit-env t
+         )))
 
 (provide 'init-ai)

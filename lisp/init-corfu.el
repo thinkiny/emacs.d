@@ -36,13 +36,10 @@
         '((command (styles orderless+initialism))
           (symbol (styles orderless+initialism))
           (variable (styles orderless+initialism))
-          (file (styles partical-completion))
+          (file (styles orderless+initialism))
           ;; (eglot (styles orderless))
           ;; (eglot-capf (styles orderless))
           )))
-
-(with-eval-after-load 'eshell
-  (add-hook 'eshell-mode-hook (lambda () (setq-local corfu-auto nil))))
 
 (with-eval-after-load 'corfu
   (corfu-popupinfo-mode))

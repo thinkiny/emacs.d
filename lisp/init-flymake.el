@@ -1,8 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
 (require 'flymake)
-(setq flymake-start-on-flymake-mode nil)
 (setq flymake-start-on-save-buffer nil)
+;; (setq flymake-start-on-flymake-mode t)
 ;; (setq flymake-show-diagnostics-at-end-of-line t)
 ;; (setq flymake-indicator-type 'auto)
 ;; (setq flymake-fringe-indicator-position 'left-fringe)

@@ -27,10 +27,12 @@
   (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
-  (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions))
+  (define-key eglot-mode-map (kbd "C-c a f") 'eglot-code-actions)
+  )
 
 (with-eval-after-load 'eglot
   ;;(require 'eglot-hover)
+  ;;(advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
                                                         :usePlaceholders t
                                                         :analyses  (:ST1003 :json-false))
@@ -151,7 +153,6 @@
   (if (listp cmd)
       (push `(,mode ,@cmd) eglot-server-programs)
     (push `(,mode ,cmd) eglot-server-programs)))
-
 
 ;; manual execute lsp command
 (defun my/eglot-enable-command-provider (orig-fn server)

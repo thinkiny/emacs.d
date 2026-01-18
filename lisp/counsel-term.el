@@ -6,7 +6,7 @@
 (require 'tramp)
 (require 'vterm)
 
-(defvar counsel-mt-shell-type 'vterm)
+(defvar counsel-mt-shell-type 'eshell)
 (defconst counsel-mt-name-header "*TERM-")
 
 (defun counsel-mt/get-dir(&optional buf)
@@ -104,23 +104,6 @@
                  (concat "cd " term-localname)))))
     (list (getenv "SHELL") "-l")))
 
-(defun counsel-term-handle-close ()
-  "Close current term buffer when `exit' from term buffer."
-  (when (ignore-errors (get-buffer-process (current-buffer)))
-    (set-process-sentinel (get-buffer-process (current-buffer))
-                          (lambda (proc change)
-                            (when (string-match "\\(finished\\|exited\\)" change)
-                              (kill-buffer (process-buffer proc)))))))
-
-(defun counsel-open-term (name)
-  (let* ((cmd (counsel-term-get-term-cmd))
-         (buf (apply 'make-term name (car cmd) nil (cdr cmd))))
-    (set-buffer buf)
-    (term-mode)
-    (term-char-mode)
-    (counsel-term-handle-close)
-    (switch-to-buffer buf)
-    (rename-buffer name)))
 
 (defun counsel-open-eshell (name)
   (call-interactively 'eshell)
@@ -140,7 +123,6 @@
          (name (counsel-mt/new-buffer-name idx)))
     (pcase counsel-mt-shell-type
       ('eshell (counsel-open-eshell name))
-      ('term (counsel-open-term name))
       ('vterm (counsel-open-vterm name)))
     (setq-local counsel-mt-index idx)))
 

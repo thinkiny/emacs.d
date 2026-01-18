@@ -6,11 +6,12 @@
   (setq eshell-up-ignore-case nil))
 
 (with-eval-after-load 'eshell
-  (add-to-list 'eshell-modules-list 'eshell-smart)
+  ;; (add-to-list 'eshell-modules-list 'eshell-smart)
   (setq eshell-history-size 10000
         eshell-save-history-on-exit t
         eshell-hist-ignoredups t
-        eshell-scroll-to-bottom-on-input t)
+        eshell-scroll-to-bottom-on-input 'this
+        eshell-scroll-to-bottom-on-output 'this)
 
   (defun pcomplete/sudo ()
     (let ((prec (pcomplete-arg 'last -1)))
@@ -34,10 +35,9 @@
     (eshell/cd project-root)))
 
 (defun my-eshell-mode-hook()
-  (setenv "TERM" "term")
+  (setenv "TERM" "xterm-256color")
   (setenv "PAGER" "cat")
   (setenv "GIT_EDITOR" "emacsclient")
-  (eshell-cmpl-initialize)
   (define-key eshell-mode-map (kbd "C-a") 'eshell-maybe-bol))
 
 (add-hook 'eshell-mode-hook #'my-eshell-mode-hook)
