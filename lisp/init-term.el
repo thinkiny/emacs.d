@@ -26,24 +26,6 @@
   (require 'vterm-anti-flicker-filter)
   (remove-hook 'vterm-mode-hook #'vterm-anti-flicker-filter-enable)
 
-  (defun vterm-copy-text ()
-    (interactive)
-    (when (region-active-p)
-      (save-excursion
-        (vterm--enter-copy-mode)
-        (kill-ring-save (region-beginning) (region-end))
-        (vterm--exit-copy-mode))))
-
-  (defun vterm-move-up()
-    (interactive)
-    (let ((current-prefix-arg (/ (window-height) 2)))
-      (call-interactively #'previous-line)))
-
-  (defun vterm-move-down()
-    (interactive)
-    (let ((current-prefix-arg (/ (window-height) 2)))
-      (call-interactively #'next-line)))
-
   (defun vterm--get-directory (path)
     "Get normalized directory to PATH."
     (when path
@@ -61,16 +43,41 @@
                   (setq directory (file-name-as-directory (concat "/" tramp-default-method ":" path))))))
           (when (file-directory-p path)
             (setq directory (file-name-as-directory path))))
-        directory)))
+        directory))))
 
-  (defun my/vterm-toggle-scroll (&rest _)
-    (when (eq major-mode 'vterm-mode)
-      (if (>= (window-end) (buffer-size))
-          (when vterm-copy-mode
-            (vterm-copy-mode-done nil))
-        (vterm-copy-mode 1))))
+(defun my-vterm-mode-hook()
+  (unless (string-prefix-p "*claude-code" (buffer-name))
+    (vterm-anti-flicker-filter-enable)))
 
-  (advice-add 'set-window-vscroll :after #'my/vterm-toggle-scroll))
+(add-hook 'vterm-mode-hook #'my-vterm-mode-hook)
+
+;; other staff
+(defun vterm-copy-text ()
+  (interactive)
+  (when (region-active-p)
+    (save-excursion
+      (vterm--enter-copy-mode)
+      (kill-ring-save (region-beginning) (region-end))
+      (vterm--exit-copy-mode))))
+
+(defun vterm-move-up()
+  (interactive)
+  (let ((current-prefix-arg (/ (window-height) 2)))
+    (call-interactively #'previous-line)))
+
+(defun vterm-move-down()
+  (interactive)
+  (let ((current-prefix-arg (/ (window-height) 2)))
+    (call-interactively #'next-line)))
+
+(defun my/vterm-toggle-scroll (&rest _)
+  (when (eq major-mode 'vterm-mode)
+    (if (>= (window-end) (buffer-size))
+        (when vterm-copy-mode
+          (vterm-copy-mode-done nil))
+      (vterm-copy-mode 1))))
+
+(advice-add 'set-window-vscroll :after #'my/vterm-toggle-scroll)
 
 ;; counsel-term
 (require 'counsel-term)
@@ -78,10 +85,10 @@
 
 ;; term-color
 (with-eval-after-load-theme 'term
-  (when (theme-dark-p)
-    ;; (set-face-background 'term-color-black (face-attribute 'default :foreground))
-    (set-face-foreground 'term-color-blue "skyblue3")
-    (set-face-foreground 'term-color-red "IndianRed1")))
+                            (when (theme-dark-p)
+                              ;; (set-face-background 'term-color-black (face-attribute 'default :foreground))
+                              (set-face-foreground 'term-color-blue "skyblue3")
+                              (set-face-foreground 'term-color-red "IndianRed1")))
 
 
 ;; eat

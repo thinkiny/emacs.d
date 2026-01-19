@@ -6,7 +6,7 @@
 (require 'tramp)
 (require 'vterm)
 
-(defvar counsel-mt-shell-type 'eshell)
+(defvar counsel-mt-shell-type 'vterm)
 (defconst counsel-mt-name-header "*TERM-")
 
 (defun counsel-mt/get-dir(&optional buf)
