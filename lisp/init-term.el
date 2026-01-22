@@ -56,9 +56,9 @@
   (interactive)
   (when (region-active-p)
     (save-excursion
-      (vterm--enter-copy-mode)
+      (vterm-copy-mode 1)
       (kill-ring-save (region-beginning) (region-end))
-      (vterm--exit-copy-mode))))
+      (vterm-copy-mode -1))))
 
 (defun vterm-move-up()
   (interactive)
@@ -74,8 +74,9 @@
   (when (eq major-mode 'vterm-mode)
     (if (>= (window-end) (buffer-size))
         (when vterm-copy-mode
-          (vterm-copy-mode-done nil))
-      (vterm-copy-mode 1))))
+          (vterm-copy-mode -1))
+      (unless vterm-copy-mode
+        (vterm-copy-mode 1)))))
 
 (advice-add 'set-window-vscroll :after #'my/vterm-toggle-scroll)
 

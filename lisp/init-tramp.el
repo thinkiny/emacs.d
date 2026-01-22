@@ -140,4 +140,8 @@ Example: /ssh:user@host:/path/to/dir -> user@host:/path/to/dir"
             tramp-path))
     tramp-path))
 
+(use-package tramp-rpc
+  :demand t
+  :vc (:url "https://github.com/ArthurHeymans/emacs-tramp-rpc.git" :rev :newest))
+
 (provide 'init-tramp)

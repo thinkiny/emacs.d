@@ -14,7 +14,7 @@
   (setq dired-free-space nil)
   (setq dired-omit-files "^\\.?#\\|\\.cmd$")
   (setq dired-omit-verbose nil)
-  (setq dired-listing-switches "-aBhl --group-directories-first")
+  (setq dired-listing-switches "-ahl --group-directories-first")
   (add-hook 'dired-mode-hook 'dired-omit-mode)
   (put 'dired-find-alternate-file 'disabled nil)
   (define-key dired-mode-map (kbd "RET") 'dired-find-alternate-file)

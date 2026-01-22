@@ -39,7 +39,7 @@
 
 (defun cache-tramp-magit-toplevel (orig &optional directory)
   (cache-tramp-from-matching-value
-   (expand-file-name (or directory default-directory))
+   (file-truename (or directory default-directory))
    'magit-toplevel-tramp-cache orig directory))
 
 (defun magit-rsync-to-src()
@@ -61,11 +61,10 @@ then syncs from the key (source) to the value (destination)."
   (interactive)
   (when-let* ((src-rsync (tramp-to-rsync-address src-tramp))
               (dest-rsync (tramp-to-rsync-address dest-tramp)))
-    (let* ((rsync-cmd (list "rsync" "-avur" "--delete" "--exclude" ".git/"
+    (let* ((rsync-cmd (list "rsync" "-avr" "--delete" "--exclude" ".git/"
                             src-rsync dest-rsync))
            (magit-buffer (current-buffer))
            (buffer (get-buffer-create "*magit-rsync*")))
-
       (with-current-buffer buffer
         (erase-buffer)
         (insert (mapconcat #'identity rsync-cmd " "))
@@ -113,9 +112,6 @@ then syncs from the key (source) to the value (destination)."
 (with-eval-after-load 'vc
   (define-key vc-prefix-map (kbd "l") 'sanityinc/magit-or-vc-log-file)
   (define-key vc-prefix-map (kbd "f") 'vc-git-grep))
-
-;; smerge-mode
-(use-package smerge-mode)
 
 (provide 'init-git)
 ;;; init-git.el ends here

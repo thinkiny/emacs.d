@@ -125,10 +125,15 @@ main() {
         # Update repositories
         update_lsp
         update_repo "${ELPA_DIR}/claude-code-ide"
+        update_repo "${ELPA_DIR}/tramp-rpc"
     else
         case $1 in
             lsp)
                 update_lsp
+                ;;
+            repo)
+                update_repo "${ELPA_DIR}/claude-code-ide"
+                update_repo "${ELPA_DIR}/tramp-rpc"
                 ;;
             *)
                 echo "Unknown option: $1"

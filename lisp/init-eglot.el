@@ -143,8 +143,6 @@
       (eglot-enable-format)
     (eglot-disable-format)))
 
-
-
 (with-eval-after-load-theme 'eglot
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))
 
