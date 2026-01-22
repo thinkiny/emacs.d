@@ -11,12 +11,12 @@
   (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash -l"))
   (ignore-tramp-ssh-control-master 'vterm-mode)
   (setq vterm-always-compile-module t)
-  (setq vterm-min-window-width 60)
-  (setq vterm-max-scrollback 5000)
+  (setq vterm-min-window-width 40)
+  (setq vterm-max-scrollback 10000)
   (setq vterm-shell (concat shell-file-name " -l"))
 
   ;; key bindings
-  (define-key vterm-mode-map (kbd "M-w") 'vterm-copy-text)
+  (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'vterm-move-down)
   (define-key vterm-mode-map (kbd "M-v") 'vterm-move-up)
@@ -52,14 +52,6 @@
 (add-hook 'vterm-mode-hook #'my-vterm-mode-hook)
 
 ;; other staff
-(defun vterm-copy-text ()
-  (interactive)
-  (when (region-active-p)
-    (save-excursion
-      (vterm-copy-mode 1)
-      (kill-ring-save (region-beginning) (region-end))
-      (vterm-copy-mode -1))))
-
 (defun vterm-move-up()
   (interactive)
   (let ((current-prefix-arg (/ (window-height) 2)))
@@ -85,11 +77,12 @@
 (global-set-key (kbd "C-x t") 'counsel-term)
 
 ;; term-color
-(with-eval-after-load-theme 'term
-                            (when (theme-dark-p)
-                              ;; (set-face-background 'term-color-black (face-attribute 'default :foreground))
-                              (set-face-foreground 'term-color-blue "skyblue3")
-                              (set-face-foreground 'term-color-red "IndianRed1")))
+(with-eval-after-load-theme
+ 'term
+ (when (theme-dark-p)
+   ;; (set-face-background 'term-color-black (face-attribute 'default :foreground))
+   (set-face-foreground 'term-color-blue "skyblue3")
+   (set-face-foreground 'term-color-red "IndianRed1")))
 
 
 ;; eat

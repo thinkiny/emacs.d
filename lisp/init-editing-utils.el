@@ -408,7 +408,12 @@ If ARG is omitted or nil, move point forward one word."
 (require-package 'string-inflection)
 (require 'string-inflection)
 
-;; ediff-no-confirm
+;; ediff
+(defun my-ediff-prepare-buffer-hook ()
+  (visual-line-mode 1))
+
+(add-hook 'ediff-prepare-buffer-hook 'my-ediff-prepare-buffer-hook)
+
 (with-eval-after-load 'ediff-util
   (defun ediff-quit(reverse-default-keep-variants)
     "Remove y-or-n-p in edifff-util."

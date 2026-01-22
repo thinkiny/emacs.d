@@ -23,8 +23,18 @@
         magit-revision-insert-related-refs nil
         magit-tramp-pipe-stty-settings 'pty)
 
-  (define-key magit-status-mode-map (kbd "C-c f") 'magit-rsync-from-src)
-  (define-key magit-status-mode-map (kbd "C-c t") 'magit-rsync-to-src)
+ (transient-define-prefix magit-rsync ()
+    "Rsync operations."
+    ["Rsync"
+     ("u" magit-rsync-from-src
+      :description (lambda () (format "=> %s" (cdr magit-rsync-entry))))
+     ("p" magit-rsync-to-src
+      :description (lambda () (format "=> %s" (car magit-rsync-entry))))])
+
+  (transient-append-suffix 'magit-dispatch "!"
+    '("R" "Rsync" magit-rsync))
+
+  (define-key magit-status-mode-map (kbd "R") #'magit-rsync)
   (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
   (define-key magit-file-section-map (kbd "<RET>") 'magit-diff-visit-file-other-window))
 
@@ -37,11 +47,26 @@
   :type '(alist :key-type string :value-type string)
   :group 'tramp-caches)
 
+(defvar-local magit-rsync-entry nil
+  "Rsync entry for current magit buffer.")
+
+(defun magit-rsync-set-entry (&rest _)
+  "Set `magit-rsync-entry' based on `magit-toplevel-tramp-cache'."
+  (when-let* ((entry (rassoc default-directory
+                             magit-toplevel-tramp-cache)))
+    (setq-local magit-rsync-entry entry)))
+
+(advice-add 'magit-status :after #'magit-rsync-set-entry)
+
+;; cache advice
 (defun cache-tramp-magit-toplevel (orig &optional directory)
   (cache-tramp-from-matching-value
    (file-truename (or directory default-directory))
    'magit-toplevel-tramp-cache orig directory))
 
+(advice-add 'magit-toplevel :around #'cache-tramp-magit-toplevel)
+
+;; rsync functions
 (defun magit-rsync-to-src()
   "Find matching entry in `magit-toplevel-tramp-cache` and run rsync.
 Looks for an entry where the value matches current project root,
@@ -94,8 +119,6 @@ then syncs from the key (source) to the value (destination)."
 
     (if matching-entry
         (magit-run-rsync (car matching-entry) (cdr matching-entry)))))
-
-(advice-add 'magit-toplevel :around #'cache-tramp-magit-toplevel)
 
 (defun sanityinc/magit-or-vc-log-file (&optional prompt)
   (interactive "P")
