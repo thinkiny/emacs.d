@@ -25,10 +25,10 @@
 
  (transient-define-prefix magit-rsync ()
     "Rsync operations."
-    ["Rsync"
-     ("u" magit-rsync-from-src
+    ["Rsync to"
+     ("d" magit-rsync-from-src
       :description (lambda () (format "=> %s" (cdr magit-rsync-entry))))
-     ("p" magit-rsync-to-src
+     ("s" magit-rsync-to-src
       :description (lambda () (format "=> %s" (car magit-rsync-entry))))])
 
   (transient-append-suffix 'magit-dispatch "!"

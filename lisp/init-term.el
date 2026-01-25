@@ -18,8 +18,8 @@
   ;; key bindings
   (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
-  (define-key vterm-mode-map (kbd "C-v") 'vterm-move-down)
-  (define-key vterm-mode-map (kbd "M-v") 'vterm-move-up)
+  (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
+  (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode))
 
 (with-eval-after-load 'vterm
@@ -45,32 +45,49 @@
             (setq directory (file-name-as-directory path))))
         directory))))
 
+
 (defun my-vterm-mode-hook()
-  (unless (string-prefix-p "*claude-code" (buffer-name))
-    (vterm-anti-flicker-filter-enable)))
+  ;; (unless (string-prefix-p "*claude-code" (buffer-name))
+  (vterm-anti-flicker-filter-enable))
 
 (add-hook 'vterm-mode-hook #'my-vterm-mode-hook)
 
-;; other staff
-(defun vterm-move-up()
-  (interactive)
-  (let ((current-prefix-arg (/ (window-height) 2)))
-    (call-interactively #'previous-line)))
 
-(defun vterm-move-down()
-  (interactive)
-  (let ((current-prefix-arg (/ (window-height) 2)))
-    (call-interactively #'next-line)))
+;; other staff
+(defvar-local vterm-claude-loopback-mode-enabled nil
+  "Track whether claude loopback mode is enabled.")
+
+(defun vterm-claude-loopback-mode (arg)
+  "Toggle claude loopback mode.
+With positive ARG, enable. With negative ARG, disable."
+  (when (and (string-prefix-p "*claude-code" (buffer-name))
+             (not claude-code-ide-prevent-reflow-glitch))
+    (let ((enable (> arg 0)))
+      (unless (eq enable vterm-claude-loopback-mode-enabled)
+        (vterm-send-string "\x1e")
+        (sit-for 0.2))
+      (setq vterm-claude-loopback-mode-enabled enable))))
+
+(defun my/vterm-copy-mode-off-hook ()
+  "Disable vterm-claude-loopback-mode when vterm-copy-mode is turned off."
+  (unless vterm-copy-mode
+    (vterm-claude-loopback-mode -1)))
+
+(add-hook 'vterm-copy-mode-hook #'my/vterm-copy-mode-off-hook)
 
 (defun my/vterm-toggle-scroll (&rest _)
   (when (eq major-mode 'vterm-mode)
-    (if (>= (window-end) (buffer-size))
-        (when vterm-copy-mode
-          (vterm-copy-mode -1))
-      (unless vterm-copy-mode
-        (vterm-copy-mode 1)))))
+    (let ((at-top (= (window-start) (point-min)))
+          (at-bottom (>= (window-end) (point-max))))
+      (if at-bottom
+          (if vterm-copy-mode
+              (vterm-copy-mode -1))
+        (if at-top
+            (vterm-claude-loopback-mode 1))
+        (unless vterm-copy-mode
+          (vterm-copy-mode 1))))))
 
-(advice-add 'set-window-vscroll :after #'my/vterm-toggle-scroll)
+(advice-add 'pixel-scroll-precision :after #'my/vterm-toggle-scroll)
 
 ;; counsel-term
 (require 'counsel-term)
@@ -84,10 +101,10 @@
    (set-face-foreground 'term-color-blue "skyblue3")
    (set-face-foreground 'term-color-red "IndianRed1")))
 
-
 ;; eat
 (require-package 'eat)
 (setq eat-term-name "xterm-256color")
+(ignore-tramp-ssh-control-master 'eat-exec)
 
 (with-eval-after-load 'eshell
   (eat-eshell-mode)

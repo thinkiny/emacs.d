@@ -1,13 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 
 (require 'flymake)
-(setq flymake-start-on-save-buffer nil)
-;; (setq flymake-start-on-flymake-mode t)
 ;; (setq flymake-show-diagnostics-at-end-of-line t)
 ;; (setq flymake-indicator-type 'auto)
 ;; (setq flymake-fringe-indicator-position 'left-fringe)
 ;; (setq flymake-margin-indicator-position nil)
-(setq flymake-no-changes-timeout 1.5)
+(setq flymake-no-changes-timeout 1)
 (setq flymake-mode-line-counter-format
       '(":["
         flymake-mode-line-error-counter
@@ -44,6 +42,8 @@
       (delete-overlay ov))))
 
 (defun my-flymake-mode-hook()
+  ;; (when (file-remote-p default-directory)
+  ;;   (remove-hook 'after-save-hook 'flymake-after-save-hook  t))
   (remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t)
   ;;(remove-hook 'after-change-functions 'flymake-after-change-function t)
   ;;(add-hook 'after-change-functions #'clear-flymake-from-current-line t)

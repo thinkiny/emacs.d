@@ -15,7 +15,7 @@
   (setq eglot-autoshutdown t)
   (setq eglot-prefer-plaintext t)
   (setq eglot-sync-connect nil)
-  (setq eglot-send-changes-idle-time 2)
+  (setq eglot-send-changes-idle-time 1)
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
                                             :documentOnTypeFormattingProvider
                                             :documentRangeFormattingProvider))
@@ -32,7 +32,6 @@
 
 (with-eval-after-load 'eglot
   ;;(require 'eglot-hover)
-  ;;(advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
                                                         :usePlaceholders t
                                                         :analyses  (:ST1003 :json-false))
@@ -123,15 +122,26 @@
 ;; (advice-add #'eglot--sig-info :around #'advice/ignore-errors)
 ;; (advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
 
+;; disable document sync
+(defun my/eglot-disable-document-sync (server)
+    "Force disable sync for SERVER."
+    (if-let* ((capabilities (eglot--capabilities server)))
+        (if (plist-get capabilities :textDocumentSync)
+            (plist-put (plist-get capabilities :textDocumentSync)
+                       :change 1)))) ; 0 = None, 1 = Full, 2 = Incremental
+
 (defun my-eglot-mode-hook()
   ;; (eglot--setq-saving eldoc-documentation-functions
   ;;                       '(eglot-signature-eldoc-function
   ;;                         eglot-hover-eldoc-function))
   (when (file-remote-p default-directory)
     (make-variable-buffer-local 'eglot-ignored-server-capabilities)
-    (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider))
+    (remove-hook 'before-save-hook #'eglot--signal-textDocument/willSave t)
+    (remove-hook 'after-save-hook #'eglot--signal-textDocument/didSave t)
+    (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
+    ;; (add-hook 'eglot-server-initialized-hook #'my/eglot-disable-document-sync t)
+    )
 
-  (remove-hook 'before-save-hook #'eglot--signal-textDocument/willSave t)
   (setq-local completion-at-point-functions
               (list (cape-capf-super
                      #'cape-file

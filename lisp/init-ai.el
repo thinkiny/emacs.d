@@ -9,16 +9,19 @@
 ;;   (setq aidermacs-backend 'vterm))
 
 ;; claude-wrapper
+;; #!/bin/bash
+
 ;; if [[ -n "$CLAUDE_CODE_SSE_PORT" ]]; then
 ;;   lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
 ;;   if [[ -f $lock ]]; then
 ;;     sed -ri 's/"pid":[0-9]+/"pid":'$$'/' $lock
-;;     claude ${1+"$@"}
+;;     # Use exec so claude inherits the shell's PID
+;;     exec claude-chill -a 0 -- claude ${1+"$@"}
 ;;   else
-;;    claude $@
+;;     exec claude "$@"
 ;;   fi
 ;; else
-;;    claude $@
+;;   exec claude "$@"
 ;; fi
 
 (use-package claude-code-ide
@@ -27,16 +30,17 @@
   :bind (:map global-map
               ("C-c y" . claude-code-ide-menu))
   :config
+  ;; (setq claude-code-ide-debug t)
   (setq claude-code-ide-terminal-initialization-delay 1)
-  (setq claude-code-ide-vterm-render-delay 0.2)
   (setq claude-code-ide-terminal-backend 'vterm)
+  (setq claude-code-ide-prevent-reflow-glitch nil) ;; use claude-chill
+  (setq claude-code-ide-vterm-anti-flicker nil) ;; use vterm-anti-flicker-filter-enable
   (setq claude-code-ide-use-side-window nil)
   (add-to-list 'display-buffer-alist
                '("\\*claude-code*"
                  (display-buffer-in-side-window)
                  (side . right)
                  (window-width . 0.5)))
-  ;; (setq claude-code-ide-debug t)
   (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 80)
@@ -45,7 +49,7 @@
 
 ;; (use-package agent-shell
 ;;   :bind (:map global-map
-;;               ("C-c a s" . agent-shell-cursor-start-agent))
+;;               ("C-c s a" . agent-shell-cursor-start-agent))
 ;;   :config
 ;;   (setq agent-shell-header-style nil)
 ;;   (setq agent-shell-show-welcome-message nil)
@@ -55,8 +59,5 @@
 ;;          "HTTPS_PROXY" "http://127.0.0.1:1087"
 ;;          :inherit-env t
 ;;          )))
-
-(use-package opencode
-  :vc (:url "https://codeberg.org/sczi/opencode.el.git" :rev :newest))
 
 (provide 'init-ai)

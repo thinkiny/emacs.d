@@ -60,6 +60,15 @@
   :group 'vterm
   :prefix "vterm-anti-flicker-")
 
+(defcustom vterm-anti-flicker-flush-delay 0.035
+  "Seconds to buffer output before flushing to vterm.
+
+The anti-flicker filter buffers output briefly when it detects
+rapid redraw patterns, then flushes the accumulated output in one
+batch.  The default value (0.035) is about 35ms."
+  :type 'number
+  :group 'vterm-anti-flicker)
+
 (defvar-local vterm-anti-flicker--output-buffer nil
   "Buffer for accumulating vterm output during potential flickering sequences.")
 
@@ -91,7 +100,9 @@ Detects when INPUT contains patterns typical of terminal redrawing:
 - Cursor movement (ESC[nA/B/C/D)
 
 When these patterns are detected, output is buffered for 16ms
-and then processed in a single batch to prevent flickering."
+and then processed in a single batch to prevent flickering.
+
+The buffer duration is controlled by `vterm-anti-flicker-flush-delay'."
   (with-current-buffer (process-buffer process)
     ;; Credit for these patterns: https://github.com/yuya373/claude-code-emacs.
     ;; Check if this looks like multi-line input box redraw
@@ -116,7 +127,10 @@ and then processed in a single batch to prevent flickering."
             (when vterm-anti-flicker--output-timer
               (cancel-timer vterm-anti-flicker--output-timer))
             (setq vterm-anti-flicker--output-timer
-                  (run-at-time 0.016 nil #'vterm-anti-flicker--flush-buffer (current-buffer))))
+                  (run-at-time vterm-anti-flicker-flush-delay
+                               nil
+                               #'vterm-anti-flicker--flush-buffer
+                               (current-buffer))))
         ;; Normal output, process immediately
         (vterm--filter process input)))))
 

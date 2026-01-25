@@ -408,12 +408,43 @@ If ARG is omitted or nil, move point forward one word."
 (require-package 'string-inflection)
 (require 'string-inflection)
 
-;; ediff
+;; ediff visual-line
+(defvar my-ediff-visual-line-mode-states nil
+  "Alist mapping buffers to their original 'visual-line-mode' state.")
+
 (defun my-ediff-prepare-buffer-hook ()
+  "Save 'visual-line-mode' state and enable it for ediff."
+  (let ((buf (current-buffer)))
+    (setq my-ediff-visual-line-mode-states
+          (assq-delete-all buf my-ediff-visual-line-mode-states))
+    (push (cons buf visual-line-mode)
+          my-ediff-visual-line-mode-states))
   (visual-line-mode 1))
 
-(add-hook 'ediff-prepare-buffer-hook 'my-ediff-prepare-buffer-hook)
+(defun my-ediff-cleanup-hook ()
+  "Restore `visual-line-mode` state after ediff quits."
+  (dolist (buf (list ediff-buffer-A ediff-buffer-B ediff-buffer-C))
+    (when (buffer-live-p buf)
+      (if-let* ((entry (assq buf my-ediff-visual-line-mode-states)))
+          (with-current-buffer buf
+            (visual-line-mode (if (cdr entry) 1 -1))
+            (when (file-remote-p default-directory)
+              (run-with-timer 2 nil
+                              (lambda (buf)
+                                (when (buffer-live-p buf)
+                                  (with-current-buffer buf
+                                    (ignore-errors (revert-buffer t t t)))))
+                              buf))))))
 
+  (setq my-ediff-visual-line-mode-states
+        (cl-remove-if-not (lambda (entry) (buffer-live-p (car entry)))
+                          my-ediff-visual-line-mode-states)))
+
+(with-eval-after-load 'ediff-init
+  (add-hook 'ediff-prepare-buffer-hook #'my-ediff-prepare-buffer-hook)
+  (add-hook 'ediff-cleanup-hook #'my-ediff-cleanup-hook))
+
+;; ediff-quit
 (with-eval-after-load 'ediff-util
   (defun ediff-quit(reverse-default-keep-variants)
     "Remove y-or-n-p in edifff-util."
@@ -459,8 +490,14 @@ FILE-NAME is the remote file path, VEC is the parsed TRAMP vector."
                (with-current-buffer buffer
                  (if (string-match-p "finished" event)
                      (progn
+                       ;; set tramp
+                       (let ((tramp-file-name-handler-alist nil))
+                         (with-parsed-tramp-file-name file-name nil
+                           (set-file-times file-name mod-time)
+                           (tramp-flush-file-properties v localname)))
+
+                       ;; set local
                        (set-visited-file-modtime mod-time)
-                       ;; Only clear modified flag if buffer unchanged during save
                        (when (= tick (buffer-modified-tick))
                          (set-buffer-modified-p nil))
                        (ignore-errors (run-hooks 'after-save-hook))
