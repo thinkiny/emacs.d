@@ -11,7 +11,6 @@
               case-fold-search t
               visible-bell nil
               tab-width 4
-              auto-revert-interval 3
               make-backup-files nil
               auto-save-default nil
               indent-tabs-mode nil
@@ -236,19 +235,14 @@ With arg N, insert N newlines."
 (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
 
 ;;hs-minor-mode
-(add-hook 'prog-mode-hook
-          (lambda()
-            (hs-minor-mode)
-            (diminish 'hs-minor-mode)
-            (local-set-key "\C-c-" 'hs-hide-block)
-            (local-set-key "\C-c=" 'hs-show-block)
-            (local-set-key "\C-c_" 'hs-hide-all)
-            (local-set-key "\C-c+" 'hs-show-all)))
+(defun my/hs-minor-mode()
+  (hs-minor-mode)
+  (local-set-key "\C-c-" 'hs-hide-block)
+  (local-set-key "\C-c=" 'hs-show-block)
+  (local-set-key "\C-c_" 'hs-hide-all)
+  (local-set-key "\C-c+" 'hs-show-all))
 
-(diminish 'eldoc-mode)
-(diminish 'abbrev-mode)
-
-(require-package 'htmlize)
+(add-hook 'prog-mode-hook  #'my/hs-minor-mode)
 
 ;; dict
 (use-package bing-dict
@@ -428,13 +422,14 @@ If ARG is omitted or nil, move point forward one word."
       (if-let* ((entry (assq buf my-ediff-visual-line-mode-states)))
           (with-current-buffer buf
             (visual-line-mode (if (cdr entry) 1 -1))
-            (when (file-remote-p default-directory)
-              (run-with-timer 2 nil
-                              (lambda (buf)
-                                (when (buffer-live-p buf)
-                                  (with-current-buffer buf
-                                    (ignore-errors (revert-buffer t t t)))))
-                              buf))))))
+            ;; (when (file-remote-p default-directory)
+            ;;   (run-with-timer 2 nil
+            ;;                   (lambda (buf)
+            ;;                     (when (buffer-live-p buf)
+            ;;                       (with-current-buffer buf
+            ;;                         (ignore-errors (revert-buffer t t t)))))
+            ;;                   buf))
+            ))))
 
   (setq my-ediff-visual-line-mode-states
         (cl-remove-if-not (lambda (entry) (buffer-live-p (car entry)))
@@ -490,13 +485,14 @@ FILE-NAME is the remote file path, VEC is the parsed TRAMP vector."
                (with-current-buffer buffer
                  (if (string-match-p "finished" event)
                      (progn
-                       ;; set tramp
+                       ;; update tramp
                        (let ((tramp-file-name-handler-alist nil))
                          (with-parsed-tramp-file-name file-name nil
-                           (set-file-times file-name mod-time)
-                           (tramp-flush-file-properties v localname)))
+                           ;; (set-file-times file-name mod-time)
+                           (tramp-flush-file-properties v localname)
+                           (tramp-flush-directory-properties v (file-name-directory localname))))
 
-                       ;; set local
+                       ;; update local
                        (set-visited-file-modtime mod-time)
                        (when (= tick (buffer-modified-tick))
                          (set-buffer-modified-p nil))
@@ -523,5 +519,9 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
     (save-buffer))))
 
 (global-set-key (kbd "C-x C-s") 'save-buffer-async)
+
+;; auto-revert
+(setq auto-revert-interval 3)
+(add-hook 'prog-mode-hook #'auto-revert-mode)
 
 (provide 'init-editing-utils)

@@ -128,7 +128,7 @@
     (if-let* ((capabilities (eglot--capabilities server)))
         (if (plist-get capabilities :textDocumentSync)
             (plist-put (plist-get capabilities :textDocumentSync)
-                       :change 1)))) ; 0 = None, 1 = Full, 2 = Incremental
+                       :change 0)))) ; 0 = None, 1 = Full, 2 = Incremental
 
 (defun my-eglot-mode-hook()
   ;; (eglot--setq-saving eldoc-documentation-functions
@@ -139,7 +139,7 @@
     (remove-hook 'before-save-hook #'eglot--signal-textDocument/willSave t)
     (remove-hook 'after-save-hook #'eglot--signal-textDocument/didSave t)
     (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
-    ;; (add-hook 'eglot-server-initialized-hook #'my/eglot-disable-document-sync t)
+    (add-hook 'eglot-server-initialized-hook #'my/eglot-disable-document-sync t)
     )
 
   (setq-local completion-at-point-functions
@@ -147,7 +147,6 @@
                      #'cape-file
                      #'eglot-completion-at-point)))
 
-  ;; (auto-revert-mode)
   ;; (eglot-hover-mode)
   (if eglot-enable-format-at-save
       (eglot-enable-format)

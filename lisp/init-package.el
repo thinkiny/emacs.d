@@ -50,7 +50,6 @@ locate PACKAGE."
 
 (require-package 'cl-lib)
 (require-package 'gnu-elpa-keyring-update)
-(require-package 'diminish)
 
 (require-package 'use-package)
 (setq use-package-always-defer t

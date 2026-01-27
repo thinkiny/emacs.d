@@ -1,7 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 
 (use-package ivy
-  :diminish ivy-mode
   :commands ivy-mode
   :init (ivy-mode 1)
   :config
@@ -62,7 +61,6 @@
 (use-package ivy-hydra)
 
 (use-package ivy-rich
-  :diminish ivy-rich-mode
   :after (ivy counsel)
   :init (ivy-rich-mode 1)
   :config

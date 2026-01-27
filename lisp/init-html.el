@@ -2,6 +2,7 @@
 
 (maybe-require-package 'web-mode)
 (maybe-require-package 'zencoding-mode)
+(require-package 'htmlize)
 
 (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))

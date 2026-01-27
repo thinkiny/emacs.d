@@ -5,7 +5,6 @@
 (add-hook 'after-init-hook 'yas-global-mode)
 
 (with-eval-after-load 'yasnippet
-  (diminish 'yas-minor-mode)
   (defun gen-cpp-header-tag()
     (let* ((root (projectile-project-root))
            (path (string-trim-left
