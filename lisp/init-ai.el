@@ -8,20 +8,28 @@
 ;;   (setq aidermacs-default-chat-mode 'architect)
 ;;   (setq aidermacs-backend 'vterm))
 
-;; claude-wrapper
+;; claude-remote
 ;; #!/bin/bash
-
 ;; if [[ -n "$CLAUDE_CODE_SSE_PORT" ]]; then
 ;;   lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
 ;;   if [[ -f $lock ]]; then
 ;;     sed -ri 's/"pid":[0-9]+/"pid":'$$'/' $lock
 ;;     # Use exec so claude inherits the shell's PID
-;;     exec claude-chill -a 0 -- claude ${1+"$@"}
+;;     exec claude-chill -a 0 -- claude "$@"
 ;;   else
 ;;     exec claude "$@"
 ;;   fi
 ;; else
 ;;   exec claude "$@"
+;; fi
+
+;; claude-local
+;; #!/bin/zsh -l
+;; if [ -n "$ANTHROPIC_BASE_URL" ]; then
+;;    exec claude-chill -a 0 -- claude "$@"
+;; else
+;;    eval "$(ccr activate)"
+;;    exec claude-chill -a 0 -- claude "$@"
 ;; fi
 
 (use-package claude-code-ide
@@ -47,17 +55,17 @@
   (setq claude-code-ide-diagnostics-backend 'flymake)
   (claude-code-ide-emacs-tools-setup))
 
-;; (use-package agent-shell
-;;   :bind (:map global-map
-;;               ("C-c s a" . agent-shell-cursor-start-agent))
-;;   :config
-;;   (setq agent-shell-header-style nil)
-;;   (setq agent-shell-show-welcome-message nil)
-;;   (setq agent-shell-cursor-environment
-;;         (agent-shell-make-environment-variables
-;;          "HTTP_PROXY" "http://127.0.0.1:1087"
-;;          "HTTPS_PROXY" "http://127.0.0.1:1087"
-;;          :inherit-env t
-;;          )))
+(use-package agent-shell
+  :bind (:map global-map
+              ("C-c s a" . agent-shell-cursor-start-agent))
+  :config
+  (setq agent-shell-header-style 'text)
+  (setq agent-shell-show-welcome-message nil)
+  (setq agent-shell-cursor-environment
+        (agent-shell-make-environment-variables
+         "HTTP_PROXY" "http://127.0.0.1:1087"
+         "HTTPS_PROXY" "http://127.0.0.1:1087"
+         :inherit-env t
+         )))
 
 (provide 'init-ai)

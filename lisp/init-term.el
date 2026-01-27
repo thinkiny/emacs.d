@@ -45,14 +45,6 @@
             (setq directory (file-name-as-directory path))))
         directory))))
 
-
-(defun my-vterm-mode-hook()
-  ;; (unless (string-prefix-p "*claude-code" (buffer-name))
-  (vterm-anti-flicker-filter-enable))
-
-(add-hook 'vterm-mode-hook #'my-vterm-mode-hook)
-
-
 ;; other staff
 (defvar-local vterm-claude-loopback-mode-enabled nil
   "Track whether claude loopback mode is enabled.")
@@ -65,29 +57,55 @@ With positive ARG, enable. With negative ARG, disable."
     (let ((enable (> arg 0)))
       (unless (eq enable vterm-claude-loopback-mode-enabled)
         (vterm-send-string "\x1e")
-        (sit-for 0.2))
+        ;; (sit-for 0.1)
+        )
       (setq vterm-claude-loopback-mode-enabled enable))))
 
-(defun my/vterm-copy-mode-off-hook ()
-  "Disable vterm-claude-loopback-mode when vterm-copy-mode is turned off."
-  (unless vterm-copy-mode
-    (vterm-claude-loopback-mode -1)))
+;; handle claude-chill loopback
+(defvar my/scroll-timer nil)
+(defvar my/scrolling-p nil)
 
-(add-hook 'vterm-copy-mode-hook #'my/vterm-copy-mode-off-hook)
+(defun my/is-scroll-command-p (cmd)
+  "Return non-nil if CMD is a user-initiated scroll command."
+  (or (memq cmd '(mwheel-scroll scroll-up-command scroll-down-command
+                  scroll-up scroll-down mwheel-scroll-all))
+      ;; Check for commands that have the 'scroll-command property
+      (get cmd 'scroll-command)))
 
-(defun my/vterm-toggle-scroll (&rest _)
-  (when (eq major-mode 'vterm-mode)
-    (let ((at-top (= (window-start) (point-min)))
-          (at-bottom (>= (window-end) (point-max))))
-      (if at-bottom
-          (if vterm-copy-mode
-              (vterm-copy-mode -1))
-        (if at-top
-            (vterm-claude-loopback-mode 1))
-        (unless vterm-copy-mode
-          (vterm-copy-mode 1))))))
+(defun my/scroll-session-end ()
+  "Logic for the end of the scroll."
+  (setq my/scrolling-p nil)
+  (setq my/scroll-timer nil)
+  (let ((at-bottom (>= (window-end) (point-max))))
+    (if at-bottom
+        (when vterm-copy-mode
+          (vterm-copy-mode -1)
+          (vterm-claude-loopback-mode -1)))))
 
-(advice-add 'pixel-scroll-precision :after #'my/vterm-toggle-scroll)
+(defun my/user-scroll-monitor ()
+  "Runs after every command, but only acts on actual scrolling."
+  (when (my/is-scroll-command-p this-command)
+    ;; 1. Before Scroll (Session Start)
+    (unless my/scrolling-p
+      (setq my/scrolling-p t)
+      (when (= (window-start) (point-min))
+        (vterm-claude-loopback-mode 1))
+      (unless vterm-copy-mode
+        (vterm-copy-mode 1)))
+
+    ;; 2. After Scroll (Session End with Debounce)
+    (when my/scroll-timer
+      (cancel-timer my/scroll-timer))
+    (setq my/scroll-timer
+          (run-with-timer 0.1 nil #'my/scroll-session-end))))
+
+;; add vterm hook
+(defun my-vterm-mode-hook()
+  ;; (unless (string-prefix-p "*claude-code" (buffer-name))
+  (vterm-anti-flicker-filter-enable)
+  (add-hook 'post-command-hook #'my/user-scroll-monitor nil t))
+
+(add-hook 'vterm-mode-hook #'my-vterm-mode-hook)
 
 ;; counsel-term
 (require 'counsel-term)
