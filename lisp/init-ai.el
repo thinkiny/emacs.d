@@ -8,9 +8,8 @@
 ;;   (setq aidermacs-default-chat-mode 'architect)
 ;;   (setq aidermacs-backend 'vterm))
 
-;; claude-wrapper
+;; claude-remote
 ;; #!/bin/bash
-
 ;; if [[ -n "$CLAUDE_CODE_SSE_PORT" ]]; then
 ;;   lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
 ;;   if [[ -f $lock ]]; then
@@ -22,6 +21,14 @@
 ;;   fi
 ;; else
 ;;   exec claude "$@"
+;; fi
+
+;; claude-local
+;; #!/bin/zsh -l
+;; if [ -n "$ANTHROPIC_BASE_URL" ]; then
+;;    exec claude-chill -a 0 -- claude
+;; else
+;;    exec claude-chill -a 0 -- ccr code
 ;; fi
 
 (use-package claude-code-ide
