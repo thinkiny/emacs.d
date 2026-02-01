@@ -46,20 +46,18 @@
 ;; mouse && scroll
 (when window-system
   (pixel-scroll-precision-mode)
-  (setq mouse-avoidance-mode 'animate)
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
   (setq mouse-wheel-progressive-speed nil)
-  (setq mouse-wheel-follow-mouse 't)
   (setq scroll-step 1
         scroll-conservatively 101
-        scroll-up-aggressively 0.01
-        scroll-down-aggressively 0.01
-        auto-window-vscroll nil))
+        ;; scroll-up-aggressively 0.01
+        ;; scroll-down-aggressively 0.01
+        ))
 
 ;; scroll functions
 ;; font-height: (/ (plist-get (font-face-attributes (face-attribute 'default :font)) :height) 10)
-(defconst percision-scroll-scan-height 90)
-(defconst precision-scroll-not-plain-line-height 150)
+(defconst percision-scroll-step-height 90)
+(defconst precision-scroll-taller-line 150)
 (defconst precision-scroll-page-lines 20)
 
 (defun get-precision-scroll-line-height()
@@ -68,58 +66,21 @@
 (defun get-precision-scroll-page-height()
   (* precision-scroll-page-lines (get-precision-scroll-line-height)))
 
-(defun is-org-link-pic(link)
-  (member (file-name-extension link) '("png" "jpg")))
-
-(defun is-org-link-shown()
-  (ignore-errors
-    (if-let* ((link (org-element-property :raw-link (org-element-context))))
-        (and (is-org-link-pic link)
-             (> (line-pixel-height) (* 2 (frame-char-height)))))))
-
-(defun is-image-shown()
-  (plist-get (text-properties-at (point)) 'image-displayer))
-
-(defun not-plain-on-the-point()
-  (or (is-image-shown) (is-org-link-shown)))
-
-(defun not-plain-at-window-start()
-  (and (< (window-end) (point-max))
-       (save-excursion
-         (goto-char (window-start))
-         (not-plain-on-the-point))))
-
-(defun not-plain-at-window-end()
-  (and (> (window-start) (point-min))
-       (save-excursion
-         (goto-char (window-end))
-         (forward-line -1)
-         (not-plain-on-the-point))))
-
-(defun not-plain-next-line()
-  (save-excursion
-    (vertical-motion 1)
-    (beginning-of-visual-line)
-    (not-plain-on-the-point)))
-
-(defun not-plain-previous-line()
-  (save-excursion
-    (vertical-motion -1)
-    (beginning-of-visual-line)
-    (not-plain-on-the-point)))
+(defun is-taller-this-line()
+  (> (car (window-line-height)) (frame-char-height)))
 
 (defun precision-scroll-forward-line()
   (interactive)
-  (if (or (not-plain-next-line) (not-plain-on-the-point) (not-plain-at-window-start))
+  (if (is-taller-this-line)
       (ignore-errors
-        (pixel-scroll-precision-scroll-down precision-scroll-not-plain-line-height))
+        (pixel-scroll-precision-scroll-down precision-scroll-taller-line))
     (vertical-motion 1)))
 
 (defun precision-scroll-backward-line()
   (interactive)
-  (if (or (not-plain-previous-line) (not-plain-on-the-point) (not-plain-at-window-end))
+  (if (is-taller-this-line)
       (ignore-errors
-        (pixel-scroll-precision-scroll-up precision-scroll-not-plain-line-height))
+        (pixel-scroll-precision-scroll-up precision-scroll-taller-line))
     (vertical-motion -1)))
 
 (defun precision-scroll-up-page()

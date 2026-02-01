@@ -67,13 +67,13 @@
     (define-key map (kbd "M-v") #'nov-xwidget-scroll-down-page)
     (define-key map (kbd "N") #'nov-xwidget-next-document)
     (define-key map (kbd "P") #'nov-xwidget-previous-document)
-    (define-key map (kbd "n") #'nov-xwidget-scroll-up-scan)
-    (define-key map (kbd "j") #'nov-xwidget-scroll-up-scan)
-    (define-key map (kbd "k") #'nov-xwidget-scroll-down-scan)
-    (define-key map (kbd "s") #'nov-xwidget-scroll-up-scan)
-    (define-key map (kbd "w") #'nov-xwidget-scroll-down-scan)
+    (define-key map (kbd "n") #'nov-xwidget-scroll-up-step)
+    (define-key map (kbd "j") #'nov-xwidget-scroll-up-step)
+    (define-key map (kbd "k") #'nov-xwidget-scroll-down-step)
+    (define-key map (kbd "s") #'nov-xwidget-scroll-up-step)
+    (define-key map (kbd "w") #'nov-xwidget-scroll-down-step)
     (define-key map (kbd "G") #'xwidget-webkit-scroll-bottom)
-    (define-key map (kbd "p") #'nov-xwidget-scroll-down-scan)
+    (define-key map (kbd "p") #'nov-xwidget-scroll-down-step)
     map)
   "Keymap for `nov-xwidget-webkit-mode-map'.")
 
@@ -449,11 +449,11 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
    (xwidget-webkit-current-session)
    (format "window.scrollBy({top: %d, behavior: 'instant'});" arg)))
 
-(defun nov-xwidget-next-scan-or-page-cb(end)
+(defun nov-xwidget-next-step-or-page-cb(end)
   (setq nov-xwidget-need-resume-position nil)
   (if (s-equals-p end "1")
       (nov-xwidget-next-document)
-    (nov-xwidget-webkit-scroll percision-scroll-scan-height)))
+    (nov-xwidget-webkit-scroll percision-scroll-step-height)))
 
 (defun nov-xwidget-scroll-up-page()
   (interactive)
@@ -463,7 +463,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (interactive)
   (nov-xwidget-webkit-scroll (* -1 (get-precision-scroll-page-height))))
 
-(defun nov-xwidget-scroll-up-scan()
+(defun nov-xwidget-scroll-up-step()
   (interactive)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
@@ -473,17 +473,17 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     } else {
         return \"0\";
     }
-})();" #'nov-xwidget-next-scan-or-page-cb))
+})();" #'nov-xwidget-next-step-or-page-cb))
 
-(defun nov-xwidget-previous-scan-or-page-cb(end)
+(defun nov-xwidget-previous-step-or-page-cb(end)
   (setq nov-xwidget-need-resume-position nil)
   (if (s-equals-p end "1")
       (progn
         (nov-xwidget-previous-document)
         (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-    (nov-xwidget-webkit-scroll (* -1 percision-scroll-scan-height))))
+    (nov-xwidget-webkit-scroll (* -1 percision-scroll-step-height))))
 
-(defun nov-xwidget-scroll-down-scan()
+(defun nov-xwidget-scroll-down-step()
   (interactive)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
@@ -493,7 +493,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     } else {
         return \"0\";
     }
-})();" #'nov-xwidget-previous-scan-or-page-cb))
+})();" #'nov-xwidget-previous-step-or-page-cb))
 
 (provide 'nov-xwidget-webkit)
 ;;; nov-xwidget-webkit.el ends here
