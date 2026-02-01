@@ -1,62 +1,37 @@
 ;; init-pdf-tools.el -*- lexical-binding: t; -*-
 
-(defconst pdf-tools-lisp-dir (expand-file-name "third-parties/pdf-tools/lisp" user-emacs-directory))
+(require-package 'pdf-tools)
 (defvar pdf-view-theme-auto-dark nil)
 
-(require 'qpdf.el)
+(require 'pdf-outline)
+(require 'pdf-roll)
 
-(defun pdf-fix-selection ()
-  "Replace pdf with one where selection shows transparently."
-  (interactive)
-  (unless (equal (file-name-extension (buffer-file-name)) "pdf")
-    (error "Buffer should visit a pdf file."))
-  (unless (equal major-mode 'pdf-view-mode)
-    (pdf-view-mode))
-  ;; save file in QDF-mode
-  (qpdf-run (list
-             (concat "--infile="
-                     (buffer-file-name))
-             "--qdf --object-streams=disable"
-             "--replace-input"))
-  ;; do replacements
-  (text-mode)
-  (read-only-mode -1)
-  (while (re-search-forward "3 Tr" nil t)
-    (replace-match "7 Tr" nil nil))
-  (save-buffer)
-  (pdf-view-mode))
+(require 'pdf-history)
+(unbind-key (kbd "N") 'pdf-history-minor-mode-map)
 
-(when (file-directory-p pdf-tools-lisp-dir)
-  (add-to-list 'load-path pdf-tools-lisp-dir)
-  (require 'pdf-outline)
-  (require 'pdf-roll)
+(require 'pdf-view-restore)
+(setq pdf-view-restore-filename (expand-file-name ".pdf-view-restore" user-emacs-directory))
 
-  (require 'pdf-history)
-  (unbind-key (kbd "N") 'pdf-history-minor-mode-map)
+;; (defun calc-image-roll-size-mouse(arg)
+;;   (cond
+;;    ((= arg 1) 5)
+;;    ((< arg 4) 20)
+;;    (t 50)))
 
-  (require 'pdf-view-restore)
-  (setq pdf-view-restore-filename (expand-file-name ".pdf-view-restore" user-emacs-directory))
+;; (defun pdf-image-roll-forward-mouse(&optional arg)
+;;   (interactive "P")
+;;   (defvar image-roll-step-size)
+;;   (let ((image-roll-step-size (calc-image-roll-size-mouse arg)))
+;;     (image-roll-scroll-forward)))
 
-  ;; (defun calc-image-roll-size-mouse(arg)
-  ;;   (cond
-  ;;    ((= arg 1) 5)
-  ;;    ((< arg 4) 20)
-  ;;    (t 50)))
+;; (defun pdf-image-roll-backward-mouse(&optional arg)
+;;   (interactive "P")
+;;   (defvar image-roll-step-size)
+;;   (let ((image-roll-step-size (calc-image-roll-size-mouse arg)))
+;;     (image-roll-scroll-backward)))
 
-  ;; (defun pdf-image-roll-forward-mouse(&optional arg)
-  ;;   (interactive "P")
-  ;;   (defvar image-roll-step-size)
-  ;;   (let ((image-roll-step-size (calc-image-roll-size-mouse arg)))
-  ;;     (image-roll-scroll-forward)))
-
-  ;; (defun pdf-image-roll-backward-mouse(&optional arg)
-  ;;   (interactive "P")
-  ;;   (defvar image-roll-step-size)
-  ;;   (let ((image-roll-step-size (calc-image-roll-size-mouse arg)))
-  ;;     (image-roll-scroll-backward)))
-
-  (add-auto-mode 'pdf-view-mode "\\.pdf$")
-  (add-hook 'pdf-view-mode-hook 'my-pdf-view-mode-hook))
+(add-auto-mode 'pdf-view-mode "\\.pdf$")
+(add-hook 'pdf-view-mode-hook 'my-pdf-view-mode-hook)
 
 (after-load-theme
  (require 'pdf-tools)
@@ -182,7 +157,6 @@
   (define-key pdf-view-mode-map (kbd "C-v") #'pdf-view-scroll-up)
   ;;(define-key pdf-view-mode-map (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
   (define-key pdf-view-mode-map (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
-  ;;(add-function :after after-focus-change-function 'pdf-cscroll-close-window-when-dual)
-)
+  )
 
 (provide 'init-pdf-tools)

@@ -30,41 +30,6 @@ FILE_URLS=(
     "https://codeberg.org/pranshu/haskell-ts-mode/raw/branch/main/haskell-ts-mode.el"
 )
 
-# Build PDF tools
-build_pdf_tools() {
-    local repo_dir="${SCRIPT_DIR}/pdf-tools"
-
-    if [ ! -d "$repo_dir" ]; then
-        git clone --branch child-frame-preview https://github.com/aikrahguzar/pdf-tools.git "$repo_dir"
-    fi
-
-    pushd "$repo_dir"
-    git pull
-    pushd server
-    ./autogen.sh
-    ./configure
-    rm -f epdfinfo
-    make -j4
-    cp epdfinfo ../lisp/
-    popd
-    popd
-
-    wget --no-check-certificate https://raw.githubusercontent.com/orgtre/qpdf.el/refs/heads/master/qpdf.el -O qpdf.el
-}
-
-# Update LSP multiplexer
-update_lsp_multiplexer() {
-    local repo_dir="${SCRIPT_DIR}/lsp-multiplexer"
-
-    if [ ! -d "$repo_dir" ]; then
-        git clone --depth 1 https://github.com/garyo/lsp-multiplexer.git "$repo_dir"
-    else
-        pushd "$repo_dir"
-        git pull
-        popd
-    fi
-}
-
 # Update any git repository
 update_repo() {
     pushd "$1"
@@ -118,10 +83,6 @@ main() {
 
         # Download files
         update_files
-
-        # Optional operations (commented out by default)
-        # build_pdf_tools
-        # update_lsp_multiplexer
 
         # Update repositories
         update_lsp

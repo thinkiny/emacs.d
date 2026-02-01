@@ -15,10 +15,17 @@
   (setq vterm-max-scrollback 10000)
   (setq vterm-shell (concat shell-file-name " -l"))
 
+
+  ;; fix Ctrl-B not working in claude code in some cases
+  (defun vterm-send-key-left()
+    (interactive)
+    (vterm-send-key "<left>"))
+
   ;; key bindings
   (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
+  (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode))
 

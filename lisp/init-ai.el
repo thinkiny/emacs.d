@@ -10,6 +10,7 @@
 
 ;; claude-remote
 ;; #!/bin/bash
+;;
 ;; if [[ -n "$CLAUDE_CODE_SSE_PORT" ]]; then
 ;;   lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
 ;;   if [[ -f $lock ]]; then
@@ -25,6 +26,7 @@
 
 ;; claude-local
 ;; #!/bin/zsh -l
+;;
 ;; if [ -n "$ANTHROPIC_BASE_URL" ]; then
 ;;    exec claude-chill -a 0 -- claude "$@"
 ;; else

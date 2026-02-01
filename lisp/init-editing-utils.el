@@ -421,14 +421,15 @@ If ARG is omitted or nil, move point forward one word."
       (if-let* ((entry (assq buf my-ediff-visual-line-mode-states)))
           (with-current-buffer buf
             (visual-line-mode (if (cdr entry) 1 -1))
-            ;; (when (file-remote-p default-directory)
-            ;;   (run-with-timer 2 nil
-            ;;                   (lambda (buf)
-            ;;                     (when (buffer-live-p buf)
-            ;;                       (with-current-buffer buf
-            ;;                         (ignore-errors (revert-buffer t t t)))))
-            ;;                   buf))
-            ))))
+            (if-let* ((file-name (buffer-file-name))
+                      (timeout (if (file-remote-p file-name) 2 1)))
+                (run-with-timer timeout nil
+                                (lambda (buf)
+                                  (when (buffer-live-p buf)
+                                    (with-current-buffer buf
+                                      (ignore-errors (revert-buffer t t t)))))
+                                buf)
+            )))))
 
   (setq my-ediff-visual-line-mode-states
         (cl-remove-if-not (lambda (entry) (buffer-live-p (car entry)))
@@ -525,7 +526,7 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
   "Configure auto-revert-mode and interval based on file location."
   (if (file-remote-p default-directory)
       (when (derived-mode-p 'prog-mode)
-        (setq-local auto-revert-interval 3)
+        (setq-local auto-revert-interval 4)
         (auto-revert-mode 1))
     (setq-local auto-revert-interval 2)
     (auto-revert-mode 1)))
