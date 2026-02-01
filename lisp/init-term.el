@@ -25,7 +25,7 @@
   (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
-  (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
+  ;;(define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode))
 
@@ -69,48 +69,53 @@ With positive ARG, enable. With negative ARG, disable."
       (setq vterm-claude-loopback-mode-enabled enable))))
 
 ;; handle claude-chill loopback
-(defvar my/scroll-timer nil)
-(defvar my/scrolling-p nil)
+(defvar-local my/scroll-timer nil)
+(defvar-local my/scrolling-p nil)
 
 (defun my/is-scroll-command-p (cmd)
   "Return non-nil if CMD is a user-initiated scroll command."
   (or (memq cmd '(mwheel-scroll scroll-up-command scroll-down-command
-                  scroll-up scroll-down mwheel-scroll-all))
-      ;; Check for commands that have the 'scroll-command property
+                                scroll-up scroll-down mwheel-scroll-all))
       (get cmd 'scroll-command)))
 
+(defun my/scroll-session-start ()
+  "Handle scroll session start before command executes."
+  (when (my/is-scroll-command-p this-command)
+    (unless vterm-copy-mode
+      (vterm-copy-mode 1))
+    (when (and (not my/scrolling-p)
+               (= (window-start) (point-min)))
+      (setq my/scrolling-p t)
+      (vterm-claude-loopback-mode 1))))
+
 (defun my/scroll-session-end ()
-  "Logic for the end of the scroll."
+  "Handle scroll session end."
   (setq my/scrolling-p nil)
   (setq my/scroll-timer nil)
-  (let ((at-bottom (>= (window-end) (point-max))))
-    (if at-bottom
-        (when vterm-copy-mode
-          (vterm-copy-mode -1)
-          (vterm-claude-loopback-mode -1)))))
+  (when (and vterm-copy-mode (>= (window-end) (point-max)))
+    (vterm-copy-mode -1)
+    (vterm-claude-loopback-mode -1)))
 
-(defun my/user-scroll-monitor ()
-  "Runs after every command, but only acts on actual scrolling."
+(defun my/scroll-session-debounce ()
+  "Debounce scroll session end."
   (when (my/is-scroll-command-p this-command)
-    ;; 1. Before Scroll (Session Start)
-    (unless my/scrolling-p
-      (setq my/scrolling-p t)
-      (when (= (window-start) (point-min))
-        (vterm-claude-loopback-mode 1))
-      (unless vterm-copy-mode
-        (vterm-copy-mode 1)))
-
-    ;; 2. After Scroll (Session End with Debounce)
     (when my/scroll-timer
       (cancel-timer my/scroll-timer))
-    (setq my/scroll-timer
-          (run-with-timer 0.1 nil #'my/scroll-session-end))))
+    (let ((buf (current-buffer)))
+      (setq my/scroll-timer
+            (run-with-timer 0.1 nil
+                            (lambda ()
+                              (when (buffer-live-p buf)
+                                (with-current-buffer buf
+                                  (my/scroll-session-end)))))))))
 
 ;; add vterm hook
 (defun my-vterm-mode-hook()
-  ;; (unless (string-prefix-p "*claude-code" (buffer-name))
   (vterm-anti-flicker-filter-enable)
-  (add-hook 'post-command-hook #'my/user-scroll-monitor nil t))
+  ;; (unless (string-prefix-p "*claude-code" (buffer-name))
+  (add-hook 'pre-command-hook #'my/scroll-session-start nil t)
+  (add-hook 'post-command-hook #'my/scroll-session-debounce nil t)
+  )
 
 (add-hook 'vterm-mode-hook #'my-vterm-mode-hook)
 

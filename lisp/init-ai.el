@@ -45,17 +45,18 @@
   (setq claude-code-ide-terminal-backend 'vterm)
   (setq claude-code-ide-prevent-reflow-glitch nil) ;; use claude-chill
   (setq claude-code-ide-vterm-anti-flicker nil) ;; use vterm-anti-flicker-filter-enable
-  (setq claude-code-ide-use-side-window nil)
-  (add-to-list 'display-buffer-alist
-               '("\\*claude-code*"
-                 (display-buffer-in-side-window)
-                 (side . right)
-                 (window-width . 0.5)))
   (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 80)
   (setq claude-code-ide-diagnostics-backend 'flymake)
-  (claude-code-ide-emacs-tools-setup))
+  (claude-code-ide-emacs-tools-setup)
+
+  (setq claude-code-ide-use-side-window nil)
+  (add-to-list 'display-buffer-alist
+               '("\\*claude-code*"
+                 (display-buffer-in-direction)
+                 (direction . right)
+                 (window-width . 0.5))))
 
 (use-package agent-shell
   :bind (:map global-map

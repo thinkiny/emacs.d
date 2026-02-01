@@ -522,15 +522,16 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
 
 ;; auto-revert
 (setq auto-revert-remote-files t)
-(defun my-configure-auto-revert ()
-  "Configure auto-revert-mode and interval based on file location."
-  (if (file-remote-p default-directory)
-      (when (derived-mode-p 'prog-mode)
+(defun toggle-auto-revert ()
+  "Toggle 'auto-revert-mode, configuring interval based on file location."
+  (interactive)
+  (if auto-revert-mode
+      (auto-revert-mode -1)
+    (if (file-remote-p default-directory)
         (setq-local auto-revert-interval 4)
-        (auto-revert-mode 1))
-    (setq-local auto-revert-interval 2)
+      (setq-local auto-revert-interval 2))
     (auto-revert-mode 1)))
 
-(add-hook 'find-file-hook #'my-configure-auto-revert)
+(add-hook 'prog-mode-hook #'toggle-auto-revert)
 
 (provide 'init-editing-utils)
