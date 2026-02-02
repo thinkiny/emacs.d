@@ -25,14 +25,11 @@
   (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
-  ;;(define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
+  ;; (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode))
 
 (with-eval-after-load 'vterm
-  (require 'vterm-anti-flicker-filter)
-  (remove-hook 'vterm-mode-hook #'vterm-anti-flicker-filter-enable)
-
   (defun vterm--get-directory (path)
     "Get normalized directory to PATH."
     (when path
@@ -82,11 +79,9 @@ With positive ARG, enable. With negative ARG, disable."
   "Handle scroll session start before command executes."
   (when (my/is-scroll-command-p this-command)
     (unless vterm-copy-mode
-      (vterm-copy-mode 1))
-    (when (and (not my/scrolling-p)
-               (= (window-start) (point-min)))
       (setq my/scrolling-p t)
-      (vterm-claude-loopback-mode 1))))
+      (vterm-claude-loopback-mode 1)
+      (vterm-copy-mode 1))))
 
 (defun my/scroll-session-end ()
   "Handle scroll session end."
@@ -111,8 +106,6 @@ With positive ARG, enable. With negative ARG, disable."
 
 ;; add vterm hook
 (defun my-vterm-mode-hook()
-  (vterm-anti-flicker-filter-enable)
-  ;; (unless (string-prefix-p "*claude-code" (buffer-name))
   (add-hook 'pre-command-hook #'my/scroll-session-start nil t)
   (add-hook 'post-command-hook #'my/scroll-session-debounce nil t)
   )

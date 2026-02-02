@@ -22,7 +22,6 @@ FILE_URLS=(
     # "https://raw.githubusercontent.com/canatella/use-theme/master/use-theme.el"
     # "https://raw.githubusercontent.com/jdtsmith/eglot-booster/main/eglot-booster.el"
     # "https://codeberg.org/slotThe/eglot-hover/raw/branch/main/eglot-hover.el"
-    "https://raw.githubusercontent.com/thinkiny/vterm-anti-flicker-filter/refs/heads/main/vterm-anti-flicker-filter.el"
     "https://raw.githubusercontent.com/google/styleguide/gh-pages/google-c-style.el"
     "https://raw.githubusercontent.com/007kevin/pdf-view-restore/master/pdf-view-restore.el"
     "https://raw.githubusercontent.com/gaoDean/org-remoteimg/main/org-remoteimg.el"

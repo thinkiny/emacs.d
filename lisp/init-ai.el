@@ -1,13 +1,5 @@
 ;;; init-ai.el --- init-ai -*- lexical-binding: t -*-
 
-;; (use-package aidermacs
-;;   :bind (:map global-map
-;;               ("C-c y" . aidermacs-transient-menu))
-;;   :config
-;;   (aidermacs-setup-minor-mode)
-;;   (setq aidermacs-default-chat-mode 'architect)
-;;   (setq aidermacs-backend 'vterm))
-
 ;; claude-remote
 ;; #!/bin/bash
 ;;
@@ -44,7 +36,6 @@
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'vterm)
   (setq claude-code-ide-prevent-reflow-glitch nil) ;; use claude-chill
-  (setq claude-code-ide-vterm-anti-flicker nil) ;; use vterm-anti-flicker-filter-enable
   (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 80)
