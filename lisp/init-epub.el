@@ -3,7 +3,7 @@
 (defvar nov-use-xwidget t)
 
 (require 'init-nov)
-(require 'nov-xwidget-mode)
+(require 'nov-xwidget)
 
 (defun modeline-nov-document-index()
   (format " %d/%d" nov-documents-index (length nov-documents)))

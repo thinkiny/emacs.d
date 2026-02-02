@@ -35,7 +35,7 @@
       (xwidget-webkit-new-session url)
       (setq xwidget-webkit-browse-session (xwidget-webkit-last-session)))))
 
-(defun xwidget-webkit-browse-open-url(url)
+(defun xwidget-webkit-browse-open-url(url &optional rest)
   "Ask xwidget-webkit to browse URL."
   (interactive (progn
                  (list
