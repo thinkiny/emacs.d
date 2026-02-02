@@ -67,7 +67,6 @@ With positive ARG, enable. With negative ARG, disable."
 
 ;; handle claude-chill loopback
 (defvar-local my/scroll-timer nil)
-(defvar-local my/scrolling-p nil)
 
 (defun my/is-scroll-command-p (cmd)
   "Return non-nil if CMD is a user-initiated scroll command."
@@ -78,14 +77,13 @@ With positive ARG, enable. With negative ARG, disable."
 (defun my/scroll-session-start ()
   "Handle scroll session start before command executes."
   (when (my/is-scroll-command-p this-command)
+    (if (= (window-start) (point-min))
+        (vterm-claude-loopback-mode 1))
     (unless vterm-copy-mode
-      (setq my/scrolling-p t)
-      (vterm-claude-loopback-mode 1)
       (vterm-copy-mode 1))))
 
 (defun my/scroll-session-end ()
   "Handle scroll session end."
-  (setq my/scrolling-p nil)
   (setq my/scroll-timer nil)
   (when (and vterm-copy-mode (>= (window-end) (point-max)))
     (vterm-copy-mode -1)
