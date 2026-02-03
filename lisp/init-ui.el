@@ -163,6 +163,7 @@
     :demand t
     :config
     (setq cnfonts-use-face-font-rescale t)
+    (setq use-default-font-for-symbols nil)
     (cnfonts-mode)
     (unbind-all-keys cnfonts-mode-map)))
 

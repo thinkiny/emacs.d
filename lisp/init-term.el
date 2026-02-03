@@ -15,7 +15,6 @@
   (setq vterm-max-scrollback 10000)
   (setq vterm-shell (concat shell-file-name " -l"))
 
-
   ;; fix Ctrl-B not working in claude code in some cases
   (defun vterm-send-key-left()
     (interactive)
@@ -53,60 +52,64 @@
 (defvar-local vterm-claude-loopback-mode-enabled nil
   "Track whether claude loopback mode is enabled.")
 
+(defun toggle-vterm-claude-loopback-mode ()
+  (interactive)
+  (vterm-claude-loopback-mode (not vterm-claude-loopback-mode-enabled)))
+
 (defun vterm-claude-loopback-mode (arg)
   "Toggle claude loopback mode.
 With positive ARG, enable. With negative ARG, disable."
   (when (and (string-prefix-p "*claude-code" (buffer-name))
              (not claude-code-ide-prevent-reflow-glitch))
-    (let ((enable (> arg 0)))
-      (unless (eq enable vterm-claude-loopback-mode-enabled)
-        (vterm-send-string "\x1e")
-        ;; (sit-for 0.1)
-        )
-      (setq vterm-claude-loopback-mode-enabled enable))))
+    (unless (eq arg vterm-claude-loopback-mode-enabled)
+      (vterm-send-string "\x1e")
+      ;; (sit-for 0.1)
+      )
+    (setq vterm-claude-loopback-mode-enabled arg)))
 
 ;; handle claude-chill loopback
-(defvar-local my/scroll-timer nil)
+(defvar-local vterm--scroll-timer nil)
 
-(defun my/is-scroll-command-p (cmd)
+(defun vterm--pixel-scroll-precision-up (orig delta)
+  (when (derived-mode-p 'vterm-mode)
+    (vterm-claude-loopback-mode t))
+  (funcall orig delta))
+
+(with-eval-after-load 'pixel-scroll
+  (advice-add 'pixel-scroll-precision-scroll-up :around #'vterm--pixel-scroll-precision-up))
+
+(defun vterm--is-scroll-command-p (cmd)
   "Return non-nil if CMD is a user-initiated scroll command."
   (or (memq cmd '(mwheel-scroll scroll-up-command scroll-down-command
                                 scroll-up scroll-down mwheel-scroll-all))
       (get cmd 'scroll-command)))
 
-(defun my/scroll-session-start ()
-  "Handle scroll session start before command executes."
-  (when (my/is-scroll-command-p this-command)
-    (if (= (window-start) (point-min))
-        (vterm-claude-loopback-mode 1))
-    (unless vterm-copy-mode
-      (vterm-copy-mode 1))))
-
-(defun my/scroll-session-end ()
+(defun vterm--scroll-session-end ()
   "Handle scroll session end."
-  (setq my/scroll-timer nil)
-  (when (and vterm-copy-mode (>= (window-end) (point-max)))
-    (vterm-copy-mode -1)
-    (vterm-claude-loopback-mode -1)))
+  (setq vterm--scroll-timer nil)
+  (when (>= (window-end) (point-max))
+    (vterm-claude-loopback-mode nil)
+    (when vterm-copy-mode
+      (vterm-copy-mode -1))))
 
-(defun my/scroll-session-debounce ()
+(defun vterm--scroll-session-debounce ()
   "Debounce scroll session end."
-  (when (my/is-scroll-command-p this-command)
-    (when my/scroll-timer
-      (cancel-timer my/scroll-timer))
+  (when (vterm--is-scroll-command-p this-command)
+    (when vterm--scroll-timer
+      (cancel-timer vterm--scroll-timer))
     (let ((buf (current-buffer)))
-      (setq my/scroll-timer
+      (unless vterm-copy-mode
+        (vterm-copy-mode 1))
+      (setq vterm--scroll-timer
             (run-with-timer 0.1 nil
                             (lambda ()
                               (when (buffer-live-p buf)
                                 (with-current-buffer buf
-                                  (my/scroll-session-end)))))))))
+                                  (vterm--scroll-session-end)))))))))
 
 ;; add vterm hook
 (defun my-vterm-mode-hook()
-  (add-hook 'pre-command-hook #'my/scroll-session-start nil t)
-  (add-hook 'post-command-hook #'my/scroll-session-debounce nil t)
-  )
+  (add-hook 'post-command-hook #'vterm--scroll-session-debounce nil t))
 
 (add-hook 'vterm-mode-hook #'my-vterm-mode-hook)
 

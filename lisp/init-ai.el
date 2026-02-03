@@ -46,9 +46,11 @@
   (setq claude-code-ide-use-side-window nil)
   (add-to-list 'display-buffer-alist
                '("\\*claude-code*"
-                 (display-buffer-in-direction)
+                 (display-buffer-use-some-frame
+                  display-buffer-in-direction)
                  (direction . right)
-                 (window-width . 0.5))))
+                 (window-width . 0.5)
+                 )))
 
 (use-package agent-shell
   :bind (:map global-map

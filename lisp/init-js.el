@@ -10,15 +10,15 @@
                              :initializationOptions
                              (:preferences
                               (:importModuleSpecifierPreference "relative"
-                                                                :allowRenameOfImportPath t
-                                                                :includeInlayEnumMemberValueHints t
-                                                                :includeInlayFunctionLikeReturnTypeHints t
-                                                                :includeInlayFunctionParameterTypeHints t
-                                                                :includeInlayParameterNameHints "all" ; "none" | "literals" | "all"
-                                                                :includeInlayParameterNameHintsWhenArgumentMatchesName t
-                                                                :includeInlayPropertyDeclarationTypeHints t
-                                                                :includeInlayVariableTypeHints t
-                                                                :includeInlayVariableTypeHintsWhenTypeMatchesName t)))))
+                               :allowRenameOfImportPath t
+                               :includeInlayEnumMemberValueHints t
+                               :includeInlayFunctionLikeReturnTypeHints t
+                               :includeInlayFunctionParameterTypeHints t
+                               :includeInlayParameterNameHints "all" ; "none" | "literals" | "all"
+                               :includeInlayParameterNameHintsWhenArgumentMatchesName t
+                               :includeInlayPropertyDeclarationTypeHints t
+                               :includeInlayVariableTypeHints t
+                               :includeInlayVariableTypeHintsWhenTypeMatchesName t)))))
 
 (dolist (hook (mapcar #'derived-mode-hook-name ts-lsp-modes))
   (add-hook hook 'eglot-ensure))

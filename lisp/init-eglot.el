@@ -35,6 +35,8 @@
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
                                                         :usePlaceholders t
                                                         :analyses  (:ST1003 :json-false))
+                                                :javascript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
+                                                :typescript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
                                                 :basedpyright.analysis (:typeCheckingMode "standard"
                                                                         :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
                                                                                                       :reportOptionalSubscript "warning"
@@ -155,11 +157,18 @@
 (with-eval-after-load-theme 'eglot
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))
 
-(defun set-eglot-server-progam (mode cmd)
-  (setq eglot-server-programs (assoc-delete-all mode eglot-server-programs))
-  (if (listp cmd)
-      (push `(,mode ,@cmd) eglot-server-programs)
-    (push `(,mode ,cmd) eglot-server-programs)))
+(defun set-eglot-server-progam (modes cmd)
+  (let* ((modes (if (listp modes) modes (list modes))))
+    (setq eglot-server-programs
+          (cl-remove-if (lambda (entry)
+                          (let ((key (car entry)))
+                            (if (listp key)
+                                (seq-some (lambda (m) (memq m key)) modes)
+                              (memq key modes))))
+                        eglot-server-programs))
+    (if (listp cmd)
+        (push `(,modes ,@cmd) eglot-server-programs)
+      (push `(,modes ,cmd) eglot-server-programs))))
 
 ;; manual execute lsp command
 (defun my/eglot-enable-command-provider (orig-fn server)
