@@ -44,10 +44,13 @@
   (claude-code-ide-emacs-tools-setup)
 
   (setq claude-code-ide-use-side-window nil)
+  (defun claude-code--display-buffer (buffer alist)
+    (delete-other-windows)
+    (display-buffer-in-direction buffer alist))
   (add-to-list 'display-buffer-alist
                '("\\*claude-code*"
                  (display-buffer-use-some-frame
-                  display-buffer-in-direction)
+                  claude-code--display-buffer)
                  (direction . right)
                  (window-width . 0.5)
                  )))
