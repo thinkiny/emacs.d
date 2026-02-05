@@ -8,7 +8,6 @@
 (use-package eglot
   :hook (eglot-managed-mode . my-eglot-mode-hook)
   :config
-  (setq eglot-events-buffer-size 0)
   (setq eglot-code-action-indications nil)
   (setq eglot-events-buffer-config '(:size 0 :format full))
   (setq eglot-extend-to-xref t)
@@ -157,18 +156,24 @@
 (with-eval-after-load-theme 'eglot
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))
 
-(defun set-eglot-server-progam (modes cmd)
-  (let* ((modes (if (listp modes) modes (list modes))))
-    (setq eglot-server-programs
-          (cl-remove-if (lambda (entry)
-                          (let ((key (car entry)))
-                            (if (listp key)
-                                (seq-some (lambda (m) (memq m key)) modes)
-                              (memq key modes))))
-                        eglot-server-programs))
-    (if (listp cmd)
-        (push `(,modes ,@cmd) eglot-server-programs)
-      (push `(,modes ,cmd) eglot-server-programs))))
+(defun set-eglot-server-program (modes cmd)
+  "Set or update eglot server program for MODES with CMD.
+Removes any existing entries for the specified modes and adds new configuration."
+  (cl-labels ((ensure-list (value)
+                (if (listp value) value (list value)))
+              (mode-symbol (mode)
+                (if (consp mode) (car mode) mode))
+              (entry-symbols (entry-key)
+                (mapcar #'mode-symbol (ensure-list entry-key))))
+    (let* ((modes (ensure-list modes))
+           (mode-symbols (mapcar #'mode-symbol modes))
+           (cmd-list (ensure-list cmd)))
+      (setq eglot-server-programs
+            (cl-remove-if
+             (lambda (entry)
+               (seq-intersection mode-symbols (entry-symbols (car entry))))
+             eglot-server-programs))
+      (push (append (list modes) cmd-list) eglot-server-programs))))
 
 ;; manual execute lsp command
 (defun my/eglot-enable-command-provider (orig-fn server)

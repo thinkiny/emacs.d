@@ -10,13 +10,13 @@
 
 ;; use https://github.com/garyo/lsp-multiplexer/tree/main
 ;;(with-eval-after-load 'eglot
-;;  (set-eglot-server-progam '(python-mode python-ts-mode) '("lsp-multiplexer-python")))
+;;  (set-eglot-server-program '(python-mode python-ts-mode) '("lsp-multiplexer-python")))
 
 ;; use https://github.com/joaotavora/rassumfrassum
 (with-eval-after-load 'eglot
   ;; pip install rassumfrassum
   ;; rass-python: rass -- pyrefly lsp  -- ruff server
-  (set-eglot-server-progam '(python-mode python-ts-mode) '("rass-python")))
+  (set-eglot-server-program '(python-mode python-ts-mode) '("rass-python")))
 
 (use-package pyvenv-auto
   :custom

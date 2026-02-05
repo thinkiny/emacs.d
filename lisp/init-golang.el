@@ -53,7 +53,7 @@
   ;; rass-golang: rass -- gopls -- golangci-lint-langserver
   ;; go install golang.org/x/tools/gopls@latest
   ;; go install github.com/thinkiny/golangci-lint-langserver@default-option
-  (set-eglot-server-progam '(go-mode go-ts-mode) '("rass-golang")))
+  (set-eglot-server-program '(go-mode go-ts-mode) '("rass-golang")))
 
 (defun my-go-mode-hook()
   (eglot-ensure)

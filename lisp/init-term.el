@@ -45,6 +45,7 @@
             (vterm--pixel-scroll-precision-down))))))
 
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
+  (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (add-hook 'vterm-copy-mode-hook #'my-vterm-copy-mode-hook))
 
 (with-eval-after-load 'vterm
@@ -99,21 +100,20 @@
         (vterm-send-string "\x1e"))
       (setq vterm-claude-loopback-mode-enabled enable))))
 
-
 ;; vterm--pixel-scroll
 (defvar-local vterm--scroll-timer nil)
 (defun vterm--pixel-scroll-precision-up ()
-  (unless (= (window-start) 1)
-    (when vterm--scroll-timer
-      (cancel-timer vterm--scroll-timer)
-      (setq vterm--scroll-timer nil))
-    (vterm-claude-loopback-mode t)))
+  (when vterm--scroll-timer
+    (cancel-timer vterm--scroll-timer)
+    (setq vterm--scroll-timer nil))
+  (unless vterm-copy-mode
+    (vterm-copy-mode 1)))
 
 (defun vterm--scroll-session-end ()
   "Handle scroll session end."
   (setq vterm--scroll-timer nil)
-  (when (>= (window-end) (point-max))
-    (vterm-claude-loopback-mode nil)))
+  (when (and (>= (window-end) (point-max)) vterm-copy-mode)
+    (vterm-copy-mode -1)))
 
 (defun vterm--pixel-scroll-precision-down ()
   (when vterm--scroll-timer
