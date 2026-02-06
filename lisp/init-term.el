@@ -24,7 +24,7 @@
   (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
-  ;; (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
+  (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
 

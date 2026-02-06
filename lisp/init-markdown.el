@@ -1,11 +1,23 @@
 ;; -*- lexical-binding: t; -*-
 
-(use-package markdown-mode
-  :mode ("\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown")
-  :config
-  (setq markdown-fontify-code-blocks-natively t)
-  (define-key markdown-mode-command-map (kbd "g") 'grip-mode))
+(use-package markdown-ts-mode
+  :mode ("\\.md\\'" . markdown-ts-mode))
+
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman"))))
+
+(defun my-markdown-ts-mode()
+  (gfm-mode)
+  (eglot-ensure))
+
+(add-hook 'markdown-ts-mode-hook #'my-markdown-ts-mode)
+
+;; (use-package markdown-mode
+;;   :mode ("\\.md\\'" . gfm-mode)
+;;   :init (setq markdown-command "multimarkdown")
+;;   :config
+;;   (setq markdown-fontify-code-blocks-natively t)
+;;   (define-key markdown-mode-command-map (kbd "g") 'grip-mode))
 
 (use-package grip-mode
   :commands grip-mode

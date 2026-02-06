@@ -57,7 +57,7 @@
 
 (use-package agent-shell
   :bind (:map global-map
-              ("C-c s a" . agent-shell-cursor-start-agent))
+              ("C-c s a" . agent-shell))
   :config
   (setq agent-shell-header-style 'text)
   (setq agent-shell-show-welcome-message nil)

@@ -361,7 +361,7 @@ With arg N, insert N newlines."
 
 ;; hcl-mode
 (use-package hcl-mode
-  :mode (("\\.conf$" . hcl-mode)))
+  :mode (("\\.conf\\'" . hcl-mode)))
 
 ;; dwim-shell-command
 (use-package dwim-shell-command

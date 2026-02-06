@@ -5,7 +5,8 @@
 
 ;; protobuf
 (use-package protobuf-mode
-  :mode (("\\.proto$" . protobuf-mode) ("\\.proto3$" . protobuf-mode))
+  :mode (("\\.proto\\'" . protobuf-mode)
+         ("\\.proto3\\'" . protobuf-mode))
   :config
   (add-hook 'protobuf-mode-hook
             (lambda ()
