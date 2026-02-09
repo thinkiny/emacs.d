@@ -17,14 +17,7 @@
 ;; fi
 
 ;; claude-local
-;; #!/bin/zsh -l
-;;
-;; if [ -n "$ANTHROPIC_BASE_URL" ]; then
-;;    exec claude-chill -a 0 -- claude "$@"
-;; else
-;;    eval "$(ccr activate)"
-;;    exec claude-chill -a 0 -- claude "$@"
-;; fi
+;; exec claude-chill -a 0 -- claude "$@"
 
 (use-package claude-code-ide
   :ensure t

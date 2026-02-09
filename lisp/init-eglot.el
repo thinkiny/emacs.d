@@ -1,15 +1,19 @@
 ;;; init-eglot  -*- lexical-binding: t; -*-
 
+(defconst eglot-enable-debug-buffer nil)
+
 (with-eval-after-load 'jsonrpc
-  (setq jsonrpc-inhibit-debug-on-error t)
-  (setq jsonrpc-event-hook nil)
-  (fset #'jsonrpc--log-event #'ignore))
+  (unless eglot-enable-debug-buffer
+    (setq jsonrpc-inhibit-debug-on-error t)
+    (setq jsonrpc-event-hook nil)
+    (fset #'jsonrpc--log-event #'ignore)))
 
 (use-package eglot
   :hook (eglot-managed-mode . my-eglot-mode-hook)
   :config
   (setq eglot-code-action-indications nil)
-  (setq eglot-events-buffer-config '(:size 0 :format full))
+  (unless eglot-enable-debug-buffer
+    (setq eglot-events-buffer-config '(:size 0 :format full)))
   (setq eglot-extend-to-xref t)
   (setq eglot-autoshutdown t)
   (setq eglot-prefer-plaintext t)
@@ -34,16 +38,25 @@
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
                                                         :usePlaceholders t
                                                         :analyses  (:ST1003 :json-false))
-                                                :javascript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
-                                                :typescript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
-                                                :basedpyright.analysis (:typeCheckingMode "standard"
-                                                                        :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
-                                                                                                      :reportOptionalSubscript "warning"
-                                                                                                      :reportReturnType "warning"
-                                                                                                      :reportTypedDictNotRequiredAccess "warning")
-                                                                        :useLibraryCodeForTypes t
-                                                                        :diagnosticMode "workspace"
-                                                                        :autoSearchPaths t)))
+                                                :vtsls
+                                                (:autoUseWorkspaceTsdk t
+                                                 :typescript
+                                                 (:preferGoToSourceDefinition t
+                                                  :preferences (:importModuleSpecifier "relative"))
+                                                 :javascript
+                                                 (:preferGoToSourceDefinition t
+                                                  :preferences (:importModuleSpecifier "relative")))
+                                                ;; :javascript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
+                                                ;; :typescript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
+                                                ;; :basedpyright.analysis (:typeCheckingMode "standard"
+                                                ;;                         :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
+                                                ;;                                                       :reportOptionalSubscript "warning"
+                                                ;;                                                       :reportReturnType "warning"
+                                                ;;                                                       :reportTypedDictNotRequiredAccess "warning")
+                                                ;;                         :useLibraryCodeForTypes t
+                                                ;;                         :diagnosticMode "workspace"
+                                                ;;                         :autoSearchPaths t)
+                ))
 
   ;;(setq completion-category-defaults nil)
   (setq mode-line-misc-info
