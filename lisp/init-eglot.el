@@ -2,6 +2,14 @@
 
 (defconst eglot-enable-debug-buffer nil)
 
+;; only for debug
+;; (advice-add 'eglot-execute :before
+;;             (lambda (server action &rest _)
+;;               (message "eglot-execute: server=%s command=%s"
+;;                        server (plist-get action :command)))
+;;             '((name . eglot-log-execute)))
+;; (advice-remove 'eglot-execute 'eglot-log-execute)
+
 (with-eval-after-load 'jsonrpc
   (unless eglot-enable-debug-buffer
     (setq jsonrpc-inhibit-debug-on-error t)

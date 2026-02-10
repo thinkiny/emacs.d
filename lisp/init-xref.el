@@ -69,12 +69,13 @@ Override existing value with NEW-VALUE if it's set."
 (defun my/xref-find-definitions ()
   "Find definitions with fallback when backend fails."
   (interactive)
-  (condition-case nil
+  (if (null my/xref-fallback-backends)
       (xref-find-definitions (xref-backend-identifier-at-point (xref-find-backend)))
-    (error
-     (let ((xref-backend-functions
-            (append my/xref-fallback-backends (list #'dumb-jump-xref-activate))))
-       (xref-find-definitions (xref-backend-identifier-at-point (xref-find-backend)))))))
+    (condition-case nil
+        (xref-find-definitions (xref-backend-identifier-at-point (xref-find-backend)))
+      (error
+       (let ((xref-backend-functions my/xref-fallback-backends))
+         (xref-find-definitions (xref-backend-identifier-at-point (xref-find-backend))))))))
 
 (defun my/xref-find-references ()
   "Find references, merging results from primary and fallback backends."

@@ -16,11 +16,13 @@
   ;;                               :allowRenameOfImportPath t))))
 
   ;; npm install -g @vtsls/language-server
+  ;; npm install -g @t1ckbase/vscode-langservers-extracted
+  ;; rass-js: rass -- vtsls --stdio -- vscode-eslint-language-server --stdio
   (set-eglot-server-program
    '((js-ts-mode :language-id "javascript")
      (tsx-ts-mode :language-id "typescriptreact")
      (typescript-ts-mode :language-id "typescript"))
-   `("vtsls" "--stdio"))
+   `("rass-js"))
   )
 
 
@@ -106,7 +108,6 @@
 (dolist (hook (mapcar #'derived-mode-hook-name ts-lsp-modes))
   (add-hook hook 'my-js-ts-mode-hook))
 
-(add-auto-mode 'json-ts-mode "\\.json")
 (add-auto-mode 'js-ts-mode "\\.js\\'" "\\.mjs\\'" "\\.jsx\\'")
 (add-auto-mode 'tsx-ts-mode "\\.tsx\\'")
 (add-auto-mode 'typescript-ts-mode "\\.ts\\'")
