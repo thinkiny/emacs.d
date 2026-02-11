@@ -10,7 +10,8 @@
 (defun sanityinc/show-trailing-whitespace ()
   "Enable display of trailing whitespace in this buffer."
   (setq-local show-trailing-whitespace t)
-  (whitespace-cleanup-mode))
+  (unless (file-remote-p default-directory)
+    (whitespace-cleanup-mode)))
 
 (dolist (hook '(prog-mode-hook text-mode-hook conf-mode-hook maven-pom-mode shell-script-mode snippet-mode))
   (add-hook hook 'sanityinc/show-trailing-whitespace))

@@ -1,0 +1,2 @@
+#!/bin/zsh
+exec rass -- pyrefly lsp  -- ruff server

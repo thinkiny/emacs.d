@@ -5,7 +5,6 @@
 (setq ts-lsp-modes '(js-ts-mode tsx-ts-mode typescript-ts-mode))
 
 (with-eval-after-load 'eglot
-  ;; npm install -g typescript-language-server typescript
   ;; (set-eglot-server-program '((js-ts-mode :language-id "javascript")
   ;;                             (tsx-ts-mode :language-id "typescriptreact")
   ;;                             (typescript-ts-mode :language-id "typescript"))
@@ -14,10 +13,6 @@
   ;;                             (:preferences
   ;;                              (:importModuleSpecifierPreference "project-relative"
   ;;                               :allowRenameOfImportPath t))))
-
-  ;; npm install -g @vtsls/language-server
-  ;; npm install -g @t1ckbase/vscode-langservers-extracted
-  ;; rass-js: rass -- vtsls --stdio -- vscode-eslint-language-server --stdio
   (set-eglot-server-program
    '((js-ts-mode :language-id "javascript")
      (tsx-ts-mode :language-id "typescriptreact")

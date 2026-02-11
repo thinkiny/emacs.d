@@ -39,9 +39,11 @@ update_repo() {
 # Update LSP tools
 update_lsp() {
     go install golang.org/x/tools/gopls@latest
-    npm install -g typescript-language-server typescript
+    #npm install -g typescript-language-server typescript
     pipx upgrade pyrefly
     pipx upgrade rassumfrassum
+    npm install -g @vtsls/language-server
+    npm install -g @t1ckbase/vscode-langservers-extracted
 }
 
 # Download all configured files

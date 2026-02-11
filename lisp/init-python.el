@@ -8,14 +8,8 @@
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
 (require-package 'pip-requirements)
 
-;; use https://github.com/garyo/lsp-multiplexer/tree/main
-;;(with-eval-after-load 'eglot
-;;  (set-eglot-server-program '(python-mode python-ts-mode) '("lsp-multiplexer-python")))
-
 ;; use https://github.com/joaotavora/rassumfrassum
 (with-eval-after-load 'eglot
-  ;; pip install rassumfrassum
-  ;; rass-python: rass -- pyrefly lsp  -- ruff server
   (set-eglot-server-program '(python-mode python-ts-mode) '("rass-python")))
 
 (use-package pyvenv-auto

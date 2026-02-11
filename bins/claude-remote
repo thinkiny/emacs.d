@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [[ -n "$CLAUDE_CODE_SSE_PORT" ]]; then
+  lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
+  if [[ -f $lock ]]; then
+    sed -ri 's/"pid":[0-9]+/"pid":'$$'/' $lock
+    # Use exec so claude inherits the shell's PID
+    exec claude-chill -a 0 -- claude ${1+"$@"}
+  else
+    exec claude "$@"
+  fi
+else
+  exec claude "$@"
+fi

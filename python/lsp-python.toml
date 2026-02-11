@@ -1,5 +1,0 @@
-[[servers]]
-command = ["basedpyright-langserver", "--stdio"]
-
-[[servers]]
-command = ["ruff", "server"]
