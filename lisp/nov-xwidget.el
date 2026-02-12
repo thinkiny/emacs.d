@@ -340,7 +340,9 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (setq-local nov-epub-version epub)
       (setq-local nov-temp-dir temp-dir)
       (setq-local nov-metadata metadata)
+      (setq-local buffer-file-name epub-file-name)
       (setq-local cursor-type nil)
+      (set-buffer-modified-p nil)
       (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name)))
       )))
 

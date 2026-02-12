@@ -26,6 +26,7 @@
               ("C-c y" . claude-code-ide-menu))
   :config
   ;; (setq claude-code-ide-debug t)
+  (setq claude-code-ide-emacs-prompt "IMPORTANT: Connected to Emacs via claude-code-ide integration. Emacs uses mixed coordinates: Lines: 1-based (line 1 = first line), Columns: 0-based (column 0 = first column). Features: xref, tree-sitter, imenu, project, diagnostics, Context-aware with automatic project/file/selection tracking. Prefer Emacs tools to others. Never read binary files such as PDFs or EPUBs directly; use claude-code-ide-mcp-get-visible-text instead")
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'vterm)
   (setq claude-code-ide-prevent-reflow-glitch nil) ;; use claude-chill
@@ -35,6 +36,9 @@
         claude-code-ide-window-width 80)
   (setq claude-code-ide-diagnostics-backend 'flymake)
   (claude-code-ide-emacs-tools-setup)
+  (require 'claude-xwidgets-mcp-tools)
+  (claude-xwidgets-mcp-tools-setup)
+
 
   (setq claude-code-ide-use-side-window nil)
   (defun claude-code--display-buffer (buffer alist)
