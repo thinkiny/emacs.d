@@ -4,13 +4,14 @@
 (require 's)
 
 (defconst pdf-xwidget-name-format "*PDF: %s")
+(defconst pdfjs-dir (expand-file-name "~/.emacs.d/assets/pdfjs"))
 
 (defun pdf-xwidget-view-url (file)
   (unless (s-starts-with? "/" file)
     (setq file (concat "/" file)))
-  (format "http://localhost:%s%s/pdfjs/web/viewer.html?file=%s"
+  (format "http://localhost:%s%s/web/viewer.html?file=%s"
           file-server-port
-          file-server-dir
+          pdfjs-dir
           (url-hexify-string
            (format "http://localhost:%s%s"
                    file-server-port

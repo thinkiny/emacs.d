@@ -8,7 +8,6 @@ import re
 import urllib
 import urllib.request
 import shutil
-import atexit
 import mimetypes
 import http.client
 import logging
@@ -81,12 +80,12 @@ class FileHandler(SimpleHTTPRequestHandler):
 
 def extract_pdfjs():
     logging.info("extract pdfjs")
-    root = os.path.dirname(__file__)
-    pdfjs_path = Path(f"{root}/pdfjs")
-    pdfjs_zip = Path(f"{root}/pdfjs.zip")
+    assets_dir = Path.home() / ".emacs.d" / "assets"
+    pdfjs_path = assets_dir / "pdfjs"
+    pdfjs_zip = assets_dir / "pdfjs.zip"
     if not pdfjs_path.exists():
         with ZipFile(pdfjs_zip, "r") as z:
-            z.extractall(path=root)
+            z.extractall(path=assets_dir)
 
 
 def init_http_proxy():

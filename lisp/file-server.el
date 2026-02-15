@@ -9,7 +9,7 @@
   :type 'string
   :group 'file-server)
 
-(defcustom file-server-dir (expand-file-name "~/.emacs.d/file-server")
+(defcustom file-server-script (expand-file-name "~/.emacs.d/scripts/file_server.py")
   "Directory containing the file server script."
   :type 'directory
   :group 'file-server)
@@ -18,7 +18,7 @@
   (interactive)
   (unless (get-process "file-server")
     (set-process-sentinel
-     (start-process "file-server" "*file-server*" "python3" (concat file-server-dir "/server.py") file-server-port)
+     (start-process "file-server" "*file-server*" "python3" file-server-script file-server-port)
      (lambda (process event)
        (message (format "%s: %s" process event))))
     (sit-for 1)))

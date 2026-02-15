@@ -17,7 +17,7 @@
   :type 'string)
 
 (defun nov-xwidget-style-href (file)
-  (let ((path (expand-file-name (format "css/%s" file) user-emacs-directory)))
+  (let ((path (expand-file-name (format "assets/css/%s" file) user-emacs-directory)))
     (concat "file://" path)))
 
 (defun nov-xwidget-style-href-light ()
@@ -25,11 +25,6 @@
 
 (defun nov-xwidget-style-href-dark ()
   (nov-xwidget-style-href "nov-dark.css"))
-
-(defcustom nov-xwidget-debug nil
-  "Enable the debug feature."
-  :group 'nov-xwidget
-  :type 'boolean)
 
 (defun nov-xwidget-get-position-key ()
   (if-let* ((uri (xwidget-webkit-uri (xwidget-webkit-current-session)))

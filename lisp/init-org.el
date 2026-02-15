@@ -358,7 +358,7 @@ _k_: delete row   _l_: delete column  _s_: shorten
                            :follow 'browse-url-chrome)
 
   (require 'ox-reveal)
-  (setq org-reveal-root (expand-file-name "~/.emacs.d/third-parties/reveal.js"))
+  (setq org-reveal-root (expand-file-name "~/.emacs.d/assets/reveal.js"))
   (setq org-reveal-theme "league")
   ;; (require 'ox-gfm)
   ;; (org-beamer-mode)

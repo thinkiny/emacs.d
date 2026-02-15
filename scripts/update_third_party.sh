@@ -48,8 +48,10 @@ update_lsp() {
 
 # Download all configured files
 update_files() {
+    local dest_dir="${HOME}/.emacs.d/third-parties"
+    mkdir -p "$dest_dir"
     for url in "${FILE_URLS[@]}"; do
-        output=$(basename "$url")
+        output="${dest_dir}/$(basename "$url")"
         echo "Downloading: $url -> $output"
 
         local retry_count=0
