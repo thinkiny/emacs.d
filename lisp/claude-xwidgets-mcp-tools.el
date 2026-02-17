@@ -19,7 +19,7 @@
   :type 'number
   :group 'claude-xwidgets-mcp-tools)
 
-(defcustom claude-xwidgets-mcp-poll-interval 2
+(defcustom claude-xwidgets-mcp-poll-interval 1.5
   "Interval in seconds for polling xwidget selection changes.
 Xwidget web views handle mouse events via GTK/WebKit, bypassing
 Emacs's command loop.  A polling timer is the only way to detect
@@ -107,6 +107,32 @@ return value for `claude-xwidgets--selected-text'.")
   "Return non-nil when current buffer is a PDF xwidget buffer."
   (string-prefix-p "*PDF:" (buffer-name)))
 
+(defun claude-xwidgets--call-in-buffer (file-path thunk)
+  "Call THUNK in the buffer associated with FILE-PATH.
+When FILE-PATH is nil or empty, call THUNK in the current buffer.
+Otherwise find the buffer via `get-file-buffer', falling back to
+a `buffer-list' search by base filename substring.  When the
+buffer has a visible window, use `with-selected-window' so that
+`window-start'/`window-end' and `xwidget-webkit-current-session'
+resolve correctly; otherwise use `with-current-buffer'."
+  (let* ((buf (cond
+               ((or (null file-path) (string-empty-p file-path))
+                (current-buffer))
+               (t
+                (or (get-file-buffer file-path)
+                    (let ((base (file-name-nondirectory file-path)))
+                      (cl-find-if
+                       (lambda (b)
+                         (string-match-p (regexp-quote base) (buffer-name b)))
+                       (buffer-list)))
+                    (current-buffer)))))
+         (win (get-buffer-window buf t)))
+    (if win
+        (with-selected-window win
+          (funcall thunk))
+      (with-current-buffer buf
+        (funcall thunk)))))
+
 (defun claude-xwidgets--eval-sync (script &optional timeout-seconds)
   "Execute JavaScript SCRIPT in current xwidget and wait for callback result.
 Return the callback string result, or nil on timeout."
@@ -135,6 +161,20 @@ falling back to a synchronous JavaScript evaluation."
       (claude-xwidgets--eval-sync claude-xwidgets--selected-text-js)
       ""))
 
+(defun claude-xwidgets--xwidget-selection-alist (&optional text)
+  "Build a selection alist for the current xwidget buffer.
+TEXT defaults to the result of `claude-xwidgets--selected-text'."
+  (let* ((text (or text (claude-xwidgets--selected-text)))
+         (file-path (buffer-file-name))
+         (empty (string-empty-p text)))
+    `((text . ,text)
+      (filePath . ,(or file-path ""))
+      ,@(when file-path
+          `((fileUrl . ,(concat "file://" file-path))))
+      (selection . ((start . ((line . 1) (character . 1)))
+                    (end . ((line . 1) (character . 1)))
+                    (isEmpty . ,(if empty t :json-false)))))))
+
 ;;; getCurrentSelection :around advice
 
 (defun claude-xwidgets--get-current-selection-around (orig-fn arguments)
@@ -142,19 +182,25 @@ falling back to a synchronous JavaScript evaluation."
 ORIG-FN is the original `getCurrentSelection' handler.
 ARGUMENTS are the MCP tool arguments (unused)."
   (if (claude-xwidgets--buffer-p)
-      ;; Xwidget buffer: get selection from JavaScript
-      (let* ((text (claude-xwidgets--selected-text))
-             (file-path (buffer-file-name))
-             (empty (string-empty-p text)))
-        `((text . ,text)
-          (filePath . ,(or file-path ""))
-          ,@(when file-path
-              `((fileUrl . ,(concat "file://" file-path))))
-          (selection . ((start . ((line . 1) (character . 1)))
-                        (end . ((line . 1) (character . 1)))
-                        (isEmpty . ,(if empty t :json-false))))))
+      (claude-xwidgets--xwidget-selection-alist)
     ;; Not an xwidget buffer: call the original handler
     (funcall orig-fn arguments)))
+
+;;; get-selection (standalone tool)
+
+(defun claude-xwidgets--handle-get-selection-text (&optional file-path)
+  "Handle get-selection MCP tool call.
+Returns the currently selected text and its context.
+Handles both xwidget buffers (via JavaScript) and regular buffers
+\(via Emacs region).
+When FILE-PATH is given, operate on that buffer instead of current."
+  (claude-xwidgets--call-in-buffer
+   file-path
+   (lambda ()
+     (if (claude-xwidgets--buffer-p)
+         (claude-xwidgets--xwidget-selection-alist)
+       ;; Regular buffer: delegate to the original handler
+       (claude-code-ide-mcp-handle-get-current-selection nil)))))
 
 ;;; getVisibleText
 
@@ -190,20 +236,20 @@ ARGUMENTS are the MCP tool arguments (unused)."
             (if file-path (format "%s\n" file-path) "")
             text)))
 
-(defun test-func()
-  (interactive)
-  (prin1 (claude-xwidgets--handle-get-visible-text)))
-
-(defun claude-xwidgets--handle-get-visible-text ()
+(defun claude-xwidgets--handle-get-visible-text (&optional file-path)
   "Handle getVisibleText MCP tool call.
-Returns the text content currently visible to the user."
-  (cond
-   ((claude-xwidgets--pdf-buffer-p)
-    (claude-xwidgets--get-pdf-visible-text))
-   ((claude-xwidgets--buffer-p)
-    (claude-xwidgets--get-xwidget-visible-text))
-   (t
-    (claude-xwidgets--get-buffer-visible-text))))
+Returns the text content currently visible to the user.
+When FILE-PATH is given, operate on that buffer instead of current."
+  (claude-xwidgets--call-in-buffer
+   file-path
+   (lambda ()
+     (cond
+      ((claude-xwidgets--pdf-buffer-p)
+       (claude-xwidgets--get-pdf-visible-text))
+      ((claude-xwidgets--buffer-p)
+       (claude-xwidgets--get-xwidget-visible-text))
+      (t
+       (claude-xwidgets--get-buffer-visible-text))))))
 
 ;;; Xwidget selection polling
 (defun claude-xwidgets--poll-selection ()
@@ -221,21 +267,12 @@ buffer is not an xwidget buffer."
              (condition-case nil
                  (when (buffer-live-p buf)
                    (with-current-buffer buf
-                     (let* ((text (or text ""))
-                            (file-path (buffer-file-name))
-                            (empty (string-empty-p text)))
+                     (let ((text (or text "")))
                        (unless (equal text claude-xwidgets--last-selection)
                          (setq claude-xwidgets--last-selection text)
                          (claude-code-ide-mcp--send-notification
                           "selection_changed"
-                          `((text . ,text)
-                            (filePath . ,(or file-path ""))
-                            ,@(when file-path
-                                `((fileUrl . ,(concat "file://" file-path))))
-                            (selection
-                             . ((start . ((line . 1) (character . 1)))
-                                (end . ((line . 1) (character . 1)))
-                                (isEmpty . ,(if empty t :json-false))))))))))
+                          (claude-xwidgets--xwidget-selection-alist text))))))
                (error nil))))))
     ;; Swallow errors so the timer keeps running.
     (error nil)))
@@ -262,12 +299,26 @@ buffer is not an xwidget buffer."
   (interactive)
   (advice-add 'claude-code-ide-mcp-handle-get-current-selection
               :around #'claude-xwidgets--get-current-selection-around)
-  ;; Register getVisibleText tool
+
+  ;; Register get-visible-text tool
   (claude-code-ide-make-tool
    :function #'claude-xwidgets--handle-get-visible-text
    :name "claude-code-ide-mcp-get-visible-text"
-   :description "Get the text content currently user looking at"
-   :args nil)
+   :description "Get visible buffer text"
+   :args '((:name "file_path"
+            :type string
+            :description "Path to the file whose buffer to use. Falls back to current buffer if omitted."
+            :optional t)))
+
+  ;; Register get-selection tool
+  (claude-code-ide-make-tool
+   :function #'claude-xwidgets--handle-get-selection-text
+   :name "claude-code-ide-mcp-get-selection-text"
+   :description "Get selected text"
+   :args '((:name "file_path"
+            :type string
+            :description "Path to the file whose buffer to use. Falls back to current buffer if omitted."
+            :optional t)))
   (claude-xwidgets--start-poll-timer))
 
 (provide 'claude-xwidgets-mcp-tools)

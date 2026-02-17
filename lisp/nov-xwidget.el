@@ -5,16 +5,12 @@
 (require 'xwidget)
 (require 'cl-lib)
 (require 's)
+(require 'caret-xwidget)
 
 (defconst nov-xwidget-style 'light)
 (defconst nov-xwidget-need-inject t)
 (defconst nov-xwidget-need-remove-override-css t)
 (defconst nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
-
-(defcustom nov-xwidget-script ""
-  "Javascript scripts used to run in the epub file."
-  :group 'nov-xwidget
-  :type 'string)
 
 (defun nov-xwidget-style-href (file)
   (let ((path (expand-file-name (format "assets/css/%s" file) user-emacs-directory)))
@@ -58,17 +54,17 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") #'nov-xwidget-goto-toc)
     (define-key map (kbd "L") #'nov-xwidget-list-source-file)
-    (define-key map (kbd "v") #'nov-xwidget-scroll-up-page)
-    (define-key map (kbd "M-v") #'nov-xwidget-scroll-down-page)
     (define-key map (kbd "N") #'nov-xwidget-next-document)
     (define-key map (kbd "P") #'nov-xwidget-previous-document)
-    (define-key map (kbd "n") #'nov-xwidget-scroll-up-step)
-    (define-key map (kbd "j") #'nov-xwidget-scroll-up-step)
-    (define-key map (kbd "k") #'nov-xwidget-scroll-down-step)
-    (define-key map (kbd "s") #'nov-xwidget-scroll-up-step)
-    (define-key map (kbd "w") #'nov-xwidget-scroll-down-step)
     (define-key map (kbd "G") #'xwidget-webkit-scroll-bottom)
-    (define-key map (kbd "p") #'nov-xwidget-scroll-down-step)
+    ;; (define-key map (kbd "w") #'nov-xwidget-scroll-down-step)
+    ;; (define-key map (kbd "v") #'nov-xwidget-scroll-up-page)
+    ;; (define-key map (kbd "M-v") #'nov-xwidget-scroll-down-page)
+    ;; (define-key map (kbd "n") #'nov-xwidget-scroll-up-step)
+    ;; (define-key map (kbd "j") #'nov-xwidget-scroll-up-step)
+    ;; (define-key map (kbd "k") #'nov-xwidget-scroll-down-step)
+    ;; (define-key map (kbd "s") #'nov-xwidget-scroll-up-step)
+    ;;(define-key map (kbd "p") #'nov-xwidget-scroll-down-step)
     map)
   "Keymap for `nov-xwidget-webkit-mode-map'.")
 
@@ -153,8 +149,7 @@
                      (meta ((charset . "utf-8")))
                      (link ((rel . "stylesheet")
                             (type . "text/css")
-                            (href . ,(nov-xwidget-get-style-href))))
-                     (script nil ,nov-xwidget-script))))
+                            (href . ,(nov-xwidget-get-style-href)))))))
     (if title
         (append base `((title nil ,title)))
       base)))
@@ -300,14 +295,14 @@ also run it after modifing `nov-xwidget-style-dark',
 (defun nov-xwidget-webkit-callback (xwidget xwidget-event-type)
   "Callback for xwidgets.
 XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
-  (when (eq xwidget-event-type 'load-changed)
-    (when (string-equal (nth 3 last-input-event) "load-finished")
-      (when-let* ((uri (xwidget-webkit-uri xwidget))
-                  (file (nov-xwidget-extract-file uri)))
-        (unless (nov-xwidget-dont-jump uri)
-          (nov-xwidget-jump-prev-position))
-        (if-let* ((index (nov-xwidget-find-index-by-file file)))
-            (setq-local nov-documents-index index)))))
+  (when (and (eq xwidget-event-type 'load-changed)
+             (string-equal (nth 3 last-input-event) "load-finished"))
+    (when-let* ((uri (xwidget-webkit-uri xwidget))
+                (file (nov-xwidget-extract-file uri)))
+      (unless (nov-xwidget-dont-jump uri)
+        (nov-xwidget-jump-prev-position))
+      (when-let* ((index (nov-xwidget-find-index-by-file file)))
+        (setq-local nov-documents-index index))))
   (xwidget-webkit-callback xwidget xwidget-event-type))
 
 (defun nov-xwidget-view ()
@@ -337,6 +332,11 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (setq-local nov-metadata metadata)
       (setq-local buffer-file-name epub-file-name)
       (setq-local cursor-type nil)
+      (setq-local caret-xwidget-next-page-function #'nov-xwidget-next-document)
+      (setq-local caret-xwidget-previous-page-function
+                  (lambda ()
+                    (nov-xwidget-previous-document)
+                    (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom)))
       (set-buffer-modified-p nil)
       (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name)))
       )))
@@ -420,24 +420,6 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     (nov-xwidget-save-position)
     (setq-local nov-documents-index nov-toc-id)
     (nov-xwidget-webkit-find-file nov-xwidget-toc-path)))
-
-;; Window size change functions; this arrangement below is not ideal, as it basically replicates the code in xwidget-webkit.el, which changes the size of the xwidget *if* the window's mode is xwidget-webkit-mode.
-;; In the future, xwidget-webkit should accomodate generalized "windows containing a webkit instance" rather than just xwidget-webkit-mode specifically for this.
-(defun nov-xwidget-webkit-auto-adjust-size (window)
-  "Adjust the size of the webkit widget in the given nov-webkit WINDOW."
-  (with-current-buffer (window-buffer window)
-    (when (eq major-mode 'nov-xwidget-webkit-mode)
-      (let ((xwidget (xwidget-webkit-current-session)))
-        (xwidget-webkit-adjust-size-to-window xwidget window)))))
-
-(defun nov-xwidget-webkit-adjust-size-in-frame (frame)
-  "Dynamically adjust webkit widget for all nov-webkit windows of the FRAME."
-  (walk-windows 'nov-xwidget-webkit-auto-adjust-size 'no-minibuf frame))
-
-(eval-after-load 'nov-xwidget-webkit-mode
-  (add-to-list 'window-size-change-functions
-               'nov-xwidget-webkit-adjust-size-in-frame))
-
 
 (defun nov-xwidget-webkit-scroll (arg)
   (xwidget-webkit-execute-script

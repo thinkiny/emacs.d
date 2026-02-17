@@ -35,6 +35,7 @@
    (set-face-attribute 'ivy-virtual nil :inherit nil)))
 
 (use-package counsel
+  :demand t
   :after ivy
   :config
   (setq-default counsel-mode-override-describe-bindings t)

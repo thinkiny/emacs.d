@@ -122,6 +122,7 @@
   (counsel-projectile-rg (get-default-args-for-ripgrep)))
 
 (use-package counsel-projectile
+  :after counsel
   :init (counsel-projectile-mode)
   :bind (:map
          projectile-mode-map

@@ -8,8 +8,6 @@
 
 (require 'xwidget)
 (setq xwidget-webkit-buffer-name-format "*WEB: %T")
-;; (with-eval-after-load 'xwidget
-;;   (defun xwidget-webkit--update-progress-timer-function (_)))
 
 (defvar xwidget-webkit-browse-session nil)
 (defun xwidget-webkit-get-browse-buffer()
@@ -161,6 +159,8 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
     (list "Xwidget WebKit"  :visible nil))
 
   (define-key xwidget-webkit-mode-map (kbd "g") #'xwidget-webkit-browse-open-url)
+  (define-key xwidget-webkit-mode-map (kbd "F") 'xwidget-webkit-forward)
+  (define-key xwidget-webkit-mode-map (kbd "B") 'xwidget-webkit-back)
   (define-key xwidget-webkit-mode-map (kbd "n") 'xwidget-scroll-up-step)
   (define-key xwidget-webkit-mode-map (kbd "p") 'xwidget-scroll-down-step)
   (define-key xwidget-webkit-mode-map (kbd "j") 'xwidget-scroll-up-step)
@@ -196,5 +196,28 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 (add-hook 'xwidget-webkit-mode-hook #'my-xwidget-webkit-mode-hook)
 
 (global-set-key (kbd "C-x / /") #'xwidget-webkit-browse-open-url)
+
+
+;; caret.js
+(require 'caret-xwidget)
+
+;; window change functions
+(defun xwidget-webkit-auto-adjust-size-derived (window)
+  "Adjust xwidget size to fit WINDOW for any `xwidget-webkit-mode' derivative."
+  (with-current-buffer (window-buffer window)
+    (when (derived-mode-p 'xwidget-webkit-mode)
+      (when-let* ((xwidget (xwidget-webkit-current-session)))
+        (xwidget-webkit-adjust-size-to-window xwidget window)))))
+
+(defun xwidget-webkit-adjust-size-derived-in-frame (frame)
+  "Adjust xwidget sizes for all xwidget-webkit derived-mode windows in FRAME."
+  (walk-windows #'xwidget-webkit-auto-adjust-size-derived 'no-minibuf frame))
+
+(add-to-list 'window-size-change-functions
+             #'xwidget-webkit-adjust-size-derived-in-frame)
+
+(setq window-size-change-functions
+      (remove 'xwidget-webkit-adjust-size-in-frame
+              window-size-change-functions))
 
 (provide 'init-xwidget-webkit)

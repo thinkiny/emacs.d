@@ -2,6 +2,7 @@
 
 (require 'file-server)
 (require 's)
+(require 'caret-xwidget)
 
 (defconst pdf-xwidget-name-format "*PDF: %s")
 (defconst pdfjs-dir (expand-file-name "~/.emacs.d/assets/pdfjs"))
@@ -115,27 +116,19 @@
 
 (defvar pdf-xwidget-mode-map
   (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map xwidget-webkit-mode-map)
     (define-key map (kbd "o") #'pdf-xwidget-toggle-sidebar)
     (define-key map (kbd "C-s") #'pdf-xwidget-toggle-findbar)
     (define-key map (kbd "C-r") #'pdf-xwidget-toggle-findbar)
-    (define-key map (kbd "n") #'pdf-xwidget-scroll-up-step)
-    (define-key map (kbd "C-n") #'pdf-xwidget-scroll-up-step)
-    (define-key map (kbd "C-p") #'pdf-xwidget-scroll-down-step)
     (define-key map (kbd "t") #'pdf-xwidget-toggle-toolbar)
-    (define-key map (kbd "p") #'pdf-xwidget-scroll-down-step)
-    (define-key map (kbd "j") #'pdf-xwidget-scroll-up-step)
-    (define-key map (kbd "k") #'pdf-xwidget-scroll-down-step)
-    (define-key map (kbd "s") #'pdf-xwidget-scroll-up-step)
-    (define-key map (kbd "w") #'pdf-xwidget-scroll-down-step)
-    (define-key map (kbd "v") #'pdf-xwidget-scroll-up-page)
-    (define-key map (kbd "SPC") #'pdf-xwidget-scroll-up-page)
-    (define-key map (kbd "M-v") #'pdf-xwidget-scroll-down-page)
-    (define-key map (kbd "C-v") #'pdf-xwidget-scroll-up-page)
+    (define-key map (kbd "M-<") #'caret-xwidget-beginning-of-page)
+    (define-key map (kbd "M->") #'caret-xwidget-end-of-page)
     map)
-  "Keymap for `pdf-xwidget-mode-map'.")
+  "Keymap for `pdf-xwidget-mode'.")
 
 (defun pdf-xwidget-open (&optional open-file)
+  "Open a PDF file in an xwidget-webkit session.
+Creates the session, activates `pdf-xwidget-mode' in the viewing buffer,
+and sets up buffer-local variables."
   (interactive)
   (file-server-start)
   (let* ((file (or open-file (read-from-minibuffer "open pdf: ")))
@@ -149,21 +142,29 @@
     (when-let* ((session (xwidget-webkit-last-session))
                 (buffer (xwidget-buffer session)))
       (with-current-buffer buffer
-        ;; Keep URL-backed PDFs without a file path; MCP should track local files only.
+        (pdf-xwidget-mode)
         (setq-local buffer-file-name local-file)
         (setq-local buffer-read-only t)
-        (set-buffer-modified-p nil)))
+        (set-buffer-modified-p nil)
+        (setq-local xwidget-webkit-buffer-name-format (format pdf-xwidget-name-format name))
+        (setq-local cursor-type nil)
+        (when (file-directory-p dir)
+          (setq-local default-directory dir))))))
 
-    (when (file-directory-p dir)
-      (setq default-directory dir))
-    (setq-local xwidget-webkit-buffer-name-format (format pdf-xwidget-name-format name))
-    (setq-local cursor-type nil)
-    (use-local-map pdf-xwidget-mode-map)))
+(define-derived-mode pdf-xwidget-mode xwidget-webkit-mode "PDF"
+  "Major mode for reading pdf files.
+\\{pdf-xwidget-mode-map}")
 
-(define-derived-mode pdf-xwidget-mode special-mode "PDF"
-  "Major mode for reading pdf files."
-  (let* ((init-buf (current-buffer)))
-    (pdf-xwidget-open (buffer-file-name))
+;;;###autoload
+(defun pdf-xwidget-view (&optional file)
+  "Open FILE as a PDF in an xwidget-webkit viewer.
+When FILE is nil, uses `buffer-file-name' (for `auto-mode-alist' use).
+Creates a new xwidget session, activates `pdf-xwidget-mode' in it,
+and kills the original file-visiting buffer."
+  (interactive "fPDF file: ")
+  (let* ((pdf-file (expand-file-name (or file buffer-file-name)))
+         (init-buf (current-buffer)))
+    (pdf-xwidget-open pdf-file)
     (kill-buffer init-buf)))
 
 (provide 'pdf-xwidget-mode)
