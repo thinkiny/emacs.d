@@ -94,6 +94,15 @@ return value for `claude-xwidgets--selected-text'.")
 
 ;;; Helpers
 
+(defun claude-xwidgets--non-claude-code-buffer ()
+  "Return the first visible buffer whose name does not start with \"*claude-code\".
+Falls back to `current-buffer' if no such window is found."
+  (or (cl-loop for w in (window-list)
+               for b = (window-buffer w)
+               unless (string-prefix-p "*claude-code" (buffer-name b))
+               return b)
+      (current-buffer)))
+
 (defun claude-xwidgets--session ()
   "Return the current xwidget WebKit session or nil."
   (when (fboundp 'xwidget-webkit-current-session)
@@ -117,7 +126,7 @@ buffer has a visible window, use `with-selected-window' so that
 resolve correctly; otherwise use `with-current-buffer'."
   (let* ((buf (cond
                ((or (null file-path) (string-empty-p file-path))
-                (current-buffer))
+                (claude-xwidgets--non-claude-code-buffer))
                (t
                 (or (get-file-buffer file-path)
                     (let ((base (file-name-nondirectory file-path)))
@@ -307,7 +316,7 @@ buffer is not an xwidget buffer."
    :description "Get visible buffer text"
    :args '((:name "file_path"
             :type string
-            :description "Path to the file whose buffer to use. Falls back to current buffer if omitted."
+            :description "Current working file path."
             :optional t)))
 
   ;; Register get-selection tool
@@ -317,7 +326,7 @@ buffer is not an xwidget buffer."
    :description "Get selected text"
    :args '((:name "file_path"
             :type string
-            :description "Path to the file whose buffer to use. Falls back to current buffer if omitted."
+            :description "Current working file path."
             :optional t)))
   (claude-xwidgets--start-poll-timer))
 
