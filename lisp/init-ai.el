@@ -37,8 +37,8 @@
         claude-code-ide-window-width 80)
   (setq claude-code-ide-diagnostics-backend 'flymake)
   (claude-code-ide-emacs-tools-setup)
-  (require 'claude-xwidgets-mcp-tools)
-  (claude-xwidgets-mcp-tools-setup)
+  (require 'claude-extra-mcp-tools)
+  (claude-extra-mcp-tools-setup)
 
 
   (setq claude-code-ide-use-side-window nil)
