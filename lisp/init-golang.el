@@ -23,23 +23,25 @@
 (defun go-get-tag-name(name)
   (string-inflection-snake-case-function name))
 
-(defun go-insert-generate-tag (name)
-  (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
-    (if (string-match "^\\s-+\\(\\S-+\\)\\s-+\\S-+$" line)
-        (let ((tag (format "  `%s:\"%s\"`"
-                           name
-                           (go-get-tag-name (match-string 1 line)))))
-
-          (end-of-line)
-          (insert tag)))))
+(defun go-insert-generate-tag (name line)
+  (when (string-match "^\\s-+\\(\\S-+\\)\\s-+\\S-+" line)
+    (let ((tag (format " `%s:\"%s\"`"
+                       name
+                       (go-get-tag-name (match-string 1 line)))))
+      (end-of-line)
+      (when (re-search-backward "\\s-+//" (line-beginning-position) t)
+        (goto-char (match-beginning 0)))
+      (insert tag))))
 
 (defun go-generate-tag (name)
   (save-excursion
-    (let ((start (re-search-backward "{$" nil t)))
-      (forward-line 1)
-      (while (not (= (char-after (line-beginning-position)) ?}))
-        (go-insert-generate-tag name)
-        (forward-line 1)))))
+    (re-search-backward "{$" nil t)
+    (forward-line 1)
+    (while (not (= (char-after (line-beginning-position)) ?}))
+      (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
+        (unless (string-match-p "^\\s-*//\\|`" line)
+          (go-insert-generate-tag name line)))
+      (forward-line 1))))
 
 (defun go-generate-tag-json()
   (interactive)
