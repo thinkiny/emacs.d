@@ -40,73 +40,37 @@
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions)
-  )
 
-(with-eval-after-load 'eglot
   ;;(require 'eglot-hover)
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
                                                         :usePlaceholders t
                                                         :analyses  (:ST1003 :json-false))
-                                                :vtsls
-                                                (:autoUseWorkspaceTsdk t
-                                                 :typescript
-                                                 (:preferGoToSourceDefinition t
-                                                  :preferences (:importModuleSpecifier "relative"))
-                                                 :javascript
-                                                 (:preferGoToSourceDefinition t
-                                                  :preferences (:importModuleSpecifier "relative")))
-                                                ;; :javascript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
-                                                ;; :typescript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
-                                                ;; :basedpyright.analysis (:typeCheckingMode "standard"
-                                                ;;                         :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
-                                                ;;                                                       :reportOptionalSubscript "warning"
-                                                ;;                                                       :reportReturnType "warning"
-                                                ;;                                                       :reportTypedDictNotRequiredAccess "warning")
-                                                ;;                         :useLibraryCodeForTypes t
-                                                ;;                         :diagnosticMode "workspace"
-                                                ;;                         :autoSearchPaths t)
-                ))
+                                                :vtsls (:autoUseWorkspaceTsdk t
+                                                        :typescript
+                                                        (:preferGoToSourceDefinition t
+                                                         :preferences (:importModuleSpecifier "relative"))
+                                                        :javascript
+                                                        (:preferGoToSourceDefinition t
+                                                         :preferences (:importModuleSpecifier "relative")))
+                                                       ;; :javascript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
+                                                       ;; :typescript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
+                                                       ;; :basedpyright.analysis (:typeCheckingMode "standard"
+                                                       ;;                         :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
+                                                       ;;                                                       :reportOptionalSubscript "warning"
+                                                       ;;                                                       :reportReturnType "warning"
+                                                       ;;                                                       :reportTypedDictNotRequiredAccess "warning")
+                                                       ;;                         :useLibraryCodeForTypes t
+                                                       ;;                         :diagnosticMode "workspace"
+                                                       ;;                         :autoSearchPaths t)
+                                                       ))
 
   ;;(setq completion-category-defaults nil)
   (setq mode-line-misc-info
         (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
-  (defun eglot-disable-format-project()
-    (interactive)
-    (when-let* ((project-root (projectile-project-root))
-                (file (format "%s.dir-locals.el" project-root)))
-      (write-region (format "((%s . ((eglot-enable-format-at-save . nil))))" major-mode) nil file)
-      (message (format "write %s" file))))
 
   (eglot--code-action eglot-code-action-override "source.overrideMethods")
 
-  (defun eglot-first-flymake-current-line()
-    (if-let* ((digs (flymake-diagnostics (line-beginning-position) (line-end-position))))
-        (car (seq-sort-by
-              (lambda (x)
-                (pcase (flymake-diagnostic-type x)
-                  ('eglot-error 0)
-                  ('error 0)
-                  (_ 1)))
-              '<
-              digs))))
-
-  (defun eglot-code-actions-current-line()
-    (interactive)
-    (when-let* ((dig (eglot-first-flymake-current-line))
-                (beg (flymake--diag-beg dig))
-                (end (flymake--diag-end dig)))
-      (eglot-code-actions beg end nil t)))
-
-  (defun eglot-restart-workspace()
-    "Reconnect to SERVER.
-     INTERACTIVE is t if called interactively."
-    (interactive)
-    (when-let* ((server (eglot-current-server)))
-      (flymake-mode -1)
-      (when (jsonrpc-running-p server)
-        (ignore-errors (eglot-shutdown server t nil nil))))
-    (eglot-ensure))
-
+  ;; override functions
   (cl-defun eglot--rename-interactive (&aux region)
     (eglot-server-capable-or-lose :renameProvider)
     (let* ((probe (eglot--request (eglot--current-server-or-lose)
@@ -122,6 +86,42 @@
              (format "Rename `%s' to: " (or def "unknown symbol"))
              def nil nil nil def))))
   )
+
+;; interactive commands
+(defun eglot-disable-format-project()
+  (interactive)
+  (when-let* ((project-root (projectile-project-root))
+              (file (format "%s.dir-locals.el" project-root)))
+    (write-region (format "((%s . ((eglot-enable-format-at-save . nil))))" major-mode) nil file)
+    (message (format "write %s" file))))
+
+(defun eglot-first-flymake-current-line()
+  (if-let* ((digs (flymake-diagnostics (line-beginning-position) (line-end-position))))
+      (car (seq-sort-by
+            (lambda (x)
+              (pcase (flymake-diagnostic-type x)
+                ('eglot-error 0)
+                ('error 0)
+                (_ 1)))
+            '<
+            digs))))
+
+(defun eglot-code-actions-current-line()
+  (interactive)
+  (when-let* ((dig (eglot-first-flymake-current-line))
+              (beg (flymake--diag-beg dig))
+              (end (flymake--diag-end dig)))
+    (eglot-code-actions beg end nil t)))
+
+(defun eglot-restart-workspace()
+  "Reconnect to SERVER.
+     INTERACTIVE is t if called interactively."
+  (interactive)
+  (when-let* ((server (eglot-current-server)))
+    (flymake-mode -1)
+    (when (jsonrpc-running-p server)
+      (ignore-errors (eglot-shutdown server t nil nil))))
+  (eglot-ensure))
 
 ;; format
 (defvar-local eglot-enable-format-at-save t)
@@ -147,12 +147,13 @@
 
 ;; disable document sync
 (defun my/eglot-disable-document-sync (server)
-    "Force disable sync for SERVER."
-    (if-let* ((capabilities (eglot--capabilities server)))
-        (if (plist-get capabilities :textDocumentSync)
-            (plist-put (plist-get capabilities :textDocumentSync)
-                       :change 0)))) ; 0 = None, 1 = Full, 2 = Incremental
+  "Force disable sync for SERVER."
+  (if-let* ((capabilities (eglot--capabilities server)))
+      (if (plist-get capabilities :textDocumentSync)
+          (plist-put (plist-get capabilities :textDocumentSync)
+                     :change 0)))) ; 0 = None, 1 = Full, 2 = Incremental
 
+;; hook
 (defun my-eglot-mode-hook()
   ;; (eglot--setq-saving eldoc-documentation-functions
   ;;                       '(eglot-signature-eldoc-function
@@ -166,18 +167,20 @@
     )
 
   (setq-local completion-at-point-functions
-              (list (cape-capf-super
-                     #'cape-file
-                     #'eglot-completion-at-point)))
+              (list
+               #'cape-file
+               #'eglot-completion-at-point))
 
   ;; (eglot-hover-mode)
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format)))
 
+
 (with-eval-after-load-theme 'eglot
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))
 
+;; set-server-program
 (defun set-eglot-server-program (modes cmd)
   "Set or update eglot server program for MODES with CMD.
 Removes any existing entries for the specified modes and adds new configuration."

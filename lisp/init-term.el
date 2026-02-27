@@ -27,28 +27,10 @@
   (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
-
-  ;; scroll wrapper for loopback mode handling
-  (defun vterm-pixel-scroll-precision (event)
-    "Wrapper for pixel-scroll-precision in vterm - handles loopback mode."
-    (interactive "e")
-    (when (nth 4 event)
-      (let ((delta (round (cdr (nth 4 event)))))
-        (unless (zerop delta)
-          ;; Handle loopback before scrolling up
-          (if (> delta 0)
-            (vterm--pixel-scroll-precision-up))
-          ;; Call the original pixel-scroll-precision
-          (pixel-scroll-precision event)
-          ;; Handle loopback after scrolling down
-          (if (< delta 0)
-            (vterm--pixel-scroll-precision-down))))))
-
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
-  (add-hook 'vterm-copy-mode-hook #'my-vterm-copy-mode-hook))
+  (add-hook 'vterm-copy-mode-hook #'my-vterm-copy-mode-hook)
 
-(with-eval-after-load 'vterm
   (defun vterm--get-directory (path)
     "Get normalized directory to PATH."
     (when path
@@ -114,6 +96,21 @@
   (setq vterm--scroll-timer nil)
   (when (and (>= (window-end) (point-max)) vterm-copy-mode)
     (vterm-copy-mode -1)))
+
+(defun vterm-pixel-scroll-precision (event)
+  "Wrapper for pixel-scroll-precision in vterm - handles loopback mode."
+  (interactive "e")
+  (when (nth 4 event)
+    (let ((delta (round (cdr (nth 4 event)))))
+      (unless (zerop delta)
+        ;; Handle loopback before scrolling up
+        (if (> delta 0)
+            (vterm--pixel-scroll-precision-up))
+        ;; Call the original pixel-scroll-precision
+        (pixel-scroll-precision event)
+        ;; Handle loopback after scrolling down
+        (if (< delta 0)
+            (vterm--pixel-scroll-precision-down))))))
 
 (defun vterm--pixel-scroll-precision-down ()
   (when vterm--scroll-timer
