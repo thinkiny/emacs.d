@@ -26,8 +26,8 @@
               ("C-c y" . claude-code-ide-menu))
   :config
   ;; (setq claude-code-ide-debug t)
-  (setq claude-code-ide-emacs-prompt "IMPORTANT: Emacs integration active. When user questions lack context, use get-selection-text or get-visible-text
- first. Lines 1-based, columns 0-based. Prefer Emacs tools. Never read binaries directly.")
+  (setq claude-code-ide-emacs-prompt "IMPORTANT: Connected to Emacs via claude-code-ide.el integration. Emacs uses mixed coordinates: Lines: 1-based (line 1 = first line), Columns: 0-based (column 0 = first column). When user questions lack context, use get-selection-text or get-visible-text
+ first. Always prefer Emacs mcp tools. Never read binary file directly.")
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'vterm)
   (setq claude-code-ide-prevent-reflow-glitch nil) ;; use claude-chill

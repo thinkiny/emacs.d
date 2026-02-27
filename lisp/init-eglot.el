@@ -232,8 +232,8 @@ COMMAND is a string as advertised by the server. No arguments are passed."
 
 (advice-add 'eglot-uri-to-path :around #'cache-tramp-eglot-uri-to-path)
 
-;; workspace symbol search
-(require 'workspace-symbol-search)
-(global-set-key (kbd "C-c w s") 'ivy-workspace-symbol-search)
+;; project search
+(require 'project-search)
+(global-set-key (kbd "C-c w s") 'ivy-project-search)
 
 (provide 'init-eglot)

@@ -11,7 +11,7 @@
 (require 'xwidget)
 (require 'eglot nil t)
 (require 'projectile nil t)
-(require 'workspace-symbol-search)
+(require 'project-search)
 
 
 (declare-function claude-code-ide-mcp--send-notification "claude-code-ide-mcp")
@@ -22,8 +22,8 @@
   :group 'tools
   :prefix "claude-extra-")
 
-(defcustom claude-extra-workspace-search-max-results 10
-  "Maximum number of results returned by workspace search."
+(defcustom claude-extra-project-search-max-results 10
+  "Maximum number of results returned by project search."
   :type 'integer
   :group 'claude-extra-mcp-tools)
 
@@ -312,12 +312,12 @@ buffer is not an xwidget buffer."
     (cancel-timer claude-xwidgets--poll-timer)
     (setq claude-xwidgets--poll-timer nil)))
 
-;;; Workspace symbol search (delegates to workspace-symbol-search.el)
+;;; Project search (delegates to project-search.el)
 
-(defun claude-extra--handle-workspace-search (query &optional kind)
-  "Search workspace for QUERY, optionally filtering by KIND.
-Delegates to `workspace-symbol-search--search' with the MCP-specific result limit."
-  (workspace-symbol-search--search query kind claude-extra-workspace-search-max-results))
+(defun claude-extra--handle-project-search (query &optional kind)
+  "Search project for QUERY, optionally filtering by KIND.
+Delegates to `project-search--search' with the MCP-specific result limit."
+  (project-search--search query kind claude-extra-project-search-max-results))
 
 ;;; Registration
 
@@ -347,11 +347,11 @@ Delegates to `workspace-symbol-search--search' with the MCP-specific result limi
             :type string
             :description "Current working file path."
             :optional t)))
-  ;; Register workspace-symbols tool
+  ;; Register project-search tool
   (claude-code-ide-make-tool
-   :function #'claude-extra--handle-workspace-search
-   :name "claude-code-ide-mcp-workspace-symbols"
-   :description "Search for files, functions, variables, classes, etc., by name pattern across current project, It's faster and more accurate than using grep."
+   :function #'claude-extra--handle-project-search
+   :name "claude-code-ide-mcp-project-search"
+   :description "Search for everything—files, functions, variables, classes, etc.—by name pattern across the current project; it is faster and more accurate."
    :args '((:name "query"
             :type string
             :description "The search query.")
