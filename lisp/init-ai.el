@@ -26,8 +26,15 @@
               ("C-c y" . claude-code-ide-menu))
   :config
   ;; (setq claude-code-ide-debug t)
-  (setq claude-code-ide-emacs-prompt "IMPORTANT: Connected to Emacs via claude-code-ide.el integration. Emacs uses mixed coordinates: Lines: 1-based (line 1 = first line), Columns: 0-based (column 0 = first column). When user questions lack context, use get-selection-text or get-visible-text
- first. Always prefer Emacs mcp tools. Never read binary file directly.")
+  (setq claude-code-ide-emacs-prompt
+"# Constraints
+- Review Emacs MCP tool description carefully.
+- Always prefer Emacs MCP tools over built-in tools.
+- Never read binary files.
+# Coordinate system
+- Lines: 1-based (Line 1 = first line).
+- Columns: 0-based (Column 0 = first column).
+")
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'vterm)
   (setq claude-code-ide-prevent-reflow-glitch nil) ;; use claude-chill
@@ -39,7 +46,6 @@
   (claude-code-ide-emacs-tools-setup)
   (require 'claude-extra-mcp-tools)
   (claude-extra-mcp-tools-setup)
-
 
   (setq claude-code-ide-use-side-window nil)
   (defun claude-code--display-buffer (buffer alist)

@@ -314,10 +314,10 @@ buffer is not an xwidget buffer."
 
 ;;; Project search (delegates to project-search.el)
 
-(defun claude-extra--handle-project-search (query &optional kind)
-  "Search project for QUERY, optionally filtering by KIND.
+(defun claude-extra--handle-project-search (query)
+  "Search project for QUERY.
 Delegates to `project-search--search' with the MCP-specific result limit."
-  (project-search--search query kind claude-extra-project-search-max-results))
+  (project-search--search query nil claude-extra-project-search-max-results))
 
 ;;; Registration
 
@@ -332,33 +332,29 @@ Delegates to `project-search--search' with the MCP-specific result limit."
   (claude-code-ide-make-tool
    :function #'claude-xwidgets--handle-get-visible-text
    :name "claude-code-ide-mcp-get-visible-text"
-   :description "Get user visible buffer text"
+   :description "Use this tool when you lack context; it retrieves the text currently viewed by the user."
    :args '((:name "file_path"
             :type string
             :description "Current working file path."
             :optional t)))
 
   ;; Register get-selection tool
-  (claude-code-ide-make-tool
-   :function #'claude-xwidgets--handle-get-selection-text
-   :name "claude-code-ide-mcp-get-selection-text"
-   :description "Get selected text by user"
-   :args '((:name "file_path"
-            :type string
-            :description "Current working file path."
-            :optional t)))
+  ;; (claude-code-ide-make-tool
+  ;;  :function #'claude-xwidgets--handle-get-selection-text
+  ;;  :name "claude-code-ide-mcp-get-selection-text"
+  ;;  :description "Use this tool when you lack the context, it retrives selected text by user."
+  ;;  :args '((:name "file_path"
+  ;;           :type string
+  ;;           :description "Current working file path."
+  ;;           :optional t)))
   ;; Register project-search tool
   (claude-code-ide-make-tool
    :function #'claude-extra--handle-project-search
    :name "claude-code-ide-mcp-project-search"
-   :description "Search for everything—files, functions, variables, classes, etc.—by name pattern across the current project; it is faster and more accurate."
+   :description "Use this tool when you have something to search, it searches project symbols via the LSP server/rg."
    :args '((:name "query"
             :type string
-            :description "The search query.")
-           (:name "kind"
-            :type string
-            :description "Symbol kind filter (e.g. Function, Class, Variable). Only effective with LSP."
-            :optional t)))
+            :description "The search query.")))
 
   (claude-xwidgets--start-poll-timer))
 
