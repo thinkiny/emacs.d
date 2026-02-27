@@ -36,7 +36,6 @@
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
   (define-key eglot-mode-map (kbd "C-c w r") 'eglot-restart-workspace)
-  (define-key eglot-mode-map (kbd "C-c w s") 'consult-eglot-symbols)
   (define-key eglot-mode-map (kbd "C-c v") 'eglot-find-implementation)
   (define-key eglot-mode-map (kbd "C-c f") 'eglot-code-actions-current-line)
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions)
@@ -233,8 +232,8 @@ COMMAND is a string as advertised by the server. No arguments are passed."
 
 (advice-add 'eglot-uri-to-path :around #'cache-tramp-eglot-uri-to-path)
 
-;;
-(use-package consult-eglot
-  :after eglot)
+;; workspace symbol search
+(require 'workspace-symbol-search)
+(global-set-key (kbd "C-c w s") 'ivy-workspace-symbol-search)
 
 (provide 'init-eglot)

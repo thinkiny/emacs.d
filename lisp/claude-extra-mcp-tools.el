@@ -11,6 +11,7 @@
 (require 'xwidget)
 (require 'eglot nil t)
 (require 'projectile nil t)
+(require 'workspace-symbol-search)
 
 
 (declare-function claude-code-ide-mcp--send-notification "claude-code-ide-mcp")
@@ -311,125 +312,12 @@ buffer is not an xwidget buffer."
     (cancel-timer claude-xwidgets--poll-timer)
     (setq claude-xwidgets--poll-timer nil)))
 
-;;; Workspace symbol search
-
-(defun claude-extra--lsp-kind-to-string (kind)
-  "Convert LSP SymbolKind integer KIND to a human-readable string."
-  (if (boundp 'eglot--symbol-kind-names)
-      (or (alist-get kind eglot--symbol-kind-names) "Unknown")
-    "Unknown"))
-
-(defun claude-extra--find-eglot-server (project-root)
-  "Find an active Eglot server for PROJECT-ROOT.
-Searches project buffers via Projectile when available,
-otherwise falls back to iterating `buffer-list'."
-  (when (fboundp 'eglot-current-server)
-    (let ((bufs (if (fboundp 'projectile-project-buffers)
-                    (ignore-errors (projectile-project-buffers project-root))
-                  (buffer-list))))
-      (cl-some (lambda (buf)
-                 (when-let* ((file (buffer-file-name buf)))
-                   (when (file-in-directory-p file project-root)
-                     (with-current-buffer buf (eglot-current-server)))))
-               bufs))))
-
-(defun claude-extra--make-symbol-result (name kind uri start-line start-char end-line end-char &optional container)
-  "Build a symbol result alist with NAME, KIND, location (URI + range), and CONTAINER."
-  `((name . ,name)
-    (kind . ,kind)
-    (location . ((uri . ,uri)
-                 (range . ((start . ((line . ,start-line) (character . ,start-char)))
-                           (end   . ((line . ,end-line)   (character . ,end-char)))))))
-    (containerName . ,(or container ""))))
-
-(defun claude-extra--eglot-workspace-search (query kind-filter project-root)
-  "Search workspace symbols matching QUERY via Eglot in PROJECT-ROOT.
-When KIND-FILTER (a string like \"Function\") is non-nil, keep only
-matching kinds.  Returns a list of result alists."
-  (when-let* ((server (claude-extra--find-eglot-server project-root)))
-    (let* ((raw (jsonrpc-request server :workspace/symbol `(:query ,query)))
-           (results (append raw nil))
-           (filtered (if (and kind-filter (not (string-empty-p kind-filter)))
-                         (seq-filter
-                          (lambda (r)
-                            (string-equal
-                             (claude-extra--lsp-kind-to-string (plist-get r :kind))
-                             kind-filter))
-                          results)
-                       results)))
-      (seq-map
-       (lambda (res)
-         (let* ((kind  (plist-get res :kind))
-                (loc   (plist-get res :location))
-                (range (plist-get loc :range))
-                (start (plist-get range :start))
-                (end   (plist-get range :end)))
-           (claude-extra--make-symbol-result
-            (plist-get res :name)
-            (claude-extra--lsp-kind-to-string kind)
-            (plist-get loc :uri)
-            (plist-get start :line)
-            (plist-get start :character)
-            (plist-get end :line)
-            (plist-get end :character)
-            (plist-get res :containerName))))
-       filtered))))
-
-(defun claude-extra--rg-parse-match (data project-root)
-  "Extract fields from a ripgrep match DATA alist and return a symbol result.
-PROJECT-ROOT is used to expand relative paths into file URIs."
-  (let* ((path (alist-get 'text (alist-get 'path data)))
-         (line-num (alist-get 'line_number data))
-         (text (alist-get 'text (alist-get 'lines data)))
-         (submatches (alist-get 'submatches data))
-         (has-sub (and submatches (> (length submatches) 0)))
-         (start-col (if has-sub (alist-get 'start (aref submatches 0)) 0))
-         (end-col   (if has-sub (alist-get 'end   (aref submatches 0)) 0)))
-    (claude-extra--make-symbol-result
-     (string-trim (or text ""))
-     "Text"
-     (concat "file://" (expand-file-name path project-root))
-     (1- line-num) start-col
-     (1- line-num) end-col)))
-
-(defun claude-extra--rg-workspace-search (query project-root)
-  "Search for QUERY in PROJECT-ROOT using Ripgrep JSON output.
-Returns a list of result alists."
-  (let ((default-directory project-root)
-        (results '()))
-    (with-temp-buffer
-      (call-process "rg" nil t nil
-                    "--json" "--smart-case" "--max-count"
-                    (number-to-string claude-extra-workspace-search-max-results)
-                    "--" query ".")
-      (goto-char (point-min))
-      (while (not (eobp))
-        (let* ((line (buffer-substring-no-properties
-                      (line-beginning-position) (line-end-position)))
-               (parsed (ignore-errors
-                         (json-parse-string line :object-type 'alist))))
-          (when (and parsed (string-equal (alist-get 'type parsed) "match"))
-            (push (claude-extra--rg-parse-match (alist-get 'data parsed) project-root)
-                  results)))
-        (forward-line 1)))
-    (nreverse results)))
+;;; Workspace symbol search (delegates to workspace-symbol-search.el)
 
 (defun claude-extra--handle-workspace-search (query &optional kind)
   "Search workspace for QUERY, optionally filtering by KIND.
-Uses Eglot (LSP workspace/symbol) when an active server exists
-for the current project, otherwise falls back to Ripgrep text search.
-Results are limited to `claude-extra-workspace-search-max-results'."
-  (let* ((project-root (or (and (fboundp 'projectile-project-root)
-                                (ignore-errors (projectile-project-root)))
-                           default-directory))
-         (eglot-results (ignore-errors
-                          (claude-extra--eglot-workspace-search
-                           query kind project-root)))
-         (all-results (or eglot-results
-                          (ignore-errors
-                            (claude-extra--rg-workspace-search
-                             query project-root)))))
-    (seq-take (or all-results '()) claude-extra-workspace-search-max-results)))
+Delegates to `workspace-symbol-search--search' with the MCP-specific result limit."
+  (workspace-symbol-search--search query kind claude-extra-workspace-search-max-results))
 
 ;;; Registration
 
@@ -463,7 +351,7 @@ Results are limited to `claude-extra-workspace-search-max-results'."
   (claude-code-ide-make-tool
    :function #'claude-extra--handle-workspace-search
    :name "claude-code-ide-mcp-workspace-symbols"
-   :description "Search for files, functions, variables, classes, etc., by name pattern across your project. This helps you discover code elements when you know part of the name."
+   :description "Search for files, functions, variables, classes, etc., by name pattern across current project, It's faster and more accurate than using grep."
    :args '((:name "query"
             :type string
             :description "The search query.")
