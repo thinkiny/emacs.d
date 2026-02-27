@@ -76,14 +76,14 @@ Set this to navigate to the previous document/chapter.")
   "window.__caretEmacs && window.__caretEmacs."
   "JS guard prefix for calling methods on the CaretEmacs instance.")
 
-(defun caret-xwidget--js-call (method)
+(defun caret-xwidget--js-call (method &optional callback)
   "Execute a JS METHOD call on the CaretEmacs instance."
-  (caret-xwidget--exec (concat caret-xwidget--js-prefix method)))
+  (caret-xwidget--exec (concat caret-xwidget--js-prefix method) callback))
 
-(defun caret-xwidget--exec (js)
+(defun caret-xwidget--exec (js &optional callback)
   "Execute JS string in the current xwidget-webkit session."
   (when-let* ((xw (xwidget-webkit-current-session)))
-    (xwidget-webkit-execute-script xw js)))
+    (xwidget-webkit-execute-script xw js callback)))
 
 (defun caret-xwidget--handle-boundary-result (result)
   "Auto-paginate based on boundary RESULT from moveWithBoundaryCheck."
@@ -129,6 +129,16 @@ Set this to navigate to the previous document/chapter.")
   "Move caret backward one character."
   (interactive)
   (caret-xwidget--js-call "backward('character')"))
+
+(defun caret-xwidget-forward-word ()
+  "Move caret forward one word."
+  (interactive)
+  (caret-xwidget--js-call "forward('word')"))
+
+(defun caret-xwidget-backward-word ()
+  "Move caret backward one word."
+  (interactive)
+  (caret-xwidget--js-call "backward('word')"))
 
 (defun caret-xwidget-next-line ()
   "Move caret to next line."
@@ -196,6 +206,31 @@ Set this to navigate to the previous document/chapter.")
   (caret-xwidget--js-call "_setMark(false)")
   (keyboard-quit))
 
+(defconst caret-xwidget--word-at-caret-js
+  (concat "(function(){var s=window.getSelection();"
+          "if(!s.isCollapsed)return s.toString();"
+          "var n=s.focusNode,o=s.focusOffset;"
+          "if(n.nodeType!==3)return'';"
+          "var t=n.textContent;"
+          "var b=o;while(b>0&&/[\\w]/.test(t[b-1]))b--;"
+          "var m=t.slice(b).match(/^[\\w]+(-[\\w]+)*/);"
+          "return m?m[0]:''})()")
+  "JS to get compound word at caret.  Walks back to the beginning of
+the current word before matching, so it captures the full word even
+when the caret is in the middle. Uses regex to handle hyphenated
+words like well-known.  Uses native APIs directly because
+xwidget-webkit-execute-script callbacks run in a separate WebKit
+content world where window.__caretEmacs is not accessible.")
+
+(defun caret-xwidget-translate-word ()
+  "Translate the word at caret, or the active selection if any."
+  (interactive)
+  (caret-xwidget--exec caret-xwidget--word-at-caret-js
+    (lambda (text)
+      (let ((word (string-trim (or text "") "\"" "\"")))
+        (when (not (string-empty-p word))
+          (bing-dict-brief word))))))
+
 ;; ---------------------------------------------------------------------------
 ;; Keybindings -- directly in xwidget-webkit-mode-map
 ;; ---------------------------------------------------------------------------
@@ -215,14 +250,17 @@ Set this to navigate to the previous document/chapter.")
   (define-key xwidget-webkit-mode-map (kbd "M->")   #'caret-xwidget-end-of-buffer)
   (define-key xwidget-webkit-mode-map (kbd "RET")   #'caret-xwidget-click)
   ;; Vi-style / WASD-style plain-key aliases (no modifier needed).
-  (define-key xwidget-webkit-mode-map (kbd "f")     #'caret-xwidget-forward-char)
-  (define-key xwidget-webkit-mode-map (kbd "b")     #'caret-xwidget-backward-char)
+  (define-key xwidget-webkit-mode-map (kbd "f")     #'caret-xwidget-forward-word)
+  (define-key xwidget-webkit-mode-map (kbd "b")     #'caret-xwidget-backward-word)
+  (define-key xwidget-webkit-mode-map (kbd "a")     #'caret-xwidget-beginning-of-line)
+  (define-key xwidget-webkit-mode-map (kbd "e")     #'caret-xwidget-end-of-line)
   (define-key xwidget-webkit-mode-map (kbd "n")     #'caret-xwidget-next-line)
   (define-key xwidget-webkit-mode-map (kbd "p")     #'caret-xwidget-previous-line)
   (define-key xwidget-webkit-mode-map (kbd "j")     #'caret-xwidget-next-line)
   (define-key xwidget-webkit-mode-map (kbd "k")     #'caret-xwidget-previous-line)
   (define-key xwidget-webkit-mode-map (kbd "s")     #'caret-xwidget-next-line)
   (define-key xwidget-webkit-mode-map (kbd "w")     #'caret-xwidget-previous-line)
+  (define-key xwidget-webkit-mode-map (kbd ",")     #'caret-xwidget-translate-word)
 
   ;; Inject caret.js on every page load (initial and subsequent navigations).
   (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice))

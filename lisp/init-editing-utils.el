@@ -247,7 +247,6 @@ With arg N, insert N newlines."
 (use-package bing-dict
   :demand t
   :config
-  (setq bing-dict-cache-auto-save t)
   (defun bing-dict-at-point()
     (interactive)
     (let ((word (if (region-active-p)
