@@ -77,7 +77,7 @@
         (build-bazel-project root-local)
       (build-make-project compdb-local))))
 
-(ignore-tramp-ssh-control-master #'generate-compdb #'build-c-project)
+(ignore-tramp-ssh-control-master #'generate-compdb #'build-cpp-project)
 
 ;; styles
 (require 'google-c-style)

@@ -72,18 +72,13 @@
 Looks for an entry where the value matches current project root,
 then syncs from the key (source) to the value (destination)."
   (interactive)
-  (let ((matching-entry nil))
-    (dolist (entry magit-toplevel-tramp-cache)
-      (when (string= (cdr entry) (magit-toplevel))
-        (setq matching-entry entry)
-        (cl-return)))
-
-    (if matching-entry
-        (magit-run-rsync (cdr matching-entry) (car matching-entry)))))
+  (when-let* ((toplevel (magit-toplevel))
+              (matching-entry (cl-find toplevel magit-toplevel-tramp-cache
+                                       :key #'cdr :test #'string=)))
+    (magit-run-rsync (cdr matching-entry) (car matching-entry))))
 
 (defun magit-run-rsync(src-tramp dest-tramp)
   "Run rsync from SRC-TRAMP to DEST-TRAMP ."
-  (interactive)
   (when-let* ((src-rsync (tramp-to-rsync-address src-tramp))
               (dest-rsync (tramp-to-rsync-address dest-tramp)))
     (let* ((rsync-cmd (list "rsync" "-avr" "--delete" "--exclude" ".git/"
@@ -111,14 +106,10 @@ then syncs from the key (source) to the value (destination)."
 Looks for an entry where the value matches current project root,
 then syncs from the key (source) to the value (destination)."
   (interactive)
-  (let ((matching-entry nil))
-    (dolist (entry magit-toplevel-tramp-cache)
-      (when (string= (cdr entry) (magit-toplevel))
-        (setq matching-entry entry)
-        (cl-return)))
-
-    (if matching-entry
-        (magit-run-rsync (car matching-entry) (cdr matching-entry)))))
+  (when-let* ((toplevel (magit-toplevel))
+              (matching-entry (cl-find toplevel magit-toplevel-tramp-cache
+                                       :key #'cdr :test #'string=)))
+    (magit-run-rsync (car matching-entry) (cdr matching-entry))))
 
 (defun sanityinc/magit-or-vc-log-file (&optional prompt)
   (interactive "P")
@@ -129,7 +120,7 @@ then syncs from the key (source) to the value (destination)."
         (magit-log-buffer-file t))
     (vc-print-log)))
 
-(remove-hook 'find-file-hooks 'vc-refresh-state)
+(remove-hook 'find-file-hook 'vc-refresh-state)
 
 ;; Convenient binding for vc-git-grep
 (with-eval-after-load 'vc

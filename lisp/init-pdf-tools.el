@@ -68,7 +68,7 @@
     (image-set-window-vscroll 0)
     (pdf-view-redisplay t))
 
-  (defun pdf-traslate-under-mouse (ev)
+  (defun pdf-translate-under-mouse (ev)
     "Select word at mouse event EV and translate it"
     (interactive "@e")
     (let* ((posn (event-start ev))
@@ -97,7 +97,7 @@
   (defun pdf-view-mouse-set-region-wapper (event)
     (interactive "@e")
     (pdf-view-mouse-set-region event)
-    (pdf-traslate-under-mouse event))
+    (pdf-translate-under-mouse event))
 
   (defun pdf-translate-selection (&rest _)
     "Translate the selected word"
@@ -156,7 +156,7 @@
   (define-key pdf-view-mode-map (kbd "M-v") #'pdf-view-scroll-down)
   (define-key pdf-view-mode-map (kbd "C-v") #'pdf-view-scroll-up)
   ;;(define-key pdf-view-mode-map (kbd "<down-mouse-1>") #'pdf-view-mouse-set-region-wapper)
-  (define-key pdf-view-mode-map (kbd "<double-mouse-1>") #'pdf-traslate-under-mouse)
+  (define-key pdf-view-mode-map (kbd "<double-mouse-1>") #'pdf-translate-under-mouse)
   )
 
 (provide 'init-pdf-tools)

@@ -137,8 +137,6 @@ Return nil if inside string, t if in a comment."
                        ((eq (car stack-top) 'try)
                         (setq skip 5))
                        ((eq (car stack-top) '->)
-                        ;; If in fun definition use standard indent level not double
-                        (prin1 stack-top)
                         (if (not (eq (car (car (cdr stack))) 'try))
                             ;; Removed it made multi clause Named fun's look too bad
                             (setq off (+ erlang-indent-level

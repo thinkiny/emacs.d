@@ -33,7 +33,7 @@
 
 (defun pdf-xwidget-scroll-up-step ()
   (interactive)
-  (pdf-xwidget-scroll percision-scroll-step-height))
+  (pdf-xwidget-scroll precision-scroll-step-height))
 
 (defun pdf-xwidget-scroll-up-page ()
   (interactive)
@@ -41,7 +41,7 @@
 
 (defun pdf-xwidget-scroll-down-step ()
   (interactive)
-  (pdf-xwidget-scroll (* -1 percision-scroll-step-height)))
+  (pdf-xwidget-scroll (* -1 precision-scroll-step-height)))
 
 (defun pdf-xwidget-scroll-down-page ()
   (interactive)

@@ -10,8 +10,8 @@
   :group 'file-server)
 
 (defcustom file-server-script (expand-file-name "~/.emacs.d/scripts/file_server.py")
-  "Directory containing the file server script."
-  :type 'directory
+  "Path to the file server script."
+  :type 'file
   :group 'file-server)
 
 (defun file-server-start ()

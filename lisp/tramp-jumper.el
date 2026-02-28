@@ -82,7 +82,7 @@
                      :coding coding :noquery noquery :connection-type connection-type
                      :filter filter :sentinel sentinel :stderr stderr))
             (tramp-message v 6 "%s" (string-join (process-command p) " "))
-            (call-process-shell-command "sleep 5")
+            (accept-process-output p 5)
             p))))))
 
 (defun tramp-jumper-handle-make-process (&rest args)

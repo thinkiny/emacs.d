@@ -23,8 +23,9 @@ Fix for the above hasn't been released as of Emacs 25.2."
         (pop-to-buffer sql-buffer)
         (goto-char (point-max)))
     (sql-set-sqli-buffer)
-    (when sql-buffer
-      (sanityinc/pop-to-sqli-buffer))))
+    (when (and sql-buffer (buffer-live-p sql-buffer))
+      (pop-to-buffer sql-buffer)
+      (goto-char (point-max)))))
 
 (setq-default sql-input-ring-file-name
               (expand-file-name ".sqli_history" user-emacs-directory))

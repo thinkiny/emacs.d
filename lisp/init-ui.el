@@ -56,7 +56,7 @@
 
 ;; scroll functions
 ;; font-height: (/ (plist-get (font-face-attributes (face-attribute 'default :font)) :height) 10)
-(defconst percision-scroll-step-height 90)
+(defconst precision-scroll-step-height 90)
 (defconst precision-scroll-taller-line 150)
 (defconst precision-scroll-page-lines 20)
 

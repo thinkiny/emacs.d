@@ -8,7 +8,6 @@
                    ,(expand-file-name "elpa" user-emacs-directory)
                    ,(expand-file-name "workspace" user-emacs-directory)
                    ,(expand-file-name "eglot-eclipse-jdt-cache" user-emacs-directory)
-                   ,(expand-file-name "workspace" user-emacs-directory)
                    "/var/folders/"
                    ".*/.metals/"
                    ".*/.cache/"))

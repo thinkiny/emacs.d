@@ -116,10 +116,10 @@ fi"
 (defun set-italic-font-if-available(&rest args)
   (when-let* ((font (font-face-attributes (face-attribute 'italic :font)))
               (family (plist-get font :family))
-              (italic-famlily (concat family " Italic")))
+              (italic-family (concat family " Italic")))
 
-    (if (member italic-famlily (font-family-list))
-        (set-face-attribute 'italic nil :family italic-famlily))))
+    (if (member italic-family (font-family-list))
+        (set-face-attribute 'italic nil :family italic-family))))
 
 (if window-system
     (advice-add #'cnfonts-set-font :after #'set-italic-font-if-available))

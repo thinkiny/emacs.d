@@ -37,7 +37,8 @@
   (save-excursion
     (re-search-backward "{$" nil t)
     (forward-line 1)
-    (while (not (= (char-after (line-beginning-position)) ?}))
+    (while (and (not (eobp))
+                (not (= (char-after (line-beginning-position)) ?})))
       (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
         (unless (string-match-p "^\\s-*//\\|`" line)
           (go-insert-generate-tag name line)))

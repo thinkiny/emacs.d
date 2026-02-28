@@ -21,7 +21,7 @@
   (define-key dired-mode-map (kbd "^") (lambda () (interactive) (find-alternate-file "..")))
   (define-key dired-mode-map [mouse-2] 'dired-find-file)
   (define-key dired-mode-map (kbd "C-c C-q") 'wdired-change-to-wdired-mode)
-  (add-hook 'dired-mode 'dired-async-mode))
+  (add-hook 'dired-mode-hook 'dired-async-mode))
 
 (use-package ztree)
 

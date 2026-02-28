@@ -140,11 +140,11 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (defun xwidget-scroll-up-step()
   (interactive)
-  (xwidget-webkit-scroll-up percision-scroll-step-height))
+  (xwidget-webkit-scroll-up precision-scroll-step-height))
 
 (defun xwidget-scroll-down-step()
   (interactive)
-  (xwidget-webkit-scroll-down percision-scroll-step-height))
+  (xwidget-webkit-scroll-down precision-scroll-step-height))
 
 (defun xwidget-scroll-up-page()
   (interactive)
