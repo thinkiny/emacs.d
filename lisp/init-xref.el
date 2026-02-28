@@ -85,15 +85,15 @@ Override existing value with NEW-VALUE if it's set."
          (all-xrefs nil))
     ;; Collect from primary backend
     (condition-case nil
-        (when-let ((xrefs (xref-backend-references primary-backend identifier)))
+        (when-let* ((xrefs (xref-backend-references primary-backend identifier)))
           (setq all-xrefs (append all-xrefs xrefs)))
       (error nil))
     ;; Collect from fallback backends
     (dolist (backend-fn my/xref-fallback-backends)
-      (when-let ((backend (funcall backend-fn)))
+      (when-let* ((backend (funcall backend-fn)))
         (condition-case nil
             (let ((fallback-id (xref-backend-identifier-at-point backend)))
-              (when-let ((xrefs (xref-backend-references backend fallback-id)))
+              (when-let* ((xrefs (xref-backend-references backend fallback-id)))
                 (setq all-xrefs (append all-xrefs xrefs))))
           (error nil))))
     ;; Display results

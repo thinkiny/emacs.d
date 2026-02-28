@@ -149,11 +149,21 @@ class CaretEmacs {
   _relocateIfOffscreen(sel) {
     const r = sel.getRangeAt(0).cloneRange();
     r.collapse(true);
-    const rect = r.getBoundingClientRect();
+    let rect = r.getBoundingClientRect();
+    // Collapsed ranges often have height=0; try a 1-char range for a real rect.
+    if (!rect.height)
+      rect = this._rangeRectAt(r.startContainer, r.startOffset);
+    // Still no rect (e.g. collapsed on an Element node) — resolve to nearest text.
+    if (!rect) {
+      const { node, offset } = this._resolveCursorPosition(
+        r.startContainer, r.startOffset, true);
+      if (node.nodeType === Node.TEXT_NODE)
+        rect = this._rangeRectAt(node, offset);
+    }
     const vp = this._viewportRect();
-    if (rect.height && rect.bottom >= vp.top && rect.top <= vp.bottom) return;
+    if (rect && rect.bottom >= vp.top && rect.top <= vp.bottom) return;
     const cx = (vp.left + vp.right) / 2;
-    const cy = (vp.top + vp.bottom) / 2;
+    const cy = vp.top + 1;
     const range = document.caretRangeFromPoint(cx, cy);
     if (!range || !this._isContained(range.startContainer)) return;
     const resolved = this._resolveToText(range);
@@ -423,6 +433,10 @@ class CaretEmacs {
         this._updateCursor();
         return true;
       }
+      // In multi-page PDFs, null may mean the adjacent page's text layer
+      // isn't rendered yet — not a true boundary.  Let subsequent presses retry.
+      const page = this._currentPage();
+      if (page && this._visuallyAdjacentPage(page, fwd)) return false;
       this._hitBoundary = true;
       return false;
     }
@@ -551,7 +565,15 @@ class CaretEmacs {
     if (adjRect.bottom < vp.top || adjRect.top > vp.bottom)
       adj.scrollIntoView({ block: fwd ? 'start' : 'end' });
     const adjOrdered = this._visuallyOrderedTextNodes(adj);
-    if (!adjOrdered.length) return null;
+    if (!adjOrdered.length) {
+      // Text layer not rendered yet; try caretRangeFromPoint after scroll.
+      const ar = adj.getBoundingClientRect();
+      const cy = fwd ? ar.top + 1 : ar.bottom - 1;
+      const probe = document.caretRangeFromPoint(goalX, cy);
+      if (probe && this._isContained(probe.startContainer))
+        return this._resolveToText(probe);
+      return null;
+    }
     const adjLines = this._groupIntoLines(adjOrdered, lh);
     if (!adjLines.length) return null;
     const targetLine = fwd ? adjLines[0] : adjLines[adjLines.length - 1];
@@ -584,7 +606,12 @@ class CaretEmacs {
     if (node.nodeType !== Node.TEXT_NODE) return false;
     if (!node.textContent.trim()) return !this._walkToVisible(node, fwd);
     if (fwd ? off < node.length - 1 : off > 0) return false;
-    return !this._walkToVisible(node, fwd);
+    if (this._walkToVisible(node, fwd)) return false;
+    // No more text in DOM, but in multi-page PDF, adjacent pages may
+    // have unloaded text layers — not a true document boundary.
+    const page = node.parentElement?.closest('.page[data-page-number]');
+    if (page && this._visuallyAdjacentPage(page, fwd)) return false;
+    return true;
   }
 
   isAtBottom() {
