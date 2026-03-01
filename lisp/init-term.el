@@ -12,7 +12,7 @@
   (ignore-tramp-ssh-control-master 'vterm-mode)
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 40)
-  (setq vterm-max-scrollback 10000)
+  (setq vterm-max-scrollback 20000)
   (setq vterm-shell (concat shell-file-name " -l"))
 
   ;; fix Ctrl-B not working in claude code in some cases
