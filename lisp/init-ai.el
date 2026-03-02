@@ -1,24 +1,5 @@
 ;;; init-ai.el --- init-ai -*- lexical-binding: t -*-
 
-;; claude-remote
-;; #!/bin/bash
-;;
-;; if [[ -n "$CLAUDE_CODE_SSE_PORT" ]]; then
-;;   lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
-;;   if [[ -f $lock ]]; then
-;;     sed -ri 's/"pid":[0-9]+/"pid":'$$'/' $lock
-;;     # Use exec so claude inherits the shell's PID
-;;     exec claude-chill -a 0 -- claude "$@"
-;;   else
-;;     exec claude "$@"
-;;   fi
-;; else
-;;   exec claude "$@"
-;; fi
-
-;; claude-local
-;; exec claude-chill -a 0 -- claude "$@"
-
 (use-package claude-code-ide
   :ensure t
   :vc (:url "https://github.com/thinkiny/claude-code-ide.el" :branch "tramp")
@@ -28,16 +9,16 @@
   ;; (setq claude-code-ide-debug t)
   (setq claude-code-ide-emacs-prompt
 "# Constraints
-- Review Emacs MCP tool description carefully.
-- Always prefer Emacs MCP tools over built-in tools.
-- Never read binary files.
+- Examine Emacs MCP tools description carefully.
+- Prioritize Emacs MCP tools over all built-in tools.
+- Avoid reading binary files like PDFs.
 # Coordinate system
 - Lines: 1-based (Line 1 = first line).
 - Columns: 0-based (Column 0 = first column).
 ")
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'vterm)
-  (setq claude-code-ide-prevent-reflow-glitch nil) ;; use claude-chill
+  (setq claude-code-ide-prevent-reflow-glitch t) ;; set nil if using claude-chill
   (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-vterm-render-delay 0.03)
   (setq claude-code-ide-window-side 'right

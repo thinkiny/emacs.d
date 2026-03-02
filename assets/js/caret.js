@@ -177,7 +177,7 @@ class CaretEmacs {
     this.markActive = active;
     if (!active) {
       const sel = window.getSelection();
-      if (sel?.rangeCount) sel.collapseToEnd();
+      if (sel?.rangeCount) sel.collapse(sel.focusNode, sel.focusOffset);
     }
     this.onMark?.(active);
   }
@@ -284,12 +284,22 @@ class CaretEmacs {
     const rect = this._cursorRectAt(node, offset);
     if (!rect?.height) return void (el.style.display = "none");
     const cw = this._cursorWidth(rect);
+    let cursorTop = rect.top;
+    let cursorHeight = rect.height;
+    const parent = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    if (parent) {
+      const fontSize = parseFloat(getComputedStyle(parent).fontSize);
+      if (fontSize > 0 && cursorHeight > fontSize) {
+        cursorTop += (cursorHeight - fontSize) / 2;
+        cursorHeight = fontSize;
+      }
+    }
     Object.assign(el.style, {
       display: "block",
       left: `${rect.left}px`,
-      top: `${rect.top}px`,
+      top: `${cursorTop}px`,
       width: `${cw}px`,
-      height: `${rect.height}px`,
+      height: `${cursorHeight}px`,
     });
   }
 
@@ -373,6 +383,91 @@ class CaretEmacs {
     sel.collapse(prev, Math.max(0, pp));
   }
 
+  /** Visual character movement for PDF text layers (bypass DOM order). */
+  _moveCharVisual(sel, fwd) {
+    const fn = sel.focusNode;
+    const fo = sel.focusOffset;
+    if (fn.nodeType !== Node.TEXT_NODE) return false;
+
+    if (fwd) {
+      if (fo + 1 < fn.length) {
+        sel.collapse(fn, fo + 1);
+        return true;
+      }
+      const next = this._visuallyAdjacentTextNode(true);
+      if (!next) return false;
+      sel.collapse(next, 0);
+      return true;
+    } else {
+      if (fo > 0) {
+        sel.collapse(fn, fo - 1);
+        return true;
+      }
+      const prev = this._visuallyAdjacentTextNode(false);
+      if (!prev) return false;
+      sel.collapse(prev, Math.max(0, prev.length - 1));
+      return true;
+    }
+  }
+
+  /** Visual word movement for PDF text layers (bypass DOM order). */
+  _moveWordVisual(sel, fwd) {
+    const fn = sel.focusNode;
+    const fo = sel.focusOffset;
+    if (fn.nodeType !== Node.TEXT_NODE) return false;
+
+    const el = fn.parentElement;
+    const page = el?.closest('.page[data-page-number]');
+    const scopeRoot = page || el?.closest('.textLayer') || this._root;
+    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
+    if (!ordered.length) return false;
+
+    const curIdx = ordered.findIndex(e => e.node === fn);
+    if (curIdx === -1) return false;
+
+    if (fwd) {
+      let node = fn, off = fo, idx = curIdx;
+      // Skip past current word
+      while (off < node.textContent.length && /\w/.test(node.textContent[off])) off++;
+      // Skip non-word chars, crossing node boundaries as needed
+      while (true) {
+        while (off < node.textContent.length && !/\w/.test(node.textContent[off])) off++;
+        if (off < node.textContent.length) {
+          sel.collapse(node, off);
+          return true;
+        }
+        idx++;
+        if (idx >= ordered.length) return false;
+        node = ordered[idx].node;
+        off = 0;
+      }
+    } else {
+      let node = fn, off = fo, idx = curIdx;
+      // Step back one position
+      if (off > 0) {
+        off--;
+      } else {
+        idx--;
+        if (idx < 0) return false;
+        node = ordered[idx].node;
+        off = node.textContent.length - 1;
+      }
+      // Skip non-word chars backward, crossing node boundaries
+      while (true) {
+        while (off >= 0 && !/\w/.test(node.textContent[off])) off--;
+        if (off >= 0) break;
+        idx--;
+        if (idx < 0) return false;
+        node = ordered[idx].node;
+        off = node.textContent.length - 1;
+      }
+      // Skip word chars backward to find word start
+      while (off > 0 && /\w/.test(node.textContent[off - 1])) off--;
+      sel.collapse(node, off);
+      return true;
+    }
+  }
+
   _move(direction, granularity) {
     const sel = this._ensureSelection();
     if (!sel) return false;
@@ -413,6 +508,23 @@ class CaretEmacs {
     const an = this.markActive ? sel.anchorNode : null;
     const ao = this.markActive ? sel.anchorOffset : null;
     if (this.markActive) sel.collapse(sel.focusNode, sel.focusOffset);
+
+    // Use visual ordering for character/word movement
+    if (granularity === "character" || granularity === "word") {
+      let moved;
+      if (granularity === "character") {
+        moved = this._moveCharVisual(sel, fwd);
+      } else {
+        moved = this._moveWordVisual(sel, fwd);
+      }
+      if (this.markActive)
+        sel.setBaseAndExtent(an, ao, sel.focusNode, sel.focusOffset);
+      if (moved) {
+        this._scrollToSelection();
+        this._updateCursor();
+      }
+      return moved;
+    }
 
     // WebKit's forward-word from ws crosses gap + next word; track for adjustment.
     const startedOnWs = granularity === "word" && fwd &&
@@ -539,7 +651,6 @@ class CaretEmacs {
     r0.collapse(true);
     const rect = this._charRect(r0);
     if (!rect?.height) return null;
-    const lh = rect.height;
     const goalX = rect.left;
 
     // Phase 1: move within current page
@@ -547,13 +658,13 @@ class CaretEmacs {
     const scopeRoot = page || this._root;
     const ordered = this._visuallyOrderedTextNodes(scopeRoot);
     if (!ordered.length) return null;
-    const lines = this._groupIntoLines(ordered, lh);
+    const lines = this._groupIntoLines(ordered);
     if (!lines.length) return null;
-    const curLineIdx = this._findCaretLine(lines, rect, lh);
+    const curLineIdx = this._findCaretLine(lines, rect);
     if (curLineIdx >= 0) {
       const targetIdx = fwd ? curLineIdx + 1 : curLineIdx - 1;
       if (targetIdx >= 0 && targetIdx < lines.length)
-        return this._pickPositionOnLine(lines[targetIdx], goalX, lh);
+        return this._pickPositionOnLine(lines[targetIdx], goalX);
     }
 
     // Phase 2: cross page boundary
@@ -574,10 +685,10 @@ class CaretEmacs {
         return this._resolveToText(probe);
       return null;
     }
-    const adjLines = this._groupIntoLines(adjOrdered, lh);
+    const adjLines = this._groupIntoLines(adjOrdered);
     if (!adjLines.length) return null;
     const targetLine = fwd ? adjLines[0] : adjLines[adjLines.length - 1];
-    return this._pickPositionOnLine(targetLine, goalX, lh);
+    return this._pickPositionOnLine(targetLine, goalX);
   }
 
   /** Page down/up: scroll viewport, then re-place caret using caretRangeFromPoint. */
@@ -653,8 +764,8 @@ class CaretEmacs {
       if (!t.textContent.trim()) continue;
       const r = document.createRange();
       r.selectNodeContents(t);
-      const rect = r.getBoundingClientRect();
-      if (!rect.height || !rect.width) continue;
+      const rect = r.getClientRects()[0];
+      if (!rect || !rect.height || !rect.width) continue;
       nodes.push({ node: t, rect });
     }
     nodes.sort((a, b) => {
@@ -665,26 +776,45 @@ class CaretEmacs {
     return nodes;
   }
 
-  _groupIntoLines(orderedNodes, lh) {
+  /** Find the visually next/previous text node using visual ordering. */
+  _visuallyAdjacentTextNode(fwd) {
+    const sel = window.getSelection();
+    if (!sel?.focusNode) return null;
+    const fn = sel.focusNode;
+    const el = fn.nodeType === Node.ELEMENT_NODE ? fn : fn.parentElement;
+    const page = el?.closest('.page[data-page-number]');
+    const scopeRoot = page || el?.closest('.textLayer') || this._root;
+    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
+    if (!ordered.length) return null;
+    const curIdx = ordered.findIndex(e => e.node === fn);
+    if (curIdx === -1) return null;
+    const targetIdx = fwd ? curIdx + 1 : curIdx - 1;
+    if (targetIdx < 0 || targetIdx >= ordered.length) return null;
+    return ordered[targetIdx].node;
+  }
+
+  _groupIntoLines(orderedNodes) {
     if (!orderedNodes.length) return [];
     const lines = [];
     let currentLine = [orderedNodes[0]];
-    let lineTop = orderedNodes[0].rect.top;
     for (let i = 1; i < orderedNodes.length; i++) {
       const entry = orderedNodes[i];
-      if (Math.abs(entry.rect.top - lineTop) <= lh / 3) {
+      const rep = currentLine[0].rect;
+      const entryMid = entry.rect.top + entry.rect.height / 2;
+      const repMid = rep.top + rep.height / 2;
+      const tolerance = Math.max(entry.rect.height, rep.height) / 2;
+      if (Math.abs(entryMid - repMid) <= tolerance) {
         currentLine.push(entry);
       } else {
         lines.push(currentLine);
         currentLine = [entry];
-        lineTop = entry.rect.top;
       }
     }
     lines.push(currentLine);
     return lines;
   }
 
-  _findCaretLine(lines, caretRect, lh) {
+  _findCaretLine(lines, caretRect) {
     const caretMid = caretRect.top + caretRect.height / 2;
     let bestIdx = -1, bestDist = Infinity;
     for (let i = 0; i < lines.length; i++) {
@@ -693,10 +823,11 @@ class CaretEmacs {
       const dist = Math.abs(caretMid - lineMid);
       if (dist < bestDist) { bestDist = dist; bestIdx = i; }
     }
-    return bestDist > lh * 3 / 2 ? -1 : bestIdx;
+    const lineH = lines[bestIdx]?.[0].rect.height || 0;
+    return bestDist > lineH * 1.5 ? -1 : bestIdx;
   }
 
-  _pickPositionOnLine(line, goalX, lh) {
+  _pickPositionOnLine(line, goalX) {
     const repRect = line[0].rect;
     const lineMidY = repRect.top + repRect.height / 2;
     // Try caretRangeFromPoint for precision
@@ -705,7 +836,7 @@ class CaretEmacs {
       const resolved = this._resolveToText(probe);
       if (resolved && this._isContained(resolved.startContainer)) {
         const cr = this._charRect(resolved);
-        if (cr && Math.abs(cr.top - repRect.top) < lh / 2) return resolved;
+        if (cr && Math.abs(cr.top - repRect.top) < repRect.height) return resolved;
       }
     }
 
@@ -731,12 +862,28 @@ class CaretEmacs {
     const sel = this._ensureSelection();
     if (!sel) return;
     const walkRoot = root || this._root;
-    const ordered = this._visuallyOrderedTextNodes(walkRoot);
-    const tn = ordered.length > 0
-      ? (toStart ? ordered[0].node : ordered[ordered.length - 1].node)
-      : null;
-    const range = tn
-      ? this._collapsedRange(tn, toStart ? 0 : Math.max(0, tn.length - 1))
+    const tw = document.createTreeWalker(walkRoot, NodeFilter.SHOW_TEXT);
+    let bestNode = null, bestTop = null, bestLeft = null;
+    while (tw.nextNode()) {
+      const t = tw.currentNode;
+      if (!t.textContent.trim()) continue;
+      const off = toStart ? 0 : Math.max(0, t.length - 1);
+      const rect = this._rangeRectAt(t, off);
+      if (!rect) continue;
+      if (bestNode === null) {
+        bestNode = t; bestTop = rect.top; bestLeft = rect.left;
+        continue;
+      }
+      const dy = rect.top - bestTop;
+      const better = toStart
+        ? (dy < -2 || (Math.abs(dy) <= 2 && rect.left < bestLeft))
+        : (dy > 2 || (Math.abs(dy) <= 2 && rect.left > bestLeft));
+      if (better) {
+        bestNode = t; bestTop = rect.top; bestLeft = rect.left;
+      }
+    }
+    const range = bestNode
+      ? this._collapsedRange(bestNode, toStart ? 0 : Math.max(0, bestNode.length - 1))
       : (() => { const r = document.createRange(); r.selectNodeContents(walkRoot); r.collapse(toStart); return r; })();
     this._applyRange(sel, range);
     if (root) this._scrollToSelection();

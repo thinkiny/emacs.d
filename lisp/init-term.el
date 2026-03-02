@@ -73,8 +73,8 @@
     (vterm-claude-loopback-mode nil)))
 
 (defun vterm-claude-loopback-mode (enable)
-  (when (and (string-prefix-p "*claude-code" (buffer-name))
-             (not claude-code-ide-prevent-reflow-glitch))
+  (when (and (not claude-code-ide-prevent-reflow-glitch)
+             (string-prefix-p "*claude-code" (buffer-name)))
     (unless (eq enable vterm-claude-loopback-mode-enabled)
       (if enable
           (when (vterm-claude--buffer-changed-p)
