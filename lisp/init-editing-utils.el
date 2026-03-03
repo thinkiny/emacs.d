@@ -534,4 +534,10 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
 
 (add-hook 'prog-mode-hook #'toggle-auto-revert)
 
+;; shell-mode
+(with-eval-after-load 'sh-script
+  (add-hook 'sh-base-mode-hook
+            (lambda()
+              (add-to-list 'completion-at-point-functions 'cape-file))))
+
 (provide 'init-editing-utils)
