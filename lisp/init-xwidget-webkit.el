@@ -24,14 +24,21 @@
   (if (s-ends-with? ".html" (buffer-file-name))
       (concat "file://" (buffer-file-name))))
 
-(defun xwidget-webkit-create-or-goto-url(url)
-  (let ((buffer (xwidget-webkit-get-browse-buffer)))
-    (if buffer
-        (progn
-          (xwidget-webkit-goto-uri xwidget-webkit-browse-session url)
-          (switch-to-buffer buffer))
-      (xwidget-webkit-new-session url)
-      (setq xwidget-webkit-browse-session (xwidget-webkit-last-session)))))
+(defun xwidget-webkit-create-or-goto-url (url)
+  "Open or reload URL in an xwidget session.
+When current major mode is derived from `xwidget-webkit-mode',
+reload in the current buffer; otherwise use or create the global
+browse session."
+  (if (derived-mode-p 'xwidget-webkit-mode)
+      (when-let* ((session (xwidget-webkit-current-session)))
+        (xwidget-webkit-goto-uri session url))
+    (let ((buffer (xwidget-webkit-get-browse-buffer)))
+      (if buffer
+          (progn
+            (xwidget-webkit-goto-uri xwidget-webkit-browse-session url)
+            (switch-to-buffer buffer))
+        (xwidget-webkit-new-session url)
+        (setq xwidget-webkit-browse-session (xwidget-webkit-last-session))))))
 
 (defun xwidget-webkit-browse-open-url(url &optional rest)
   "Ask xwidget-webkit to browse URL."
