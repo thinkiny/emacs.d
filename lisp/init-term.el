@@ -68,19 +68,17 @@
   (vterm-claude-loopback-mode (not vterm-claude-loopback-mode-enabled)))
 
 (defun my-vterm-copy-mode-hook()
-  (if vterm-copy-mode
-      (vterm-claude-loopback-mode t)
-    (vterm-claude-loopback-mode nil)))
+  (if use-claude-code-chill
+      (vterm-claude-loopback-mode vterm-copy-mode)))
 
 (defun vterm-claude-loopback-mode (enable)
-  (when (and (not claude-code-ide-prevent-reflow-glitch)
-             (string-prefix-p "*claude-code" (buffer-name)))
+  (when (string-prefix-p "*claude-code" (buffer-name)))
     (unless (eq enable vterm-claude-loopback-mode-enabled)
       (if enable
           (when (vterm-claude--buffer-changed-p)
             (vterm-send-string "\x1e"))
         (vterm-send-string "\x1e"))
-      (setq vterm-claude-loopback-mode-enabled enable))))
+      (setq vterm-claude-loopback-mode-enabled enable)))
 
 ;; vterm--pixel-scroll
 (defvar-local vterm--scroll-timer nil)

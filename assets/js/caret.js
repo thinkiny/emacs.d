@@ -131,10 +131,17 @@ class CaretEmacs {
 
   /* ── selection helpers ──────────────────────────────────────── */
 
-  _ensureSelection() {
+  _ensureSelection(skipRelocate = false) {
     const sel = window.getSelection();
     if (sel?.rangeCount > 0) {
-      this._relocateIfOffscreen(sel);
+      if (!skipRelocate) this._relocateIfOffscreen(sel);
+      return sel;
+    }
+    const c = this._savedCaret;
+    if (c?.node && this._root.contains(c.node)) {
+      const r = this._collapsedRange(c.node, c.offset);
+      sel.removeAllRanges();
+      sel.addRange(r);
       return sel;
     }
     const range = document.createRange();
@@ -147,16 +154,15 @@ class CaretEmacs {
 
   /** Re-place the caret at visible content when it is outside the viewport. */
   _relocateIfOffscreen(sel) {
-    const r = sel.getRangeAt(0).cloneRange();
-    r.collapse(true);
+    const r = this._collapsedRange(sel.focusNode, sel.focusOffset);
     let rect = r.getBoundingClientRect();
     // Collapsed ranges often have height=0; try a 1-char range for a real rect.
     if (!rect.height)
-      rect = this._rangeRectAt(r.startContainer, r.startOffset);
+      rect = this._rangeRectAt(sel.focusNode, sel.focusOffset);
     // Still no rect (e.g. collapsed on an Element node) — resolve to nearest text.
     if (!rect) {
       const { node, offset } = this._resolveCursorPosition(
-        r.startContainer, r.startOffset, true);
+        sel.focusNode, sel.focusOffset, true);
       if (node.nodeType === Node.TEXT_NODE)
         rect = this._rangeRectAt(node, offset);
     }
@@ -177,16 +183,39 @@ class CaretEmacs {
     this.markActive = active;
     if (!active) {
       const sel = window.getSelection();
-      if (sel?.rangeCount) sel.collapse(sel.focusNode, sel.focusOffset);
+      if (sel?.rangeCount) {
+        const fn = sel.focusNode;
+        const fo = sel.focusOffset;
+        sel.collapse(fn, fo);
+        this._savedCaret = { node: fn, offset: fo };
+        setTimeout(() => this._restoreCaretIfLost(), 0);
+      }
     }
     this.onMark?.(active);
+  }
+
+  _restoreCaretIfLost() {
+    const sel = window.getSelection();
+    if (sel?.rangeCount) return;
+    const c = this._savedCaret;
+    if (!c?.node || !this._root.contains(c.node)) return;
+    const r = this._collapsedRange(c.node, c.offset);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    this._updateCursor();
   }
 
   /** Scroll the viewport to keep the selection focus visible. */
   _scrollToSelection() {
     const sel = window.getSelection();
     if (!sel?.rangeCount) return;
-    const { top, bottom } = this._collapsedRange(sel.focusNode, sel.focusOffset).getBoundingClientRect();
+    // Use _rangeRectAt for a proper rect with height, fallback to collapsed range
+    let rect = this._rangeRectAt(sel.focusNode, sel.focusOffset);
+    if (!rect) {
+      rect = this._collapsedRange(sel.focusNode, sel.focusOffset).getBoundingClientRect();
+    }
+    if (!rect || !rect.height) return; // Skip scrolling if we can't get a valid rect
+    const { top, bottom } = rect;
     const vp = this._viewportRect();
     if (bottom > vp.bottom - PAGE_OVERLAP) {
       if (Math.ceil(this._scrollTop + this._viewportHeight) >= this._scrollHeight) return;
@@ -469,7 +498,7 @@ class CaretEmacs {
   }
 
   _move(direction, granularity) {
-    const sel = this._ensureSelection();
+    const sel = this._ensureSelection(true); // Skip relocate for precise movements
     if (!sel) return false;
     this._hitBoundary = false;
     if (this._isAtVisibleBoundary(direction)) {
@@ -480,8 +509,12 @@ class CaretEmacs {
     // Pre-snap: if on whitespace node, snap to visible text first
     const { node: snapN, offset: snapO } =
       this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
-    if (snapN !== sel.focusNode || snapO !== sel.focusOffset)
+    if (snapN !== sel.focusNode || snapO !== sel.focusOffset) {
       sel.collapse(snapN, snapO);
+    }
+
+    if (!this.markActive && !sel.isCollapsed)
+      sel.collapse(sel.focusNode, sel.focusOffset);
 
     const fwd = direction === "forward";
 
@@ -520,6 +553,7 @@ class CaretEmacs {
       if (this.markActive)
         sel.setBaseAndExtent(an, ao, sel.focusNode, sel.focusOffset);
       if (moved) {
+        this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
         this._scrollToSelection();
         this._updateCursor();
       }
@@ -541,6 +575,7 @@ class CaretEmacs {
           sel.removeAllRanges();
           sel.addRange(lineRange);
         }
+        this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
         this._scrollToSelection();
         this._updateCursor();
         return true;
@@ -576,8 +611,12 @@ class CaretEmacs {
     }
 
     // Fallback: void elements that sel.modify cannot cross.
-    if (!moved && this._fallbackToAdjacentText(sel, fwd)) return true;
+    if (!moved && this._fallbackToAdjacentText(sel, fwd)) {
+      this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
+      return true;
+    }
 
+    this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
     this._scrollToSelection();
     this._updateCursor();
     return moved;
@@ -647,8 +686,7 @@ class CaretEmacs {
   _moveLine(fwd) {
     const sel = window.getSelection();
     if (!sel?.rangeCount) return null;
-    const r0 = sel.getRangeAt(0).cloneRange();
-    r0.collapse(true);
+    const r0 = this._collapsedRange(sel.focusNode, sel.focusOffset);
     const rect = this._charRect(r0);
     if (!rect?.height) return null;
     const goalX = rect.left;
@@ -764,13 +802,32 @@ class CaretEmacs {
       if (!t.textContent.trim()) continue;
       const r = document.createRange();
       r.selectNodeContents(t);
-      const rect = r.getClientRects()[0];
-      if (!rect || !rect.height || !rect.width) continue;
+      const rects = r.getClientRects();
+      const clientRect = rects[0] || r.getBoundingClientRect();
+      if (!clientRect || !clientRect.height || !clientRect.width) {
+        console.log('Filtered out text node:', t.textContent, 'rect:', clientRect);
+        continue;
+      }
+      // Convert to page coordinates (add scroll offset)
+      const rect = {
+        top: clientRect.top + window.scrollY,
+        left: clientRect.left + window.scrollX,
+        width: clientRect.width,
+        height: clientRect.height
+      };
       nodes.push({ node: t, rect });
     }
     nodes.sort((a, b) => {
-      const dy = a.rect.top - b.rect.top;
-      if (Math.abs(dy) > 2) return dy;
+      // Calculate vertical midpoints for more accurate line detection
+      const aMid = a.rect.top + a.rect.height / 2;
+      const bMid = b.rect.top + b.rect.height / 2;
+      const dy = aMid - bMid;
+
+      // Use adaptive tolerance based on the heights of both elements
+      // This handles superscripts, subscripts, and varying font sizes
+      const tolerance = Math.max(a.rect.height, b.rect.height) / 2;
+
+      if (Math.abs(dy) > tolerance) return dy;
       return a.rect.left - b.rect.left;
     });
     return nodes;

@@ -260,6 +260,11 @@ With arg N, insert N newlines."
   :bind (:map global-map
               ("C-,"  . 'bing-dict-at-point)))
 
+;; (use-package google-translate
+;;   :config
+;;   (setq google-translate-default-source-language "auto")
+;;   (setq google-translate-default-target-language "zh-CN"))
+
 ;; translation
 (defvar-local auto-translate-mouse-selection nil)
 (defun translate-mouse-selection()
@@ -521,6 +526,8 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
 
 ;; auto-revert
 (require 'autorevert)
+(setq auto-revert-mode-text "")
+(setq auto-revert-avoid-polling t)
 (setq auto-revert-remote-files t)
 (defun toggle-auto-revert ()
   "Toggle 'auto-revert-mode, configuring interval based on file location."

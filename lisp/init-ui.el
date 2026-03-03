@@ -22,15 +22,15 @@
     (remove-hook 'menu-bar-update-hook 'imenu-update-menubar)))
 
 ;; fringe
-(defun set-fringe-based-on-mode(&optional window)
-  (if (derived-mode-p 'xwidget-webkit-mode)
-      (set-window-fringes nil 0)
-    (set-window-fringes nil nil)))
+;; (defun set-fringe-based-on-mode(&optional window)
+;;   (if (derived-mode-p 'xwidget-webkit-mode)
+;;       (set-window-fringes nil nil)
+;;     (set-window-fringes nil nil)))
 
-(with-eval-after-load 'fringe
-  ;; (set-fringe-mode '(1 . 0))
-  (set-fringe-mode '(nil . 0))
-  (add-hook 'window-configuration-change-hook #'set-fringe-based-on-mode))
+;; (with-eval-after-load 'fringe
+;;   (set-fringe-mode '(nil . 0))
+;;   (set-fringe-mode '(nil . nil)))
+;;(add-hook 'window-configuration-change-hook #'set-fringe-based-on-mode))
 
 ;; line display params
 (setq frame-resize-pixelwise t)
