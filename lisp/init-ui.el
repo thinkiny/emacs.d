@@ -46,13 +46,11 @@
 ;; mouse && scroll
 (when window-system
   (pixel-scroll-precision-mode)
+  (setq mouse-autoselect-window t)
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
   (setq mouse-wheel-progressive-speed nil)
   (setq scroll-step 1
-        scroll-conservatively 101
-        ;; scroll-up-aggressively 0.01
-        ;; scroll-down-aggressively 0.01
-        ))
+        scroll-conservatively 101))
 
 ;; scroll functions
 ;; font-height: (/ (plist-get (font-face-attributes (face-attribute 'default :font)) :height) 10)

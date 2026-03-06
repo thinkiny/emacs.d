@@ -243,7 +243,7 @@ With arg N, insert N newlines."
 
 (add-hook 'prog-mode-hook  #'my/hs-minor-mode)
 
-;; dict
+;; translation
 (use-package bing-dict
   :demand t
   :config
@@ -262,15 +262,16 @@ With arg N, insert N newlines."
 
 ;; (use-package google-translate
 ;;   :config
+;;   (setq google-translate-output-destination 'echo-area)
 ;;   (setq google-translate-default-source-language "auto")
 ;;   (setq google-translate-default-target-language "zh-CN"))
 
-;; translation
+;; auto translate
 (defvar-local auto-translate-mouse-selection nil)
 (defun translate-mouse-selection()
   (interactive)
   (when auto-translate-mouse-selection
-    (if (eq major-mode 'nov-xwidget-webkit-mode)
+    (if (derived-mode-p 'nov-xwidget-webkit-mode)
         (xwidget-translate-range)
       (bing-dict-at-point))))
 
@@ -529,6 +530,7 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
 (setq auto-revert-mode-text "")
 (setq auto-revert-avoid-polling t)
 (setq auto-revert-remote-files t)
+(setq auto-revert-check-vc-info t)
 (defun toggle-auto-revert ()
   "Toggle 'auto-revert-mode, configuring interval based on file location."
   (interactive)

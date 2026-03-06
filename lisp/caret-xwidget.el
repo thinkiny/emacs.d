@@ -13,6 +13,10 @@
 The file is read at load time and injected into xwidget-webkit pages."
   :type 'file)
 
+(defcustom caret-xwidget-reload-js-on-inject nil
+  "If non-nil, reload `caret-xwidget-js-file' on every injection."
+  :type 'boolean)
+
 ;; ---------------------------------------------------------------------------
 ;; Load caret.js source from file
 ;; ---------------------------------------------------------------------------
@@ -40,6 +44,8 @@ The file is read at load time and injected into xwidget-webkit pages."
 (defun caret-xwidget--inject ()
   "Inject caret.js into the current xwidget-webkit session."
   (when-let* ((xw (xwidget-webkit-current-session)))
+    (when caret-xwidget-reload-js-on-inject
+      (caret-xwidget--load-js))
     (let ((post caret-xwidget--after-inject-js))
       (setq caret-xwidget--after-inject-js nil)
       (xwidget-webkit-execute-script xw
@@ -206,6 +212,13 @@ Set this to navigate to the previous document/chapter.")
   (caret-xwidget--js-call "_setMark(false)")
   (keyboard-quit))
 
+(defun caret-xwidget--before-keyboard-quit (&rest _)
+  "Clear xwidget caret mark before `keyboard-quit'.
+Ensures mark mode is deactivated even when C-g is handled by a
+minor mode (isearch, ivy, etc.) rather than the major mode binding."
+  (when (derived-mode-p 'xwidget-webkit-mode)
+    (caret-xwidget--js-call "_setMark(false)")))
+
 (defconst caret-xwidget--word-at-caret-js
   (concat "(function(){var s=window.getSelection();"
           "if(!s.isCollapsed)return s.toString();"
@@ -230,6 +243,56 @@ content world where window.__caretEmacs is not accessible.")
       (let ((word (string-trim (or text "") "\"" "\"")))
         (when (not (string-empty-p word))
           (bing-dict-brief word))))))
+
+;; ---------------------------------------------------------------------------
+;; Debug helpers (caret.js)
+;; ---------------------------------------------------------------------------
+
+(defun caret-xwidget-debug-enable ()
+  "Enable caret.js debug logging."
+  (interactive)
+  (caret-xwidget--js-call "enableDebug(true)"))
+
+(defun caret-xwidget-debug-disable ()
+  "Disable caret.js debug logging."
+  (interactive)
+  (caret-xwidget--js-call "enableDebug(false)"))
+
+(defun caret-xwidget-debug-clear ()
+  "Clear caret.js debug log."
+  (interactive)
+  (caret-xwidget--js-call "clearDebug()"))
+
+(defun caret-xwidget-debug-dump ()
+  "Dump caret.js debug log to *caret-debug* buffer."
+  (interactive)
+  (caret-xwidget--exec (concat caret-xwidget--js-prefix "dumpDebug()")
+    (lambda (result)
+      (let ((payload (string-trim (or result "") "\"" "\"")))
+        (with-current-buffer (get-buffer-create "*caret-debug*")
+          (erase-buffer)
+          (insert payload)
+          (goto-char (point-min))
+          (pop-to-buffer (current-buffer)))))))
+
+(defun caret-xwidget-debug-dump-to-file (&optional file)
+  "Dump caret.js debug log to FILE (defaults to ~/.emacs.d/caret.log)."
+  (interactive)
+  (let ((target (expand-file-name (or file "~/.emacs.d/1.log"))))
+    (caret-xwidget--exec (concat caret-xwidget--js-prefix "dumpDebug()")
+      (lambda (result)
+        (let ((payload (string-trim (or result "") "\"" "\"")))
+          (with-temp-buffer
+            (insert payload)
+            (write-region (point-min) (point-max) target nil 'silent))
+          (message "caret.js debug log written to %s" target))))))
+
+(defun caret-xwidget-reload-js ()
+  "Reload caret.js from disk and re-inject it into the current xwidget."
+  (interactive)
+  (caret-xwidget--load-js)
+  (caret-xwidget--inject)
+  (message "caret.js reloaded and injected"))
 
 ;; ---------------------------------------------------------------------------
 ;; Keybindings -- directly in xwidget-webkit-mode-map
@@ -264,7 +327,8 @@ content world where window.__caretEmacs is not accessible.")
   (define-key xwidget-webkit-mode-map (kbd ",")     #'caret-xwidget-translate-word)
 
   ;; Inject caret.js on every page load (initial and subsequent navigations).
-  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice))
+  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice)
+  (advice-add 'keyboard-quit :before #'caret-xwidget--before-keyboard-quit))
 
 (provide 'caret-xwidget)
 
