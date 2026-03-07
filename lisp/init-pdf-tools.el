@@ -51,10 +51,10 @@
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
 
   ;; Silence "File *.pdf is large (X MiB), really open?" prompts for pdfs
-  (defadvice! +pdf-suppress-large-file-prompts-a (fn size op-type filename &optional offer-raw)
-    :around #'abort-if-file-too-large
+  (defun +pdf-suppress-large-file-prompts-a (fn size op-type filename &optional offer-raw)
     (unless (string-match-p "\\.pdf\\'" filename)
       (funcall fn size op-type filename offer-raw)))
+  (advice-add 'abort-if-file-too-large :around #'+pdf-suppress-large-file-prompts-a)
 
   (add-to-list 'display-buffer-alist
                '("\\*Outline .*pdf\\*"

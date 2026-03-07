@@ -89,8 +89,6 @@
   (dolist (func funcs)
     (advice-add func :around #'advice/ignore-file-truename)))
 
-(require 'doom-utils)
-
 ;; init platform
 (defconst *is-a-mac* (eq system-type 'darwin))
 (defconst *is-a-linux* (eq system-type 'gnu/linux))
