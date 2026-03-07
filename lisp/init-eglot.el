@@ -29,7 +29,8 @@
   (setq eglot-send-changes-idle-time 1)
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
                                             :documentOnTypeFormattingProvider
-                                            :documentRangeFormattingProvider))
+                                            :documentRangeFormattingProvider
+                                            :semanticTokensProvider))
   (setq jsonrpc-default-request-timeout 15)
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
@@ -161,10 +162,9 @@
     (make-variable-buffer-local 'eglot-ignored-server-capabilities)
     (remove-hook 'before-save-hook #'eglot--signal-textDocument/willSave t)
     (remove-hook 'after-save-hook #'eglot--signal-textDocument/didSave t)
-    (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
-    (add-hook 'eglot-server-initialized-hook #'my/eglot-disable-document-sync t)
-    )
+    (add-hook 'eglot-server-initialized-hook #'my/eglot-disable-document-sync t))
 
+  (eglot-semantic-tokens-mode -1)
   (setq-local completion-at-point-functions
               (list
                #'cape-file
@@ -174,7 +174,6 @@
   (if eglot-enable-format-at-save
       (eglot-enable-format)
     (eglot-disable-format)))
-
 
 (with-eval-after-load-theme 'eglot
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))

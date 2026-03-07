@@ -123,7 +123,8 @@ When KIND-FILTER is non-nil, keep only symbols of that kind."
                              kind-filter))
                           results)
                        results)))
-      (seq-map #'project-search--parse-lsp-result filtered))))
+      (seq-map #'project-search--parse-lsp-result
+               (seq-sort-by (lambda (r) (plist-get r :kind)) #'< filtered)))))
 
 (defun project-search--rg-parse-match (data project-root)
   "Parse a ripgrep JSON match DATA into a result alist.

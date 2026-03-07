@@ -42,7 +42,7 @@
 
 ;;; Optimizations
 (setq process-adaptive-read-buffering nil)
-(setq read-process-output-max (* 1024 1024))
+(setq read-process-output-max (* 4096 1024))
 ;; A second, case-insensitive pass over `auto-mode-alist' is time wasted, and
 ;; indicates misconfiguration (don't rely on case insensitivity for file names).
 (setq auto-mode-case-fold nil)
@@ -243,40 +243,6 @@ With arg N, insert N newlines."
 
 (add-hook 'prog-mode-hook  #'my/hs-minor-mode)
 
-;; translation
-(use-package bing-dict
-  :demand t
-  :config
-  (defun bing-dict-at-point()
-    (interactive)
-    (let ((word (if (region-active-p)
-                    (buffer-substring-no-properties
-                     (region-beginning) (region-end))
-                  (let ((text (thing-at-point 'word)))
-                    (if text (substring-no-properties text))))))
-      (if word
-          (bing-dict-brief word)
-        (message "can't find word at point"))))
-  :bind (:map global-map
-              ("C-,"  . 'bing-dict-at-point)))
-
-;; (use-package google-translate
-;;   :config
-;;   (setq google-translate-output-destination 'echo-area)
-;;   (setq google-translate-default-source-language "auto")
-;;   (setq google-translate-default-target-language "zh-CN"))
-
-;; auto translate
-(defvar-local auto-translate-mouse-selection nil)
-(defun translate-mouse-selection()
-  (interactive)
-  (when auto-translate-mouse-selection
-    (if (derived-mode-p 'nov-xwidget-webkit-mode)
-        (xwidget-translate-range)
-      (bing-dict-at-point))))
-
-(advice-add #'mouse-set-region-1 :after #'translate-mouse-selection)
-
 ;; view-mode
 (with-eval-after-load 'view
   (setq view-read-only t)
@@ -286,10 +252,6 @@ With arg N, insert N newlines."
 (use-package so-long
   :demand t
   :config
-  ;; Don't disable syntax highlighting and line numbers, or make the buffer
-  ;; read-only, in `so-long-minor-mode', so we can have a basic editing
-  ;; experience in them, at least. It will remain off in `so-long-mode',
-  ;; however, because long files have a far bigger impact on Emacs performance.
   (delq! 'font-lock-mode so-long-minor-modes)
   (delq! 'buffer-read-only so-long-variable-overrides 'assq)
   ;; ...but at least reduce the level of syntax highlighting

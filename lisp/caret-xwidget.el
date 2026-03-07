@@ -210,7 +210,8 @@ Set this to navigate to the previous document/chapter.")
   "Deactivate mark (clear selection) and call `keyboard-quit'."
   (interactive)
   (caret-xwidget--js-call "_setMark(false)")
-  (keyboard-quit))
+  ;;(keyboard-quit)
+  )
 
 (defun caret-xwidget--before-keyboard-quit (&rest _)
   "Clear xwidget caret mark before `keyboard-quit'.
@@ -242,7 +243,7 @@ content world where window.__caretEmacs is not accessible.")
     (lambda (text)
       (let ((word (string-trim (or text "") "\"" "\"")))
         (when (not (string-empty-p word))
-          (bing-dict-brief word))))))
+          (translate-brief word))))))
 
 ;; ---------------------------------------------------------------------------
 ;; Debug helpers (caret.js)
@@ -309,7 +310,7 @@ content world where window.__caretEmacs is not accessible.")
   (define-key xwidget-webkit-mode-map (kbd "M-v")   #'caret-xwidget-scroll-down)
   (define-key xwidget-webkit-mode-map (kbd "SPC")   #'caret-xwidget-scroll-up)
   (define-key xwidget-webkit-mode-map (kbd "C-SPC") #'caret-xwidget-toggle-mark)
-  (define-key xwidget-webkit-mode-map (kbd "C-g")   #'caret-xwidget-quit-mark)
+  ;;(define-key xwidget-webkit-mode-map (kbd "C-g")   #'caret-xwidget-quit-mark)
   (define-key xwidget-webkit-mode-map (kbd "M-<")   #'caret-xwidget-beginning-of-buffer)
   (define-key xwidget-webkit-mode-map (kbd "M->")   #'caret-xwidget-end-of-buffer)
   (define-key xwidget-webkit-mode-map (kbd "RET")   #'caret-xwidget-click)

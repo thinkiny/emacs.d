@@ -133,7 +133,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
                           (setq xwidget-translate-timer nil)
                           (xwidget-webkit-get-selection
                            (lambda (text)
-                             (bing-dict-brief text)))))))
+                             (translate-brief text)))))))
 
 (defun xwidget-webkit-open-in-chrome(&optional rest)
   (interactive)

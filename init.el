@@ -10,6 +10,7 @@
 (require 'init-ui)
 (require 'init-performance)
 (require 'init-exec-path)
+(require 'init-translation)
 (require 'init-editing-utils)
 (require 'init-xref)
 (require 'init-treemacs)
