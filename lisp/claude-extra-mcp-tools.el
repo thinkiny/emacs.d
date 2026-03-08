@@ -303,7 +303,7 @@ Handles both xwidget buffers (via JavaScript) and regular buffers
   (claude-code-ide-make-tool
    :function #'claude-extra--handle-project-search
    :name "claude-code-ide-mcp-project-search"
-   :description "Use this tool when you have something to search, prioritize this over built-in search tools; it searches text via the LSP Server/rg."
+   :description "Use this tool when you have something to search. Prioritize it over any shell searching tool (e.g., rg/grep)."
    :args '((:name "query"
             :type string
             :description "The search query.")))

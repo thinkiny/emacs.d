@@ -275,6 +275,7 @@ class CaretEmacs {
         setTimeout(() => this._restoreCaretIfLost(), 0);
       }
     }
+    this._updateCursor();
   }
 
   _restoreCaretIfLost() {
@@ -403,7 +404,15 @@ class CaretEmacs {
     const el = this._cursorEl;
     if (!el) return;
     const sel = window.getSelection();
-    if (!sel?.rangeCount) return void (el.style.display = "none");
+    if (!sel?.rangeCount) {
+      // Selection unexpectedly lost — restore from last rendered position
+      const c = this._lastCursorPos;
+      if (c?.node && this._root.contains(c.node)) {
+        sel.removeAllRanges();
+        sel.addRange(this._collapsedRange(c.node, c.offset));
+      }
+      if (!sel?.rangeCount) return void (el.style.display = "none");
+    }
     if (!this._isContained(sel.focusNode)) return void (el.style.display = "none");
     const { node, offset } = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
     const rect = this._cursorRectAt(node, offset);
@@ -427,6 +436,9 @@ class CaretEmacs {
       width: `${cw}px`,
       height: `${cursorHeight}px`,
     });
+
+    // Save current focus as last-rendered position
+    this._lastCursorPos = { node: sel.focusNode, offset: sel.focusOffset };
   }
 
   /* ── movement ───────────────────────────────────────────────── */
