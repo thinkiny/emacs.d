@@ -16,7 +16,6 @@
   :config
   (setq transient-default-level 5
         magit-diff-refine-hunk t
-        magit-auto-revert-mode nil
         magit-save-repository-buffers nil
         magit-commit-show-diff nil
         magit-branch-direct-configure nil

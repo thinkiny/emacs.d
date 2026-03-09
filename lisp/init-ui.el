@@ -46,7 +46,7 @@
 ;; mouse && scroll
 (when window-system
   (pixel-scroll-precision-mode)
-  (setq mouse-autoselect-window t)
+  (setq mouse-autoselect-window nil)
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
   (setq mouse-wheel-progressive-speed nil)
   (setq scroll-step 1

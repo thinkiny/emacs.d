@@ -210,15 +210,7 @@ Set this to navigate to the previous document/chapter.")
   "Deactivate mark (clear selection) and call `keyboard-quit'."
   (interactive)
   (caret-xwidget--js-call "_setMark(false)")
-  (keyboard-quit)
-  )
-
-(defun caret-xwidget--before-keyboard-quit (&rest _)
-  "Clear xwidget caret mark before `keyboard-quit'.
-Ensures mark mode is deactivated even when C-g is handled by a
-minor mode (isearch, ivy, etc.) rather than the major mode binding."
-  (when (derived-mode-p 'xwidget-webkit-mode)
-    (caret-xwidget--js-call "_setMark(false)")))
+  (keyboard-quit))
 
 (defconst caret-xwidget--word-at-caret-js
   (concat "(function(){var s=window.getSelection();"
@@ -328,9 +320,7 @@ content world where window.__caretEmacs is not accessible.")
   (define-key xwidget-webkit-mode-map (kbd ",")     #'caret-xwidget-translate-word)
 
   ;; Inject caret.js on every page load (initial and subsequent navigations).
-  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice)
-  ;; (advice-add 'keyboard-quit :before #'caret-xwidget--before-keyboard-quit)
-  )
+  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice))
 
 (provide 'caret-xwidget)
 

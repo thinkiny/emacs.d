@@ -3,7 +3,7 @@
 (require 'xref)
 (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
 
-(setq xref-marker-ring-length 10240)
+(setq xref-marker-ring-length 1024)
 (defun print-xref()
   (interactive)
   (let ((i 0)
@@ -63,6 +63,7 @@ Override existing value with NEW-VALUE if it's set."
   ;; (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate)
   )
 
+;; support fallback
 (defvar-local my/xref-fallback-backends nil
   "Buffer-local list of fallback xref backend functions when primary fails.")
 
@@ -105,5 +106,28 @@ Override existing value with NEW-VALUE if it's set."
 (global-set-key (kbd "M-,") #'my/xref-find-references)
 (global-set-key (kbd "M-[") #'xref-go-back)
 (global-set-key (kbd "M-]") #'xref-go-forward)
+
+;; ivy-xref
+(defun ivy-xref-trim-path (file)
+  (let* ((path (file-relative-name file default-directory))
+         (parts (split-string path "/" t)))
+    (if (> (length parts) 5)
+        (string-join (append (seq-take parts 3) '("...") (seq-drop parts (- (length parts) 2))) "/")
+      path)))
+
+(use-package ivy-xref
+  :after ivy
+  :init
+  (setq xref-show-definitions-function #'ivy-xref-show-defs)
+  (setq xref-show-xrefs-function 'ivy-xref-show-xrefs)
+  (setq ivy-xref-use-file-path t)
+  :config
+  (advice-add 'ivy-xref-make-collection :around
+              (lambda (fn xrefs)
+                (cl-letf* ((orig-location-group (symbol-function 'xref-location-group))
+                           ((symbol-function 'xref-location-group)
+                            (lambda (location)
+                              (ivy-xref-trim-path (funcall orig-location-group location)))))
+                  (funcall fn xrefs)))))
 
 (provide 'init-xref)

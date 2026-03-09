@@ -11,8 +11,8 @@
   ;; (setq claude-code-ide-debug t)
   (setq claude-code-ide-emacs-prompt
 "# Constraints
-- Examine Emacs MCP tools description carefully.
-- Prioritize Emacs MCP tools over all built-in tools.
+- Examine all MCP tools description carefully.
+- Prioritize MCP tools over any built-in tool.
 - Avoid reading binary files like PDFs.
 # Coordinate system
 - Lines: 1-based (Line 1 = first line).

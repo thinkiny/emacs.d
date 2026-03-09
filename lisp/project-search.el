@@ -3,31 +3,14 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'json)
 (require 'seq)
 (require 'subr-x)
-(require 'eglot nil t)
-(require 'projectile nil t)
 
 (declare-function eglot-current-server "eglot")
 (declare-function eglot-server-capable "eglot")
 (declare-function eglot-uri-to-path "eglot")
 (declare-function jsonrpc-request "jsonrpc")
 (declare-function jsonrpc-async-request "jsonrpc")
-(declare-function projectile-project-root "projectile")
-(declare-function projectile-project-buffers "projectile")
-(declare-function ivy-more-chars "ivy")
-(declare-function ivy-read "ivy")
-(declare-function ivy--set-candidates "ivy")
-(declare-function ivy--insert-minibuffer "ivy")
-(declare-function ivy--format "ivy")
-(declare-function ivy-configure "ivy")
-(defvar ivy-last)
-(defvar ivy--all-candidates)
-(declare-function counsel--async-command "counsel")
-(declare-function counsel-git-grep-action "counsel")
-(declare-function counsel-git-grep-transformer "counsel")
-(declare-function counsel--grep-unwind "counsel")
 
 (defvar eglot--cached-server)
 
@@ -45,8 +28,7 @@ are not truncated client-side (the server controls its own limit)."
 
 (defcustom project-search-debounce-delay 0.3
   "Seconds to wait after last keystroke before sending the query.
-Only affects the LSP path in the interactive ivy command;
-the rg fallback uses `counsel-async-command-delay'."
+Applies to both the LSP and rg paths in the interactive ivy command."
   :type 'number
   :group 'project-search)
 
@@ -83,105 +65,59 @@ Returns nil when no server exists or the server lacks
                              server)))))))
                bufs))))
 
-(defun project-search--make-result (name kind uri start-line start-char end-line end-char &optional container)
-  "Build a normalized symbol result alist with NAME, KIND, URI, range, and CONTAINER."
-  `((name . ,name)
-    (kind . ,kind)
-    (location . ((uri . ,uri)
-                 (range . ((start . ((line . ,start-line) (character . ,start-char)))
-                           (end   . ((line . ,end-line)   (character . ,end-char)))))))
-    (containerName . ,(or container ""))))
+(defun project-search--xref-to-result (item)
+  "Convert xref ITEM to the normalized alist format for MCP."
+  (let* ((summary (xref-item-summary item))
+         (loc     (xref-item-location item))
+         (file    (xref-location-group loc))
+         (line    (xref-location-line loc))
+         (col     (if (cl-typep loc 'xref-file-location)
+                      (slot-value loc 'column) 0))
+         (kind-and-name
+          (if (string-match "\\`#\\([a-z]+\\) \\(.*\\)" summary)
+              (cons (capitalize (match-string 1 summary))
+                    (match-string 2 summary))
+            (cons "Text" summary)))
+         (uri  (concat "file://" (expand-file-name file)))
+         (line-0 (1- line)))
+    `((name . ,(cdr kind-and-name))
+      (kind . ,(car kind-and-name))
+      (location . ((uri . ,uri)
+                   (range . ((start . ((line . ,line-0) (character . ,col)))
+                             (end   . ((line . ,line-0) (character . ,col)))))))
+      (containerName . ""))))
 
-(defun project-search--parse-lsp-result (res)
-  "Convert an LSP SymbolInformation plist RES to a result alist."
-  (let* ((kind  (plist-get res :kind))
-         (loc   (plist-get res :location))
-         (range (plist-get loc :range))
-         (start (plist-get range :start))
-         (end   (plist-get range :end)))
-    (project-search--make-result
-     (plist-get res :name)
-     (project-search--lsp-kind-to-string kind)
-     (plist-get loc :uri)
-     (plist-get start :line)
-     (plist-get start :character)
-     (plist-get end :line)
-     (plist-get end :character)
-     (plist-get res :containerName))))
+(defun project-search--xref-query (query)
+  "Search for QUERY using the current xref backend."
+  (when-let* ((backend (xref-find-backend)))
+    (xref-backend-apropos backend query)))
 
-(defun project-search--eglot-query-sync (query &optional kind-filter project-root)
-  "Search workspace symbols matching QUERY via Eglot synchronously.
-When KIND-FILTER is non-nil, keep only symbols of that kind."
-  (when-let* ((server (project-search--find-eglot-server project-root)))
-    (let* ((raw (jsonrpc-request server :workspace/symbol `(:query ,query)))
-           (results (append raw nil))
-           (filtered (if (and kind-filter (not (string-empty-p kind-filter)))
-                         (seq-filter
-                          (lambda (r)
-                            (string-equal
-                             (project-search--lsp-kind-to-string (plist-get r :kind))
-                             kind-filter))
-                          results)
-                       results)))
-      (seq-map #'project-search--parse-lsp-result
-               (seq-sort-by (lambda (r) (plist-get r :kind)) #'< filtered)))))
-
-(defun project-search--rg-parse-match (data project-root)
-  "Parse a ripgrep JSON match DATA into a result alist.
-PROJECT-ROOT expands relative paths into file URIs."
-  (let* ((path (alist-get 'text (alist-get 'path data)))
-         (line-num (alist-get 'line_number data))
-         (text (alist-get 'text (alist-get 'lines data)))
-         (submatches (alist-get 'submatches data))
-         (has-sub (and submatches (> (length submatches) 0)))
-         (start-col (if has-sub (alist-get 'start (aref submatches 0)) 0))
-         (end-col   (if has-sub (alist-get 'end   (aref submatches 0)) 0)))
-    (project-search--make-result
-     (string-trim (or text ""))
-     "Text"
-     (concat "file://" (expand-file-name path project-root))
-     (1- line-num) start-col
-     (1- line-num) end-col)))
-
-(defun project-search--rg-query (query project-root &optional max-results)
-  "Search for QUERY in PROJECT-ROOT using ripgrep with JSON output.
-Total results are capped at MAX-RESULTS."
-  (let ((default-directory project-root)
-        (limit (or max-results project-search-max-results))
-        (results '()))
-    (with-temp-buffer
-      (call-process "rg" nil t nil
-                    "--json" "--smart-case"
-                    "--" query ".")
-      (goto-char (point-min))
-      (while (and (not (eobp)) (< (length results) limit))
-        (let* ((line (buffer-substring-no-properties
-                      (line-beginning-position) (line-end-position)))
-               (parsed (ignore-errors
-                         (json-parse-string line :object-type 'alist))))
-          (when (and parsed (string-equal (alist-get 'type parsed) "match"))
-            (push (project-search--rg-parse-match
-                   (alist-get 'data parsed) project-root)
-                  results)))
-        (forward-line 1)))
-    (nreverse results)))
-
-(defun project-search--search (query &optional kind max-results)
-  "Search project for QUERY, optionally filtering by KIND.
-Uses Eglot when available, falls back to ripgrep.
-Results are limited to MAX-RESULTS (default `project-search-max-results')."
+(defun project-search--search (query &optional _kind max-results)
+  "Search project for QUERY, returning normalized alist results.
+Uses Eglot (sync) when available, then xref-backend-apropos, then ripgrep.
+Results capped at MAX-RESULTS (default `project-search-max-results')."
   (let* ((project-root (project-search--project-root))
          (limit (or max-results project-search-max-results))
-         (eglot-results (ignore-errors
-                          (project-search--eglot-query-sync
-                           query kind project-root)))
-         (all-results (or eglot-results
-                          (ignore-errors
-                            (project-search--rg-query
-                             query project-root limit)))))
-    (seq-take (or all-results '()) limit)))
+         (xrefs
+          (or (condition-case err
+                  (when-let* ((server (project-search--find-eglot-server project-root)))
+                    (let* ((raw (jsonrpc-request server :workspace/symbol
+                                                `(:query ,query)))
+                           (sorted (seq-sort-by
+                                    (lambda (r) (or (plist-get r :score) 0))
+                                    #'> (append raw nil))))
+                      (project-search--lsp-to-xrefs sorted)))
+                (error (message "project-search LSP error: %S" err) nil))
+              (ignore-errors (project-search--xref-query query))
+              (ignore-errors
+                (project-search--rg-to-xrefs query project-root limit)))))
+    (seq-take (seq-map #'project-search--xref-to-result (or xrefs '()))
+              limit)))
 
 ;;; ---- Ivy Interactive Command ----
+
+(defvar project-search--ivy-default-directory nil
+  "Saved `default-directory' from when the ivy session started.")
 
 (defvar project-search--ivy-project-root nil
   "Project root for the current `ivy-project-search' session.")
@@ -189,55 +125,79 @@ Results are limited to MAX-RESULTS (default `project-search-max-results')."
 (defvar project-search--ivy-server nil
   "Eglot server for the current `ivy-project-search' session.")
 
+(defvar project-search--ivy-rg-extra-args nil
+  "Extra rg flags for the current ivy session (e.g. \"-tgo -i\").")
+
 (defvar project-search--request-id 0
   "Monotonic counter to discard stale async LSP responses.")
 
 (defvar project-search--debounce-timer nil
-  "Timer for debouncing LSP workspace/symbol requests.")
+  "Timer for debouncing workspace/symbol and rg requests.")
 
-(defun project-search--format-lsp-candidate (res project-root)
-  "Format LSP SymbolInformation plist RES as an ivy candidate string.
-PROJECT-ROOT is used for relative path display."
-  (let* ((name (plist-get res :name))
-         (kind (plist-get res :kind))
-         (kind-name (project-search--lsp-kind-to-string kind))
-         (loc (plist-get res :location))
-         (uri (plist-get loc :uri))
-         (range (plist-get loc :range))
-         (line (1+ (plist-get (plist-get range :start) :line)))
-         (col (plist-get (plist-get range :start) :character))
-         (file-path (eglot-uri-to-path uri))
-         (rel-path (file-relative-name file-path project-root)))
-    (propertize
-     (concat
-      (propertize (format "%s:%d: " rel-path line) 'face 'compilation-info)
-      (propertize (format "#%s " (downcase kind-name)) 'face 'font-lock-type-face)
-      name)
-     'project-search-file file-path
-     'project-search-line line
-     'project-search-col (or col 0))))
+(defvar project-search--ivy-candidates nil
+  "Current alist of (display-string . xref-location) for the ivy session.")
 
-(defun project-search--ivy-transformer (candidate)
-  "Display transformer for `ivy-project-search' candidates.
-LSP candidates pass through (already formatted); rg candidates
-are transformed via `counsel-git-grep-transformer'."
-  (if (get-text-property 0 'project-search-file candidate)
-      candidate
-    (counsel-git-grep-transformer candidate)))
+(defun project-search--lsp-to-xrefs (results)
+  "Convert LSP SymbolInformation plists RESULTS to xref items."
+  (seq-filter
+   #'identity
+   (seq-map
+    (lambda (r)
+      (ignore-errors
+        (let* ((name (plist-get r :name))
+               (kind (plist-get r :kind))
+               (kind-name (project-search--lsp-kind-to-string kind))
+               (loc (plist-get r :location))
+               (uri (plist-get loc :uri))
+               (range (plist-get loc :range))
+               (line (1+ (plist-get (plist-get range :start) :line)))
+               (col (plist-get (plist-get range :start) :character))
+               (file-path (eglot-uri-to-path uri)))
+          (xref-make (format "#%s %s" (downcase kind-name) name)
+                     (xref-make-file-location file-path line (or col 0))))))
+    results)))
+
+(defun project-search--rg-to-xrefs (query project-root max-results &optional extra-args)
+  "Run rg for QUERY in PROJECT-ROOT and return xref items.
+Results are capped at MAX-RESULTS.  EXTRA-ARGS is an optional
+string of additional rg flags (e.g. \"-tgo -i\")."
+  (let ((default-directory project-root)
+        (limit (or max-results project-search-max-results))
+        (xrefs '()))
+    (with-temp-buffer
+      (apply #'call-process "rg" nil t nil
+             (append (when extra-args (split-string-and-unquote extra-args))
+                     (list "--no-heading" "--line-number" "--column"
+                           "--smart-case" "--color" "never"
+                           "--" query ".")))
+      (goto-char (point-min))
+      (while (and (not (eobp)) (< (length xrefs) limit))
+        (when (looking-at "\\./\\(.+?\\):\\([0-9]+\\):\\([0-9]+\\):\\(.*\\)")
+          (let ((file (expand-file-name (match-string 1) project-root))
+                (line (string-to-number (match-string 2)))
+                (col (string-to-number (match-string 3)))
+                (text (match-string 4)))
+            (push (xref-make (string-trim text)
+                             (xref-make-file-location file line col))
+                  xrefs)))
+        (forward-line 1)))
+    (nreverse xrefs)))
+
+(defun project-search--update-ivy-candidates (xrefs)
+  "Update ivy candidates from XREFS using `ivy-xref-make-collection'."
+  (when xrefs
+    (let ((collection (let ((default-directory project-search--ivy-default-directory))
+                        (ivy-xref-make-collection xrefs))))
+      (setq project-search--ivy-candidates collection)
+      (ivy--set-candidates (mapcar #'car collection))
+      (ivy--insert-minibuffer (ivy--format ivy--all-candidates)))))
 
 (defun project-search--ivy-action (candidate)
-  "Jump to the location described by CANDIDATE.
-Dispatches between LSP results (text-property based) and rg
-results (file:line:text format)."
-  (if (get-text-property 0 'project-search-file candidate)
-      (let ((file (get-text-property 0 'project-search-file candidate))
-            (line (get-text-property 0 'project-search-line candidate))
-            (col  (get-text-property 0 'project-search-col candidate)))
-        (find-file file)
-        (goto-char (point-min))
-        (forward-line (1- line))
-        (forward-char (or col 0)))
-    (counsel-git-grep-action candidate)))
+  "Jump to the xref location associated with CANDIDATE."
+  (when-let* ((entry (assoc candidate project-search--ivy-candidates)))
+    (let ((marker (xref-location-marker (cdr entry))))
+      (switch-to-buffer (marker-buffer marker))
+      (goto-char marker))))
 
 (defun project-search--extract-kind-prefix (input)
   "Extract the kind filter prefix from INPUT.
@@ -259,12 +219,20 @@ kind name from `eglot--symbol-kind-names'."
   (when-let* ((kind-name (project-search--lsp-kind-to-string kind-int)))
     (string-prefix-p prefix (downcase kind-name))))
 
-(defun project-search--send-lsp-request (server query project-root req-id &optional kind-prefix)
+(defun project-search--rg-fallback (query project-root max-results &optional extra-args)
+  "Run rg search for QUERY in PROJECT-ROOT and update ivy candidates.
+Results are capped at MAX-RESULTS.  EXTRA-ARGS is an optional
+string of additional rg flags."
+  (project-search--update-ivy-candidates
+   (project-search--rg-to-xrefs query project-root max-results extra-args)))
+
+(defun project-search--send-lsp-request (server query project-root req-id &optional kind-prefix max-results)
   "Send workspace/symbol request for QUERY to SERVER.
 PROJECT-ROOT is used for candidate formatting.  REQ-ID is checked
 against `project-search--request-id' to discard stale
 responses.  When KIND-PREFIX is non-nil, only symbols whose kind
-name starts with that prefix are kept."
+name starts with that prefix are kept.  When MAX-RESULTS is
+non-nil, it caps the rg fallback output."
   (jsonrpc-async-request
    server :workspace/symbol `(:query ,query)
    :success-fn
@@ -279,53 +247,72 @@ name starts with that prefix are kept."
                                   (plist-get r :kind) kind-prefix))
                                results)
                             results))
-                (candidates
-                 (seq-filter
-                  #'identity
-                  (seq-map
-                   (lambda (r)
-                     (ignore-errors
-                       (project-search--format-lsp-candidate
-                        r project-root)))
-                   filtered))))
-           (ivy--set-candidates candidates)
-           (ivy--insert-minibuffer
-            (ivy--format ivy--all-candidates))))))
+                (sorted (seq-sort-by (lambda (r) (or (plist-get r :score) 0)) #'> filtered))
+                (xrefs (project-search--lsp-to-xrefs sorted)))
+           (if xrefs
+               (project-search--update-ivy-candidates xrefs)
+             (project-search--rg-fallback query project-root max-results))))))
    :error-fn
    (lambda (&rest _)
-     (message "project-search: LSP request failed"))
+     (when (= req-id project-search--request-id)
+       (project-search--rg-fallback query project-root max-results)))
    :timeout-fn
    (lambda ()
-     (message "project-search: LSP request timed out"))))
+     (when (= req-id project-search--request-id)
+       (project-search--rg-fallback query project-root max-results)))))
+
+(defun project-search--send-rg-request (query project-root req-id max-results &optional extra-args)
+  "Run rg for QUERY in PROJECT-ROOT and update ivy candidates.
+REQ-ID is checked against `project-search--request-id' to discard
+stale results.  EXTRA-ARGS is an optional string of additional rg flags."
+  (when (= req-id project-search--request-id)
+    (ignore-errors
+      (project-search--rg-fallback query project-root max-results extra-args))))
 
 (defun project-search--ivy-function (input)
   "Dynamic collection function for `ivy-project-search'.
-INPUT is the current minibuffer text.  For LSP, debounces then
-sends an async request; for rg, delegates to counsel's async
-command infrastructure.  A `#prefix' at the start of INPUT filters
-LSP results by kind and is stripped before querying."
+INPUT is the current minibuffer text.  Both LSP and rg paths are
+debounced.  A `#prefix' at the start of INPUT filters LSP results
+by kind and is stripped before querying."
   (let ((server project-search--ivy-server)
         (project-root project-search--ivy-project-root)
         (max-results project-search-max-results)
+        (extra-args project-search--ivy-rg-extra-args)
         (query (project-search--extract-query input))
         (kind-prefix (project-search--extract-kind-prefix input)))
     (or (let ((ivy-text query)) (ivy-more-chars))
-        (if server
-            (let ((req-id (cl-incf project-search--request-id)))
-              (when project-search--debounce-timer
-                (cancel-timer project-search--debounce-timer))
-              (setq project-search--debounce-timer
+        (let ((req-id (cl-incf project-search--request-id)))
+          (when project-search--debounce-timer
+            (cancel-timer project-search--debounce-timer))
+          (setq project-search--debounce-timer
+                (if server
                     (run-with-timer
                      project-search-debounce-delay nil
                      #'project-search--send-lsp-request
-                     server query project-root req-id kind-prefix))
-              nil)
-          (let ((default-directory project-root))
-            (counsel--async-command
-             (format "rg -S --no-heading --line-number --color never -- %s . | head -n %d"
-                     (shell-quote-argument query)
-                     max-results))
-            nil)))))
+                     server query project-root req-id kind-prefix max-results)
+                  (run-with-timer
+                   project-search-debounce-delay nil
+                   #'project-search--send-rg-request
+                   query project-root req-id max-results extra-args)))
+          nil))))
+
+;;;###autoload
+(defun ivy-project-rg (&optional options)
+  "Search project with ripgrep using xref-based ivy display.
+OPTIONS is an optional string of extra rg flags (e.g. \"-tgo -i\")."
+  (interactive)
+  (let* ((project-root (project-search--project-root))
+         (project-search--ivy-project-root project-root)
+         (project-search--ivy-server nil)
+         (project-search--ivy-rg-extra-args options)
+         (project-search--ivy-default-directory default-directory)
+         (default-directory project-root))
+    (ivy-read (format "[%s] rg: " (projectile-project-name))
+              #'project-search--ivy-function
+              :dynamic-collection t
+              :require-match t
+              :action #'project-search--ivy-action
+              :caller 'ivy-project-search)))
 
 ;;;###autoload
 (defun ivy-project-search ()
@@ -339,27 +326,25 @@ ripgrep text search.  Results are limited to
          (server (project-search--find-eglot-server project-root))
          (project-search--ivy-project-root project-root)
          (project-search--ivy-server server)
+         (project-search--ivy-default-directory default-directory)
          (default-directory project-root))
-    (ivy-read (if server "LSP Symbols: " "rg search: ")
+    (ivy-read (format "[%s] sym: " (projectile-project-name))
               #'project-search--ivy-function
+              :initial-input (thing-at-point 'symbol t)
               :dynamic-collection t
               :require-match t
               :action #'project-search--ivy-action
               :caller 'ivy-project-search)))
 
 (defun project-search--unwind ()
-  "Clean up debounce timer and counsel process on ivy exit."
+  "Clean up debounce timer on ivy exit."
   (when project-search--debounce-timer
     (cancel-timer project-search--debounce-timer)
-    (setq project-search--debounce-timer nil))
-  (counsel--grep-unwind))
+    (setq project-search--debounce-timer nil)))
 
 (with-eval-after-load 'ivy
-  (with-eval-after-load 'counsel
-    (ivy-configure 'ivy-project-search
-      :display-transformer-fn #'project-search--ivy-transformer
-      :unwind-fn #'project-search--unwind
-      :exit-codes '(1 "No matches found")))
+  (ivy-configure 'ivy-project-search
+    :unwind-fn #'project-search--unwind)
   (add-to-list 'ivy-more-chars-alist '(ivy-project-search . 2)))
 
 (provide 'project-search)

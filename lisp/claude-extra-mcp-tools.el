@@ -2,6 +2,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'subr-x)
 (require 'xwidget)
 (require 'project-search)
@@ -15,7 +16,7 @@
   :group 'tools
   :prefix "claude-extra-")
 
-(defcustom claude-extra-project-search-max-results 10
+(defcustom claude-extra-project-search-max-results 5
   "Maximum number of results returned by project search."
   :type 'integer
   :group 'claude-extra-mcp-tools)
@@ -303,10 +304,15 @@ Handles both xwidget buffers (via JavaScript) and regular buffers
   (claude-code-ide-make-tool
    :function #'claude-extra--handle-project-search
    :name "claude-code-ide-mcp-project-search"
-   :description "Use this tool when you have something to search. Prioritize it over any shell searching tool (e.g., rg/grep)."
-   :args '((:name "query"
+   :description "Use this tool to search for functions, variables, classes, etc., by name pattern across the project."
+   :args '((:name "pattern"
             :type string
-            :description "The search query.")))
+            :description "The pattern to search for symbols.")))
+
+  (setq claude-code-ide-mcp-server-tools
+        (cl-remove-if (lambda (spec)
+                        (equal (plist-get spec :name) "claude-code-ide-mcp-xref-find-apropos"))
+                      claude-code-ide-mcp-server-tools))
 
   (claude-xwidgets--start-poll-timer))
 

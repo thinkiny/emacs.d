@@ -29,8 +29,8 @@
   (setq eglot-send-changes-idle-time 1)
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider
                                             :documentOnTypeFormattingProvider
-                                            :documentRangeFormattingProvider
-                                            :semanticTokensProvider))
+                                            :documentRangeFormattingProvider))
+
   (setq jsonrpc-default-request-timeout 15)
   (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
@@ -159,12 +159,10 @@
   ;;                       '(eglot-signature-eldoc-function
   ;;                         eglot-hover-eldoc-function))
   (when (file-remote-p default-directory)
-    (make-variable-buffer-local 'eglot-ignored-server-capabilities)
     (remove-hook 'before-save-hook #'eglot--signal-textDocument/willSave t)
     (remove-hook 'after-save-hook #'eglot--signal-textDocument/didSave t)
     (add-hook 'eglot-server-initialized-hook #'my/eglot-disable-document-sync t))
 
-  (eglot-semantic-tokens-mode -1)
   (setq-local completion-at-point-functions
               (list
                #'cape-file
@@ -230,9 +228,5 @@ COMMAND is a string as advertised by the server. No arguments are passed."
                        uri))
 
 (advice-add 'eglot-uri-to-path :around #'cache-tramp-eglot-uri-to-path)
-
-;; project search
-(require 'project-search)
-(global-set-key (kbd "C-c w s") 'ivy-project-search)
 
 (provide 'init-eglot)

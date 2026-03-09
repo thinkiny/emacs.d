@@ -94,16 +94,8 @@
             (kill-buffer buffer)))))
     (message "Killed buffers not having files associcated"))
 
-(use-package ag
-  :config
-  (set-face-attribute 'ag-hit-face nil :inherit 'highlight)
-  (setq ag-reuse-buffers t)
-  (setq ag-group-matches nil)
-  (setq ag-arguments (delete "--stats" ag-arguments))
-  (setq compilation-scroll-output 'first-error)
-  (add-hook 'ag-search-finished-hook
-            (lambda ()
-              (pop-to-buffer next-error-last-buffer))))
+;; project search
+(require 'project-search)
 
 (defun get-default-args-for-ripgrep()
   (let ((file-name (buffer-file-name)))
@@ -119,14 +111,15 @@
 
 (defun counsel-projectile-rg-default()
   (interactive)
-  (counsel-projectile-rg (get-default-args-for-ripgrep)))
+  (ivy-project-rg (get-default-args-for-ripgrep)))
 
 (use-package counsel-projectile
   :after counsel
   :init (counsel-projectile-mode)
   :bind (:map
          projectile-mode-map
-         ("C-c p s s" . #'counsel-projectile-rg-default)))
+         ("C-c p s g" . #'counsel-projectile-rg-default)
+         ("C-c p s s" . #'ivy-project-search)))
 
 ;; tramp
 ;; (defun projectile-project-root-before(&optional dir)
