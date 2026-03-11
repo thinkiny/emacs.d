@@ -1,5 +1,5 @@
 ;; -*- lexical-binding: t; -*-
 
-(maybe-require-package 'systemtap-mode)
-(add-to-list 'auto-mode-alist '("\\.stp\\'" . systemtap-mode))
+(use-package systemtap-mode
+  :mode "\\.stp\\'")
 (provide 'init-systemtap)

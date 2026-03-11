@@ -1,7 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 
 (use-package sideline
-  :demand t
   :config
   ;;(setq sideline-backends-left '((sideline-blame . down)))
   (setq sideline-backends-right '((sideline-flymake . down)

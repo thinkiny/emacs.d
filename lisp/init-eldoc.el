@@ -8,7 +8,6 @@
 
 (use-package eldoc-box
   :after eldoc
-  :demand t
   :config
   (setq eldoc-box-clear-with-C-g t)
   (setq eldoc-box-only-multi-line nil))

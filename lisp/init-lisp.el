@@ -85,7 +85,8 @@ there is no current file, eval the current buffer."
 ;; ----------------------------------------------------------------------------
 ;; Automatic byte compilation
 ;; ----------------------------------------------------------------------------
-(when (maybe-require-package 'auto-compile)
+(use-package auto-compile
+  :config
   (setq auto-compile-check-parens nil)
   (add-hook 'after-init-hook 'auto-compile-on-save-mode)
   (add-hook 'after-init-hook 'auto-compile-on-load-mode))
@@ -97,8 +98,8 @@ there is no current file, eval the current buffer."
 
 
 
-(require-package 'immortal-scratch)
-(add-hook 'after-init-hook 'immortal-scratch-mode)
+(use-package immortal-scratch
+  :hook (after-init . immortal-scratch-mode))
 
 
 ;;; Support byte-compilation in a sub-process, as
@@ -151,20 +152,16 @@ there is no current file, eval the current buffer."
 (add-to-list 'auto-mode-alist '("\\.emacs-project\\'" . emacs-lisp-mode))
 (add-to-list 'auto-mode-alist '("archive-contents\\'" . emacs-lisp-mode))
 
-(require-package 'macrostep)
+(use-package macrostep)
 
 
 ;; A quick way to jump to the definition of a function given its key binding
 (global-set-key (kbd "C-h K") 'find-function-on-key)
 
-(when (maybe-require-package 'highlight-quoted)
-  (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
+(use-package highlight-quoted
+  :hook (emacs-lisp-mode . highlight-quoted-mode))
 
-(maybe-require-package 'cl-libify)
-
-;; (maybe-require-package 'flycheck-relint)
-
-(maybe-require-package 'cask-mode)
+(use-package cask-mode)
 
 (use-package erefactor
   :bind (:map emacs-lisp-mode-map

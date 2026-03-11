@@ -1,6 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 
-(require-package 'typescript-mode)
+(use-package typescript-mode)
 
 (setq ts-lsp-modes '(js-ts-mode tsx-ts-mode typescript-ts-mode))
 

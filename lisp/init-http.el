@@ -2,10 +2,11 @@
 ;;; Commentary:
 ;;; Code:
 
-(maybe-require-package 'httprepl)
-(when (maybe-require-package 'restclient)
-  (add-auto-mode 'restclient-mode "\\.rest\\'")
+(use-package httprepl)
 
+(use-package restclient
+  :mode ("\\.rest\\'" . restclient-mode)
+  :config
   (defun sanityinc/restclient ()
     (interactive)
     (with-current-buffer (get-buffer-create "*restclient*")

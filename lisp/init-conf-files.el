@@ -1,7 +1,7 @@
 ;; toml  -*- lexical-binding: t; -*-
 
-(when (maybe-require-package 'toml-mode)
-  (add-hook 'toml-mode-hook 'goto-address-prog-mode))
+(use-package toml-mode
+  :hook (toml-mode . goto-address-prog-mode))
 
 ;; protobuf
 (use-package protobuf-mode

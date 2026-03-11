@@ -1,6 +1,6 @@
 ;; init-pdf-tools.el -*- lexical-binding: t; -*-
 
-(require-package 'pdf-tools)
+(use-package pdf-tools)
 (defvar pdf-view-theme-auto-dark nil)
 
 (require 'pdf-outline)

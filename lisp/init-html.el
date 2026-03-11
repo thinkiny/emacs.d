@@ -1,8 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
-(maybe-require-package 'web-mode)
-(maybe-require-package 'zencoding-mode)
-(require-package 'htmlize)
+(use-package web-mode)
+(use-package zencoding-mode)
+(use-package htmlize)
 
 (setq web-mode-enable-current-element-highlight t)
 (setq web-mode-enable-auto-closing t)

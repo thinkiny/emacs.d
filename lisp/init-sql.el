@@ -96,7 +96,7 @@ This command currently blocks the UI, sorry."
                 (user-error "EXPLAIN failed")))))))))
 
 ;; mysql-to-org
-;; (require-package 'mysql-to-org)
+;; (use-package mysql-to-org)
 ;; (add-hook 'mysql-to-org-mode-hook
 ;;           (lambda ()
 ;;             (define-key mysql-to-org-mode-map (kbd "C-c e") 'mysql-to-org-eval)

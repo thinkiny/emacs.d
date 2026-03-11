@@ -103,11 +103,12 @@
 (unless *is-a-linux* (setq command-line-x-option-alist nil))
 
 ;; Huge files
-(require-package 'vlf)
-(require 'vlf-setup)
-(setq-default vlf-application 'dont-ask)
-(setq-default vlf-batch-size 4096000)
-(setq-default vlf-tune-enabled nil)
+(use-package vlf
+  :config
+  (require 'vlf-setup)
+  (setq-default vlf-application 'dont-ask
+                vlf-batch-size 4096000
+                vlf-tune-enabled nil))
 
 ;;----------------------------------------------------------------------------
 ;; Don't disable narrowing commands
@@ -124,21 +125,21 @@
 ;;----------------------------------------------------------------------------
 ;; Expand region
 ;;----------------------------------------------------------------------------
-(require-package 'expand-region)
-(defun er/mark-parameter ()
-  (interactive)
-  (when (re-search-backward "[(\\|,]\\([^, )]+\\)" nil t)
-    (goto-char (match-beginning 1))
-    (set-mark (point))
-    (re-search-forward "[,\\|)]")
-    (goto-char (match-beginning 0))
-    (exchange-point-and-mark)))
-
-(defvar er/try-expand-list nil)
-(add-hook 'c-mode-common-hook
-          (lambda ()
-            (add-to-list 'er/try-expand-list 'er/mark-parameter)))
-(global-set-key (kbd "M-=") 'er/expand-region)
+(use-package expand-region
+  :bind ("M-=" . er/expand-region)
+  :config
+  (defun er/mark-parameter ()
+    (interactive)
+    (when (re-search-backward "[(\\|,]\\([^, )]+\\)" nil t)
+      (goto-char (match-beginning 1))
+      (set-mark (point))
+      (re-search-forward "[,\\|)]")
+      (goto-char (match-beginning 0))
+      (exchange-point-and-mark)))
+  (add-hook 'c-mode-common-hook
+            (lambda ()
+              (make-local-variable 'er/try-expand-list)
+              (push 'er/mark-parameter er/try-expand-list))))
 
 ;;----------------------------------------------------------------------------
 ;; Don't disable case-change functions
@@ -147,15 +148,14 @@
 (put 'downcase-region 'disabled nil)
 
 ;; multiple-cursors
-(require-package 'multiple-cursors)
-(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C->") 'mc/mark-next-like-this)
-(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-;; From active region to multiple cursors:
-(global-set-key (kbd "C-c m r") 'set-rectangular-region-anchor)
-(global-set-key (kbd "C-c m c") 'mc/edit-lines)
-(global-set-key (kbd "C-c m e") 'mc/edit-ends-of-lines)
-(global-set-key (kbd "C-c m a") 'mc/edit-beginnings-of-lines)
+(use-package multiple-cursors
+  :bind (("C-<" . mc/mark-previous-like-this)
+         ("C->" . mc/mark-next-like-this)
+         ("C-c C-<" . mc/mark-all-like-this)
+         ("C-c m r" . set-rectangular-region-anchor)
+         ("C-c m c" . mc/edit-lines)
+         ("C-c m e" . mc/edit-ends-of-lines)
+         ("C-c m a" . mc/edit-beginnings-of-lines)))
 
 ;;----------------------------------------------------------------------------
 ;; Fix backward-up-list to understand quotes, see http://bit.ly/h7mdIL
@@ -215,15 +215,15 @@ With arg N, insert N newlines."
         (sort-subr nil 'forward-line 'end-of-line nil nil
                    (lambda (s1 s2) (eq (random 2) 0)))))))
 
-(require-package 'json-mode)
-(add-to-list 'auto-mode-alist '("\\.json\\'"  . json-mode))
+(use-package json-mode
+  :mode "\\.json\\'")
 
 ;; symbol-overlay
-(require-package 'symbol-overlay)
-(global-set-key (kbd "M-i") 'symbol-overlay-put)
-(global-set-key (kbd "M-n") 'symbol-overlay-jump-next)
-(global-set-key (kbd "M-p") 'symbol-overlay-jump-prev)
-(add-hook 'prog-mode-hook 'symbol-overlay-mode)
+(use-package symbol-overlay
+  :hook (prog-mode . symbol-overlay-mode)
+  :bind (("M-i" . symbol-overlay-put)
+         ("M-n" . symbol-overlay-jump-next)
+         ("M-p" . symbol-overlay-jump-prev)))
 
 ;; (define-globalized-minor-mode global-symbol-overlay-mode symbol-overlay-mode symbol-overlay-mode)
 ;; (global-symbol-overlay-mode)
@@ -250,7 +250,6 @@ With arg N, insert N newlines."
 
 ;; long line mode
 (use-package so-long
-  :demand t
   :config
   (setq so-long-minor-modes (delq 'font-lock-mode so-long-minor-modes))
   (setq so-long-variable-overrides (delq (assq 'buffer-read-only so-long-variable-overrides) so-long-variable-overrides))
@@ -333,7 +332,6 @@ With arg N, insert N newlines."
 
 ;; dwim-shell-command
 (use-package dwim-shell-command
-  :demand t
   :bind (([remap shell-command] . dwim-shell-command)
          :map dired-mode-map
          ([remap dired-do-async-shell-command] . dwim-shell-command)
@@ -356,7 +354,6 @@ If ARG is omitted or nil, move point forward one word."
 
 ;; direnv
 (use-package direnv
-  :demand t
   :config
   (setq direnv-always-show-summary nil)
   (dolist (hook '(find-file-hook))
@@ -366,8 +363,7 @@ If ARG is omitted or nil, move point forward one word."
                   (direnv-update-directory-environment))))))
 
 ;; string-inflection
-(require-package 'string-inflection)
-(require 'string-inflection)
+(use-package string-inflection)
 
 ;; ediff visual-line
 (defvar my-ediff-visual-line-mode-states nil
@@ -504,7 +500,7 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
       (setq-local auto-revert-interval 2))
     (auto-revert-mode 1)))
 
-(add-hook 'prog-mode-hook #'toggle-auto-revert)
+(add-hook 'flymake-mode-hook #'toggle-auto-revert)
 
 ;; shell-mode
 (with-eval-after-load 'sh-script

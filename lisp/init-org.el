@@ -274,7 +274,7 @@
   (setq org-archive-mark-done nil)
   (setq org-archive-location "%s_archive::* Archive"))
 
-;; (require-package 'org-pomodoro)
+;; (use-package org-pomodoro)
 ;; (setq org-pomodoro-keep-killed-pomodoro-time t)
 ;; (with-eval-after-load 'org-agenda
 ;;   (define-key org-agenda-mode-map (kbd "P") 'org-pomodoro))
@@ -460,8 +460,9 @@ _k_: delete row   _l_: delete column  _s_: shorten
   )
 
 (require 'org-tempo nil 'noerror)
-(require-package 'org-preview-html)
-(setq org-preview-html-viewer 'xwidget)
+(use-package org-preview-html
+  :config
+  (setq org-preview-html-viewer 'xwidget))
 
 (defun org-level-reset-height()
   (dolist (face '(outline-1 outline-2 outline-3 org-level-1 org-level-2 org-level-3))
@@ -478,7 +479,8 @@ _k_: delete row   _l_: delete column  _s_: shorten
 (add-hook 'org-mode-hook #'my-org-mode-hook)
 
 ;; clipboard
-(require-package 'org-cliplink)
+(use-package org-cliplink
+  :after org)
 (defun org-download-annotate-empty (_) "")
 
 (with-eval-after-load 'org

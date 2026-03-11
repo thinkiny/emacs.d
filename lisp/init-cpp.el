@@ -1,8 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
-(require-package 'cff)
-(require-package 'cmake-mode)
-(require-package 'disaster)
+(use-package cff)
+(use-package cmake-mode)
+(use-package disaster)
 
 (use-package cuda-mode
   :hook (cuda-mode . eglot-ensure))

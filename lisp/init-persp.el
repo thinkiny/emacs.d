@@ -3,7 +3,6 @@
 (use-package perspective
   :init
   (setq persp-show-modestring nil)
-  (persp-mode)
   :bind ((:map persp-mode-map
                ("C-x p d" . persp-remove-buffer)
                ("C-x p m" . persp-set-buffer)
@@ -30,6 +29,7 @@
   (setq persp-modestring-short t)
   (setq persp-state-default-file (expand-file-name "persp.state" user-emacs-directory))
   (after-load-theme
-   (set-face-attribute 'persp-selected-face nil :foreground (face-attribute 'mode-line :foreground))))
+   (set-face-attribute 'persp-selected-face nil :foreground (face-attribute 'mode-line :foreground)))
+  (persp-mode))
 
 (provide 'init-persp)

@@ -184,10 +184,9 @@ string of additional rg flags (e.g. \"-tgo -i\")."
     (nreverse xrefs)))
 
 (defun project-search--update-ivy-candidates (xrefs)
-  "Update ivy candidates from XREFS using `ivy-xref-make-collection'."
+  "Update ivy candidates from XREFS."
   (when xrefs
-    (let ((collection (let ((default-directory project-search--ivy-default-directory))
-                        (ivy-xref-make-collection xrefs))))
+    (let ((collection (ivy-xref-make-collection xrefs)))
       (setq project-search--ivy-candidates collection)
       (ivy--set-candidates (mapcar #'car collection))
       (ivy--insert-minibuffer (ivy--format ivy--all-candidates)))))
@@ -219,13 +218,6 @@ kind name from `eglot--symbol-kind-names'."
   (when-let* ((kind-name (project-search--lsp-kind-to-string kind-int)))
     (string-prefix-p prefix (downcase kind-name))))
 
-(defun project-search--rg-fallback (query project-root max-results &optional extra-args)
-  "Run rg search for QUERY in PROJECT-ROOT and update ivy candidates.
-Results are capped at MAX-RESULTS.  EXTRA-ARGS is an optional
-string of additional rg flags."
-  (project-search--update-ivy-candidates
-   (project-search--rg-to-xrefs query project-root max-results extra-args)))
-
 (defun project-search--send-lsp-request (server query project-root req-id &optional kind-prefix max-results)
   "Send workspace/symbol request for QUERY to SERVER.
 PROJECT-ROOT is used for candidate formatting.  REQ-ID is checked
@@ -251,23 +243,19 @@ non-nil, it caps the rg fallback output."
                 (xrefs (project-search--lsp-to-xrefs sorted)))
            (if xrefs
                (project-search--update-ivy-candidates xrefs)
-             (project-search--rg-fallback query project-root max-results))))))
+             (project-search--update-ivy-candidates
+              (project-search--rg-to-xrefs query project-root max-results)))))))
    :error-fn
    (lambda (&rest _)
      (when (= req-id project-search--request-id)
-       (project-search--rg-fallback query project-root max-results)))
+       (project-search--update-ivy-candidates
+        (project-search--rg-to-xrefs query project-root max-results))))
    :timeout-fn
    (lambda ()
      (when (= req-id project-search--request-id)
-       (project-search--rg-fallback query project-root max-results)))))
+       (project-search--update-ivy-candidates
+        (project-search--rg-to-xrefs query project-root max-results))))))
 
-(defun project-search--send-rg-request (query project-root req-id max-results &optional extra-args)
-  "Run rg for QUERY in PROJECT-ROOT and update ivy candidates.
-REQ-ID is checked against `project-search--request-id' to discard
-stale results.  EXTRA-ARGS is an optional string of additional rg flags."
-  (when (= req-id project-search--request-id)
-    (ignore-errors
-      (project-search--rg-fallback query project-root max-results extra-args))))
 
 (defun project-search--ivy-function (input)
   "Dynamic collection function for `ivy-project-search'.
@@ -281,20 +269,24 @@ by kind and is stripped before querying."
         (query (project-search--extract-query input))
         (kind-prefix (project-search--extract-kind-prefix input)))
     (or (let ((ivy-text query)) (ivy-more-chars))
-        (let ((req-id (cl-incf project-search--request-id)))
-          (when project-search--debounce-timer
-            (cancel-timer project-search--debounce-timer))
-          (setq project-search--debounce-timer
-                (if server
+        (if server
+            (let ((req-id (cl-incf project-search--request-id)))
+              (when project-search--debounce-timer
+                (cancel-timer project-search--debounce-timer))
+              (setq project-search--debounce-timer
                     (run-with-timer
                      project-search-debounce-delay nil
                      #'project-search--send-lsp-request
-                     server query project-root req-id kind-prefix max-results)
-                  (run-with-timer
-                   project-search-debounce-delay nil
-                   #'project-search--send-rg-request
-                   query project-root req-id max-results extra-args)))
-          nil))))
+                     server query project-root req-id kind-prefix max-results))
+              nil)
+          (condition-case err
+              (let ((xrefs (project-search--rg-to-xrefs query project-root max-results extra-args)))
+                (when xrefs
+                  (let ((collection (ivy-xref-make-collection xrefs)))
+                    (setq project-search--ivy-candidates collection)
+                    (mapcar #'car collection))))
+            (error (message "project-search rg error: %S" err) nil))))))
+
 
 ;;;###autoload
 (defun ivy-project-rg (&optional options)
@@ -330,7 +322,6 @@ ripgrep text search.  Results are limited to
          (default-directory project-root))
     (ivy-read (format "[%s] sym: " (projectile-project-name))
               #'project-search--ivy-function
-              :initial-input (thing-at-point 'symbol t)
               :dynamic-collection t
               :require-match t
               :action #'project-search--ivy-action

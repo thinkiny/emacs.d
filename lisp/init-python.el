@@ -6,7 +6,7 @@
               auto-mode-alist))
 
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
-(require-package 'pip-requirements)
+(use-package pip-requirements)
 
 ;; use https://github.com/joaotavora/rassumfrassum
 (with-eval-after-load 'eglot

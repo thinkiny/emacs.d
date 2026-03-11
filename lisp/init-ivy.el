@@ -1,8 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 
 (use-package ivy
-  :commands ivy-mode
-  :init (ivy-mode 1)
   :config
   (setq-default ivy-use-virtual-buffers 'recentf
                 ivy-virtual-abbreviate 'abbreviate
@@ -11,6 +9,7 @@
                 enable-recursive-minibuffers t
                 ivy-case-fold-search-default t
                 ivy-use-selectable-prompt t)
+  (ivy-mode)
   (define-key ivy-minibuffer-map (kbd "<up>") #'ivy-previous-line-or-history)
   (define-key ivy-minibuffer-map (kbd "<down>") #'ivy-next-line-or-history)
   (define-key ivy-minibuffer-map (kbd "C-l") #'ivy-backward-delete-char)
@@ -37,7 +36,6 @@
 
 ;; counsel
 (use-package counsel
-  :demand t
   :after ivy
   :config
   (setq-default counsel-mode-override-describe-bindings t)
@@ -46,7 +44,7 @@
   (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
   (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache$" ".metals$" "bazel-.*" ".o$" ".elc$" ".so$")))
   (global-set-key (kbd "C-c l") 'counsel-imenu)
-  (global-set-key (kbd "C-c s s") 'counsel-ag)
+  (global-set-key (kbd "C-c s s") 'counsel-rg)
   (global-set-key (kbd "C-c s d") 'counsel-rg-here)
   (global-set-key (kbd "C-c s t") 'counsel-rg-filetype)
   (counsel-mode))
@@ -59,26 +57,24 @@
   (interactive (list (read-string "Search file type: ")))
   (counsel-rg "" default-directory (concat "-t" type)))
 
-(use-package ivy-hydra)
-
 (use-package ivy-rich
   :after (ivy counsel)
-  :init (ivy-rich-mode 1)
   :config
   (setq ivy-rich-parse-remote-buffer nil
         ivy-rich-path-style 'abbrev)
   (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line)
+  (ivy-rich-mode 1)
   (ivy-rich-project-root-cache-mode 1))
 
 ;; ivy-posframe
-;; (require-package 'ivy-posframe)
+;; (use-package ivy-posframe)
 ;; (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-bottom-center)))
 ;; (ivy-posframe-mode 1)
 
 ;; smex
-(require-package 'smex)
-(smex-initialize)
-(global-set-key (kbd "M-x") 'smex)
+;; (use-package smex)
+;; (smex-initialize)
+;; (global-set-key (kbd "M-x") 'smex)
 
 (provide 'init-ivy)
 ;;; init-ivy.el ends here

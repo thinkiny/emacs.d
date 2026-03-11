@@ -1,8 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
-(require-package 'java-snippets)
-(require-package 'groovy-mode)
-(require-package 'java-ts-mode)
+(use-package java-snippets)
+(use-package groovy-mode)
+(use-package java-ts-mode)
 (use-package android-mode)
 
 (add-to-list 'auto-mode-alist '("\\.gradle\\'" . groovy-mode))

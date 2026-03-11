@@ -53,7 +53,6 @@
 ;; tramp-hlo
 (use-package tramp-hlo
   :ensure t
-  :demand t
   :config
   (tramp-hlo-setup))
 
@@ -141,7 +140,6 @@ Example: /ssh:user@host:/path/to/dir -> user@host:/path/to/dir"
     tramp-path))
 
 (use-package tramp-rpc
-  :demand t
   :vc (:url "https://github.com/ArthurHeymans/emacs-tramp-rpc.git"
        :rev :newest
        :lisp-dir "lisp"))

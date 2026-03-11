@@ -95,10 +95,11 @@
   (add-to-list 'initial-frame-alist no-border))
 
 ;; icons
-(require-package 'all-the-icons)
-(require-package 'treemacs-icons-dired)
+(use-package all-the-icons)
 
-(when window-system
+(use-package treemacs-icons-dired
+  :when window-system
+  :config
   (defun treemacs-icons-dired--display-before()
     (not (file-remote-p default-directory)))
   (advice-add 'treemacs-icons-dired--display :before-while #'treemacs-icons-dired--display-before)
@@ -124,12 +125,12 @@
 
 ;; themes
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-(require-package 'modus-themes)
-(require-package 'ef-themes)
-
-(with-eval-after-load 'modus-themes
+(use-package modus-themes
+  :config
   (setq modus-themes-tabs-accented t
         modus-themes-paren-match '(bold intense)))
+
+(use-package ef-themes)
 
 ;; default-theme
 (defcustom default-theme 'modus-operandi
@@ -158,7 +159,6 @@
 ;;fonts
 (when window-system
   (use-package cnfonts
-    :demand t
     :config
     (setq cnfonts-use-face-font-rescale t)
     (setq use-default-font-for-symbols nil)
@@ -276,6 +276,6 @@
       (customize-save-variable 'default-theme current-theme)))
 
 ;; hide-mode-line
-(require-package 'hide-mode-line)
+(use-package hide-mode-line)
 
 (provide 'init-ui)

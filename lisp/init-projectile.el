@@ -17,11 +17,9 @@
           "*\\.hg$"
           "*\\.bzr$"
           "*\\.venv$"
-          "aarch64-darwin"
-          "build"
           "target"
-          "vendor"
-          ))
+          "vendor"))
+
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
   (define-key projectile-command-map (kbd "0") #'projectile-kill-no-files)
@@ -61,7 +59,6 @@
             (kill-buffer buffer))))
     (message (format "Killed buffers not belongs to %s" project-name))))
 
-
 (defun projectile-revert-project-buffers ()
   "Revert buffers belongs to this project"
   (interactive)
@@ -93,33 +90,6 @@
         (unless (buffer-file-name buffer)
             (kill-buffer buffer)))))
     (message "Killed buffers not having files associcated"))
-
-;; project search
-(require 'project-search)
-
-(defun get-default-args-for-ripgrep()
-  (let ((file-name (buffer-file-name)))
-    (concat (if file-name
-                (pcase (file-name-extension file-name)
-                  ("go" "-tgo")
-                  ("py" "-tpython")
-                  ("js" "-tjs")
-                  ("cc" "-tcpp")
-                  (_ ""))
-              "")
-            " -i")))
-
-(defun counsel-projectile-rg-default()
-  (interactive)
-  (ivy-project-rg (get-default-args-for-ripgrep)))
-
-(use-package counsel-projectile
-  :after counsel
-  :init (counsel-projectile-mode)
-  :bind (:map
-         projectile-mode-map
-         ("C-c p s g" . #'counsel-projectile-rg-default)
-         ("C-c p s s" . #'ivy-project-search)))
 
 ;; tramp
 ;; (defun projectile-project-root-before(&optional dir)

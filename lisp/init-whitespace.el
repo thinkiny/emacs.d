@@ -16,7 +16,7 @@
 (dolist (hook '(prog-mode-hook text-mode-hook conf-mode-hook maven-pom-mode shell-script-mode snippet-mode))
   (add-hook hook 'sanityinc/show-trailing-whitespace))
 
-(require-package 'whitespace-cleanup-mode)
+(use-package whitespace-cleanup-mode)
 
 (setq whitespace-cleanup-mode-only-if-initially-clean nil)
 (global-set-key [remap just-one-space] 'cycle-spacing)

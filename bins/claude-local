@@ -1,4 +1,4 @@
 #!/bin/zsh
 
-#exec claude-chill -a 0 -- claude "$@"
-claude "$@"
+exec claude-chill -a 0 -- claude "$@"
+#claude "$@"

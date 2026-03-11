@@ -1,10 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 
-(require-package 'fullframe)
+;; fullframe already installed in init-package.el; just use it here
 (with-eval-after-load 'ibuffer
- (fullframe ibuffer ibuffer-quit))
+  (fullframe ibuffer ibuffer-quit))
 
-(require-package 'ibuffer-vc)
+(use-package ibuffer-vc
+  :after ibuffer)
 
 (defun ibuffer-set-up-preferred-filters ()
   (ibuffer-vc-set-filter-groups-by-vc-root)

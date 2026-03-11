@@ -24,7 +24,7 @@
       (message "can't find word at point"))))
 
 ;; bing
-(use-package bing-dict :demand t)
+(use-package bing-dict)
 (defun bing-dict-at-point()
   (interactive)
   (let ((word (if (region-active-p)
@@ -38,7 +38,6 @@
 
 ;; google
 (use-package google-translate
-  :demand t
   :config
   (setq google-translate-show-phonetic t)
   (setq google-translate-output-destination 'echo-area)

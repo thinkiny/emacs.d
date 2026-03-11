@@ -15,11 +15,11 @@
   ;; (corfu-echo-documentation nil) ;; Disable documentation in the echo area
   ;; (corfu-scroll-margin 5)        ;; Use scroll margin
   :init
-  (global-corfu-mode)
-  (global-set-key (kbd "M-/") 'completion-at-point))
+  (global-set-key (kbd "M-/") 'completion-at-point)
+  :config
+  (global-corfu-mode))
 
 (use-package orderless
-  :demand t
   :config
   (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
   (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))

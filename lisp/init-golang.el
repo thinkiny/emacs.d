@@ -1,6 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 
-(require-package 'go-mode)
+(use-package go-mode)
 
 ;; project
 (require 'project)

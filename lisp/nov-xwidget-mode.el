@@ -1,4 +1,4 @@
-;;; nov-xwidget.el --- EPUB reader using xwidget-webkit -*- lexical-binding: t; -*-
+;;; nov-xwidget-mode.el --- EPUB reader using xwidget-webkit -*- lexical-binding: t; -*-
 
 (require 'nov)
 (require 'shr)
@@ -519,5 +519,5 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     (nov-xwidget-view)
     (kill-buffer init-buf)))
 
-(provide 'nov-xwidget)
-;;; nov-xwidget.el ends here
+(provide 'nov-xwidget-mode)
+;;; nov-xwidget-mode.el ends here

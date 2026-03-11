@@ -1,6 +1,6 @@
 ;;; init-ai.el --- init-ai -*- lexical-binding: t -*-
 
-(defconst use-claude-code-chill nil)
+(defconst use-claude-code-chill t)
 
 (use-package claude-code-ide
   :ensure t

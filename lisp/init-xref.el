@@ -1,7 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 
 (require 'xref)
-(setq xref-show-definitions-function #'xref-show-definitions-completing-read)
 
 (setq xref-marker-ring-length 1024)
 (defun print-xref()
@@ -55,7 +54,6 @@ Override existing value with NEW-VALUE if it's set."
 
 ;; dumb-jump
 (use-package dumb-jump
-  :demand t
   :config
   (setq dumb-jump-force-searcher 'rg)
   (setq dumb-jump-prefer-searcher 'rg)
@@ -108,26 +106,48 @@ Override existing value with NEW-VALUE if it's set."
 (global-set-key (kbd "M-]") #'xref-go-forward)
 
 ;; ivy-xref
+(use-package ivy-xref
+  :after (ivy)
+  :config
+  (setq xref-show-definitions-function #'ivy-xref-show-defs)
+  (setq xref-show-xrefs-function 'ivy-xref-show-xrefs)
+  (setq ivy-xref-use-file-path t))
+
 (defun ivy-xref-trim-path (file)
-  (let* ((path (file-relative-name file default-directory))
+  (let* ((base (or project-search--ivy-default-directory default-directory))
+         (path (file-relative-name file base))
          (parts (split-string path "/" t)))
     (if (> (length parts) 5)
         (string-join (append (seq-take parts 3) '("...") (seq-drop parts (- (length parts) 2))) "/")
       path)))
 
-(use-package ivy-xref
-  :after ivy
-  :init
-  (setq xref-show-definitions-function #'ivy-xref-show-defs)
-  (setq xref-show-xrefs-function 'ivy-xref-show-xrefs)
-  (setq ivy-xref-use-file-path t)
+(advice-add 'xref-location-group :filter-return #'ivy-xref-trim-path)
+
+
+;; project search
+(require 'project-search)
+
+(defun get-default-args-for-ripgrep()
+  (let ((file-name (buffer-file-name)))
+    (concat (if file-name
+                (pcase (file-name-extension file-name)
+                  ("go" "-tgo")
+                  ("py" "-tpython")
+                  ("js" "-tjs")
+                  ("cc" "-tcpp")
+                  (_ ""))
+              "")
+            " -i")))
+
+(defun counsel-projectile-rg-default()
+  (interactive)
+  (ivy-project-rg (get-default-args-for-ripgrep)))
+
+(use-package counsel-projectile
+  :after (ivy-xref projectile)
   :config
-  (advice-add 'ivy-xref-make-collection :around
-              (lambda (fn xrefs)
-                (cl-letf* ((orig-location-group (symbol-function 'xref-location-group))
-                           ((symbol-function 'xref-location-group)
-                            (lambda (location)
-                              (ivy-xref-trim-path (funcall orig-location-group location)))))
-                  (funcall fn xrefs)))))
+  (counsel-projectile-mode)
+  (define-key projectile-command-map (kbd "s g") #'counsel-projectile-rg-default)
+  (define-key projectile-command-map (kbd "s s") #'ivy-project-search))
 
 (provide 'init-xref)

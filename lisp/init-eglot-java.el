@@ -1,15 +1,14 @@
-(require-package 'eglot-java)
-(require 'eglot-java)
-
-(setq eglot-java-server-install-dir (concat user-emacs-directory "java/eclipse.jdt.ls"))
-(setq eglot-java-eclipse-jdt-cache-directory "~/.emacs.d/eglot-eclipse-jdt-cache")
-(setq eglot-java-eclipse-jdt-args
-      `("-Xms100m"
-        "-Dsun.zip.disableMemoryMapping=true"
-        "--add-modules=ALL-SYSTEM"
-        "--add-opens=java.base/java.util=ALL-UNNAMED"
-        "--add-opens=java.base/java.lang=ALL-UNNAMED"
-        ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar"))))
+(use-package eglot-java
+  :config
+  (setq eglot-java-server-install-dir (concat user-emacs-directory "java/eclipse.jdt.ls"))
+  (setq eglot-java-eclipse-jdt-cache-directory "~/.emacs.d/eglot-eclipse-jdt-cache")
+  (setq eglot-java-eclipse-jdt-args
+        `("-Xms100m"
+          "-Dsun.zip.disableMemoryMapping=true"
+          "--add-modules=ALL-SYSTEM"
+          "--add-opens=java.base/java.util=ALL-UNNAMED"
+          "--add-opens=java.base/java.lang=ALL-UNNAMED"
+          ,(concat "-javaagent:" (expand-file-name "~/.emacs.d/java/lombok.jar")))))
 
 ;; jdecomp
 (use-package jdecomp

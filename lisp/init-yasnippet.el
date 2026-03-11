@@ -1,10 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
-(require-package 'yasnippet)
-(require-package 'yasnippet-snippets)
-(add-hook 'after-init-hook 'yas-global-mode)
-
-(with-eval-after-load 'yasnippet
+(use-package yasnippet
+  :hook (after-init . yas-global-mode)
+  :config
   (defun gen-cpp-header-tag()
     (let* ((root (projectile-project-root))
            (path (string-trim-left
@@ -12,6 +10,9 @@
                   root))
            (name (replace-regexp-in-string "[./-]" "_" path)))
       (concat (upcase name) "_H_"))))
+
+(use-package yasnippet-snippets
+  :after yasnippet)
 
 
 ;; (add-hook 'yas-minor-mode-hook

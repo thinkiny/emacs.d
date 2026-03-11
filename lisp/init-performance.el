@@ -1,7 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 
 (use-package gcmh
-  :demand t
   :config
   (setq gcmh-high-cons-threshold (* 512 1024 1024))
   (setq gcmh-low-cons-threshold (* 64 1024 1024))

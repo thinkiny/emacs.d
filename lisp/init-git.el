@@ -12,7 +12,6 @@
               tramp-file-name-regexp)))
 
 (use-package magit
-  :demand t
   :config
   (setq transient-default-level 5
         magit-diff-refine-hunk t

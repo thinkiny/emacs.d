@@ -1,7 +1,7 @@
 ;; -*- lexical-binding: t; -*-
 
-(require-package 'ace-window)
-(require-package 'transpose-frame)
+(use-package ace-window)
+(use-package transpose-frame)
 
 (global-set-key (kbd "C-x o") 'ace-window)
 (global-set-key (kbd "C-x x") 'ace-swap-window)
@@ -28,10 +28,10 @@ transpositions to execute in sequence."
       (setq arg (if (cl-plusp arg) (1- arg) (1+ arg))))))
 
 (use-package winner
-  :init (winner-mode t)
   :config
   (global-set-key (kbd "C-c 9") #'winner-undo)
-  (global-set-key (kbd "C-c 0") #'winner-redo))
+  (global-set-key (kbd "C-c 0") #'winner-redo)
+  (winner-mode t))
 
 
 ;; change window size

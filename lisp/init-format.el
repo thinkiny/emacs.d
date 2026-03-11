@@ -1,11 +1,10 @@
 ;; -*- lexical-binding: t; -*-
 
-(require-package 'format-all)
-
-(require 'format-all)
-(setq format-all-show-errors 'never)
-(setcdr (assoc "SQL" format-all-default-formatters) '(pgformatter))
-(setcdr (assoc "Python" format-all-default-formatters) '(ruff))
+(use-package format-all
+  :config
+  (setq format-all-show-errors 'never)
+  (setcdr (assoc "SQL" format-all-default-formatters) '(pgformatter))
+  (setcdr (assoc "Python" format-all-default-formatters) '(ruff)))
 
 (defun toggle-format-all-mode ()
   (interactive)

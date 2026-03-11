@@ -4,7 +4,6 @@
 
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns x))
-  :demand t
   :config
   (setq exec-path-from-shell-arguments '("-l"))
   (dolist (var '("SSH_AUTH_SOCK"

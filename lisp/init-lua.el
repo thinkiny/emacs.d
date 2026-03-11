@@ -1,7 +1,7 @@
 ;; -*- lexical-binding: t; -*-
 
-(maybe-require-package 'lua-mode)
-(maybe-require-package 'ruby-end)
+(use-package lua-mode)
+(use-package ruby-end)
 
 (add-hook 'lua-mode-hook (lambda()
                            ;;(semantic-mode 0)
