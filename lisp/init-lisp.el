@@ -66,8 +66,11 @@ there is no current file, eval the current buffer."
       (funcall sanityinc/repl-switch-function sanityinc/repl-original-buffer)
     (error "No original buffer")))
 
+(setq trusted-content :all)
 (with-eval-after-load 'elisp-mode
+  (setq elisp-flymake-byte-compile-load-path load-path)
   (define-key emacs-lisp-mode-map (kbd "C-c C-z") 'sanityinc/switch-to-ielm))
+
 (with-eval-after-load 'ielm
   (define-key ielm-map (kbd "C-c C-z") 'sanityinc/repl-switch-back))
 
@@ -95,6 +98,8 @@ there is no current file, eval the current buffer."
 ;; Load .el if newer than corresponding .elc
 ;; ----------------------------------------------------------------------------
 (setq load-prefer-newer t)
+
+(setq enable-local-variables :all)
 
 
 
@@ -137,8 +142,6 @@ there is no current file, eval the current buffer."
   (append sanityinc/elispy-modes
           '(lisp-mode inferior-lisp-mode lisp-interaction-mode))
   "All lispy major modes.")
-
-(require 'derived)
 
 (dolist (hook (mapcar #'derived-mode-hook-name sanityinc/lispy-modes))
   (add-hook hook 'sanityinc/lisp-setup))

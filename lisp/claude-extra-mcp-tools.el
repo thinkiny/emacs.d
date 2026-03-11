@@ -16,11 +16,6 @@
   :group 'tools
   :prefix "claude-extra-")
 
-(defcustom claude-extra-project-search-max-results 5
-  "Maximum number of results returned by project search."
-  :type 'integer
-  :group 'claude-extra-mcp-tools)
-
 (defcustom claude-xwidgets-mcp-timeout-seconds 0.8
   "Timeout in seconds while waiting for xwidget JavaScript callback results."
   :type 'number
@@ -258,12 +253,10 @@ buffer is not an xwidget buffer."
     (setq claude-xwidgets--poll-timer nil)))
 
 ;;; Project search (delegates to project-search.el)
-
 (defun claude-extra--handle-project-search (query)
-  "Search project for QUERY.
-Delegates to `project-search--search' with the MCP-specific result limit."
+  "Search project for QUERY."
   (claude-code-ide-mcp-server-with-session-context nil
-    (project-search--search query nil claude-extra-project-search-max-results)))
+    (project-search-sync-query query)))
 
 
 (defun claude-xwidgets--handle-get-selection-text ()

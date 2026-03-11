@@ -99,6 +99,7 @@ main() {
             repo)
                 update_repo "${ELPA_DIR}/claude-code-ide"
                 update_repo "${ELPA_DIR}/tramp-rpc"
+                update_repo "${ELPA_DIR}/clutch"
                 ;;
             *)
                 echo "Unknown option: $1"

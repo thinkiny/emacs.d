@@ -1,27 +1,6 @@
 ;;; init-translation.el --- Translation configuration -*- lexical-binding: t -*-
 
 ;;; Code:
-(defvar translate-backend 'google
-  "Translation backend to use. Either 'bing or 'google.")
-
-(defun translate-brief (text &optional sync-p)
-  "Translate TEXT using configured backend."
-  (pcase translate-backend
-    ('bing (bing-dict-brief text sync-p))
-    ('google (google-translate-brief text))
-    (_ (error "Unknown translation backend: %s" translate-backend))))
-
-(defun translate-at-point ()
-  "Translate word at point or region using configured backend."
-  (interactive)
-  (let ((word (if (region-active-p)
-                  (buffer-substring-no-properties
-                   (region-beginning) (region-end))
-                (let ((text (thing-at-point 'word)))
-                  (if text (substring-no-properties text))))))
-    (if word
-        (translate-brief word)
-      (message "can't find word at point"))))
 
 ;; bing
 (use-package bing-dict)
@@ -78,6 +57,29 @@ http://www.gnu.org/software/emacs/manual/html_node/elisp/The-Echo-Area.html)"
       (translate-at-point))))
 
 (advice-add #'mouse-set-region-1 :after #'translate-mouse-selection)
+
+;; tranlate functions
+(defvar translate-backend 'google
+  "Translation backend to use. Either 'bing or 'google.")
+
+(defun translate-brief (text &optional sync-p)
+  "Translate TEXT using configured backend."
+  (pcase translate-backend
+    ('bing (bing-dict-brief text sync-p))
+    ('google (google-translate-brief text))
+    (_ (error "Unknown translation backend: %s" translate-backend))))
+
+(defun translate-at-point ()
+  "Translate word at point or region using configured backend."
+  (interactive)
+  (let ((word (if (region-active-p)
+                  (buffer-substring-no-properties
+                   (region-beginning) (region-end))
+                (let ((text (thing-at-point 'word)))
+                  (if text (substring-no-properties text))))))
+    (if word
+        (translate-brief word)
+      (message "can't find word at point"))))
 
 (global-set-key (kbd "C-,") 'translate-at-point)
 

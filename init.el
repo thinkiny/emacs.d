@@ -72,9 +72,10 @@
 (require 'init-platform)
 (require 'init-ai)
 
+;; custom file
 (when (file-exists-p custom-file)
   (load custom-file))
 
-(require 'private-setup nil 'noerror)
+(require 'private-conf nil 'noerror)
 
 (provide 'init)

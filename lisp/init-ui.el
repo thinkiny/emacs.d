@@ -2,7 +2,6 @@
 
 ;;; Code:
 (setq inhibit-startup-message t)
-(setq gnus-inhibit-startup-message t)
 
 (when (fboundp 'tab-bar-mode)
   (tab-bar-mode -1)
@@ -166,18 +165,22 @@
     (unbind-all-keys cnfonts-mode-map)))
 
 ;;size
-(defun set-large-frame-size()
-  (add-to-list 'default-frame-alist (cons 'width 130))
-  (add-to-list 'default-frame-alist (cons 'height 50)))
+(defun apply-frame-size-for-display (&optional frame)
+  "Apply appropriate frame size based on display width."
+  (when window-system
+    (let* ((large-p (> (x-display-pixel-width) 1280))
+           (w (if large-p 130 80))
+           (h (if large-p 50 30)))
+      (setf (alist-get 'width default-frame-alist) w)
+      (setf (alist-get 'height default-frame-alist) h)
+      (when frame
+        (set-frame-size frame w h)))))
 
-(defun set-small-frame-size()
-  (add-to-list 'default-frame-alist (cons 'width 80))
-  (add-to-list 'default-frame-alist (cons 'height 30)))
+;; Set initial frame size
+(apply-frame-size-for-display)
 
-(when window-system
-  (if (> (x-display-pixel-width) 1280)
-      (set-large-frame-size)
-    (set-small-frame-size)))
+;; Ensure client frames get the correct size
+(add-hook 'after-make-frame-functions #'apply-frame-size-for-display)
 
 ;;mode line
 (setq mode-line-percent-position nil)
@@ -220,8 +223,9 @@
     mode-line-project-name))
 
 (defun persp-with-project-name-mode-line()
-  (if (fboundp 'persp-current-name)
-      `("[" ,(persp-current-name) "] " ,(mode-line-projectile-project-name))))
+  (if (bound-and-true-p persp-mode)
+      `("[" ,(persp-current-name) "] " ,(mode-line-projectile-project-name))
+    (mode-line-projectile-project-name)))
 
 (defun my-flymake-mode-line-counters ()
   (if (bound-and-true-p flymake-mode)
