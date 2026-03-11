@@ -47,14 +47,13 @@
                 org2ctex-latex-fonts)))
 
 ;; dwim-shell-command
-(with-eval-after-load 'dwim-shell-command
-  (require 'dwim-shell-commands)
-  (defun dwim-shell-commands-toggle-menu-bar-macos()
-    "Toggle macOS menu bar."
-    (interactive)
-    (dwim-shell-command-on-marked-files
-     "Toggle menu bar auto-hide."
-     "current_status=$(osascript -e 'tell application \"System Events\" to get autohide menu bar of dock preferences')
+(require 'dwim-shell-commands)
+(defun dwim-shell-commands-toggle-menu-bar-macos()
+  "Toggle macOS menu bar."
+  (interactive)
+  (dwim-shell-command-on-marked-files
+   "Toggle menu bar auto-hide."
+   "current_status=$(osascript -e 'tell application \"System Events\" to get autohide menu bar of dock preferences')
 
 if [ \"$current_status\" = \"true\" ]; then
     osascript -e 'tell application \"System Events\" to set autohide menu bar of dock preferences to false'
@@ -63,19 +62,19 @@ else
     osascript -e 'tell application \"System Events\" to set autohide menu bar of dock preferences to true'
     echo \"Auto-hide menu enabled.\"
 fi"
-     :utils "osascript"
-     :silent-success t))
+   :utils "osascript"
+   :silent-success t))
 
-  (defun dwim-shell-commands-show-dock-macos (status on-completion)
-    "Control macOS dock shown."
-    (let ((cmd (if status "false" "true" ))
-          (title (if status "Show" "Hide")))
-      (dwim-shell-command-on-marked-files
-       (concat title " dock.")
-       (format "osascript -e 'tell application \"System Events\" to set autohide of dock preferences to %s'" cmd)
-       :utils "osascript"
-       :silent-success t
-       :on-completion on-completion))))
+(defun dwim-shell-commands-show-dock-macos (status on-completion)
+  "Control macOS dock shown."
+  (let ((cmd (if status "false" "true" ))
+        (title (if status "Show" "Hide")))
+    (dwim-shell-command-on-marked-files
+     (concat title " dock.")
+     (format "osascript -e 'tell application \"System Events\" to set autohide of dock preferences to %s'" cmd)
+     :utils "osascript"
+     :silent-success t
+     :on-completion on-completion)))
 
 ;; maximize window
 (defun get-dock-autohide-macos()

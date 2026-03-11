@@ -26,4 +26,8 @@
 ;; yaml
 (add-auto-mode 'yaml-mode "\\.yml\\'" "\\.erb\\'")
 
+;; rpc-spec
+(use-package rpm-spec-mode
+  :mode "\\.spec")
+
 (provide 'init-conf-files)

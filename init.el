@@ -64,7 +64,6 @@
 ;;other
 (require 'init-term)
 (require 'init-eshell)
-(require 'init-rpm)
 (require 'init-git)
 (require 'init-http)
 (require 'init-dash)
@@ -75,5 +74,7 @@
 
 (when (file-exists-p custom-file)
   (load custom-file))
+
+(require 'private-setup nil 'noerror)
 
 (provide 'init)

@@ -216,7 +216,8 @@ With arg N, insert N newlines."
                    (lambda (s1 s2) (eq (random 2) 0)))))))
 
 (use-package json-mode
-  :mode "\\.json\\'")
+  :mode "\\.json\\'"
+  :bind (("C-c C-f" . json-pretty-print-buffer)))
 
 ;; symbol-overlay
 (use-package symbol-overlay
