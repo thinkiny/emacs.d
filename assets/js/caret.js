@@ -42,6 +42,13 @@ class CaretEmacs {
           this._updateCursor();
           this._onUserScroll();
         }, { passive: true });
+        window.addEventListener('resize', () => {
+          const sel = window.getSelection();
+          if (sel?.rangeCount) {
+            this._relocateIfOffscreen(sel);
+          }
+          this._updateCursor();
+        }, { passive: true });
       }
     };
     document.body ? init() : document.addEventListener("DOMContentLoaded", init, { once: true });
@@ -761,13 +768,13 @@ class CaretEmacs {
   _scrollPage(direction) {
     const sel = this._ensureSelection();
     if (!sel?.rangeCount) return;
-    const caretX = sel.getRangeAt(0).getBoundingClientRect().left;
-    const vp = this._viewportRect();
-    const delta = this._viewportHeight - PAGE_OVERLAP;
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    const caretX = rect.left;
+    const caretY = rect.top;
+    const delta = this._viewportHeight / 3;
     this._scrollBy(direction === "down" ? delta : -delta);
-    const targetY = direction === "down"
-      ? vp.top + PAGE_OVERLAP / 2 : vp.bottom - PAGE_OVERLAP / 2;
-    const range = this._probeTextAt(caretX, targetY);
+    const newY = direction === "down" ? caretY - delta : caretY + delta;
+    const range = this._probeTextAt(caretX, newY);
     if (!range) return;
     this._applyRange(sel, range);
     this._updateCursor();

@@ -11,8 +11,7 @@
 (require 'ivy)
 (require 'tramp)
 (require 'vterm)
-
-(declare-function persp-current-buffers* "perspective")
+(require 'perspective)
 
 (defvar counsel-mt-shell-type 'vterm
   "Terminal backend to use.  Either `vterm' or `eshell'.")
