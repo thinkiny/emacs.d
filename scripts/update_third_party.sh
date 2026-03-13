@@ -36,6 +36,13 @@ update_repo() {
     popd
 }
 
+# Update all git repositories
+update_repos() {
+    update_repo "${ELPA_DIR}/claude-code-ide"
+    update_repo "${ELPA_DIR}/tramp-rpc"
+    update_repo "${ELPA_DIR}/clutch"
+}
+
 # Update LSP tools
 update_lsp() {
     go install golang.org/x/tools/gopls@latest
@@ -89,17 +96,14 @@ main() {
 
         # Update repositories
         update_lsp
-        update_repo "${ELPA_DIR}/claude-code-ide"
-        # update_repo "${ELPA_DIR}/tramp-rpc"
+        update_repos
     else
         case $1 in
             lsp)
                 update_lsp
                 ;;
             repo)
-                update_repo "${ELPA_DIR}/claude-code-ide"
-                update_repo "${ELPA_DIR}/tramp-rpc"
-                update_repo "${ELPA_DIR}/clutch"
+                update_repos
                 ;;
             *)
                 echo "Unknown option: $1"

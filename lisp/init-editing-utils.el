@@ -490,7 +490,6 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
 (setq auto-revert-mode-text "")
 (setq auto-revert-avoid-polling t)
 (setq auto-revert-remote-files t)
-(setq auto-revert-check-vc-info t)
 (defun toggle-auto-revert ()
   "Toggle 'auto-revert-mode, configuring interval based on file location."
   (interactive)
@@ -500,8 +499,6 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
         (setq-local auto-revert-interval 4)
       (setq-local auto-revert-interval 2))
     (auto-revert-mode 1)))
-
-(add-hook 'flymake-mode-hook #'toggle-auto-revert)
 
 ;; shell-mode
 (with-eval-after-load 'sh-script

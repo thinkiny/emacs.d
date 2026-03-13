@@ -88,13 +88,6 @@
   )
 
 ;; interactive commands
-(defun eglot-disable-format-project()
-  (interactive)
-  (when-let* ((project-root (projectile-project-root))
-              (file (format "%s.dir-locals.el" project-root)))
-    (write-region (format "((%s . ((eglot-enable-format-at-save . nil))))" major-mode) nil file)
-    (message (format "write %s" file))))
-
 (defun eglot-first-flymake-current-line()
   (if-let* ((digs (flymake-diagnostics (line-beginning-position) (line-end-position))))
       (car (seq-sort-by
@@ -123,25 +116,6 @@
       (ignore-errors (eglot-shutdown server t nil nil))))
   (eglot-ensure))
 
-;; format
-(defvar-local eglot-enable-format-at-save t)
-(put 'eglot-enable-format-at-save 'safe-local-variable #'always)
-
-(defun eglot-enable-format ()
-  (interactive)
-  (setq-local eglot-enable-format-at-save t)
-  (add-hook 'before-save-hook 'eglot-format-buffer -10 t))
-
-(defun eglot-disable-format ()
-  (interactive)
-  (setq-local eglot-enable-format-at-save nil)
-  (remove-hook 'before-save-hook 'eglot-format-buffer t)
-  ;; (if (bound-and-true-p format-all-mode)
-  ;;     (remove-hook 'before-save-hook
-  ;;                  'format-all--buffer-from-hook
-  ;;                  'local))
-  )
-
 ;; (advice-add #'eglot--sig-info :around #'advice/ignore-errors)
 ;; (advice-add #'jsonrpc--process-filter :around #'advice/ignore-errors)
 
@@ -169,9 +143,7 @@
                #'eglot-completion-at-point))
 
   ;; (eglot-hover-mode)
-  (if eglot-enable-format-at-save
-      (eglot-enable-format)
-    (eglot-disable-format)))
+  )
 
 (with-eval-after-load-theme 'eglot
                             (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))

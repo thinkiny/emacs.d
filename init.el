@@ -23,10 +23,10 @@
 (require 'init-windows)
 (require 'init-yasnippet)
 (require 'init-dired)
-(require 'init-whitespace)
 (require 'init-treesit)
 (require 'init-org)
 (require 'init-feed)
+(require 'init-format)
 
 ;;language
 (require 'init-flymake)
@@ -66,9 +66,7 @@
 (require 'init-eshell)
 (require 'init-git)
 (require 'init-http)
-(require 'init-dash)
 (require 'init-god)
-(require 'init-format)
 (require 'init-platform)
 (require 'init-ai)
 

@@ -23,8 +23,8 @@
 
 (defun my-python-mode-hook()
   (sphinx-doc-mode)
-  ;; (setq-local eglot-enable-format-at-save nil)
-  ;; (toggle-format-all-mode)
+  ;; (setq-local enable-format-at-save nil)
+  ;; (enable-format-all-mode)
   (eglot-ensure))
 
 (add-hook 'python-ts-mode-hook #'my-python-mode-hook)
