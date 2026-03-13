@@ -29,8 +29,7 @@
 
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-(add-to-list 'backup-directory-alist
-             (cons tramp-file-name-regexp nil))
+(add-to-list 'backup-directory-alist (cons tramp-file-name-regexp nil))
 
 (setq debug-ignored-errors (cons 'remote-file-error debug-ignored-errors))
 (defvar tramp-ssh-controlmaster-options)
@@ -52,7 +51,6 @@
 
 ;; tramp-hlo
 (use-package tramp-hlo
-  :ensure t
   :config
   (tramp-hlo-setup))
 
@@ -139,6 +137,7 @@ Example: /ssh:user@host:/path/to/dir -> user@host:/path/to/dir"
             tramp-path))
     tramp-path))
 
+;; tramp-rpc
 (use-package tramp-rpc
   :vc (:url "https://github.com/ArthurHeymans/emacs-tramp-rpc.git"
        :rev :newest

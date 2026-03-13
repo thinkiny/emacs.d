@@ -107,7 +107,6 @@ ripgrep."
          (line-0 (1- line)))
     `((name . ,(cdr kind-and-name))
       (kind . ,(car kind-and-name))
-      (text . ,summary)
       (location . ((uri . ,uri)
                    (range . ((start . ((line . ,line-0) (character . ,col)))
                              (end   . ((line . ,line-0) (character . ,col)))))))

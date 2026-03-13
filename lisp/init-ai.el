@@ -1,6 +1,6 @@
 ;;; init-ai.el --- init-ai -*- lexical-binding: t -*-
 
-(defconst use-claude-code-chill t)
+(defconst use-claude-code-chill nil)
 
 (use-package claude-code-ide
   :ensure t
@@ -22,7 +22,7 @@
   (setq claude-code-ide-terminal-backend 'vterm)
   (setq claude-code-ide-prevent-reflow-glitch (not use-claude-code-chill))
   (setq claude-code-ide-show-claude-window-in-ediff nil)
-  (setq claude-code-ide-vterm-render-delay 0.03)
+  (setq claude-code-ide-vterm-render-delay 0.02)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 80)
   (setq claude-code-ide-diagnostics-backend 'flymake)
