@@ -24,7 +24,8 @@
 ;; ztree
 (use-package ztree
   :bind ((:map global-map
-               ("C-c d d" . ztree-diff)
+               ("C-c d d" . ediff-directories)
+               ("C-c d z" . ztree-diff)
                ("C-c d ." . ztree-dir))
          (:map ztree-mode-map
                ("n" . ztree-next-line)

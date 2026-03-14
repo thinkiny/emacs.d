@@ -419,6 +419,44 @@ If ARG is omitted or nil, move point forward one word."
       (select-frame ctl-frm)
       (raise-frame ctl-frm))))
 
+;; ediff-directories: make top-level =h consistent with sub-session =h.
+;; override to compare only common files.
+(with-eval-after-load 'ediff-diff
+  (defun ediff-same-file-contents-lists (entries-1 entries-2 filter-re)
+    (let* ((names-1 (mapcar #'file-name-nondirectory entries-1))
+           (names-2 (mapcar #'file-name-nondirectory entries-2))
+           (common-names (seq-intersection names-1 names-2 #'string=))
+           (continue t))
+      (dolist (name common-names continue)
+        (when continue
+          (let ((f1 (seq-find (lambda (e) (string= (file-name-nondirectory e) name))
+                              entries-1))
+                (f2 (seq-find (lambda (e) (string= (file-name-nondirectory e) name))
+                              entries-2)))
+            (unless (ediff-same-contents f1 f2 filter-re)
+              (setq continue nil))))))))
+
+(defun ediff-hide-identical-sessions ()
+  "Toggle hiding of identical sessions."
+  (interactive)
+  (let* ((hidden (bound-and-true-p ediff--identical-hidden))
+         (from (if hidden ?I ?H))
+         (to (if hidden nil ?I)))
+    (unless hidden
+      (ediff-meta-mark-equal-files ?h))
+    (dolist (elt (cdr ediff-meta-list))
+      (when (eq (ediff-get-session-status elt) from)
+        (ediff-set-session-status elt to)))
+    (setq-local ediff--identical-hidden (not hidden))
+    (ediff-update-meta-buffer (current-buffer) 'must-redraw)))
+
+(add-hook 'ediff-meta-buffer-keymap-setup-hook
+          (lambda ()
+            (define-key ediff-meta-buffer-map "H"
+                        #'ediff-hide-identical-sessions)))
+
+(add-hook 'ediff-after-session-group-setup-hook #'ediff-hide-identical-sessions)
+
 ;; jit-lock
 ;; (setq font-lock-support-mode 'jit-lock-mode)
 (setq jit-lock-stealth-time 1)
