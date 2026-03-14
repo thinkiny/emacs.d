@@ -1,6 +1,7 @@
 ;; -*- lexical-binding: t; -*-
 
 (require 'xref)
+(require 'apropos)
 
 (setq xref-marker-ring-length 1024)
 (defun print-xref()

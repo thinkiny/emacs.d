@@ -91,15 +91,35 @@ ripgrep."
                           server)))))
              bufs)))
 
+(defun project-search--location-line-col (loc)
+  "Return (LINE . COL) for xref location LOC.
+Try `xref-location-line' first, then resolve via `xref-location-marker'.
+Falls back to (1 . 0) when neither works."
+  (let ((line (xref-location-line loc))
+        (col  (ignore-errors (xref-file-location-column loc))))
+    (if line
+        (cons line (or col 0))
+      (condition-case nil
+          (let ((marker (xref-location-marker loc)))
+            (with-current-buffer (marker-buffer marker)
+              (save-excursion
+                (save-restriction
+                  (widen)
+                  (goto-char marker)
+                  (cons (line-number-at-pos) (current-column))))))
+        (error '(1 . 0))))))
+
 (defun project-search--sync-format-result (item)
   "Convert xref ITEM to the normalized alist format for MCP."
   (let* ((summary (xref-item-summary item))
          (loc     (xref-item-location item))
          (file    (xref-location-group loc))
-         (line    (xref-location-line loc))
-         (col     (or (ignore-errors (xref-file-location-column loc)) 0))
+         (lc      (project-search--location-line-col loc))
+         (line    (car lc))
+         (col     (cdr lc))
          (kind-and-name
-          (if (string-match "\\`#\\([a-z]+\\) \\(.*\\)" summary)
+          (if (and (get-text-property 0 'project-search-lsp summary)
+                   (string-match "\\`#\\([a-z]+\\) \\(.*\\)" summary))
               (cons (capitalize (match-string 1 summary))
                     (match-string 2 summary))
             (cons "Text" summary)))
@@ -109,8 +129,7 @@ ripgrep."
       (kind . ,(car kind-and-name))
       (location . ((uri . ,uri)
                    (range . ((start . ((line . ,line-0) (character . ,col)))
-                             (end   . ((line . ,line-0) (character . ,col)))))))
-      (containerName . ""))))
+                             (end   . ((line . ,line-0) (character . ,col))))))))))
 
 (defun project-search--xref-query (query)
   "Search for QUERY using the current xref backend."
@@ -212,10 +231,12 @@ MAX-WIDTH controls text truncation (defaults to window width)."
                (line (1+ (plist-get (plist-get range :start) :line)))
                (col (plist-get (plist-get range :start) :character))
                (file-path (eglot-uri-to-path uri)))
-          (xref-make (project-search--truncate-text
-                      (format "#%s %s" (downcase kind-name) name)
-                      query
-                      max-width)
+          (xref-make (propertize
+                      (project-search--truncate-text
+                       (format "#%s %s" (downcase kind-name) name)
+                       query
+                       max-width)
+                      'project-search-lsp t)
                      (xref-make-file-location file-path line (or col 0))))))
     results)))
 
