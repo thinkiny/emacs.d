@@ -140,7 +140,7 @@ Override existing value with NEW-VALUE if it's set."
               "")
             " -i")))
 
-(defun counsel-projectile-rg-default()
+(defun ivy-project-rg-type()
   (interactive)
   (ivy-project-rg (get-default-args-for-ripgrep)))
 
@@ -148,7 +148,8 @@ Override existing value with NEW-VALUE if it's set."
   :after (ivy-xref projectile)
   :config
   (counsel-projectile-mode)
-  (define-key projectile-command-map (kbd "s g") #'counsel-projectile-rg-default)
+  (define-key projectile-command-map (kbd "s t") #'ivy-project-rg-type)
+  (define-key projectile-command-map (kbd "s g") #'ivy-project-rg)
   (define-key projectile-command-map (kbd "s s") #'ivy-project-search))
 
 (provide 'init-xref)
