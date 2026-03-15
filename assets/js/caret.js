@@ -43,10 +43,6 @@ class CaretEmacs {
           this._onUserScroll();
         }, { passive: true });
         window.addEventListener('resize', () => {
-          const sel = window.getSelection();
-          if (sel?.rangeCount) {
-            this._relocateIfOffscreen(sel);
-          }
           this._updateCursor();
         }, { passive: true });
       }

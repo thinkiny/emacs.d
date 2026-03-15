@@ -12,6 +12,7 @@
               tramp-file-name-regexp)))
 
 (use-package magit
+  :init (setq magit-auto-revert-mode nil)
   :config
   (setq transient-default-level 5
         magit-diff-refine-hunk t
@@ -20,8 +21,7 @@
         magit-branch-direct-configure nil
         magit-revision-insert-related-refs nil
         magit-tramp-pipe-stty-settings 'pty)
-
- (transient-define-prefix magit-rsync ()
+  (transient-define-prefix magit-rsync ()
     "Rsync operations."
     ["Rsync to"
      ("d" magit-rsync-from-src

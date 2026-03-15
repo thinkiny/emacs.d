@@ -44,7 +44,7 @@
 (defun my-flymake-mode-hook()
   ;; (when (file-remote-p default-directory)
   ;;   (remove-hook 'after-save-hook 'flymake-after-save-hook  t))
-  (toggle-auto-revert)
+  (enable-auto-revert)
   (remove-hook 'eldoc-documentation-functions #'flymake-eldoc-function t)
   ;;(remove-hook 'after-change-functions 'flymake-after-change-function t)
   ;;(add-hook 'after-change-functions #'clear-flymake-from-current-line t)
