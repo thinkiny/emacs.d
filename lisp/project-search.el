@@ -109,6 +109,29 @@ Falls back to (1 . 0) when neither works."
                   (cons (line-number-at-pos) (current-column))))))
         (error '(1 . 0))))))
 
+(defun project-search--read-line (file line)
+  "Return the trimmed text of LINE in FILE, or nil on error."
+  (condition-case nil
+      (let ((buf (find-buffer-visiting file)))
+        (if buf
+            (with-current-buffer buf
+              (save-excursion
+                (save-restriction
+                  (widen)
+                  (goto-char (point-min))
+                  (forward-line (1- line))
+                  (string-trim (buffer-substring-no-properties
+                                (line-beginning-position)
+                                (line-end-position))))))
+          (with-temp-buffer
+            (insert-file-contents file)
+            (goto-char (point-min))
+            (forward-line (1- line))
+            (string-trim (buffer-substring-no-properties
+                          (line-beginning-position)
+                          (line-end-position))))))
+    (error nil)))
+
 (defun project-search--sync-format-result (item)
   "Convert xref ITEM to the normalized alist format for MCP."
   (let* ((summary (xref-item-summary item))
@@ -117,19 +140,22 @@ Falls back to (1 . 0) when neither works."
          (lc      (project-search--location-line-col loc))
          (line    (car lc))
          (col     (cdr lc))
+         (lsp-p   (get-text-property 0 'project-search-lsp summary))
          (kind-and-name
-          (if (and (get-text-property 0 'project-search-lsp summary)
-                   (string-match "\\`#\\([a-z]+\\) \\(.*\\)" summary))
+          (if (and lsp-p (string-match "\\`#\\([a-z]+\\) \\(.*\\)" summary))
               (cons (capitalize (match-string 1 summary))
                     (match-string 2 summary))
             (cons "Text" summary)))
-         (uri  (concat "file://" (expand-file-name file)))
-         (line-0 (1- line)))
+         (source  (and lsp-p (project-search--read-line file line)))
+         (text    (and source (project-search--truncate-text
+                               source nil project-search-sync-truncate-width)))
+         (uri     (concat "file://" (expand-file-name file))))
     `((name . ,(cdr kind-and-name))
       (kind . ,(car kind-and-name))
+      ,@(when text `((text . ,text)))
       (location . ((uri . ,uri)
-                   (range . ((start . ((line . ,line-0) (character . ,col)))
-                             (end   . ((line . ,line-0) (character . ,col))))))))))
+                   (line . ,line)
+                   (col . ,col))))))
 
 (defun project-search--xref-query (query)
   "Search for QUERY using the current xref backend."
@@ -273,7 +299,7 @@ MAX-WIDTH controls text truncation (defaults to window width)."
       (apply #'call-process "rg" nil t nil
              (append (when extra-args (split-string-and-unquote extra-args))
                      (list "--no-heading" "--line-number" "--column"
-                           "--smart-case" "--color" "never"
+                           "--ignore-case" "--color" "never"
                            "--fixed-strings"  ;; Treat query as literal string
                            "--" query ".")))
       (goto-char (point-min))
@@ -292,7 +318,11 @@ MAX-WIDTH controls text truncation (defaults to window width)."
                         (ivy-xref-make-collection xrefs)
                       '())))
     (setq project-search--ivy-candidates collection)
-    (ivy-update-candidates (mapcar #'car collection))))
+    (run-with-idle-timer
+     0 nil
+     (lambda ()
+       (ignore-errors
+         (ivy-update-candidates (mapcar #'car collection)))))))
 
 (defun project-search--ivy-action (candidate)
   "Jump to the xref location associated with CANDIDATE."
@@ -405,7 +435,7 @@ responses."
          (buf (get-buffer-create "*project-search-rg*"))
          (args (append (when extra-args (split-string-and-unquote extra-args))
                       (list "--no-heading" "--line-number" "--column"
-                            "--smart-case" "--color" "never"
+                            "--ignore-case" "--color" "never"
                             "--line-buffered"
                             "--fixed-strings"  ;; Treat query as literal string
                             "--max-count" (number-to-string max-results)
@@ -443,8 +473,8 @@ responses."
                  (push (project-search--rg-match-to-xref match query) xrefs)
                  (cl-incf count))))
 
-           (ignore-errors
-             (project-search--update-ivy-candidates (nreverse (copy-sequence xrefs)))))
+           
+          (project-search--update-ivy-candidates (nreverse (copy-sequence xrefs))))
 
          ;; True global cap: stop rg as soon as we have enough.
          (when (and (>= count max-results) (process-live-p process))

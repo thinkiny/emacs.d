@@ -13,7 +13,7 @@
 "# Constraints
 - Examine all Emacs MCP tools description carefully.
 - Prioritize Emacs MCP tools over any other tool/Agent.
-- Avoid reading binary files like PDFs.
+- Avoid reading any binary files (e.g., PDFs or EPUBs).
 # Coordinate system
 - Lines: 1-based (Line 1 = first line).
 - Columns: 0-based (Column 0 = first column).

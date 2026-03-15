@@ -40,16 +40,15 @@
     (format-all-mode -1))
   (remove-hook 'before-save-hook #'maybe-eglot-format-buffer t))
 
-(defun setup-format-on-save ()
+(defun toggle-format-on-save ()
   "Set up or tear down format-on-save for current buffer based on `enable-format-at-save'."
-  (if enable-format-at-save
-      (enable-format-on-save)
-    (disable-format-on-save)))
+  (when (derived-mode-p 'prog-mode 'text-mode 'conf-mode)
+    (if enable-format-at-save
+        (enable-format-on-save)
+      (disable-format-on-save))))
 
-;; Hook to common modes
-(dolist (hook '(prog-mode-hook text-mode-hook conf-mode-hook
-               maven-pom-mode shell-script-mode snippet-mode))
-  (add-hook hook #'setup-format-on-save))
+;; Run after dir-locals so `enable-format-at-save' from .dir-locals.el is respected
+(add-hook 'hack-local-variables-hook #'toggle-format-on-save)
 
 (defun disable-format-on-save-project ()
   (interactive)
@@ -80,8 +79,5 @@
 
 ;;(add-hook 'sql-mode-hook #'enable-format-all-mode)
 (add-hook 'protobuf-mode-hook #'enable-format-all-mode)
-
-;; Disable formatting in ediff buffers
-(add-hook 'ediff-prepare-buffer-hook #'disable-format-on-save)
 
 (provide 'init-format)

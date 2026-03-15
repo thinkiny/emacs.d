@@ -2,23 +2,11 @@
 
 (use-package projectile
   :config
+  (projectile-mode)
   (setq projectile-globally-ignored-directories
-        '("*node_modules$"
-          ".bloop"
-          ".metals"
-          ".bsp"
-          "*.github"
-          ".clangd"
-          "^\\.idea$"
-          "^\\.vscode$"
-          "*\\.cache$"
-          "*\\.git$"
-          "*\\.svn$"
-          "*\\.hg$"
-          "*\\.bzr$"
-          "*\\.venv$"
-          "target"
-          "vendor"))
+        (append projectile-globally-ignored-directories
+                '("node_modules" ".bloop" ".metals" ".bsp"
+                  ".github" ".venv" "target" "vendor")))
 
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
@@ -31,7 +19,7 @@
   (setq projectile-show-menu nil)
   (setq projectile-enable-caching 'persistent)
   (setq projectile-file-exists-remote-cache-expire nil)
-  (projectile-mode)
+
 
   ;; don't use file-truename
   ;; (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)
