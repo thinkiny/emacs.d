@@ -21,16 +21,6 @@
   (define-key dired-mode-map [mouse-2] 'dired-find-file)
   (define-key dired-mode-map (kbd "C-c C-q") 'wdired-change-to-wdired-mode))
 
-;; ztree
-(use-package ztree
-  :bind ((:map global-map
-               ("C-c d d" . ediff-directories)
-               ("C-c d z" . ztree-diff)
-               ("C-c d ." . ztree-dir))
-         (:map ztree-mode-map
-               ("n" . ztree-next-line)
-               ("p" . ztree-previous-line))))
-
 (defun copy-filename ()
   "Copy the current buffer file name to the clipboard."
   (interactive)

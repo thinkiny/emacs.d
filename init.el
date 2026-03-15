@@ -12,6 +12,7 @@
 (require 'init-exec-path)
 (require 'init-translation)
 (require 'init-editing-utils)
+(require 'init-ediff)
 (require 'init-treemacs)
 (require 'init-uniquify)
 (require 'init-ibuffer)
