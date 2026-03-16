@@ -202,14 +202,24 @@ Returns nil or empty string if no text is selected."
 
 (defun claude-xwidgets--handle-get-visible-text ()
   "Handle getVisibleText MCP tool call.
-Returns selected text if available, otherwise returns the text content currently visible to the user."
+Returns an alist with text and location information."
   (claude-code-ide-mcp-server-with-session-context nil
-    ;; First check for selected text
-    (let ((selected-text (claude-xwidgets--get-selected-text-if-available)))
-      (if (and selected-text (not (string-empty-p selected-text)))
-          selected-text
-        ;; Fall back to original visible text behavior
-        (claude-xwidgets--get-current-visible-text)))))
+    (let* ((selected-text (claude-xwidgets--get-selected-text-if-available))
+           (text (if (and selected-text (not (string-empty-p selected-text)))
+                     selected-text
+                   (claude-xwidgets--get-current-visible-text)))
+           (file-path (buffer-file-name))
+           (uri (cond
+                 (file-path (concat "file://" (expand-file-name file-path)))
+                 ((claude-xwidgets--session) (xwidget-webkit-uri (claude-xwidgets--session)))
+                 (t ""))))
+      (if (claude-xwidgets--buffer-p)
+          `((text . ,text)
+            (location . ((uri . ,uri))))
+        (let ((line (line-number-at-pos (window-start))))
+          `((text . ,text)
+            (location . ((uri . ,uri)
+                         (line . ,line)))))))))
 
 ;;; Xwidget selection polling
 (defun claude-xwidgets--handle-selection-change (buf text)

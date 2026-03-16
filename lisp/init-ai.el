@@ -8,15 +8,16 @@
   :bind (:map global-map
               ("C-c y" . claude-code-ide-menu))
   :config
-  ;; (setq claude-code-ide-debug t)
+  (setq claude-code-ide-debug nil)
+  (setq claude-code-ide-cli-debug nil)
   (setq claude-code-ide-emacs-prompt
 "# Constraints
 - Examine all Emacs MCP tools description carefully.
 - Prioritize Emacs MCP tools over any other tool/Agent.
 - Avoid reading any binary files (e.g., PDFs or EPUBs).
 # Coordinate system
-- Lines: 1-based (Line 1 = first line).
-- Columns: 0-based (Column 0 = first column).
+- Line: 1-based (Line 1 = first line).
+- Column: 0-based (Column 0 = first column).
 ")
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'vterm)
@@ -29,18 +30,18 @@
   (claude-code-ide-emacs-tools-setup)
   (require 'claude-extra-mcp-tools)
   (claude-extra-mcp-tools-setup)
+  (setq claude-code-ide-use-side-window nil))
 
-  (setq claude-code-ide-use-side-window nil)
-  (defun claude-code--display-buffer (buffer alist)
-    (delete-other-windows)
-    (display-buffer-in-direction buffer alist))
-  (add-to-list 'display-buffer-alist
-               '("\\*claude-code*"
-                 (display-buffer-use-some-frame
-                  claude-code--display-buffer)
-                 (direction . right)
-                 (window-width . 0.5)
-                 )))
+(defun claude-code--display-buffer (buffer alist)
+  (delete-other-windows)
+  (display-buffer-in-direction buffer alist))
+
+(add-to-list 'display-buffer-alist
+             '("\\*claude-code*"
+               (display-buffer-use-some-frame
+                claude-code--display-buffer)
+               (direction . right)
+               (window-width . 0.5)))
 
 (use-package agent-shell
   :bind (:map global-map

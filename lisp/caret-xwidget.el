@@ -271,7 +271,7 @@ content world where window.__caretEmacs is not accessible.")
 (defun caret-xwidget-debug-dump-to-file (&optional file)
   "Dump caret.js debug log to FILE (defaults to ~/.emacs.d/caret.log)."
   (interactive)
-  (let ((target (expand-file-name (or file "~/.emacs.d/1.log"))))
+  (let ((target (expand-file-name (or file "~/.emacs.d/caret.log"))))
     (caret-xwidget--exec (concat caret-xwidget--js-prefix "dumpDebug()")
       (lambda (result)
         (let ((payload (string-trim (or result "") "\"" "\"")))

@@ -5,7 +5,12 @@
 (use-package clutch
   :vc (:url "https://github.com/LuciusChen/clutch.git"
        :rev :newest)
-  :mode (("\\.sql\\'" . clutch-mode)))
+  :mode (("\\.sql\\'" . clutch-mode))
+  :bind
+  (:map clutch-result-mode-map
+        ("f" . clutch-result-next-cell)
+        ("b" . clutch-result-prev-cell)
+        ("F" . clutch-result-fullscreen-toggle)))
 
 (use-package sqlite-mode-extras
   :bind (:map
