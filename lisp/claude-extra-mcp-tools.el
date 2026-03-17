@@ -200,7 +200,7 @@ Returns nil or empty string if no text is selected."
     (when (and (region-active-p) (use-region-p))
       (buffer-substring-no-properties (region-beginning) (region-end))))))
 
-(defun claude-xwidgets--handle-get-visible-text ()
+(defun claude-xwidgets--handle-read-screen ()
   "Handle getVisibleText MCP tool call.
 Returns an alist with text and location information."
   (claude-code-ide-mcp-server-with-session-context nil
@@ -263,13 +263,13 @@ buffer is not an xwidget buffer."
     (setq claude-xwidgets--poll-timer nil)))
 
 ;;; Project search (delegates to project-search.el)
-(defun claude-extra--handle-project-search (query)
+(defun claude-xwidgets--handle-project-search (query)
   "Search project for QUERY."
   (claude-code-ide-mcp-server-with-session-context nil
     (project-search-sync-query query)))
 
 
-(defun claude-xwidgets--handle-get-selection-text ()
+(defun claude-xwidgets--handle-get-selection ()
   "Handle get-selection MCP tool call.
 Returns the currently selected text and its context.
 Handles both xwidget buffers (via JavaScript) and regular buffers
@@ -291,21 +291,21 @@ Handles both xwidget buffers (via JavaScript) and regular buffers
 
   ;; Register get-selection tool
   ;; (claude-code-ide-make-tool
-  ;;  :function #'claude-xwidgets--handle-get-selection-text
+  ;;  :function #'claude-xwidgets--handle-get-selection
   ;;  :name "claude-code-ide-mcp-get-selection-text"
   ;;  :description "Use this tool when you lack the context, it retrives the selected text by user."
   ;;  :args nil)
 
   ;; Register get-visible-text tool
   (claude-code-ide-make-tool
-   :function #'claude-xwidgets--handle-get-visible-text
-   :name "claude-code-ide-mcp-get-visible-text"
-   :description "Use this tool when you lack context; it retrieves the text currently viewed by the user."
+   :function #'claude-xwidgets--handle-read-screen
+   :name "claude-code-ide-mcp-read-screen"
+   :description "Use this tool when you lack context; It retrieves the text currently visible in the user's active window."
    :args nil)
 
   ;; Register project-search tool
   (claude-code-ide-make-tool
-   :function #'claude-extra--handle-project-search
+   :function #'claude-xwidgets--handle-project-search
    :name "claude-code-ide-mcp-project-search"
    :description "Use this tool to search for functions, variables, classes, etc., by name pattern across the project."
    :args '((:name "pattern"

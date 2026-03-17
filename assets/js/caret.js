@@ -1,6 +1,6 @@
 /** CaretEmacs – Emacs-like caret navigation for WebKit. */
 
-const PAGE_OVERLAP = 40;
+const PAGE_OVERLAP = 0;
 const CURSOR_ID = "__caret-emacs-cursor";
 const STYLE_ID = "__caret-emacs-style";
 const DEBUG_VERSION = "2026-03-07a";
@@ -310,15 +310,15 @@ class CaretEmacs {
       if (Math.ceil(this._scrollTop + this._viewportHeight) >= this._scrollHeight) return false;
       // Scroll to place cursor at 1/3 from bottom of viewport
       const vpHeight = this._viewportHeight;
-      const delta = bottom - (vp.top + vpHeight * 2 / 3);
+      const delta = bottom - (vp.top + vpHeight * 1 / 3);
       if (delta <= 0) return false;
       this._scrollBy(delta);
       return true;
     } else if (top < vp.top + PAGE_OVERLAP) {
       if (Math.floor(this._scrollTop) <= 0) return false;
-      // Scroll to place cursor at 1/3 from top of viewport
+      // Scroll to place cursor at 2/3 from top of viewport
       const vpHeight = this._viewportHeight;
-      const delta = top - (vp.top + vpHeight / 3);
+      const delta = top - (vp.top + vpHeight * 2 / 3);
       if (delta >= 0) return false;
       this._scrollBy(delta);
       return true;
