@@ -331,6 +331,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (setq-local nov-temp-dir temp-dir)
       (setq-local nov-metadata metadata)
       (setq-local buffer-file-name epub-file-name)
+      (setq-local default-directory (file-name-directory epub-file-name))
       (setq-local cursor-type nil)
       (setq-local caret-xwidget-next-page-function #'nov-xwidget-next-document)
       (setq-local caret-xwidget-previous-page-function
@@ -501,21 +502,21 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
          (content-file (nov-make-path nov-temp-dir content-file-name))
          (work-dir (file-name-directory content-file))
          (content (nov-slurp content-file t)))
+    (when need-inject
+      (nov-xwidget-inject-all-files))
+
     (setq nov-content-file content-file)
     (setq nov-epub-version (nov-content-version content))
     (setq nov-metadata (nov-content-metadata content))
     (setq nov-documents (apply 'vector (nov-content-files work-dir content)))
-    (setq nov-documents-index 0)
-    (setq nov-xwidget-toc-path (nov-xwidget-write-toc nov-documents))
-    (when need-inject
-      (nov-xwidget-inject-all-files)))
-
-  (setq nov-file-name (buffer-file-name)) ; kept for compatibility reasons
+    (if-let* ((place (nov-saved-place (cdr (assq 'identifier nov-metadata))))
+              (index (cdr (assq 'index place))))
+        (setq nov-documents-index index)
+      (setq nov-documents-index 0))
+    (setq nov-file-name buffer-file-name)
+    (setq nov-xwidget-toc-path (nov-xwidget-write-toc nov-documents)))
   (setq-local bookmark-make-record-function 'nov-bookmark-make-record)
   (let ((init-buf (current-buffer)))
-    (when-let* ((place (nov-saved-place (cdr (assq 'identifier nov-metadata))))
-                (index (cdr (assq 'index place))))
-      (setq nov-documents-index index))
     (nov-xwidget-view)
     (kill-buffer init-buf)))
 
