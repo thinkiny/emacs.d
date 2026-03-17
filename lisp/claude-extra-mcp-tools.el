@@ -21,11 +21,6 @@
   :type 'number
   :group 'claude-extra-mcp-tools)
 
-(defcustom claude-xwidgets-mcp-poll-interval 1.5
-  "Interval in seconds for polling xwidget selection changes."
-  :type 'number
-  :group 'claude-extra-mcp-tools)
-
 (defconst claude-xwidgets--selected-text-js
   "(function() {
   var s = window.getSelection().toString();
@@ -80,16 +75,6 @@
 })();"
   "JavaScript that extracts visible text from the current viewport.")
 
-;;; State
-
-(defvar claude-xwidgets--poll-timer nil
-  "Repeating timer for polling xwidget selection changes.")
-
-(defvar-local claude-xwidgets--last-selection nil
-  "Last xwidget selection text, cached from the poll timer.
-Used both for change detection (notifications) and as a fast
-return value for `claude-xwidgets--selected-text'.")
-
 ;;; Helpers
 
 (defun claude-xwidgets--session ()
@@ -125,11 +110,8 @@ Return the callback string result, or nil on timeout."
     result))
 
 (defun claude-xwidgets--selected-text ()
-  "Return selected text from the current xwidget page.
-Prefer the cached value from the poll timer when available,
-falling back to a synchronous JavaScript evaluation."
-  (or claude-xwidgets--last-selection
-      (ignore-errors (claude-xwidgets--eval-sync claude-xwidgets--selected-text-js))
+  "Return selected text from the current xwidget page."
+  (or (ignore-errors (claude-xwidgets--eval-sync claude-xwidgets--selected-text-js))
       ""))
 
 (defun claude-xwidgets--xwidget-selection-alist (&optional text)
@@ -223,15 +205,12 @@ Returns an alist with text and location information."
 
 ;;; Xwidget selection polling
 (defun claude-xwidgets--handle-selection-change (buf text)
-  "Update selection state and notify if TEXT changed in BUF."
+  "Send notification when selection changes in BUF."
   (when (buffer-live-p buf)
     (with-current-buffer buf
-      (let ((val (and text (not (string-empty-p text)) text)))
-        (unless (equal val claude-xwidgets--last-selection)
-          (setq claude-xwidgets--last-selection val)
-          (claude-code-ide-mcp--send-notification
-           "selection_changed"
-           (claude-xwidgets--xwidget-selection-alist (or val ""))))))))
+      (claude-code-ide-mcp--send-notification
+       "selection_changed"
+       (claude-xwidgets--xwidget-selection-alist text)))))
 
 (defun claude-xwidgets--poll-selection ()
   "Poll xwidget selection and send notification if changed.
@@ -248,36 +227,19 @@ buffer is not an xwidget buffer."
            (ignore-errors
              (claude-xwidgets--handle-selection-change buf text))))))))
 
-(defun claude-xwidgets--start-poll-timer ()
-  "Start the xwidget selection polling timer."
-  (claude-xwidgets--stop-poll-timer)
-  (setq claude-xwidgets--poll-timer
-        (run-with-timer claude-xwidgets-mcp-poll-interval
-                        claude-xwidgets-mcp-poll-interval
-                        #'claude-xwidgets--poll-selection)))
-
-(defun claude-xwidgets--stop-poll-timer ()
-  "Stop the xwidget selection polling timer."
-  (when claude-xwidgets--poll-timer
-    (cancel-timer claude-xwidgets--poll-timer)
-    (setq claude-xwidgets--poll-timer nil)))
-
 ;;; Project search (delegates to project-search.el)
 (defun claude-xwidgets--handle-project-search (query)
   "Search project for QUERY."
   (claude-code-ide-mcp-server-with-session-context nil
     (project-search-sync-query query)))
 
-
-(defun claude-xwidgets--handle-get-selection ()
-  "Handle get-selection MCP tool call.
-Returns the currently selected text and its context.
-Handles both xwidget buffers (via JavaScript) and regular buffers
-\(via Emacs region)."
-  (claude-code-ide-mcp-server-with-session-context nil
-    (if (claude-xwidgets--buffer-p)
-        (claude-xwidgets--xwidget-selection-alist)
-      (claude-code-ide-mcp-handle-get-current-selection nil))))
+(defun claude-xwidgets--send-selection-for-project-around (orig-fn arg)
+  "Around advice for `claude-code-ide-mcp--track-selection'.
+In xwidget buffers, poll the selection directly since the original
+function requires `buffer-file-name'.  ORIG-FN is the original function."
+  (if (claude-xwidgets--buffer-p)
+      (claude-xwidgets--poll-selection)
+    (funcall orig-fn arg)))
 
 
 ;;; Registration
@@ -288,13 +250,8 @@ Handles both xwidget buffers (via JavaScript) and regular buffers
   (interactive)
   (advice-add 'claude-code-ide-mcp-handle-get-current-selection
               :around #'claude-xwidgets--get-current-selection-around)
-
-  ;; Register get-selection tool
-  ;; (claude-code-ide-make-tool
-  ;;  :function #'claude-xwidgets--handle-get-selection
-  ;;  :name "claude-code-ide-mcp-get-selection-text"
-  ;;  :description "Use this tool when you lack the context, it retrives the selected text by user."
-  ;;  :args nil)
+  (advice-add 'claude-code-ide-mcp--send-selection-for-project
+              :around #'claude-xwidgets--send-selection-for-project-around)
 
   ;; Register get-visible-text tool
   (claude-code-ide-make-tool
@@ -316,8 +273,7 @@ Handles both xwidget buffers (via JavaScript) and regular buffers
         (cl-remove-if (lambda (spec)
                         (equal (plist-get spec :name) "claude-code-ide-mcp-xref-find-apropos"))
                       claude-code-ide-mcp-server-tools))
-
-  (claude-xwidgets--start-poll-timer))
+  )
 
 (provide 'claude-extra-mcp-tools)
 ;;; claude-extra-mcp-tools.el ends here

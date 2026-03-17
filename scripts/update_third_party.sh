@@ -31,9 +31,10 @@ FILE_URLS=(
 
 # Update any git repository
 update_repo() {
-    pushd "$1"
+    echo "updating $1"
+    pushd "$1" &> /dev/null
     git pull
-    popd
+    popd &> /dev/null
 }
 
 # Update all git repositories

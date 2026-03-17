@@ -23,6 +23,8 @@
   (setq claude-code-ide-terminal-backend 'vterm)
   (setq claude-code-ide-prevent-reflow-glitch (not use-claude-code-chill))
   (setq claude-code-ide-show-claude-window-in-ediff nil)
+  (setq claude-code-ide-mcp-selection-delay 0.2)
+  (setq claude-code-ide-mcp-initial-notification-delay 1)
   (setq claude-code-ide-vterm-render-delay 0.01)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 80)
