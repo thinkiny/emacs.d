@@ -212,6 +212,11 @@ Set this to navigate to the previous document/chapter.")
   (caret-xwidget--js-call "_setMark(false)")
   (keyboard-quit))
 
+(defun caret-xwidget-expand-selection ()
+  "Progressively expand selection: word, then sentence, then paragraph."
+  (interactive)
+  (caret-xwidget--js-call "expandSelection()"))
+
 (defconst caret-xwidget--word-at-caret-js
   (concat "(function(){var s=window.getSelection();"
           "if(!s.isCollapsed)return s.toString();"
@@ -220,13 +225,7 @@ Set this to navigate to the previous document/chapter.")
           "var t=n.textContent;"
           "var b=o;while(b>0&&/[\\w]/.test(t[b-1]))b--;"
           "var m=t.slice(b).match(/^[\\w]+(-[\\w]+)*/);"
-          "return m?m[0]:''})()")
-  "JS to get compound word at caret.  Walks back to the beginning of
-the current word before matching, so it captures the full word even
-when the caret is in the middle. Uses regex to handle hyphenated
-words like well-known.  Uses native APIs directly because
-xwidget-webkit-execute-script callbacks run in a separate WebKit
-content world where window.__caretEmacs is not accessible.")
+          "return m?m[0]:''})()"))
 
 (defun caret-xwidget-translate-word ()
   "Translate the word at caret, or the active selection if any."
@@ -303,6 +302,7 @@ content world where window.__caretEmacs is not accessible.")
   (define-key xwidget-webkit-mode-map (kbd "SPC")   #'caret-xwidget-scroll-up)
   (define-key xwidget-webkit-mode-map (kbd "C-SPC") #'caret-xwidget-toggle-mark)
   (define-key xwidget-webkit-mode-map (kbd "C-g")   #'caret-xwidget-quit-mark)
+  (define-key xwidget-webkit-mode-map (kbd "q")     #'caret-xwidget-quit-mark)
   (define-key xwidget-webkit-mode-map (kbd "M-<")   #'caret-xwidget-beginning-of-buffer)
   (define-key xwidget-webkit-mode-map (kbd "M->")   #'caret-xwidget-end-of-buffer)
   (define-key xwidget-webkit-mode-map (kbd "RET")   #'caret-xwidget-click)
@@ -318,6 +318,7 @@ content world where window.__caretEmacs is not accessible.")
   (define-key xwidget-webkit-mode-map (kbd "s")     #'caret-xwidget-next-line)
   (define-key xwidget-webkit-mode-map (kbd "w")     #'caret-xwidget-previous-line)
   (define-key xwidget-webkit-mode-map (kbd ",")     #'caret-xwidget-translate-word)
+  (define-key xwidget-webkit-mode-map (kbd "=")     #'caret-xwidget-expand-selection)
 
   ;; Inject caret.js on every page load (initial and subsequent navigations).
   (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice))

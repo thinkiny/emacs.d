@@ -547,8 +547,8 @@ class CaretEmacs {
   }
 
   _moveCaret(direction, granularity) {
-    const sel = this._ensureSelection(true); // Skip relocate for precise movements
-    if (!sel) return false;
+    const sel = this._ensureSelection(true);
+    if (!sel) { return false; }
 
     this._hitBoundary = false;
     if (this._isAtVisibleBoundary(direction)) {
@@ -563,11 +563,78 @@ class CaretEmacs {
       sel.collapse(snapN, snapO);
     }
 
-    if (!this.markActive && !sel.isCollapsed)
+    if (!this.markActive && !sel.isCollapsed) {
       sel.collapse(sel.focusNode, sel.focusOffset);
+    }
 
     const fwd = direction === "forward";
+    const initNode = sel.focusNode, initOff = sel.focusOffset;
+    const an = this.markActive ? sel.anchorNode : null;
+    const ao = this.markActive ? sel.anchorOffset : null;
+    if (this.markActive) { sel.collapse(sel.focusNode, sel.focusOffset); }
 
+    // Common epilogue: restore mark, save caret, scroll & redraw
+    const finish = (moved) => {
+      if (this.markActive) {
+        sel.setBaseAndExtent(an, ao, sel.focusNode, sel.focusOffset);
+      }
+      if (moved) {
+        this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
+        this._scrollToSelection();
+        this._updateCursor();
+      }
+      return moved;
+    };
+
+    // Character / word: visual ordering (PDF text layers have DOM ≠ visual order)
+    if (granularity === "character" || granularity === "word") {
+      const moved = granularity === "character"
+        ? this._moveCharVisual(sel, fwd)
+        : this._moveWordVisual(sel, fwd);
+      return finish(moved);
+    }
+
+    // Line: caretRangeFromPoint for visual line movement
+    if (granularity === "line" && this.scrollContainer) {
+      const lineRange = this._moveLine(fwd);
+      if (!lineRange) {
+        this._hitBoundary = true;
+        return false;
+      }
+      if (this.markActive) {
+        sel.setBaseAndExtent(an, ao, lineRange.startContainer, lineRange.startOffset);
+      } else {
+        sel.removeAllRanges();
+        sel.addRange(lineRange);
+      }
+      this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
+      this._scrollToSelection();
+      this._updateCursor();
+      return true;
+    }
+
+    // Default (sentence, paragraph, etc.): sel.modify with guards
+    let moved = this._stepModify(sel, direction, granularity, fwd);
+    this._snapToText(sel, fwd);
+    if (sel.focusNode === initNode && sel.focusOffset === initOff) { moved = false; }
+
+    if (moved && this._movedWrongWay(initNode, initOff, sel.focusNode, sel.focusOffset, fwd)) {
+      this._setFocus(sel, initNode, initOff,
+        this.markActive ? sel.anchorNode : null,
+        this.markActive ? sel.anchorOffset : null);
+      moved = false;
+    }
+
+    // Fallback: void elements that sel.modify cannot cross
+    if (!moved && this._fallbackToAdjacentText(sel, fwd)) {
+      this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
+      return true;
+    }
+
+    return finish(moved);
+  }
+
+  _stepModify(sel, direction, granularity, fwd) {
     const step = () => {
       const { focusNode: fn0, focusOffset: fo0 } = sel;
       sel.modify("move", direction, granularity);
@@ -583,76 +650,10 @@ class CaretEmacs {
       this._unstickCaret(sel, direction, fn0, fo0);
       return sel.focusNode !== fn0 || sel.focusOffset !== fo0;
     };
-
-    const initNode = sel.focusNode;
-    const initOff = sel.focusOffset;
-
-    // Save anchor for mark-active; collapse focus for stepping
-    const an = this.markActive ? sel.anchorNode : null;
-    const ao = this.markActive ? sel.anchorOffset : null;
-    if (this.markActive) sel.collapse(sel.focusNode, sel.focusOffset);
-
-    // Use visual ordering for character/word movement
-    if (granularity === "character" || granularity === "word") {
-      let moved;
-      if (granularity === "character") {
-        moved = this._moveCharVisual(sel, fwd);
-      } else {
-        moved = this._moveWordVisual(sel, fwd);
-      }
-      if (this.markActive)
-        sel.setBaseAndExtent(an, ao, sel.focusNode, sel.focusOffset);
-      if (moved) {
-        this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
-        this._scrollToSelection(); this._updateCursor();
-      }
-      return moved;
-    }
-
-    if (granularity === "line" && this.scrollContainer) {
-      const lineRange = this._moveLine(fwd);
-      if (lineRange) {
-        if (this.markActive) {
-          sel.setBaseAndExtent(an, ao, lineRange.startContainer, lineRange.startOffset);
-        } else {
-          sel.removeAllRanges();
-          sel.addRange(lineRange);
-        }
-        this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
-        this._scrollToSelection(); this._updateCursor();
-        return true;
-      }
-      // _moveLine already searched through all adjacent pages.
-      this._hitBoundary = true;
-      return false;
-    }
-
     let moved = step();
     while (moved && sel.focusNode.nodeType === Node.ELEMENT_NODE) {
-      if (!step()) break;
+      if (!step()) { break; }
     }
-    this._snapToText(sel, fwd);
-    if (sel.focusNode === initNode && sel.focusOffset === initOff) moved = false;
-
-    if (this.markActive)
-      sel.setBaseAndExtent(an, ao, sel.focusNode, sel.focusOffset);
-
-    // Guard: if step + snapToText left us in the wrong direction, revert.
-    if (moved && this._movedWrongWay(initNode, initOff, sel.focusNode, sel.focusOffset, fwd)) {
-      this._setFocus(sel, initNode, initOff,
-        this.markActive ? sel.anchorNode : null,
-        this.markActive ? sel.anchorOffset : null);
-      moved = false;
-    }
-
-    // Fallback: void elements that sel.modify cannot cross.
-    if (!moved && this._fallbackToAdjacentText(sel, fwd)) {
-      this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
-      return true;
-    }
-
-    this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
-    this._scrollToSelection(); this._updateCursor();
     return moved;
   }
 
@@ -804,6 +805,24 @@ class CaretEmacs {
     return Math.floor(this._scrollTop) <= 0;
   }
 
+  _detectSelectionScope() {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount || sel.isCollapsed) return 'none';
+    return /[.!?]/.test(sel.toString()) ? 'sentence' : 'word';
+  }
+
+  _expandTo(sel, granularity) {
+    const an = sel.anchorNode, ao = sel.anchorOffset;
+    sel.collapse(an, ao);
+    sel.modify('extend', 'backward', granularity);
+    const startNode = sel.focusNode, startOff = sel.focusOffset;
+    sel.collapse(an, ao);
+    sel.modify('extend', 'forward', granularity);
+    const endNode = sel.focusNode, endOff = sel.focusOffset;
+    sel.setBaseAndExtent(startNode, startOff, endNode, endOff);
+    this.markActive = true;
+  }
+
   /* ── public API (for programmatic / Emacs xwidget dispatch) ── */
 
   forward(granularity) {
@@ -817,6 +836,25 @@ class CaretEmacs {
   pageDown() { this._scrollPage("down"); }
   pageUp() { this._scrollPage("up"); }
   toggleMark() { this._setMark(!this.markActive); }
+
+  expandSelection() {
+    const sel = this._ensureSelection(true);
+    if (!sel?.rangeCount) return;
+    const scope = this._detectSelectionScope();
+
+    if (scope === 'none') {
+      sel.modify('move', 'forward', 'word');
+      sel.modify('extend', 'backward', 'word');
+      sel.setBaseAndExtent(sel.focusNode, sel.focusOffset, sel.anchorNode, sel.anchorOffset);
+      this.markActive = true;
+    } else if (scope === 'word') {
+      this._expandTo(sel, 'sentenceboundary');
+    } else {
+      this._expandTo(sel, 'paragraphboundary');
+    }
+    this._scrollToSelection();
+    this._updateCursor();
+  }
 
   moveWithBoundaryCheck(method, granularity) {
     if (granularity) this[method](granularity);

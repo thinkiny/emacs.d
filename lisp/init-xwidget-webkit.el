@@ -135,15 +135,15 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
                            (lambda (text)
                              (translate-brief text)))))))
 
-(defun xwidget-webkit-open-in-chrome(&optional rest)
+(defun xwidget-webkit-open-in-chrome (&optional _rest)
   (interactive)
-  (let* ((url (xwidget-webkit-uri (xwidget-webkit-current-session))))
-    (setq prev-frame (selected-frame))
+  (let ((url (xwidget-webkit-uri (xwidget-webkit-current-session)))
+        (frame (selected-frame)))
     (browse-url-chrome url)
     (quit-window)
     (run-with-timer 0.15 nil
                     (lambda ()
-                      (select-frame-set-input-focus prev-frame)))))
+                      (select-frame-set-input-focus frame)))))
 
 (defun xwidget-scroll-up-step()
   (interactive)
