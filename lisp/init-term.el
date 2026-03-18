@@ -24,12 +24,11 @@
   (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
   (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
-  (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
+  ;; (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
-  (add-hook 'vterm-copy-mode-hook #'my-vterm-copy-mode-hook)
 
   (defun vterm--get-directory (path)
     "Get normalized directory to PATH."
@@ -49,36 +48,6 @@
           (when (file-directory-p path)
             (setq directory (file-name-as-directory path))))
         directory))))
-
-;; claude-chill loopback
-(defvar-local vterm-claude-loopback-mode-enabled nil
-  "Track whether claude loopback mode is enabled.")
-
-(defvar-local vterm-claude--last-modified-tick nil
-  "Track last buffer modified tick for claude vterm buffer.")
-
-(defun vterm-claude--buffer-changed-p ()
-  (let ((current (buffer-modified-tick)))
-    (unless (eq current vterm-claude--last-modified-tick)
-      (setq vterm-claude--last-modified-tick current)
-      t)))
-
-(defun toggle-vterm-claude-loopback-mode ()
-  (interactive)
-  (vterm-claude-loopback-mode (not vterm-claude-loopback-mode-enabled)))
-
-(defun my-vterm-copy-mode-hook()
-  (if use-claude-code-chill
-      (vterm-claude-loopback-mode vterm-copy-mode)))
-
-(defun vterm-claude-loopback-mode (enable)
-  (when (string-prefix-p "*claude-code" (buffer-name)))
-    (unless (eq enable vterm-claude-loopback-mode-enabled)
-      (if enable
-          (when (vterm-claude--buffer-changed-p)
-            (vterm-send-string "\x1e"))
-        (vterm-send-string "\x1e"))
-      (setq vterm-claude-loopback-mode-enabled enable)))
 
 ;; vterm--pixel-scroll
 (defvar-local vterm--scroll-timer nil)
@@ -115,7 +84,7 @@
     (cancel-timer vterm--scroll-timer))
   (let ((buf (current-buffer)))
     (setq vterm--scroll-timer
-          (run-with-timer 0.1 nil
+          (run-with-timer 0.05 nil
                           (lambda ()
                             (when (buffer-live-p buf)
                               (with-current-buffer buf

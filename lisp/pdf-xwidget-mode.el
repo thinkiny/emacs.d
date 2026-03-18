@@ -4,51 +4,69 @@
 (require 's)
 (require 'caret-xwidget)
 
+(defgroup pdf-xwidget nil
+  "PDF viewer using xwidget-webkit and PDF.js."
+  :group 'applications
+  :prefix "pdf-xwidget-")
+
 (defconst pdf-xwidget-name-format "*PDF: %s")
-(defconst pdfjs-dir (expand-file-name "~/.emacs.d/assets/pdfjs"))
+
+(defcustom pdf-xwidget-pdfjs-dir
+  (expand-file-name "assets/pdfjs" user-emacs-directory)
+  "Directory containing PDF.js viewer files."
+  :type 'directory
+  :group 'pdf-xwidget)
 
 (defun pdf-xwidget-view-url (file)
+  "Generate PDF.js viewer URL for FILE."
   (unless (s-starts-with? "/" file)
     (setq file (concat "/" file)))
   (format "http://localhost:%s%s/web/viewer.html?file=%s"
           file-server-port
-          pdfjs-dir
+          pdf-xwidget-pdfjs-dir
           (url-hexify-string
            (format "http://localhost:%s%s"
                    file-server-port
                    file))))
 
 (defun pdf-xwidget-view-name (file)
+  "Extract display name from FILE path or URL."
   (if (s-starts-with? "http" file)
       file
     (file-name-nondirectory file)))
 
 ;; pdf xwidget scroll
-(defun pdf-xwidget-scroll (pixels)
+(defun pdf-xwidget--scroll (pixels)
+  "Scroll PDF viewer container by PIXELS (negative for up)."
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
-   (format
-    "document.getElementById(\"viewerContainer\").scrollBy({top: %d, behavior: 'instant'})"
-    pixels)))
+   (format "document.getElementById('viewerContainer').scrollBy({top: %d, behavior: 'instant'})"
+           pixels)))
 
 (defun pdf-xwidget-scroll-up-step ()
+  "Scroll PDF up by one step."
   (interactive)
-  (pdf-xwidget-scroll precision-scroll-step-height))
-
-(defun pdf-xwidget-scroll-up-page ()
-  (interactive)
-  (pdf-xwidget-scroll (get-precision-scroll-page-height)))
+  (pdf-xwidget--scroll precision-scroll-step-height))
 
 (defun pdf-xwidget-scroll-down-step ()
+  "Scroll PDF down by one step."
   (interactive)
-  (pdf-xwidget-scroll (* -1 precision-scroll-step-height)))
+  (pdf-xwidget--scroll (- precision-scroll-step-height)))
+
+(defun pdf-xwidget-scroll-up-page ()
+  "Scroll PDF up by one page."
+  (interactive)
+  (pdf-xwidget--scroll (get-precision-scroll-page-height)))
 
 (defun pdf-xwidget-scroll-down-page ()
+  "Scroll PDF down by one page."
   (interactive)
-  (pdf-xwidget-scroll (* -1 (get-precision-scroll-page-height))))
+  (pdf-xwidget--scroll (- (get-precision-scroll-page-height))))
 
 ;; pdf xwidget toolbar
-(defvar-local pdf-xwidget-toolbar-show t)
+(defvar-local pdf-xwidget-toolbar-show t
+  "Whether the PDF toolbar is currently visible.")
+
 (defconst pdf-xwidget-toggle-sidebar-script
   "document.getElementById(\"viewsManagerToggleButton\").click();")
 
@@ -65,44 +83,42 @@
   "document.getElementById('toolbarContainer').style.visibility='visible';
    document.getElementById('viewerContainer').style.inset='';")
 
-(defun pdf-xwidget-toggle-sidebar-scripts ()
-  (if pdf-xwidget-toolbar-show
-      (list pdf-xwidget-toggle-sidebar-script)
-    (list pdf-xwidget-show-toolbar-script pdf-xwidget-toggle-sidebar-script)))
-
-(defun pdf-xwidget-toggle-sidebar ()
-  (interactive)
-  (xwidget-execute-scripts
-   (pdf-xwidget-toggle-sidebar-scripts))
-  (setq-local pdf-xwidget-toolbar-show t))
-
-(defun pdf-xwidget-toggle-toolbar-scripts ()
-  (if pdf-xwidget-toolbar-show
-      (list pdf-xwidget-hide-toolbar-script)
-    (list pdf-xwidget-show-toolbar-script)))
-
-(defun pdf-xwidget-toggle-toolbar ()
-  (interactive)
-  (xwidget-execute-scripts
-   (pdf-xwidget-toggle-toolbar-scripts))
-  (setq-local pdf-xwidget-toolbar-show (not pdf-xwidget-toolbar-show)))
-
-;; findbar
 (defconst pdf-xwidget-toggle-findbar-script
   "document.getElementById(\"viewFindButton\").click();")
 
-(defun pdf-xwidget-toggle-findbar-scripts ()
-  (if pdf-xwidget-toolbar-show
-      (list pdf-xwidget-toggle-findbar-script)
-    (list pdf-xwidget-show-toolbar-script pdf-xwidget-toggle-findbar-script)))
+(defun pdf-xwidget--toggle-with-toolbar (script &optional state-fn)
+  "Execute SCRIPT, showing toolbar first if hidden. Call STATE-FN to update state."
+  (xwidget-execute-scripts
+   (if pdf-xwidget-toolbar-show
+       (list script)
+     (list pdf-xwidget-show-toolbar-script script)))
+  (when state-fn (funcall state-fn)))
 
-(defun pdf-xwidget-toggle-findbar ()
+(defun pdf-xwidget-toggle-sidebar ()
+  "Toggle PDF sidebar visibility."
+  (interactive)
+  (pdf-xwidget--toggle-with-toolbar
+   pdf-xwidget-toggle-sidebar-script
+   (lambda () (setq-local pdf-xwidget-toolbar-show t))))
+
+(defun pdf-xwidget-toggle-toolbar ()
+  "Toggle PDF toolbar visibility."
   (interactive)
   (xwidget-execute-scripts
-   (pdf-xwidget-toggle-findbar-scripts))
-  (setq-local pdf-xwidget-toolbar-show t))
+   (if pdf-xwidget-toolbar-show
+       (list pdf-xwidget-hide-toolbar-script)
+     (list pdf-xwidget-show-toolbar-script)))
+  (setq-local pdf-xwidget-toolbar-show (not pdf-xwidget-toolbar-show)))
+
+(defun pdf-xwidget-toggle-findbar ()
+  "Toggle PDF findbar visibility."
+  (interactive)
+  (pdf-xwidget--toggle-with-toolbar
+   pdf-xwidget-toggle-findbar-script
+   (lambda () (setq-local pdf-xwidget-toolbar-show t))))
 
 (defun pdf-xwidget-update-title (&optional session)
+  "Update buffer name to match PDF title from SESSION (or current session)."
   (interactive)
   (let* ((xwidget (or session (xwidget-webkit-current-session)))
          (title (xwidget-webkit-title xwidget))

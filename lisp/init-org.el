@@ -1,6 +1,8 @@
-;; init-org.el --- Org-mode config -*- lexical-binding: t -*-
+;;; init-org.el --- Org-mode config -*- lexical-binding: t -*-
 
-(use-package async)
+;;; Code:
+(use-package org)
+
 ;; org-roam
 (use-package org-roam
   :bind (("C-c n f" . org-roam-node-find)
@@ -32,121 +34,290 @@
 
 ;; org-modern
 (use-package org-modern
-  :hook (org-mode .  org-modern-mode))
+  :hook
+  (org-mode . org-modern-mode)
+  (org-agenda-finalize . org-modern-agenda)
+  :custom
+  (org-modern-hide-stars nil)
+  (org-modern-table nil))
 
-(with-eval-after-load 'org
-  ;; auto download
-  (require 'org-remoteimg)
-  (setq url-cache-directory "~/.emacs.d/cache/url")
-  (setq org-display-remote-inline-images 'cache)
-
-  (setq
-   ;; Edit settings
-   org-use-sub-superscripts '{}
-   org-auto-align-tags nil
-   org-tags-column 0
-   org-catch-invisible-edits 'show-and-error
-   org-special-ctrl-a/e t
-   org-insert-heading-respect-content t
-   org-startup-with-inline-images t
-
-   ;; Org styling, hide markup etc.
-   org-hide-emphasis-markers t
-   org-pretty-entities t
-
-   ;; Agenda styling
-   org-agenda-tags-column 0
-   org-agenda-block-separator ?─
-   org-agenda-time-grid
-   '((daily today require-timed)
-     (800 1000 1200 1400 1600 1800 2000)
-     " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-   org-agenda-current-time-string
-   "◀── now ─────────────────────────────────────────────────")
-
-  ;; Ellipsis styling
-  (setq org-ellipsis "…")
-  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil))
-
-;; ;; org-appear
+;; org-appear
 (use-package org-appear
   :after org
   :config
   (setq org-appear-autolinks t))
 
-;; (use-package org-pdftools
-;;   :hook (org-mode . org-pdftools-setup-link))
+;; Export packages
+(use-package ox-reveal)
+(use-package ob-go)
+(use-package ox-gfm)
 
-(defvar org-global-prefix-map (make-sparse-keymap)
-  "A keymap for handy global access to org helpers, particularly clocking.")
+(use-package org2ctex
+  :after org
+  :config
+  (setq org-latex-logfiles-extensions (append '("bbl" "pyg") org-latex-logfiles-extensions))
+  (setq org-latex-src-block-backend 'minted)
+  (setq org2ctex-latex-packages-alist (list (string-join (mapcar (apply-partially 'format "\\usepackage{%s}")
+                                                                 '("minted" "tikz" "graphicx"))
+                                                         "\n")))
+  (setq org-latex-minted-options '(("breaklines")
+                                   ("fontsize" "\\footnotesize")
+                                   ("breakbefore" ".")))
 
-(define-key org-global-prefix-map (kbd "j") 'org-clock-jump-to-current-clock)
-(define-key org-global-prefix-map (kbd "i") 'org-clock-in)
-(define-key org-global-prefix-map (kbd "o") 'org-clock-out)
-(define-key org-global-prefix-map (kbd "s") 'org-sidebar-tree)
-(define-key global-map (kbd "C-c o") org-global-prefix-map)
+  (setq org2ctex-latex-classes
+        '(("ctexart"
+           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexart}"
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+           ("\\paragraph{%s}" . "\\paragraph*{%s}")
+           ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
+          ("ctexrep"
+           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexrep}"
+           ("\\part{%s}" . "\\part*{%s}")
+           ("\\chapter{%s}" . "\\chapter*{%s}")
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+          ("ctexbook"
+           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexbook}"
+           ("\\part{%s}" . "\\part*{%s}")
+           ("\\chapter{%s}" . "\\chapter*{%s}")
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+          ("beamer"
+           "\\documentclass[presentation]{beamer}
+\\usepackage[fontset=none,UTF8,zihao=-4]{ctex}"
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
+  (setq org2ctex-latex-commands
+        '("xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+          "bibtex %b"
+          "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+          "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f")))
 
-;; Re-align tags when window shape changes
-(with-eval-after-load 'org-agenda
-  (unless (file-directory-p org-directory)
-    (mkdir org-directory))
+(use-package org-preview-html
+  :config
+  (setq org-preview-html-viewer 'xwidget))
 
-  (add-hook 'org-agenda-mode-hook
-            (lambda () (add-hook 'window-configuration-change-hook 'org-agenda-align-tags nil t))))
+(use-package org-cliplink
+  :after org)
 
-
-;;; Capturing
-(global-set-key (kbd "C-c c") 'org-capture)
-(global-set-key (kbd "C-c g") 'org-agenda)
+(require 'org-tempo nil 'noerror)
+(require 'hydra)
 
-(setq org-capture-templates
-      `(("t" "todo" entry (file "")  ; "" => `org-default-notes-file'
-         "* TODO %?\nSCHEDULED: %T\n" :clock-resume t)
-        ("d" "doing" entry (file "")  ; "" => `org-default-notes-file'
-         "* NEXT %?\nSCHEDULED: %T\n" :clock-in t :clock-resume t)
-        ("n" "note" entry (file "note.org")
-         "* %? :NOTE:\n%U\n%a\n" :clock-resume t)
-        ))
-
-;;; Refiling
-(setq org-refile-use-cache nil)
+;;; Custom Functions
 
-;; Targets include this file and any file contributing to the agenda - up to 5 levels deep
-(setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
+;; Link Functions
+(defun org-link-complete-docview (&optional _)
+  "Create a file link using completion."
+  (interactive)
+  (concat "docview:"
+          (read-file-name "DocFile: " "~/Documents" "./")))
 
-(with-eval-after-load 'org-agenda
-  (add-to-list 'org-agenda-after-show-hook 'org-show-entry))
+(defun org-link-complete-chrome (&optional _)
+  "Create a file link using completion."
+  (interactive)
+  (let ((text (current-kill 0)))
+    (if (s-starts-with? "http" text)
+        (concat "chrome:" text)
+      "chrome:")))
 
-(advice-add 'org-refile :after (lambda (&rest _) (org-save-all-org-buffers)))
+(defun org-delete-link-at-point()
+  "Delete link at point with associated file."
+  (interactive)
+  (let* ((link (org-element-context))
+         (type (org-element-type link))
+         (beg (org-element-property :begin link))
+         (end (org-element-property :end link))
+         (from (org-element-property :type link))
+         (path (org-element-property :path link)))
+    (delete-region beg end)
+    (when (and (s-equals? from "file") (eq type 'link))
+      (delete-file path))))
 
-;; Exclude DONE state tasks from refile targets
+;; Refile Functions
 (defun sanityinc/verify-refile-target ()
   "Exclude todo keywords with a done state from refile targets."
   (not (member (nth 2 (org-heading-components)) org-done-keywords)))
-(setq org-refile-target-verify-function 'sanityinc/verify-refile-target)
 
 (defun sanityinc/org-refile-anywhere (&optional goto default-buffer rfloc msg)
-  "A version of `org-refile' which allows refiling to any subtree."
+  "A version of `org-refile' which allows refiling to any subtree.
+GOTO, DEFAULT-BUFFER, RFLOC, and MSG are passed to `org-refile'."
   (interactive "P")
   (let ((org-refile-target-verify-function))
     (org-refile goto default-buffer rfloc msg)))
 
 (defun sanityinc/org-agenda-refile-anywhere (&optional goto rfloc no-update)
-  "A version of `org-agenda-refile' which allows refiling to any subtree."
+  "A version of `org-agenda-refile' which allows refiling to any subtree.
+GOTO, RFLOC, and NO-UPDATE are passed to `org-agenda-refile'."
   (interactive "P")
   (let ((org-refile-target-verify-function))
     (org-agenda-refile goto rfloc no-update)))
 
-;; Targets start with the file name - allows creating level 1 tasks
-;;(setq org-refile-use-outline-path (quote file))
-(setq org-refile-use-outline-path t)
-(setq org-outline-path-complete-in-steps nil)
+;; Clipboard/Download Functions
+(defun org-download-annotate-empty (_)
+  "Return empty string for org-download annotation."
+  "")
 
-;; Allow refile to create parent tasks with confirmation
-(setq org-refile-allow-creating-parent-nodes 'confirm)
+(defun my-org-download-clipboard (&optional basename)
+  "Capture the image from the clipboard and insert the resulting file.
+BASENAME is the optional base name for the downloaded file."
+  (interactive)
+  (let ((org-download-screenshot-method
+         (cl-case system-type
+           (gnu/linux
+            (if (string= "wayland" (getenv "XDG_SESSION_TYPE"))
+                (if (executable-find "wl-paste")
+                    "wl-paste -t image/png > %s"
+                  (user-error
+                   "Please install the \"wl-paste\" program included in wl-clipboard"))
+              (if (executable-find "xclip")
+                  "xclip -selection clipboard -t image/png -o > %s"
+                (user-error
+                 "Please install the \"xclip\" program"))))
+           ((windows-nt cygwin)
+            (if (executable-find "magick")
+                "magick convert clipboard: %s"
+              (user-error
+               "Please install the \"magick\" program included in ImageMagick")))
+           ((darwin berkeley-unix)
+            (if (executable-find "pngpaste")
+                "pngpaste %s"
+              (user-error
+               "Please install the \"pngpaste\" program from Homebrew"))))))
+    (save-excursion
+      (org-download-screenshot basename))))
 
-
-;;; To-do settings
+(defun org-clip-paste()
+  "Paste from clipboard - insert link if URL, otherwise download image."
+  (interactive)
+  (let ((clip-text (substring-no-properties (gui-get-selection 'CLIPBOARD 'STRING))))
+    (if (s-starts-with? "http" clip-text)
+        (org-cliplink)
+      (my-org-download-clipboard))))
+
+;; Utility Functions
+(defun org-level-reset-height()
+  "Reset org heading heights to 1.0."
+  (dolist (face '(outline-1 outline-2 outline-3 org-level-1 org-level-2 org-level-3))
+    (set-face-attribute face nil :height 1.0)))
+
+(defun my-org-mode-hook()
+  "Custom `org-mode' hook."
+  (setq-local electric-pair-inhibit-predicate (lambda (c) (char-equal c ?<)))
+  (setq-local org-download-image-dir (concat (buffer-name) "-assets/images")))
+
+(defun org-clock-todo-change ()
+  "Clock in when state changes to NEXT, clock out otherwise."
+  (if (string= org-state "NEXT")
+      (org-clock-in)
+    (org-clock-out)))
+
+;;; Core Org Configuration
+
+(with-eval-after-load 'url-cache
+  (setq url-cache-directory "~/.emacs.d/cache/url"))
+
+(with-eval-after-load 'org
+  ;; Remote image handling
+  (require 'org-remoteimg)
+  (setq org-display-remote-inline-images 'cache)
+
+  ;; Display & styling settings
+  (setq org-use-sub-superscripts '{}
+        org-auto-align-tags nil
+        org-tags-column 0
+        org-fold-catch-invisible-edits 'show-and-error
+        org-startup-with-inline-images t
+        org-hide-emphasis-markers t
+        org-pretty-entities t
+        org-ellipsis "…"
+        org-fontify-whole-heading-line t)
+
+  ;; Edit behavior
+  (setq org-special-ctrl-a/e t
+        org-insert-heading-respect-content t
+        org-log-done t
+        org-edit-timestamp-down-means-later t
+        org-export-coding-system 'utf-8
+        org-fast-tag-selection-single-key 'expert
+        org-html-validation-link nil
+        org-cycle-include-plain-lists 'integrate
+        org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-src-preserve-indentation nil
+        org-edit-src-content-indentation 0
+        org-export-time-stamp-file nil
+        org-html-html5-fancy t
+        org-html-doctype "html5"
+        org-default-notes-file (convert-standard-filename "~/org/inbox.org")
+        org-support-shift-select t)
+
+  ;; Agenda styling
+  (setq org-agenda-tags-column 0)
+
+  ;; Ellipsis styling
+  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
+
+  ;; Link setup
+  (setf (alist-get 'file org-link-frame-setup) 'find-file)
+  (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
+  (org-link-set-parameters "chrome"
+                           :complete 'org-link-complete-chrome
+                           :follow 'browse-url-chrome)
+
+  ;; Babel configuration
+  (setq org-confirm-babel-evaluate nil)
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   `((R . t)
+     (ditaa . t)
+     (dot . t)
+     (go . t)
+     (emacs-lisp . t)
+     (gnuplot . t)
+     (haskell . nil)
+     (latex . t)
+     (ocaml . nil)
+     (octave . t)
+     (plantuml . t)
+     (python . t)
+     (ruby . t)
+     (screen . nil)
+     (shell . t)
+     (clutch . t)
+     (mysql . t)
+     (postgresql . t)
+     (sqlite . t)))
+
+  ;; ox-reveal setup
+  (require 'ox-reveal)
+  (setq org-reveal-root (expand-file-name "~/.emacs.d/assets/reveal.js"))
+  (setq org-reveal-theme "league")
+
+  ;; Clock Management
+  (require 'org-clock)
+  (org-clock-persistence-insinuate)
+  (setq org-clock-persist t
+        org-clock-in-resume t
+        org-clock-into-drawer t
+        org-log-into-drawer t
+        org-clock-out-remove-zero-time-clocks t
+        org-duration-format
+        '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t))
+
+  ;; Archiving
+  (setq org-archive-mark-done nil
+        org-archive-location "%s_archive::* Archive")
+
+  ;; Clipboard/Download setup
+  (require 'org-download)
+  (setq org-download-annotate-function #'org-download-annotate-empty))
+
+;;; Todo & Workflow
 
 (setq org-todo-keywords
       (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!/!)")
@@ -158,17 +329,40 @@
       (quote (("NEXT" :inherit warning)
               ("PROJECT" :inherit font-lock-string-face))))
 
-(add-hook 'org-after-todo-state-change-hook
-          'org-clock-todo-change)
+;;; Capture Templates
 
-(defun org-clock-todo-change ()
-  (if (string= org-state "NEXT")
-      (org-clock-in)
-    (org-clock-out)))
+(setq org-capture-templates
+      `(("t" "todo" entry (file "")
+         "* TODO %?\nSCHEDULED: %T\n" :clock-resume t)
+        ("d" "doing" entry (file "")
+         "* NEXT %?\nSCHEDULED: %T\n" :clock-in t :clock-resume t)
+        ("n" "note" entry (file "note.org")
+         "* %? :NOTE:\n%U\n%a\n" :clock-resume t)))
 
-
-;;; Agenda views
+;;; Refiling
+
+(setq org-refile-use-cache nil
+      org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5))
+      org-refile-target-verify-function 'sanityinc/verify-refile-target
+      org-refile-use-outline-path t
+      org-outline-path-complete-in-steps nil
+      org-refile-allow-creating-parent-nodes 'confirm)
+
+(advice-add 'org-refile :after (lambda (&rest _) (org-save-all-org-buffers)))
+
+;;; Agenda Configuration
+
+(with-eval-after-load 'org-agenda
+  (unless (file-directory-p org-directory)
+    (mkdir org-directory))
+
+  (add-to-list 'org-agenda-after-show-hook 'org-show-entry)
+
+  (add-hook 'org-agenda-mode-hook
+            (lambda () (add-hook 'window-configuration-change-hook 'org-agenda-align-tags nil t))))
+
 (setq-default org-agenda-clockreport-parameter-plist '(:link t :maxlevel 3))
+
 (let ((active-project-match "-INBOX/PROJECT"))
   (setq org-stuck-projects
         `(,active-project-match ("NEXT")))
@@ -242,129 +436,42 @@
                                 (org-agenda-skip-entry-if 'nottodo '("HOLD")))))
                         (org-tags-match-list-sublevels nil)
                         (org-agenda-sorting-strategy
-                         '(category-keep))))
-            ;; (tags-todo "-NEXT"
-            ;;            ((org-agenda-overriding-header "All other TODOs")
-            ;;             (org-match-list-sublevels t)))
-            )))))
+                         '(category-keep)))))))))
 
-
-(add-hook 'org-agenda-mode-hook 'hl-line-mode)
-
-
-;;; Org clock
-
-;; Save the running clock and all clock history when exiting Emacs, load it on startup
-(with-eval-after-load 'org
-  (org-clock-persistence-insinuate)
-  (setq org-clock-persist t)
-  (setq org-clock-in-resume t)
-
-  ;; Save clock data and notes in the LOGBOOK drawer
-  (setq org-clock-into-drawer t)
-  ;; Save state changes in the LOGBOOK drawer
-  (setq org-log-into-drawer t)
-  ;; Removes clocked tasks with 0:00 duration
-  (setq org-clock-out-remove-zero-time-clocks t)
-
-  ;; Show clock sums as hours and minutes, not "n days" etc.
-  (setq org-time-clocksum-format
-        '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t))
-
-;;; Archiving
-  (setq org-archive-mark-done nil)
-  (setq org-archive-location "%s_archive::* Archive"))
-
-;; (use-package org-pomodoro)
-;; (setq org-pomodoro-keep-killed-pomodoro-time t)
-;; (with-eval-after-load 'org-agenda
-;;   (define-key org-agenda-mode-map (kbd "P") 'org-pomodoro))
-
-(use-package ox-reveal)
-(use-package ob-go)
-(use-package ox-gfm)
-;;(use-package org-sidebar)
+;;; Hydra Definitions
 
 (defhydra hydra-org-table (:color blue :hint nil)
-  "
+  "Org table manipulation commands.
+
 ^Rows^            ^Columns^           ^size^
 -----------------------------------------------------------------
-_j_: insert row   _h_: insert column  _w_: widen
-_k_: delete row   _l_: delete column  _s_: shorten
+_i_: insert row   _c_: insert column  _w_: widen
+_d_: delete row   _k_: delete column  _s_: shorten
 "
-  ("j" #'table-insert-row)
-  ("k" #'table-delete-row)
-  ("h" #'table-insert-column)
-  ("l" #'table-delete-column)
-  ("w" #'table-widen-cell)
-  ("s" #'table-shorten-cell))
+  ("i" org-table-insert-row)
+  ("d" org-table-kill-row)
+  ("c" org-table-insert-column)
+  ("k" org-table-delete-column)
+  ("w" org-table-expand)
+  ("s" org-table-shrink))
 
-;; custom links
-(defun org-link-complete-docview (&optional _)
-  "Create a file link using completion."
-  (interactive)
-  (concat "docview:"
-          (read-file-name "DocFile: " "~/Documents" "./")))
+;;; Keybindings
 
-(defun org-link-complete-chrome (&optional _)
-  "Create a file link using completion."
-  (interactive)
-  (let ((text (current-kill 0)))
-    (if (s-starts-with? "http" text)
-        (concat "chrome:" text)
-      "chrome:")))
+;; Global keybindings
+(defvar org-global-prefix-map (make-sparse-keymap)
+  "A keymap for handy global access to org helpers, particularly clocking.")
 
-;; delete link at point with associated file
-(defun org-delete-link-at-point()
-  (interactive)
-  (let* ((link (org-element-context))
-         (type (org-element-type link))
-         (beg (org-element-property :begin link))
-         (end (org-element-property :end link))
-         (from (org-element-property :type link))
-         (path (org-element-property :path link)))
-    (delete-region beg end)
-    (when (and (s-equals? from "file") (eq type 'link))
-      (delete-file path))))
+(define-key org-global-prefix-map (kbd "j") 'org-clock-jump-to-current-clock)
+(define-key org-global-prefix-map (kbd "i") 'org-clock-in)
+(define-key org-global-prefix-map (kbd "o") 'org-clock-out)
+(define-key org-global-prefix-map (kbd "s") 'org-sidebar-tree)
+(define-key global-map (kbd "C-c o") org-global-prefix-map)
 
+(global-set-key (kbd "C-c c") 'org-capture)
+(global-set-key (kbd "C-c g") 'org-agenda)
+
+;; Org-mode-map keybindings
 (with-eval-after-load 'org
-  ;; Various preferences
-  (setq org-log-done t
-        org-edit-timestamp-down-means-later t
-        org-hide-emphasis-markers t
-        org-catch-invisible-edits 'show
-        org-export-coding-system 'utf-8
-        org-fast-tag-selection-single-key 'expert
-        org-html-validation-link nil
-        org-export-kill-product-buffer-when-displayed t
-        org-cycle-include-plain-lists 'integrate
-        org-src-fontify-natively t
-        org-src-tab-acts-natively t
-        org-src-preserve-indentation nil
-        org-fontify-whole-heading-line t
-        org-edit-src-content-indentation 0
-        org-export-time-stamp-file nil
-        org-html-html5-fancy t
-        org-html-doctype "html5"
-        org-default-notes-file (convert-standard-filename "~/org/inbox.org")
-        org-support-shift-select t)
-
-  ;; use find-file
-  (setf (alist-get 'file org-link-frame-setup) 'find-file)
-
-  ;; custom links
-  (org-link-set-parameters "docview" :complete 'org-link-complete-docview)
-  (org-link-set-parameters "chrome"
-                           :complete 'org-link-complete-chrome
-                           :follow 'browse-url-chrome)
-
-  (require 'ox-reveal)
-  (setq org-reveal-root (expand-file-name "~/.emacs.d/assets/reveal.js"))
-  (setq org-reveal-theme "league")
-  ;; (require 'ox-gfm)
-  ;; (org-beamer-mode)
-
-  ;; keybindings
   (unbind-key (kbd "C-,") org-mode-map)
   (unbind-key (kbd "C-c $") org-mode-map)
   (unbind-key (kbd "C-c C-m") org-mode-map)
@@ -378,151 +485,18 @@ _k_: delete row   _l_: delete column  _s_: shorten
   (define-key org-mode-map (kbd "C-c v") #'org-overview)
   (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
   (define-key org-mode-map (kbd "C-c t i") #'org-toggle-inline-images)
+  (define-key org-mode-map (kbd "C-c t c") #'org-table-convert-region)
+  (define-key org-mode-map (kbd "C-c t t") #'hydra-org-table/body)
   (define-key org-mode-map (kbd "C-c i") #'org-clip-paste)
   (define-key org-mode-map (kbd "C-M-<up>") #'org-up-element)
   (define-key org-mode-map (kbd "M-.") #'org-open-at-point)
-  ;;(define-key org-mode-map (kbd "C-c i l") #'org-insert-link)
-  (define-key org-mode-map (kbd "C-c d l") #'org-delete-link-at-point)
+  (define-key org-mode-map (kbd "C-c d l") #'org-delete-link-at-point))
 
-  (setq org-confirm-babel-evaluate nil)
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   `((R . t)
-     (ditaa . t)
-     (dot . t)
-     (go . t)
-     (emacs-lisp . t)
-     (gnuplot . t)
-     (haskell . nil)
-     (latex . t)
-     (ocaml . nil)
-     (octave . t)
-     (plantuml . t)
-     (python . t)
-     (ruby . t)
-     (screen . nil)
-     ;;     (scala . t)
-     (shell . t)
-     (sql . t)
-     (sqlite . t))))
-
-(use-package ob-sql-mode
-  :config
-  (setq org-confirm-babel-evaluate
-        (lambda (lang body)
-          (not (string= lang "sql-mode")))))
-
-(use-package org2ctex
-  :after org
-  :config
-  (setq org-latex-logfiles-extensions (append '("bbl" "pyg") org-latex-logfiles-extensions))
-  (setq org-latex-listings 'minted)
-  (setq org2ctex-latex-packages-alist (list (string-join (mapcar (apply-partially 'format "\\usepackage{%s}")
-                                                                 '("minted" "tikz" "graphicx"))
-                                                         "\n")))
-  (setq org-latex-minted-options '(("breaklines")
-                                   ("fontsize" "\\footnotesize")
-                                   ("breakbefore" ".")))
-
-  (setq org2ctex-latex-classes
-        '(("ctexart"
-           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexart}"
-           ("\\section{%s}" . "\\section*{%s}")
-           ("\\subsection{%s}" . "\\subsection*{%s}")
-           ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-           ("\\paragraph{%s}" . "\\paragraph*{%s}")
-           ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
-          ("ctexrep"
-           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexrep}"
-           ("\\part{%s}" . "\\part*{%s}")
-           ("\\chapter{%s}" . "\\chapter*{%s}")
-           ("\\section{%s}" . "\\section*{%s}")
-           ("\\subsection{%s}" . "\\subsection*{%s}")
-           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
-          ("ctexbook"
-           "\\documentclass[fontset=none,UTF8,zihao=-4]{ctexbook}"
-           ("\\part{%s}" . "\\part*{%s}")
-           ("\\chapter{%s}" . "\\chapter*{%s}")
-           ("\\section{%s}" . "\\section*{%s}")
-           ("\\subsection{%s}" . "\\subsection*{%s}")
-           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
-          ("beamer"
-           "\\documentclass[presentation]{beamer}
-\\usepackage[fontset=none,UTF8,zihao=-4]{ctex}"
-           ("\\section{%s}" . "\\section*{%s}")
-           ("\\subsection{%s}" . "\\subsection*{%s}")
-           ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
-  (setq org2ctex-latex-commands
-        '("xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-          "bibtex %b"
-          "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-          "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-  ;;:hook (org-mode . org2ctex-mode)
-  )
-
-(require 'org-tempo nil 'noerror)
-(use-package org-preview-html
-  :config
-  (setq org-preview-html-viewer 'xwidget))
-
-(defun org-level-reset-height()
-  (dolist (face '(outline-1 outline-2 outline-3 org-level-1 org-level-2 org-level-3))
-    ;;(make-local-variable face)
-    (set-face-attribute face nil :height 1.0)))
-
-;;(after-load-theme (org-level-reset-height))
-
-(defun my-org-mode-hook()
-  (toggle-truncate-lines)
-  (setq-local electric-pair-inhibit-predicate (lambda (c) (char-equal c ?<)))
-  (setq-local org-download-image-dir (concat (buffer-name) "-assets/images")))
+;;; Hooks
 
 (add-hook 'org-mode-hook #'my-org-mode-hook)
-
-;; clipboard
-(use-package org-cliplink
-  :after org)
-(defun org-download-annotate-empty (_) "")
-
-(with-eval-after-load 'org
-  (require 'org-download)
-  (setq org-download-annotate-function #'org-download-annotate-empty)
-
-  (defun my-org-download-clipboard (&optional basename)
-    "Capture the image from the clipboard and insert the resulting file."
-    (interactive)
-    (let ((org-download-screenshot-method
-           (cl-case system-type
-             (gnu/linux
-              (if (string= "wayland" (getenv "XDG_SESSION_TYPE"))
-                  (if (executable-find "wl-paste")
-                      "wl-paste -t image/png > %s"
-                    (user-error
-                     "Please install the \"wl-paste\" program included in wl-clipboard"))
-                (if (executable-find "xclip")
-                    "xclip -selection clipboard -t image/png -o > %s"
-                  (user-error
-                   "Please install the \"xclip\" program"))))
-             ((windows-nt cygwin)
-              (if (executable-find "magick")
-                  "magick convert clipboard: %s"
-                (user-error
-                 "Please install the \"magick\" program included in ImageMagick")))
-             ((darwin berkeley-unix)
-              (if (executable-find "pngpaste")
-                  "pngpaste %s"
-                (user-error
-                 "Please install the \"pngpaste\" program from Homebrew."))))))
-      (save-excursion
-        (org-download-screenshot basename))))
-
-  (defun org-clip-paste()
-    (interactive)
-    (let ((clip-text (substring-no-properties (gui-get-selection 'CLIPBOARD 'STRING))))
-      (if (s-starts-with? "http" clip-text)
-          (org-cliplink)
-        (my-org-download-clipboard))))
-  )
+(add-hook 'org-agenda-mode-hook 'hl-line-mode)
+(add-hook 'org-after-todo-state-change-hook 'org-clock-todo-change)
 
 (provide 'init-org)
 ;;; init-org.el ends here
