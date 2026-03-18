@@ -819,7 +819,7 @@ class CaretEmacs {
     sel.collapse(an, ao);
     sel.modify('extend', 'forward', granularity);
     const endNode = sel.focusNode, endOff = sel.focusOffset;
-    sel.setBaseAndExtent(startNode, startOff, endNode, endOff);
+    sel.setBaseAndExtent(endNode, endOff, startNode, startOff);
     this.markActive = true;
   }
 
@@ -845,7 +845,6 @@ class CaretEmacs {
     if (scope === 'none') {
       sel.modify('move', 'forward', 'word');
       sel.modify('extend', 'backward', 'word');
-      sel.setBaseAndExtent(sel.focusNode, sel.focusOffset, sel.anchorNode, sel.anchorOffset);
       this.markActive = true;
     } else if (scope === 'word') {
       this._expandTo(sel, 'sentenceboundary');

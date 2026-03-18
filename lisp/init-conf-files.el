@@ -30,4 +30,7 @@
 (use-package rpm-spec-mode
   :mode "\\.spec")
 
+;; csv
+(use-package csv-mode)
+
 (provide 'init-conf-files)
