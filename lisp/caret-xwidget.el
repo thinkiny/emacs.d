@@ -209,7 +209,7 @@ Set this to navigate to the previous document/chapter.")
 (defun caret-xwidget-quit-mark ()
   "Deactivate mark (clear selection) and call `keyboard-quit'."
   (interactive)
-  (caret-xwidget--js-call "_setMark(false)")
+  (caret-xwidget--js-call "deactivateMark()")
   (keyboard-quit))
 
 (defun caret-xwidget-expand-selection ()
@@ -321,7 +321,8 @@ Set this to navigate to the previous document/chapter.")
   (define-key xwidget-webkit-mode-map (kbd "=")     #'caret-xwidget-expand-selection)
 
   ;; Inject caret.js on every page load (initial and subsequent navigations).
-  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice))
+  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice)
+  )
 
 (provide 'caret-xwidget)
 

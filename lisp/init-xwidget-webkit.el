@@ -196,6 +196,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (defun my-xwidget-webkit-mode-hook()
   ;;(setq-local auto-translate-mouse-selection t)
+  (eldoc-mode -1)
   (setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
   (setq-local isearch-lazy-highlight nil)
   (setq-local header-line-format nil))

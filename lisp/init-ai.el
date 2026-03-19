@@ -9,23 +9,20 @@
   (setq claude-code-ide-debug nil)
   (setq claude-code-ide-cli-debug nil)
   (setq claude-code-ide-emacs-prompt
-"# Constraints
-- Examine all Emacs MCP tools description carefully.
-- Prioritize Emacs MCP tools over any other tool/Agent.
+"# Attention
+- Review Emacs MCP tool descriptions thoroughly.
+- Prioritize Emacs MCP tools over any other tools or agents.
 - Avoid reading any binary files (e.g., PDFs or EPUBs).
-# Coordinate system
-- Line: 1-based (Line 1 = first line).
-- Column: 0-based (Column 0 = first column).
-")
+- Line numbers are 1-based; column numbers are 0-based.")
+
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'vterm)
   (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-mcp-selection-delay 0.2)
-  (setq claude-code-ide-mcp-initial-notification-delay 1)
-  (setq claude-code-ide-vterm-render-delay 0.15)
+  (setq claude-code-ide-mcp-initial-notification-delay 0.5)
+  (setq claude-code-ide-vterm-render-delay 0.03)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 80)
-  (setq claude-code-ide-diagnostics-backend 'flymake)
   (claude-code-ide-emacs-tools-setup)
   (require 'claude-extra-mcp-tools)
   (claude-extra-mcp-tools-setup)

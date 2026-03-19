@@ -25,7 +25,6 @@
 (require 'init-yasnippet)
 (require 'init-dired)
 (require 'init-treesit)
-(require 'init-org)
 (require 'init-feed)
 (require 'init-format)
 
@@ -55,6 +54,7 @@
 (require 'init-haskell)
 
 ;;file
+(require 'init-org)
 (require 'init-markdown)
 (require 'init-conf-files)
 (require 'init-xwidget-webkit)
