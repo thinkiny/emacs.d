@@ -7,76 +7,59 @@
 (require 's)
 (require 'caret-xwidget)
 
-;;; Configuration
+(defconst nov-xwidget-style 'light)
+(defconst nov-xwidget-need-inject t)
+(defconst nov-xwidget-need-remove-override-css t)
+(defconst nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
 
-(defconst nov-xwidget-style 'light
-  "Theme style for EPUB rendering: 'light, 'dark, or 'auto.")
+(defvar-local nov-xwidget-toc-path nil)
+(defvar-local nov-xwidget-need-resume-position t)
 
-(defconst nov-xwidget-need-inject t
-  "Whether to inject custom CSS and modify DOM.")
+;;; Style
 
-(defconst nov-xwidget-need-remove-override-css t
-  "Whether to remove Calibre's override_v1.css.")
-
-(defconst nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory)
-  "Directory for caching extracted EPUB files.")
-
-(defvar-local nov-xwidget-toc-path nil
-  "Path to the generated TOC HTML file.")
-
-;;; Style Management
-
-(defun nov-xwidget-get-style-href ()
-  "Get the CSS file URL based on `nov-xwidget-style' setting."
+(defun nov-xwidget--style-href ()
   (let ((theme (pcase nov-xwidget-style
                  ('auto (or (frame-parameter nil 'background-mode) 'light))
                  (_ nov-xwidget-style))))
-    (format "file://%s/assets/css/nov-%s.css"
-            (expand-file-name user-emacs-directory)
-            (if (eq theme 'dark) "dark" "light"))))
+    (concat "file://"
+            (expand-file-name (format "assets/css/nov-%s.css"
+                                      (if (eq theme 'dark) "dark" "light"))
+                              user-emacs-directory))))
 
-;;; Position Persistence
+;;; Position save/restore
 
-(defvar-local nov-xwidget-need-resume-position t
-  "Whether to resume scroll position on next page load.")
-
-(defun nov-xwidget--get-position-key ()
-  "Generate localStorage key for current document's scroll position."
+(defun nov-xwidget--position-key ()
   (when-let* ((uri (xwidget-webkit-uri (xwidget-webkit-current-session)))
               (url (url-generic-parse-url uri))
-              (filename (url-unhex-string (url-filename url))))
+              (decode-url (url-unhex-string (url-filename url))))
     (concat "epub-pos-"
-            (string-trim-left filename (concat "/" nov-xwidget-cache-dir "/")))))
+            (string-trim-left decode-url (concat "/" nov-xwidget-cache-dir "/")))))
 
 (defun nov-xwidget-save-position ()
-  "Save current scroll position to browser localStorage."
   (interactive)
-  (when-let* ((key (nov-xwidget--get-position-key)))
+  (when-let* ((key (nov-xwidget--position-key)))
     (xwidget-execute-script
      (format "window.localStorage.setItem('%s', window.scrollY);" key))))
 
 (defun nov-xwidget-reset-position ()
-  "Clear saved scroll position for current document."
   (interactive)
-  (when-let* ((key (nov-xwidget--get-position-key)))
+  (when-let* ((key (nov-xwidget--position-key)))
     (xwidget-execute-script
      (format "window.localStorage.removeItem('%s');" key))))
 
-(defun nov-xwidget-jump-prev-position ()
-  "Restore previously saved scroll position."
-  (interactive)
-  (when (and nov-xwidget-need-resume-position
-             (nov-xwidget--get-position-key))
-    (let ((key (nov-xwidget--get-position-key)))
+(defun nov-xwidget--restore-scroll-position ()
+  (when nov-xwidget-need-resume-position
+    (when-let* ((key (nov-xwidget--position-key)))
       (xwidget-execute-script
        (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key))))
   (setq nov-xwidget-need-resume-position t))
 
-;;; Keymap and Mode Definition
+;;; Keymap and mode
 
 (defvar nov-xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") #'nov-xwidget-goto-toc)
+    (define-key map (kbd "V") #'nov-xwidget-view-source-file)
     (define-key map (kbd "N") #'nov-xwidget-next-document)
     (define-key map (kbd "P") #'nov-xwidget-previous-document)
     (define-key map (kbd "G") #'xwidget-webkit-scroll-bottom)
@@ -84,105 +67,103 @@
   "Keymap for `nov-xwidget-webkit-mode'.")
 
 (define-derived-mode nov-xwidget-webkit-mode xwidget-webkit-mode "EPUB"
-  "Major mode for reading EPUB files in xwidget-webkit.
+  "Major mode for reading epub files.
 \\{nov-xwidget-webkit-mode-map}"
   :keymap nov-xwidget-webkit-mode-map
-  (add-hook 'kill-buffer-hook #'nov-xwidget-save nil t)
-  (add-hook 'kill-emacs-hook #'nov-xwidget-save nil t))
+  (add-hook 'kill-buffer-hook #'nov-xwidget--save nil t)
+  (add-hook 'kill-emacs-hook #'nov-xwidget--save nil t))
 
-(defun nov-xwidget-save ()
-  "Save reading position and metadata for current EPUB."
+(defun nov-xwidget--save ()
+  "Save current reading position."
   (when nov-temp-dir
     (let ((identifier (cdr (assq 'identifier nov-metadata)))
-          (index (if (integerp nov-documents-index) nov-documents-index 0)))
+          (index (if (integerp nov-documents-index)
+                     nov-documents-index
+                   0)))
       (nov-save-place identifier index (point)))
     (nov-xwidget-save-position)))
 
-;;; File Path Handling
+;;; DOM transformation
 
-(defun nov-xwidget--unify-path (path)
-  "Convert EPUB file paths to webkit-compatible format.
-Converts .xhtml to .html and .ncx to TOC path."
-  (pcase (file-name-extension path)
+(defun nov-xwidget--normalize-filepath (file)
+  (pcase (file-name-extension file)
     ("xhtml" (format "%s%s.html"
-                     (or (file-name-directory path) "")
-                     (file-name-base path)))
+              (or (file-name-directory file) "")
+              (file-name-base file)))
     ("ncx" nov-xwidget-toc-path)
-    (_ path)))
+    (_ file)))
 
-(defun nov-xwidget--fix-href (href)
-  "Normalize href attribute for webkit rendering."
+(defun nov-xwidget--normalize-href (file)
   (format "%s%s.%s"
-          (or (file-name-directory href) "")
-          (file-name-base href)
-          (replace-regexp-in-string "x?html" "html" (file-name-extension href))))
+          (or (file-name-directory file) "")
+          (file-name-base file)
+          (replace-regexp-in-string
+           "x?html"
+           "html"
+           (file-name-extension file))))
 
-;;; DOM Manipulation
+(defun nov-xwidget--normalize-dom-hrefs (dom)
+  (cl-map 'list (lambda (x)
+                  (let ((new-href (nov-xwidget--normalize-href (dom-attr x 'href))))
+                    (dom-set-attribute x 'href new-href)))
+          (cl-remove-if
+           (lambda (x)
+             (string-match-p "https?.*" (dom-attr x 'href)))
+           (dom-elements dom 'href ".*htm.*"))))
 
-(defun nov-xwidget--is-override-css-p (node)
-  "Check if NODE is Calibre's override CSS."
+(defun nov-xwidget--inject-head (dom &optional title)
+  (let ((head (car (dom-by-tag dom 'head)))
+        (elems `((meta ((charset . "utf-8")))
+                 (link ((rel . "stylesheet") (type . "text/css")
+                        (href . ,(nov-xwidget--style-href)))))))
+    (when title (push `(title nil ,title) elems))
+    (if head
+        (dolist (e (nreverse elems)) (dom-append-child head e))
+      (dom-add-child-before dom `(head nil ,@(nreverse elems))))))
+
+(defun nov-xwidget--override-css-p (node)
   (string-equal (dom-attr node 'href) "override_v1.css"))
 
 (defun nov-xwidget--remove-override-css (dom)
-  "Remove Calibre's override_v1.css from DOM if present."
   (when nov-xwidget-need-remove-override-css
     (when-let* ((head (car (dom-by-tag dom 'head)))
-                (node (car (dom-search head 'nov-xwidget--is-override-css-p))))
+                (node (car (dom-search head 'nov-xwidget--override-css-p))))
       (dom-remove-node head node))))
 
 (defun nov-xwidget--remove-calibre-classes (dom)
-  "Remove Calibre-generated class names from DOM elements."
-  (dolist (elem (dom-elements dom 'class ".*calibre.*"))
-    (let* ((class (dom-attr elem 'class))
-           (cleaned (replace-regexp-in-string "calibre[^ ]*" "" class)))
-      (dom-set-attribute elem 'class cleaned))))
-
-(defun nov-xwidget--fix-href-attributes (dom)
-  "Fix all href attributes in DOM to use .html extension."
-  (dolist (elem (cl-remove-if
-                 (lambda (x) (string-match-p "https?.*" (dom-attr x 'href)))
-                 (dom-elements dom 'href ".*htm.*")))
-    (let* ((href (dom-attr elem 'href))
-           (fixed (nov-xwidget--fix-href href)))
-      (dom-set-attribute elem 'href fixed))))
-
-(defun nov-xwidget--inject-head (dom &optional title)
-  "Inject CSS stylesheet and optional TITLE into DOM's head element."
-  (let ((head (car (dom-by-tag dom 'head)))
-        (elements `((meta ((charset . "utf-8")))
-                    (link ((rel . "stylesheet")
-                           (type . "text/css")
-                           (href . ,(nov-xwidget-get-style-href)))))))
-    (when title
-      (push `(title nil ,title) elements))
-    (if head
-        (dolist (elem (nreverse elements))
-          (dom-append-child head elem))
-      (dom-add-child-before dom `(head nil ,@(nreverse elements))))))
+  "Remove calibre-generated class names from DOM elements."
+  (dolist (x (dom-elements dom 'class ".*calibre.*"))
+    (let ((new-cls (replace-regexp-in-string "calibre[^ ]*" "" (dom-attr x 'class))))
+      (dom-set-attribute x 'class new-cls))))
 
 (defun nov-xwidget--transform-dom (dom &optional title)
-  "Apply all DOM transformations: fix hrefs, inject styles, remove Calibre artifacts."
+  "Transform DOM: fix hrefs, inject head, remove calibre classes, remove override CSS."
   (when dom
-    (nov-xwidget--fix-href-attributes dom)
+    (nov-xwidget--normalize-dom-hrefs dom)
     (nov-xwidget--inject-head dom title)
     (nov-xwidget--remove-calibre-classes dom)
     (nov-xwidget--remove-override-css dom))
   dom)
 
-(defun nov-xwidget--dom-print (dom)
-  "Print DOM as HTML string."
+;;; DOM printing
+
+(defun nov-dom-print (dom)
+  "Print DOM at point as HTML/XML."
   (insert (format "<%s" (dom-tag dom)))
-  (dolist (attr (dom-attributes dom))
-    (insert (if (and (memq (car attr)
-                           '(async autofocus autoplay checked contenteditable
-                             controls default defer disabled formNoValidate
-                             frameborder hidden ismap itemscope loop multiple
-                             muted nomodule novalidate open readonly required
-                             reversed cscoped selected typemustmatch))
-                     (cdr attr))
-                (format " %s" (car attr))
-              (format " %s=\"%s\"" (car attr)
-                      (url-insert-entities-in-string (cdr attr))))))
+  (let ((attr (dom-attributes dom)))
+    (dolist (elem attr)
+      (insert (if (and (memq (car elem)
+                             '(async autofocus autoplay checked
+                                     contenteditable controls default
+                                     defer disabled formNoValidate frameborder
+                                     hidden ismap itemscope loop
+                                     multiple muted nomodule novalidate open
+                                     readonly required reversed
+                                     cscoped selected typemustmatch))
+                       (cdr elem))
+                  (format " %s" (car elem))
+                (format " %s=\"%s\"" (car elem)
+                        (url-insert-entities-in-string (cdr elem)))))))
   (let ((children (dom-children dom)))
     (if (null children)
         (insert (format "></%s>" (dom-tag dom)))
@@ -190,166 +171,157 @@ Converts .xhtml to .html and .ncx to TOC path."
       (dolist (child children)
         (if (stringp child)
             (insert (url-insert-entities-in-string child))
-          (nov-xwidget--dom-print child)))
+          (nov-dom-print child)))
       (insert (format "</%s>" (dom-tag dom))))))
 
-;;; File Processing
+;;; File injection
 
-(defun nov-xwidget--process-file (source-path &optional callback)
-  "Process EPUB file at SOURCE-PATH: parse, transform DOM, and write output.
-Optional CALLBACK is called with the transformed DOM before writing."
-  (let* ((output-path source-path)
-         (dom (with-temp-buffer
-                (insert-file-contents source-path)
+(defun nov-xwidget--transform-file (file &optional callback)
+  "Inject styles into FILE, optionally running CALLBACK on the DOM."
+  (let* ((dom (with-temp-buffer
+                (insert-file-contents file)
                 (libxml-parse-html-region (point-min) (point-max))))
-         (transformed (nov-xwidget--transform-dom dom)))
+         (new-dom (nov-xwidget--transform-dom dom)))
     (when callback
-      (funcall callback transformed))
-    (with-temp-file output-path
+      (funcall callback new-dom))
+    (with-temp-file file
       (insert "<!DOCTYPE html>\n")
-      (nov-xwidget--dom-print transformed))
-    output-path))
+      (nov-dom-print new-dom))
+    file))
 
-(defun nov-xwidget-process-all-documents ()
-  "Process all EPUB documents: rename .xhtml to .html and inject styles.
-Should be run once after EPUB extraction."
+(defun nov-xwidget--transform-all-files ()
+  "Inject styles into all files in `nov-documents'."
   (interactive)
   (when nov-documents
     (seq-do-indexed
      (lambda (document i)
-       (let* ((original-path (cdr document))
-              (unified-path (nov-xwidget--unify-path original-path)))
-         (unless (string= original-path unified-path)
-           (unless (file-exists-p unified-path)
-             (rename-file original-path unified-path)))
+       (let* ((file (cdr document))
+              (new-file (nov-xwidget--normalize-filepath file)))
+         (unless (file-exists-p new-file)
+           (rename-file file new-file))
          (when nov-xwidget-need-inject
-           (nov-xwidget--process-file unified-path))
-         (aset nov-documents i (cons (car document) unified-path))))
+           (nov-xwidget--transform-file new-file))
+         (aset nov-documents i (cons (car document) new-file))))
      nov-documents)))
 
-;;; Webkit Integration
+;;; Browsing
 
-(defun nov-xwidget--browse-url (url &optional new-session switch-fn)
-  "Browse URL in xwidget-webkit.
-If NEW-SESSION, create new webkit session.
-SWITCH-FN determines how to switch to the buffer."
+(defun nov-xwidget--browse-url (url &optional new-session)
+  "Browse URL in xwidget webkit. Create new session with callback when NEW-SESSION is non-nil."
   (if new-session
       (progn
-        (switch-to-buffer
-         (xwidget-webkit--create-new-session-buffer url #'nov-xwidget--webkit-callback))
+        (switch-to-buffer (xwidget-webkit--create-new-session-buffer url #'nov-xwidget--webkit-callback))
         (xwidget-webkit-goto-uri (xwidget-webkit-last-session) url))
     (xwidget-webkit-goto-url url)
-    (if switch-fn
-        (funcall switch-fn (xwidget-buffer (xwidget-webkit-current-session)))
-      (pop-to-buffer (xwidget-buffer (xwidget-webkit-current-session))))))
+    (switch-to-buffer (xwidget-buffer (xwidget-webkit-current-session)))))
 
-(defun nov-xwidget--open-file (path &optional new-session switch-fn)
-  "Open EPUB document at PATH in xwidget-webkit."
-  (let ((url (concat "file:///" (nov-xwidget--unify-path path))))
-    (nov-xwidget--browse-url url new-session (or switch-fn 'switch-to-buffer))))
+(defun nov-xwidget-view-source-file ()
+  "Open the source file."
+  (interactive nil nov-xwidget-webkit-mode)
+  (find-file-other-window (cdr (aref nov-documents nov-documents-index))))
 
 ;;; Navigation
 
-(defun nov-xwidget--view-document (index)
-  "Display EPUB document at INDEX."
-  (let ((path (cdr (aref nov-documents index))))
-    (nov-xwidget--open-file path)
-    (setq-local nov-documents-index index)))
+(defun nov-xwidget--find-index-by-file (file)
+  (when file
+    (seq-position nov-documents
+                  (decode-coding-string (url-unhex-string file) 'utf-8)
+                  (lambda (a b)
+                    (string-collate-equalp b (nov-xwidget--normalize-filepath (cdr a)))))))
 
-(defun nov-xwidget--find-document-index (path)
-  "Find document index for PATH in `nov-documents'."
-  (when path
-    (let ((decoded (decode-coding-string (url-unhex-string path) 'utf-8)))
-      (seq-position nov-documents decoded
-                    (lambda (doc file)
-                      (string-collate-equalp file (nov-xwidget--unify-path (cdr doc))))))))
-
-(defun nov-xwidget--extract-path-from-uri (uri)
-  "Extract file path from webkit URI."
+(defun nov-xwidget--extract-filepath (uri)
   (when (and uri (string-match "file:///\\([^#]*\\)" uri))
     (match-string 1 uri)))
 
-(defun nov-xwidget--should-skip-position-restore-p (uri)
-  "Check if position restoration should be skipped for URI."
+(defun nov-xwidget--skip-restore-p (uri)
   (or (eq nov-documents-index nov-toc-id)
-      (string-match-p "#" uri)))
+      (s-contains? "#" uri)))
 
-(defun nov-xwidget--webkit-callback (xwidget event-type)
-  "Webkit callback handler for EPUB navigation.
-Updates document index and restores scroll position on page load."
-  (when (and (eq event-type 'load-changed)
+(defun nov-xwidget--webkit-callback (xwidget xwidget-event-type)
+  "Callback for xwidgets.
+XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
+  (when (and (eq xwidget-event-type 'load-changed)
              (string-equal (nth 3 last-input-event) "load-finished"))
-    (when-let* ((uri (xwidget-webkit-uri xwidget)))
-      (unless (nov-xwidget--should-skip-position-restore-p uri)
-        (nov-xwidget-jump-prev-position))
-      (when-let* ((path (nov-xwidget--extract-path-from-uri uri))
-                  (index (nov-xwidget--find-document-index path)))
+    (when-let* ((uri (xwidget-webkit-uri xwidget))
+                (file (nov-xwidget--extract-filepath uri)))
+      (unless (nov-xwidget--skip-restore-p uri)
+        (nov-xwidget--restore-scroll-position))
+      (when-let* ((index (nov-xwidget--find-index-by-file file)))
         (setq-local nov-documents-index index))))
-  (xwidget-webkit-callback xwidget event-type))
+  (xwidget-webkit-callback xwidget xwidget-event-type))
+
+(defun nov-xwidget-view ()
+  "View the current document in a xwidget webkit buffer."
+  (interactive)
+  (let* ((docs nov-documents)
+         (index nov-documents-index)
+         (toc nov-toc-id)
+         (epub nov-epub-version)
+         (metadata nov-metadata)
+         (temp-dir nov-temp-dir)
+         (file (cdr (aref docs index)))
+         (epub-file-name nov-file-name)
+         (toc-path nov-xwidget-toc-path)
+         (path (nov-xwidget--normalize-filepath file))
+         (url (concat "file:///" path)))
+
+    (nov-xwidget--browse-url url t)
+
+    (with-current-buffer (xwidget-buffer (xwidget-webkit-current-session))
+      (nov-xwidget-webkit-mode)
+      (setq-local nov-xwidget-toc-path toc-path)
+      (setq-local nov-documents docs)
+      (setq-local nov-documents-index index)
+      (setq-local nov-toc-id toc)
+      (setq-local nov-epub-version epub)
+      (setq-local nov-temp-dir temp-dir)
+      (setq-local nov-metadata metadata)
+      (setq-local buffer-file-name epub-file-name)
+      (setq-local default-directory (file-name-directory epub-file-name))
+      (setq-local cursor-type nil)
+      (setq-local caret-xwidget-next-page-function #'nov-xwidget-next-document)
+      (setq-local caret-xwidget-previous-page-function
+                  (lambda ()
+                    (nov-xwidget-previous-document)
+                    (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom)))
+      (set-buffer-modified-p nil)
+      (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name))))))
+
+(defun nov-xwidget--goto-index (index)
+  (let* ((docs nov-documents)
+         (path (cdr (aref docs index)))
+         (url (concat "file:///" (nov-xwidget--normalize-filepath path))))
+    (nov-xwidget--browse-url url)
+    (setq-local nov-documents-index index)))
 
 (defun nov-xwidget-next-document ()
-  "Navigate to the next EPUB document."
+  "Go to the next document and render it."
   (interactive)
   (unless (integerp nov-documents-index)
     (setq nov-documents-index 0))
   (when (< nov-documents-index (1- (length nov-documents)))
-    (nov-xwidget--view-document (1+ nov-documents-index))))
+    (nov-xwidget--goto-index (1+ nov-documents-index))))
 
 (defun nov-xwidget-previous-document ()
-  "Navigate to the previous EPUB document."
+  "Go to the previous document and render it."
   (interactive)
   (unless (integerp nov-documents-index)
     (setq nov-documents-index 0))
   (when (> nov-documents-index 0)
-    (nov-xwidget--view-document (1- nov-documents-index))))
+    (nov-xwidget--goto-index (1- nov-documents-index))))
 
-;;; Webkit Buffer Setup
-
-(defun nov-xwidget--setup-webkit-buffer (epub-path)
-  "Configure webkit buffer with EPUB-specific settings and variables."
-  (nov-xwidget-webkit-mode)
-  (setq-local nov-xwidget-toc-path nov-xwidget-toc-path
-              nov-documents nov-documents
-              nov-documents-index nov-documents-index
-              nov-toc-id nov-toc-id
-              nov-epub-version nov-epub-version
-              nov-temp-dir nov-temp-dir
-              nov-metadata nov-metadata
-              buffer-file-name epub-path
-              default-directory (file-name-directory epub-path)
-              cursor-type nil
-              caret-xwidget-next-page-function #'nov-xwidget-next-document
-              caret-xwidget-previous-page-function
-              (lambda ()
-                (nov-xwidget-previous-document)
-                (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-              xwidget-webkit-buffer-name-format
-              (format "*Epub: %s" (file-name-nondirectory epub-path)))
-  (set-buffer-modified-p nil))
-
-(defun nov-xwidget-view ()
-  "Open current EPUB document in xwidget-webkit browser."
-  (interactive)
-  (let ((epub-path nov-file-name)
-        (document-path (cdr (aref nov-documents nov-documents-index))))
-    (nov-xwidget--open-file document-path)
-    (with-current-buffer (xwidget-buffer (xwidget-webkit-current-session))
-      (nov-xwidget--setup-webkit-buffer epub-path))))
-
-;;; Table of Contents
+;;; TOC
 
 (defun nov-xwidget--walk-ncx-node (node)
-  "Recursively convert NCX navigation NODE to HTML list structure."
   (let ((tag (dom-tag node))
-        (children (seq-filter (lambda (child)
-                                (memq (dom-tag child) '(navPoint navpoint)))
+        (children (seq-filter (lambda (child) (or (eq (dom-tag child) 'navPoint) (eq (dom-tag child) 'navpoint)))
                               (dom-children node))))
     (cond
-     ((memq tag '(navMap navmap))
+     ((or (eq tag 'navMap) (eq tag 'navmap))
       (insert "<ol>\n")
       (mapc #'nov-xwidget--walk-ncx-node children)
       (insert "</ol>\n"))
-     ((memq tag '(navPoint navpoint))
+     ((or (eq tag 'navPoint) (eq tag 'navpoint))
       (let* ((label-node (esxml-query "navLabel>text,navlabel>text" node))
              (content-node (esxml-query "content" node))
              (href (nov-urldecode (dom-attr content-node 'src)))
@@ -366,65 +338,65 @@ Updates document index and restores scroll position on page load."
                 (insert "</ol>\n</li>\n"))
             (insert (format "<li>\n%s\n</li>\n" link)))))))))
 
-(defun nov-xwidget--ncx-to-html (ncx-path)
-  "Convert NCX document at NCX-PATH to HTML."
-  (let ((root (esxml-query "navMap,navmap" (nov-slurp ncx-path t))))
+(defun nov-xwidget--ncx-to-html (path)
+  "Convert NCX document at PATH to HTML."
+  (let ((root (esxml-query "navMap,navmap" (nov-slurp path t))))
     (with-temp-buffer
       (nov-xwidget--walk-ncx-node root)
       (buffer-string))))
 
-(defun nov-xwidget--generate-toc-html (toc-path output-path is-ncx)
-  "Generate TOC HTML file from TOC-PATH and save to OUTPUT-PATH.
-IS-NCX indicates whether the source is NCX format (EPUB2) or nav format (EPUB3)."
-  (unless (file-exists-p output-path)
+(defun nov-xwidget--build-toc-html (path html-path ncxp)
+  (unless (file-exists-p html-path)
     (let* ((dom (with-temp-buffer
-                  (if is-ncx
-                      (insert (nov-xwidget--ncx-to-html toc-path))
-                    (insert-file-contents toc-path))
+                  (if ncxp
+                      (insert (nov-xwidget--ncx-to-html path))
+                    (insert-file-contents path))
                   (libxml-parse-html-region (point-min) (point-max))))
-           (transformed (nov-xwidget--transform-dom dom "TOC")))
-      (with-temp-file output-path
+           (new-dom (nov-xwidget--transform-dom dom "TOC")))
+      (with-temp-file html-path
         (insert "<!DOCTYPE html>\n")
-        (shr-dom-print transformed)))))
+        (shr-dom-print new-dom)))))
 
-(defun nov-xwidget--prepare-toc ()
-  "Generate and return path to TOC HTML file."
-  (let* ((is-ncx (version< nov-epub-version "3.0"))
-         (toc-index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id))))
-         (toc-path (cdr (aref nov-documents toc-index)))
-         (html-path (expand-file-name "toc.html" (file-name-directory toc-path))))
-    (unless toc-index
+(defun nov-xwidget--build-toc (docs)
+  (let* ((ncxp (version< nov-epub-version "3.0"))
+         (index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id))))
+         (path (cdr (aref docs index)))
+         (html-path (expand-file-name "toc.html" (file-name-directory path))))
+    (unless index
       (error "Couldn't locate TOC"))
-    (nov-xwidget--generate-toc-html toc-path html-path is-ncx)
+    (nov-xwidget--build-toc-html path html-path ncxp)
     html-path))
 
 (defun nov-xwidget-goto-toc ()
-  "Navigate to the table of contents."
+  "Go to the TOC index and render the TOC document."
   (interactive)
   (nov-xwidget-save-position)
   (setq-local nov-documents-index nov-toc-id)
-  (nov-xwidget--open-file nov-xwidget-toc-path))
+  (let ((url (concat "file:///" nov-xwidget-toc-path)))
+    (nov-xwidget--browse-url url)))
 
-;;; Scrolling (for compatibility)
+;;; Scroll helpers
 
-(defun nov-xwidget--scroll (pixels)
-  "Scroll webkit view by PIXELS (positive = down, negative = up)."
+(defun nov-xwidget--scroll-by (arg)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
-   (format "window.scrollBy({top: %d, behavior: 'instant'});" pixels)))
+   (format "window.scrollBy({top: %d, behavior: 'instant'});" arg)))
+
+(defun nov-xwidget--next-step-or-page-cb (end)
+  (setq nov-xwidget-need-resume-position nil)
+  (if (s-equals-p end "1")
+      (nov-xwidget-next-document)
+    (nov-xwidget--scroll-by precision-scroll-step-height)))
 
 (defun nov-xwidget-scroll-up-page ()
-  "Scroll down one page."
   (interactive)
-  (nov-xwidget--scroll (get-precision-scroll-page-height)))
+  (nov-xwidget--scroll-by (get-precision-scroll-page-height)))
 
 (defun nov-xwidget-scroll-down-page ()
-  "Scroll up one page."
   (interactive)
-  (nov-xwidget--scroll (* -1 (get-precision-scroll-page-height))))
+  (nov-xwidget--scroll-by (* -1 (get-precision-scroll-page-height))))
 
 (defun nov-xwidget-scroll-up-step ()
-  "Scroll down one step, or go to next document if at bottom."
   (interactive)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
@@ -434,15 +406,17 @@ IS-NCX indicates whether the source is NCX format (EPUB2) or nav format (EPUB3).
     } else {
         return \"0\";
     }
-})();"
-   (lambda (at-end)
-     (setq nov-xwidget-need-resume-position nil)
-     (if (s-equals-p at-end "1")
-         (nov-xwidget-next-document)
-       (nov-xwidget--scroll precision-scroll-step-height)))))
+})();" #'nov-xwidget--next-step-or-page-cb))
+
+(defun nov-xwidget--previous-step-or-page-cb (end)
+  (setq nov-xwidget-need-resume-position nil)
+  (if (s-equals-p end "1")
+      (progn
+        (nov-xwidget-previous-document)
+        (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
+    (nov-xwidget--scroll-by (* -1 precision-scroll-step-height))))
 
 (defun nov-xwidget-scroll-down-step ()
-  "Scroll up one step, or go to previous document if at top."
   (interactive)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
@@ -452,19 +426,11 @@ IS-NCX indicates whether the source is NCX format (EPUB2) or nav format (EPUB3).
     } else {
         return \"0\";
     }
-})();"
-   (lambda (at-top)
-     (setq nov-xwidget-need-resume-position nil)
-     (if (s-equals-p at-top "1")
-         (progn
-           (nov-xwidget-previous-document)
-           (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-       (nov-xwidget--scroll (* -1 precision-scroll-step-height))))))
+})();" #'nov-xwidget--previous-step-or-page-cb))
 
-;;; Entry Point
+;;; Entry point mode
 
 (defun nov-xwidget--extract-epub ()
-  "Extract EPUB file to temporary directory. Return t if extraction succeeded."
   (unless (file-exists-p nov-temp-dir)
     (let ((exit-code (nov-unzip-epub nov-temp-dir buffer-file-name)))
       (unless (integerp exit-code)
@@ -472,52 +438,42 @@ IS-NCX indicates whether the source is NCX format (EPUB2) or nav format (EPUB3).
         (error "EPUB extraction aborted by signal %s" exit-code))
       (when (> exit-code 1)
         (nov-clean-up)
-        (error "EPUB extraction failed with exit code %d (see *nov unzip* buffer)" exit-code)))
+        (error "EPUB extraction failed with exit code %d (see *nov unzip* buffer)"
+               exit-code)))
     (unless (nov-epub-valid-p nov-temp-dir)
       (nov-clean-up)
       (error "Invalid EPUB file"))
     t))
 
 (define-derived-mode nov-xwidget-mode special-mode "EPUB"
-  "Major mode for reading EPUB documents in xwidget-webkit."
-  (setq nov-temp-dir (expand-file-name (file-name-nondirectory buffer-file-name)
-                                       nov-xwidget-cache-dir))
+  "Major mode for reading EPUB documents"
+  (setq nov-temp-dir (expand-file-name (file-name-nondirectory buffer-file-name) nov-xwidget-cache-dir))
   (unless (file-exists-p nov-xwidget-cache-dir)
     (make-directory nov-xwidget-cache-dir t))
 
-  ;; Extract and parse EPUB
-  (let* ((need-processing (nov-xwidget--extract-epub))
+  (let* ((need-inject (nov-xwidget--extract-epub))
          (container (nov-slurp (nov-container-filename nov-temp-dir) t))
-         (content-filename (nov-container-content-filename container))
-         (content-path (nov-make-path nov-temp-dir content-filename))
-         (content (nov-slurp content-path t)))
+         (content-file-name (nov-container-content-filename container))
+         (content-file (nov-make-path nov-temp-dir content-file-name))
+         (work-dir (file-name-directory content-file))
+         (content (nov-slurp content-file t)))
+    (when need-inject
+      (nov-xwidget--transform-all-files))
 
-    ;; Set up nov.el variables
-    (setq-local bookmark-make-record-function 'nov-bookmark-make-record
-                nov-content-file content-path
-                nov-epub-version (nov-content-version content)
-                nov-metadata (nov-content-metadata content)
-                nov-documents (apply 'vector (nov-content-files
-                                              (file-name-directory content-path)
-                                              content))
-                nov-file-name buffer-file-name)
-
-    ;; Process documents and generate TOC
-    (when need-processing
-      (nov-xwidget-process-all-documents))
-    (setq nov-xwidget-toc-path (nov-xwidget--prepare-toc))
-
-    ;; Restore saved position or start at beginning
-    (setq nov-documents-index
-          (if-let* ((place (nov-saved-place (cdr (assq 'identifier nov-metadata))))
-                    (index (cdr (assq 'index place))))
-              index
-            0)))
-
-  ;; Open webkit view and kill this buffer
-  (let ((init-buffer (current-buffer)))
+    (setq nov-content-file content-file)
+    (setq nov-epub-version (nov-content-version content))
+    (setq nov-metadata (nov-content-metadata content))
+    (setq nov-documents (apply 'vector (nov-content-files work-dir content)))
+    (if-let* ((place (nov-saved-place (cdr (assq 'identifier nov-metadata))))
+              (index (cdr (assq 'index place))))
+        (setq nov-documents-index index)
+      (setq nov-documents-index 0))
+    (setq nov-file-name buffer-file-name)
+    (setq nov-xwidget-toc-path (nov-xwidget--build-toc nov-documents)))
+  (setq-local bookmark-make-record-function 'nov-bookmark-make-record)
+  (let ((init-buf (current-buffer)))
     (nov-xwidget-view)
-    (kill-buffer init-buffer)))
+    (kill-buffer init-buf)))
 
 (provide 'nov-xwidget-mode)
 ;;; nov-xwidget-mode.el ends here

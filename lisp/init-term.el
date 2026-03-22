@@ -55,13 +55,16 @@
   (when vterm--scroll-timer
     (cancel-timer vterm--scroll-timer)
     (setq vterm--scroll-timer nil))
-  (unless vterm-copy-mode
+  (when (and (derived-mode-p 'vterm-mode)
+             (not vterm-copy-mode))
     (vterm-copy-mode 1)))
 
 (defun vterm--scroll-session-end ()
   "Handle scroll session end."
   (setq vterm--scroll-timer nil)
-  (when (and (>= (window-end) (point-max)) vterm-copy-mode)
+  (when (and (derived-mode-p 'vterm-mode)
+             vterm-copy-mode
+             (>= (window-end) (point-max)))
     (vterm-copy-mode -1)))
 
 (defun vterm-pixel-scroll-precision (event)
