@@ -28,22 +28,37 @@
    google-translate-default-source-language google-translate-default-target-language
    text))
 
+(defun google-translate--word-p (text)
+  (not (string-match-p " " (string-trim text))))
+
+(defun google-translate--format-word-output (gtos)
+  (let ((translation (gtos-translation gtos))
+        (detailed-translation (gtos-detailed-translation gtos)))
+    (concat
+     (gtos-text gtos)
+     (google-translate--text-phonetic gtos " [%s]")
+     ": "
+     (if detailed-translation
+         (google-translate--detailed-translation
+          detailed-translation translation "\n%s. " "%d: %s ")
+       translation))))
+
+(defun google-translate--format-sentence-output (gtos)
+  (concat
+   (replace-regexp-in-string "\n" "" (gtos-text gtos))
+   "\n"
+   (replace-regexp-in-string "\n" "" (gtos-translation gtos))))
+
+
 (with-eval-after-load 'google-translate
   (defun google-translate-echo-area-output-translation (gtos)
     "Output translation to the echo area (See
 http://www.gnu.org/software/emacs/manual/html_node/elisp/The-Echo-Area.html)"
     (message
-     (with-temp-buffer
-       (let ((translation (gtos-translation gtos))
-             (detailed-translation (gtos-detailed-translation gtos))
-             (detailed-definition (gtos-detailed-definition gtos)))
-         (insert
-          (google-translate--translating-text gtos " %s")
-          (google-translate--text-phonetic gtos " [%s]")
-          ": "
-          (google-translate--translated-text gtos "%s")))
-       (google-translate--trim-string
-        (buffer-substring (point-min) (point-max)))))))
+     (google-translate--trim-string
+      (if (google-translate--word-p (gtos-text gtos))
+          (google-translate--format-word-output gtos)
+        (google-translate--format-sentence-output gtos))))))
 
 (use-proxy-local 'google-translate-request)
 

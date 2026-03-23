@@ -19,7 +19,8 @@
 
 ;; Eglot format wrapper — checks eglot at save time, not setup time
 (defun maybe-eglot-format-buffer ()
-  (when (bound-and-true-p eglot--managed-mode)
+  (when (and (bound-and-true-p eglot--managed-mode)
+             (eglot-server-capable :documentFormattingProvider))
     (eglot-format-buffer)))
 
 ;; Interactive toggle commands
