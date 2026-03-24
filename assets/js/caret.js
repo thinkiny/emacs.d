@@ -37,11 +37,10 @@ class CaretEmacs {
         this._ensureSelection();
         this._updateCursor();
         window.addEventListener('scroll', () => {
-          this._updateCursor();
           this._onUserScroll();
         }, { passive: true });
         window.addEventListener('resize', () => {
-          this._updateCursor();
+          requestAnimationFrame(() => this._updateCursor());
         }, { passive: true });
       }
     };
@@ -129,7 +128,6 @@ class CaretEmacs {
       };
       this.scrollContainer.addEventListener('scroll', () => {
         ensureCaret();
-        this._updateCursor();
         this._onUserScroll();
       }, { passive: true });
       setTimeout(ensureCaret, 300);
@@ -180,7 +178,8 @@ class CaretEmacs {
   /** Create a collapsed range at the given node and offset. */
   _collapsedRange(node, offset) {
     const range = document.createRange();
-    range.setStart(node, offset);
+    const max = node.nodeType === Node.TEXT_NODE ? node.length : node.childNodes.length;
+    range.setStart(node, Math.min(Math.max(0, offset), max));
     range.collapse(true);
     return range;
   }
@@ -609,20 +608,10 @@ class CaretEmacs {
     // Line: caretRangeFromPoint for visual line movement
     if (granularity === "line" && this.scrollContainer) {
       const lineRange = this._moveLine(fwd);
-      if (!lineRange) {
-        this._hitBoundary = true;
-        return false;
-      }
-      if (this.markActive) {
-        sel.setBaseAndExtent(markAnchorNode, markAnchorOff, lineRange.startContainer, lineRange.startOffset);
-      } else {
-        sel.removeAllRanges();
-        sel.addRange(lineRange);
-      }
-      this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
-      this._scrollToSelection();
-      this._updateCursor();
-      return true;
+      if (!lineRange) { this._hitBoundary = true; return false; }
+      sel.removeAllRanges();
+      sel.addRange(lineRange);
+      return finish(true);
     }
 
     // Default (sentence, paragraph, etc.): sel.modify with guards
@@ -638,10 +627,7 @@ class CaretEmacs {
     }
 
     // Fallback: void elements that sel.modify cannot cross
-    if (!moved && this._fallbackToAdjacentText(sel, fwd)) {
-      this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
-      return true;
-    }
+    if (!moved && this._fallbackToAdjacentText(sel, fwd)) return true;
 
     return finish(moved);
   }
@@ -679,6 +665,7 @@ class CaretEmacs {
     this._setFocus(sel, textNode, fwd ? 0 : textNode.length,
       this.markActive ? sel.anchorNode : null,
       this.markActive ? sel.anchorOffset : null);
+    this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
     this._scrollToSelection();
     this._updateCursor();
     return true;
@@ -829,8 +816,7 @@ class CaretEmacs {
         return pdfScope;
       }
     }
-    const fallback = /[.!?]/.test(sel.toString()) ? 'sentence' : 'word';
-    return fallback;
+    return /[.!?]|\S\s+\S/.test(sel.toString()) ? 'sentence' : 'word';
   }
 
   _lineBounds(line) {
@@ -1074,11 +1060,14 @@ class CaretEmacs {
       if (granularity === 'sentenceboundary' && this._expandPdf(sel, 'sentence')) return;
       if (granularity === 'paragraphboundary' && this._expandPdf(sel, 'paragraph')) return;
     }
-    const anchorNode = sel.anchorNode, anchorOff = sel.anchorOffset;
-    sel.collapse(anchorNode, anchorOff);
+    const range = sel.getRangeAt(0);
+    const refNode = range.startContainer;
+    const len = refNode.nodeType === Node.TEXT_NODE ? refNode.length : refNode.childNodes.length;
+    const refOff = Math.min(range.startOffset + 1, len);
+    sel.collapse(refNode, refOff);
     sel.modify('extend', 'backward', granularity);
     const startNode = sel.focusNode, startOff = sel.focusOffset;
-    sel.collapse(anchorNode, anchorOff);
+    sel.collapse(refNode, refOff);
     sel.modify('extend', 'forward', granularity);
     const endNode = sel.focusNode, endOff = sel.focusOffset;
     sel.setBaseAndExtent(endNode, endOff, startNode, startOff);

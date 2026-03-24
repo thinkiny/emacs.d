@@ -37,11 +37,10 @@
     (concat
      (gtos-text gtos)
      (google-translate--text-phonetic gtos " [%s]")
-     ": "
      (if detailed-translation
          (google-translate--detailed-translation
-          detailed-translation translation "\n%s. " "%d: %s ")
-       translation))))
+          detailed-translation translation "\n%s: " "%d. %s ")
+       (concat ": " translation)))))
 
 (defun google-translate--format-sentence-output (gtos)
   (concat
