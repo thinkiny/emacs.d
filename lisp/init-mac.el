@@ -2,10 +2,8 @@
 
 (setq mac-option-modifier 'super)
 (setq mac-command-modifier 'meta)
-(setq dired-use-ls-dired nil)
 
 (setq-default locate-command "mdfind")
-(setq ns-use-thin-smoothing t)
 
 ;; start new emacs
 (defun start-new-emacs ()
@@ -21,24 +19,20 @@
 ;; ;; Visit files opened outside of Emacs in existing frame, not a new one
 (setq ns-pop-up-frames nil)
 
-;; sane trackpad/mouse scroll settings
-(setq mac-redisplay-dont-reset-vscroll t
-      mac-mouse-wheel-smooth-scroll nil)
-
 ;;locale
 (require 'init-utf8)
 
 (when window-system
-  (enable-menu-bar-mode))
+  (enable-menu-bar))
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+
 (after-load-theme
  (if (theme-dark-p)
      (add-to-list 'default-frame-alist '(ns-appearance . dark))
    (add-to-list 'default-frame-alist '(ns-appearance . light))))
 
 (setq ns-use-proxy-icon nil)
-;;(setq frame-transparency 96)
 
 (with-eval-after-load 'org2ctex
   (setq org2ctex-latex-fonts

@@ -13,7 +13,7 @@
   (menu-bar-mode -1))
 
 ;; menu-bar
-(defun enable-menu-bar-mode()
+(defun enable-menu-bar()
   (menu-bar-mode)
   (global-unset-key [menu-bar buffer])
   (remove-hook 'menu-bar-update-hook 'menu-bar-update-buffers)
