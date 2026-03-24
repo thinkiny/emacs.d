@@ -6,16 +6,15 @@
 ;; Some basic preferences
 ;;----------------------------------------------------------------------------
 (setq-default bookmark-default-file (expand-file-name ".bookmarks.el" user-emacs-directory)
-              blink-cursor-interval 1
               buffers-menu-max-size 30
               case-fold-search t
+              max-mini-window-height 0.4
               visible-bell nil
               tab-width 4
               make-backup-files nil
               auto-save-default nil
               indent-tabs-mode nil
               create-lockfiles nil
-              bookmark-save-flag 1
               save-abbrevs nil
               truncate-lines t
               large-file-warning-threshold nil
@@ -25,12 +24,10 @@
               set-mark-command-repeat-pop t
               tooltip-delay 1.5
               truncate-partial-width-windows nil
-              nxml-slash-auto-complete-flag t
               warning-minimum-level :error
               select-safe-coding-system-function nil
               enable-local-eval t
-              line-number-mode -1
-              )
+              line-number-mode -1)
 
 (put 'erase-buffer 'disabled nil)
 (delete-selection-mode 1)
@@ -39,7 +36,6 @@
 (global-set-key (kbd "C-c $") 'toggle-truncate-lines)
 
 ;;; Optimizations
-(setq process-adaptive-read-buffering nil)
 (setq read-process-output-max (* 4096 1024))
 ;; A second, case-insensitive pass over `auto-mode-alist' is time wasted, and
 ;; indicates misconfiguration (don't rely on case insensitivity for file names).
@@ -321,10 +317,6 @@ With arg N, insert N newlines."
   (let* ((value (read-number "set tab width: ")))
     (setq-local tab-width value)
     (setq-local c-basic-offset value)))
-
-;; Handlebars
-(use-package handlebars-mode
-  :mode (("\\.hbs$" . handlebars-mode)))
 
 ;; hcl-mode
 (use-package hcl-mode

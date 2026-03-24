@@ -8,10 +8,7 @@ const CURSOR_CSS = `
 #${CURSOR_ID}{
   position:absolute;pointer-events:none;z-index:2147483647;
   background:highlight;display:none;box-sizing:border-box;
-  animation:__caret-emacs-blink 1s step-end infinite
-}
-@keyframes __caret-emacs-blink{50%{opacity:0}}
-`.trim();
+}`.trim();
 
 class CaretEmacs {
   constructor(el = document, opts = {}) {

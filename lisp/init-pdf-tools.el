@@ -125,7 +125,6 @@
   (pdf-view-restore-mode)
   (pdf-outline-minor-mode)
   (pdf-history-minor-mode)
-  (blink-cursor-mode -1)
   (eldoc-mode -1)
   (whitespace-cleanup-mode -1)
   (electric-pair-local-mode -1)

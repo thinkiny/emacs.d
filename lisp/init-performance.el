@@ -3,8 +3,8 @@
 (use-package gcmh
   :config
   (setq gcmh-high-cons-threshold (* 512 1024 1024))
-  (setq gcmh-low-cons-threshold (* 64 1024 1024))
-  (setq gcmh-idle-delay 5)
+  (setq gcmh-low-cons-threshold (* 16 1024 1024))
+  (setq gcmh-auto-idle-delay-factor 10)
   (gcmh-mode 1))
 
 (defvar my/gc-timer nil
