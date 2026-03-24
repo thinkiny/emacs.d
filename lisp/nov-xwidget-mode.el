@@ -88,8 +88,8 @@
 (defun nov-xwidget--normalize-filepath (file)
   (pcase (file-name-extension file)
     ("xhtml" (format "%s%s.html"
-              (or (file-name-directory file) "")
-              (file-name-base file)))
+                     (or (file-name-directory file) "")
+                     (file-name-base file)))
     ("ncx" nov-xwidget-toc-path)
     (_ file)))
 
@@ -429,6 +429,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 })();" #'nov-xwidget--previous-step-or-page-cb))
 
 ;;; Entry point mode
+(defvar-local nov-temp-dir nil)
 
 (defun nov-xwidget--extract-epub ()
   (unless (file-exists-p nov-temp-dir)
@@ -447,23 +448,23 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 
 (define-derived-mode nov-xwidget-mode special-mode "EPUB"
   "Major mode for reading EPUB documents"
-  (setq nov-temp-dir (expand-file-name (file-name-nondirectory buffer-file-name) nov-xwidget-cache-dir))
   (unless (file-exists-p nov-xwidget-cache-dir)
     (make-directory nov-xwidget-cache-dir t))
-
-  (let* ((need-inject (nov-xwidget--extract-epub))
+  (setq nov-temp-dir (expand-file-name (file-name-nondirectory buffer-file-name) nov-xwidget-cache-dir))
+  (let* ((extracted (nov-xwidget--extract-epub))
          (container (nov-slurp (nov-container-filename nov-temp-dir) t))
          (content-file-name (nov-container-content-filename container))
          (content-file (nov-make-path nov-temp-dir content-file-name))
          (work-dir (file-name-directory content-file))
          (content (nov-slurp content-file t)))
-    (when need-inject
-      (nov-xwidget--transform-all-files))
 
     (setq nov-content-file content-file)
     (setq nov-epub-version (nov-content-version content))
     (setq nov-metadata (nov-content-metadata content))
     (setq nov-documents (apply 'vector (nov-content-files work-dir content)))
+    (when extracted
+      (nov-xwidget--transform-all-files))
+
     (if-let* ((place (nov-saved-place (cdr (assq 'identifier nov-metadata))))
               (index (cdr (assq 'index place))))
         (setq nov-documents-index index)
