@@ -1,8 +1,13 @@
 ;; -*- lexical-binding: t; -*-
 
-(use-package typescript-mode)
+(use-package typescript-mode
+  :config
+  (setq typescript-indent-level 2))
 
-(setq ts-lsp-modes '(js-ts-mode tsx-ts-mode typescript-ts-mode))
+(with-eval-after-load 'js
+  (setq js-indent-level 2))
+
+(setq-default ts-lsp-modes '(js-ts-mode tsx-ts-mode typescript-ts-mode))
 
 (with-eval-after-load 'eglot
   ;; (set-eglot-server-program '((js-ts-mode :language-id "javascript")
