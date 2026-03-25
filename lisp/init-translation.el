@@ -31,13 +31,13 @@
 (defun google-translate--word-p (text)
   (not (string-match-p " " (string-trim text))))
 
-(defun google-translate--format-word-output (gtos)
+(defun google-translate--format-word-output (gtos &optional detail)
   (let ((translation (gtos-translation gtos))
         (detailed-translation (gtos-detailed-translation gtos)))
     (concat
      (gtos-text gtos)
      (google-translate--text-phonetic gtos " [%s]")
-     (if detailed-translation
+     (if (and detail detailed-translation)
          (google-translate--detailed-translation
           detailed-translation translation "\n%s: " "%d. %s ")
        (concat ": " translation)))))

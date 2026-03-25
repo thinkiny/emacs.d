@@ -462,15 +462,16 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     (setq nov-epub-version (nov-content-version content))
     (setq nov-metadata (nov-content-metadata content))
     (setq nov-documents (apply 'vector (nov-content-files work-dir content)))
+    (setq nov-xwidget-toc-path (nov-xwidget--build-toc nov-documents))
+    (setq nov-file-name buffer-file-name)
     (when extracted
       (nov-xwidget--transform-all-files))
 
     (if-let* ((place (nov-saved-place (cdr (assq 'identifier nov-metadata))))
               (index (cdr (assq 'index place))))
         (setq nov-documents-index index)
-      (setq nov-documents-index 0))
-    (setq nov-file-name buffer-file-name)
-    (setq nov-xwidget-toc-path (nov-xwidget--build-toc nov-documents)))
+      (setq nov-documents-index 0)))
+
   (setq-local bookmark-make-record-function 'nov-bookmark-make-record)
   (let ((init-buf (current-buffer)))
     (nov-xwidget-view)

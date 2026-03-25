@@ -23,17 +23,16 @@ tr, td, div.warning {
 span {
     font-size: 1em !important;
 }
-pre {
-    padding: 0.5em 0.5em !important;
-}
+
 th {
     font-size: 1em;
 }
 
 /* Same font for all tags */
 pre, code {
-    font-size: 1em !important;
-    font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+  font-size: 1em !important;
+  line-height: 1.2em !important;
+  font-family: "JetBrains Mono", "SF Mono", Monaco, monospace !important;
 }
 a, em, caption, th, tr, td, h1, h2, h3, h4, h5, h6, p, body {
     font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
