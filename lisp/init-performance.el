@@ -3,7 +3,7 @@
 (use-package gcmh
   :config
   (setq gcmh-high-cons-threshold (* 512 1024 1024))
-  (setq gcmh-low-cons-threshold (* 16 1024 1024))
+  (setq gcmh-low-cons-threshold (* 128 1024 1024))
   (setq gcmh-auto-idle-delay-factor 10)
   (gcmh-mode 1))
 

@@ -404,7 +404,7 @@ FILE-NAME is the remote file path, VEC is the parsed TRAMP vector."
                    (message "Rsync save error: %s" (string-trim event)))))
            (ignore-errors (delete-file temp-file))))))))
 
-(defun save-buffer-async ()
+(defun my-save-buffer ()
   "Save buffer asynchronously for SSH-based TRAMP files.
 Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and non-SSH TRAMP methods."
   (interactive)
@@ -421,7 +421,7 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
    (t
     (save-buffer))))
 
-(global-set-key (kbd "C-x C-s") 'save-buffer-async)
+(global-set-key (kbd "C-x C-s") 'my-save-buffer)
 
 ;; auto-revert
 (require 'autorevert)

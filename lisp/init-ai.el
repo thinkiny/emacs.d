@@ -9,7 +9,7 @@
   (setq claude-code-ide-debug nil)
   (setq claude-code-ide-cli-debug nil)
   (setq claude-code-ide-emacs-prompt
-"# Attention
+"# IMPORTANT
 - Review Emacs MCP tool descriptions thoroughly.
 - Prioritize Emacs MCP tools over any other tools or agents.
 - Avoid reading any binary files (e.g., PDFs or EPUBs).
