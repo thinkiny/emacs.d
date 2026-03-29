@@ -1,31 +1,31 @@
 body {
-    writing-mode: horizontal-tb;
-    font-size: 20px !important;
-    width: 95% !important;
-    height: 50% !important;
-    position: absolute !important;
-    left: 49% !important;
-    top: 30% !important;
-    transform: translate(-50%, -55%) !important;
+  writing-mode: horizontal-tb;
+  font-size: 20px !important;
+  width: 95% !important;
+  height: 50% !important;
+  position: absolute !important;
+  left: 49% !important;
+  top: 30% !important;
+  transform: translate(-50%, -55%) !important;
 }
 p {
-    line-height: 2em !important;
-    font-size: 1em !important;
-    text-align: left !important;
+  line-height: 2em !important;
+  font-size: 1em !important;
+  text-align: left !important;
 }
 table {
-    margin-left: 0 !important;
+  margin-left: 0 !important;
 }
 tr, td, div.warning {
-    font-size: 1em !important;
-    background: #d8dee9;
+  font-size: 1em !important;
+  background: #d8dee9;
 }
 span {
-    font-size: 1em !important;
+  font-size: 1em !important;
 }
 
 th {
-    font-size: 1em;
+  font-size: 1em;
 }
 
 /* Same font for all tags */
@@ -35,53 +35,53 @@ pre, code {
   font-family: "JetBrains Mono", "SF Mono", Monaco, monospace !important;
 }
 a, em, caption, th, tr, td, h1, h2, h3, h4, h5, h6, p, body {
-    font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
+  font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 h1 {
-    font-size: 2em !important;
-    color: #2e3440 !important;
-    margin-bottom: 10px !important;
+  font-size: 2em !important;
+  color: #2e3440 !important;
+  margin-bottom: 10px !important;
 }
 h2 {
-    font-size: 1.5em !important;
-    color: #2e3440 !important;
-    margin-bottom: 10px !important;
+  font-size: 1.5em !important;
+  color: #2e3440 !important;
+  margin-bottom: 10px !important;
 }
 h3 {
-    font-size: 1.3em !important;
-    color: #2e3440 !important;
-    margin-bottom: 10px !important;
+  font-size: 1.3em !important;
+  color: #2e3440 !important;
+  margin-bottom: 10px !important;
 }
 h4 {
-    font-size: 1.2em !important;
-    color: #2e3440 !important;
-    margin-bottom: 10px !important;
+  font-size: 1.2em !important;
+  color: #2e3440 !important;
+  margin-bottom: 10px !important;
 }
 h5 {
-    font-size: 1.1em !important;
-    color: #2e3440 !important;
-    margin-bottom: 10px !important;
+  font-size: 1.1em !important;
+  color: #2e3440 !important;
+  margin-bottom: 10px !important;
 }
 h6 {
-    font-size: 1em !important;
-    color: #2e3440 !important;
-    margin-bottom: 10px !important;
+  font-size: 1em !important;
+  color: #2e3440 !important;
+  margin-bottom: 10px !important;
 }
 :root {
-    color-scheme: light; /* both supported */
+  color-scheme: light; /* both supported */
 }
 body img {
-    max-width: 80%;
+  max-width: 80%;
 }
 
 /* custom css */
 dl.calloutlist p:first-child {
-    margin-top: 25px !important;
+  margin-top: 25px !important;
 }
 dd p {
-    text-align: left !important;
-    margin-bottom: 25px !important;
+  text-align: left !important;
+  margin-bottom: 25px !important;
 }
 code.inlineCode {
-    white-space: normal !important;
+  white-space: normal !important;
 }

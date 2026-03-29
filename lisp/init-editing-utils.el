@@ -1,5 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
+;; Prefer loading newer compiled files
+(setq load-prefer-newer t)
+
 (when (fboundp 'electric-pair-mode)
   (add-hook 'after-init-hook 'electric-pair-mode))
 ;;----------------------------------------------------------------------------

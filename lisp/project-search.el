@@ -333,16 +333,16 @@ MAX-WIDTH controls text truncation (defaults to window width)."
 
 (defun project-search--extract-kind-prefix (input)
   "Extract the kind filter prefix from INPUT.
-A leading `#word' is treated as a kind prefix.  Returns the
+A leading `#word ' is treated as a kind prefix.  Returns the
 prefix as a lowercase string, or nil if none found.
-  e.g. \"#fu myFunc\" -> \"fu\", \"#file foo\" -> \"file\", \"bar\" -> nil."
-  (when (string-match "\\`#\\([a-zA-Z]+\\)" input)
+  e.g. \"#fu myFunc\" -> \"fu\", \"#file foo\" -> \"file\", \"#include\" -> nil."
+  (when (string-match "\\`#\\([a-zA-Z]+\\)\\s-+" input)
     (downcase (match-string 1 input))))
 
 (defun project-search--extract-query (input)
-  "Extract the search query from INPUT, stripping any `#prefix'.
-  e.g. \"#fu myFunc\" -> \"myFunc\", \"#f foo\" -> \"foo\", \"bar\" -> \"bar\"."
-  (string-trim (replace-regexp-in-string "\\`#[a-zA-Z]*\\s-*" "" input)))
+  "Extract the search query from INPUT, stripping any `#prefix '.
+  e.g. \"#fu myFunc\" -> \"myFunc\", \"#f foo\" -> \"foo\", \"#include\" -> \"#include\"."
+  (string-trim (replace-regexp-in-string "\\`#[a-zA-Z]+\\s-+" "" input)))
 
 (defun project-search--kind-matches-prefix-p (kind-int prefix)
   "Return non-nil if LSP SymbolKind KIND-INT matches PREFIX.
@@ -533,7 +533,7 @@ OPTIONS is an optional string of extra rg flags (e.g. \"-tgo -i\")."
               :dynamic-collection t
               :require-match t
               :action #'project-search--ivy-action
-              :caller 'ivy-project-search)))
+              :caller 'ivy-project-rg)))
 
 ;;;###autoload
 (defun ivy-project-search ()

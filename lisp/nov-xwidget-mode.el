@@ -7,7 +7,6 @@
 (require 's)
 (require 'caret-xwidget)
 
-(defconst nov-xwidget-style 'light)
 (defconst nov-xwidget-need-inject t)
 (defconst nov-xwidget-need-remove-override-css t)
 (defconst nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
@@ -15,16 +14,22 @@
 (defvar-local nov-xwidget-toc-path nil)
 (defvar-local nov-xwidget-need-resume-position t)
 
+(defun nov-xwidget--sanitize-index (documents index)
+  "Return a valid index for DOCUMENTS, derived from INDEX."
+  (let ((len (length documents)))
+    (cond
+     ((<= len 0) 0)
+     ((not (integerp index)) 0)
+     ((< index 0) 0)
+     ((>= index len) (1- len))
+     (t index))))
+
 ;;; Style
 
 (defun nov-xwidget--style-href ()
-  (let ((theme (pcase nov-xwidget-style
-                 ('auto (or (frame-parameter nil 'background-mode) 'light))
-                 (_ nov-xwidget-style))))
-    (concat "file://"
-            (expand-file-name (format "assets/css/nov-%s.css"
-                                      (if (eq theme 'dark) "dark" "light"))
-                              user-emacs-directory))))
+  (concat "file://"
+          (expand-file-name "assets/css/nov-override.css"
+                            user-emacs-directory)))
 
 ;;; Position save/restore
 
@@ -359,13 +364,13 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 
 (defun nov-xwidget--build-toc (docs)
   (let* ((ncxp (version< nov-epub-version "3.0"))
-         (index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id))))
-         (path (cdr (aref docs index)))
-         (html-path (expand-file-name "toc.html" (file-name-directory path))))
-    (unless index
+         (index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id)))))
+    (unless (integerp index)
       (error "Couldn't locate TOC"))
+    (let* ((path (cdr (aref docs index)))
+           (html-path (expand-file-name "toc.html" (file-name-directory path))))
     (nov-xwidget--build-toc-html path html-path ncxp)
-    html-path))
+    html-path)))
 
 (defun nov-xwidget-goto-toc ()
   "Go to the TOC index and render the TOC document."
@@ -469,7 +474,8 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 
     (if-let* ((place (nov-saved-place (cdr (assq 'identifier nov-metadata))))
               (index (cdr (assq 'index place))))
-        (setq nov-documents-index index)
+        (setq nov-documents-index
+              (nov-xwidget--sanitize-index nov-documents index))
       (setq nov-documents-index 0)))
 
   (setq-local bookmark-make-record-function 'nov-bookmark-make-record)

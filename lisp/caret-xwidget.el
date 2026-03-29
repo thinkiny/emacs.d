@@ -50,7 +50,8 @@ The file is read at load time and injected into xwidget-webkit pages."
       (setq caret-xwidget--after-inject-js nil)
       (xwidget-webkit-execute-script xw
         (concat caret-xwidget--js-source
-                (and post (concat "\n" caret-xwidget--js-prefix post)))))))
+                (and post (concat "\n" caret-xwidget--js-prefix post))
+                "\nvoid 0;")))))
 
 (defun caret-xwidget--callback-advice (orig-fn xwidget event-type)
   "Advice around `xwidget-webkit-callback' to re-inject caret.js on load."

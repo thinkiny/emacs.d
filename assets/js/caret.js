@@ -7,7 +7,9 @@ const DEBUG_VERSION = "2026-03-19e";
 const CURSOR_CSS = `
 #${CURSOR_ID}{
   position:absolute;pointer-events:none;z-index:2147483647;
-  background:highlight;display:none;box-sizing:border-box;
+  background:transparent;display:none;box-sizing:border-box;
+  border:1px solid Highlight;opacity:.95;border-radius:1px;
+  box-shadow:0 0 0 1px Canvas,0 0 0 2px CanvasText;
 }`.trim();
 
 class CaretEmacs {

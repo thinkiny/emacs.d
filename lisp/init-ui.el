@@ -80,9 +80,9 @@
 (use-package treemacs-icons-dired
   :when window-system
   :config
-  (defun my-treemacs-icons-dired-display-p ()
+  (defun treemacs-icons-dired-display-local-p ()
     (not (file-remote-p default-directory)))
-  (advice-add 'treemacs-icons-dired--display :before-while #'my-treemacs-icons-dired-display-p)
+  (advice-add 'treemacs-icons-dired--display :before-while #'treemacs-icons-dired-display-local-p)
   (treemacs-icons-dired-mode))
 
 ;; frame appearance and theme support
@@ -107,45 +107,63 @@
     (let ((value (read-number "change frame transparency: " frame-transparency)))
       (customize-save-variable 'frame-transparency value))))
 
+;; themes
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-(use-package modus-themes
-  :config
-  (setq modus-themes-tabs-accented t
-        modus-themes-paren-match '(bold intense)))
-
+(use-package modus-themes)
 (use-package ef-themes)
 
 (defcustom default-theme 'modus-operandi
-  "The current theme"
-  :group 'faces)
+  "The current theme."
+  :group 'faces
+  :type 'symbol)
+
+(defcustom reader-css-theme 'auto
+  "Reader stylesheet theme selection.
+`auto' follows the current Emacs theme. `light' always uses light
+reader assets."
+  :group 'faces
+  :type '(choice (const :tag "Follow Emacs theme" auto)
+                 (const :tag "Always use light reader assets" light)))
 
 (defun theme-dark-p ()
   (eq 'dark (frame-parameter nil 'background-mode)))
+
+(defun reader-css-theme-resolved ()
+  "Return the effective reader stylesheet mode."
+  (if (eq reader-css-theme 'light)
+      'light
+    (if (theme-dark-p) 'dark 'light)))
+
+(defun reader-css-theme-use-stock-light-p ()
+  "Return non-nil when the reader should use stock light assets."
+  (and (eq reader-css-theme 'light)
+       (theme-dark-p)))
+
+(defun load-and-activate-theme (theme)
+  "Disable active themes, load THEME, and run theme hooks."
+  (mapc #'disable-theme custom-enabled-themes)
+  (load-theme theme t)
+  (run-hooks 'load-theme-hook))
 
 (after-load-theme
  (set-face-attribute 'button nil :background 'unspecified)
  (set-face-attribute 'fringe nil :background 'unspecified))
 
-(with-eval-after-load 'compile
-  (after-load-theme
-   (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4")))
-
-(with-eval-after-load 'ivy
-  (after-load-theme
-   (set-face-attribute 'ivy-virtual nil :foreground 'unspecified)
-   (when (theme-dark-p)
-     (set-face-attribute 'ivy-completions-annotations nil :inherit 'italic))))
+(with-eval-after-load-theme
+ 'compile
+ (set-face-attribute 'compilation-info nil :foreground "DeepSkyBlue4"))
 
 (add-hook 'after-init-hook
           (lambda ()
-            (load-theme default-theme t)
-            (run-hooks 'load-theme-hook)))
+            (load-and-activate-theme default-theme)))
 
 ;; fonts and frame sizing
 (when window-system
+  (setq face-font-selection-order '(:width :height :slant :weight))
   (use-package cnfonts
     :config
     (setq cnfonts-use-face-font-rescale t)
+    (setq cnfonts-disable-italic nil)
     (setq use-default-font-for-symbols nil)
     (cnfonts-mode)
     (unbind-all-keys cnfonts-mode-map)))
@@ -164,6 +182,19 @@
 (apply-frame-size-for-display)
 (add-hook 'after-make-frame-functions #'apply-frame-size-for-display)
 
+;; disable fringe in xwidget-webkit-mode
+(defun sync-fringe-for-xwidget (frame)
+  "Update fringes only for the selected window in FRAME."
+  (when (frame-live-p frame)
+    (let ((window (frame-selected-window frame)))
+      (unless (window-minibuffer-p window)
+        (with-current-buffer (window-buffer window)
+          (set-window-fringes window
+                              (if (derived-mode-p 'xwidget-webkit-mode) 0 nil)
+                              (if (derived-mode-p 'xwidget-webkit-mode) 0 nil)))))))
+
+(add-hook 'window-state-change-functions #'sync-fringe-for-xwidget)
+
 ;; mode-line support
 (use-package hide-mode-line)
 (setq-default mode-line-percent-position nil
@@ -176,20 +207,20 @@
       ""
     (format-mode-line " %l:%C")))
 
-(cl-defstruct (my-mode-line-cache (:constructor my-mode-line-cache-create))
+(cl-defstruct (mode-line-cache (:constructor mode-line-cache-create))
   project-name
   flymake-counters
   persp-project)
 
-(defvar-local my-mode-line-cache nil)
-(defvar my-mode-line-cache-timer nil)
-(defconst my-mode-line-cache-refresh-interval 2)
+(defvar-local mode-line-cache nil)
+(defvar mode-line-cache-timer nil)
+(defconst mode-line-cache-refresh-interval 2)
 
-(defun my-mode-line-cache-get ()
-  (or my-mode-line-cache
-      (setq my-mode-line-cache (my-mode-line-cache-create))))
+(defun mode-line-cache-get ()
+  (or mode-line-cache
+      (setq mode-line-cache (mode-line-cache-create))))
 
-(defun my-mode-line-cache--compute-project-name ()
+(defun mode-line-cache--compute-project-name ()
   "Return current project name for mode-line cache."
   (let ((project-name
          (when (and (fboundp 'projectile-project-root)
@@ -198,47 +229,47 @@
              (funcall projectile-project-name-function project-root)))))
     (or project-name "")))
 
-(defun my-mode-line-cache--compute-persp-project (project-name)
+(defun mode-line-cache--compute-persp-project (project-name)
   (if (bound-and-true-p persp-mode)
       `("[" ,(persp-current-name) "] " ,project-name)
     project-name))
 
-(defun my-mode-line-cache--compute-flymake-counters ()
+(defun mode-line-cache--compute-flymake-counters ()
   (if (bound-and-true-p flymake-mode)
       (flymake--mode-line-counters)
     ""))
 
-(defun my-mode-line-cache-refresh (&optional buffer)
+(defun mode-line-cache-refresh (&optional buffer)
   (with-current-buffer (or buffer (current-buffer))
-    (let* ((cache (my-mode-line-cache-get))
-           (project-name (or (my-mode-line-cache-project-name cache)
-                             (my-mode-line-cache--compute-project-name)))
-           (flymake-counters (my-mode-line-cache--compute-flymake-counters))
-           (persp-project (my-mode-line-cache--compute-persp-project project-name)))
-      (setf (my-mode-line-cache-project-name cache) project-name)
-      (setf (my-mode-line-cache-flymake-counters cache) flymake-counters)
-      (setf (my-mode-line-cache-persp-project cache) persp-project))))
+    (let* ((cache (mode-line-cache-get))
+           (project-name (or (mode-line-cache-project-name cache)
+                             (mode-line-cache--compute-project-name)))
+           (flymake-counters (mode-line-cache--compute-flymake-counters))
+           (persp-project (mode-line-cache--compute-persp-project project-name)))
+      (setf (mode-line-cache-project-name cache) project-name)
+      (setf (mode-line-cache-flymake-counters cache) flymake-counters)
+      (setf (mode-line-cache-persp-project cache) persp-project))))
 
-(defun my-mode-line-cache-refresh-current-buffer ()
+(defun mode-line-cache-refresh-current-buffer ()
   (let ((buffer (window-buffer (selected-window))))
     (when (buffer-live-p buffer)
       (with-current-buffer buffer
-        (my-mode-line-cache-refresh)))))
+        (mode-line-cache-refresh)))))
 
-(defun my-mode-line-cache-start-timer ()
-  (when (timerp my-mode-line-cache-timer)
-    (cancel-timer my-mode-line-cache-timer))
-  (my-mode-line-cache-refresh-current-buffer)
-  (setq my-mode-line-cache-timer
-        (run-with-timer my-mode-line-cache-refresh-interval
-                        my-mode-line-cache-refresh-interval
-                        #'my-mode-line-cache-refresh-current-buffer)))
+(defun mode-line-cache-start-timer ()
+  (when (timerp mode-line-cache-timer)
+    (cancel-timer mode-line-cache-timer))
+  (mode-line-cache-refresh-current-buffer)
+  (setq mode-line-cache-timer
+        (run-with-timer mode-line-cache-refresh-interval
+                        mode-line-cache-refresh-interval
+                        #'mode-line-cache-refresh-current-buffer)))
 
 (defun mode-line-persp-project ()
-  (my-mode-line-cache-persp-project (my-mode-line-cache-get)))
+  (mode-line-cache-persp-project (mode-line-cache-get)))
 
 (defun mode-line-flymake-counters ()
-  (my-mode-line-cache-flymake-counters (my-mode-line-cache-get)))
+  (mode-line-cache-flymake-counters (mode-line-cache-get)))
 
 (setq-default mode-line-format
               '((:eval (mode-line-position))
@@ -248,31 +279,94 @@
                 " "
                 (:eval (mode-line-persp-project))))
 
-(my-mode-line-cache-start-timer)
+(mode-line-cache-start-timer)
 
 ;; interactive theme commands
-(defun my-load-theme-action (x)
-  "Disable current themes and load theme X."
-  (condition-case nil
-      (progn
-        (mapc #'disable-theme custom-enabled-themes)
-        (load-theme (intern x) t)
-        (run-hooks 'load-theme-hook))
-    (error "Problem loading theme %s" x)))
+(defun change-theme--action (x)
+  "Load theme X and run theme hooks once."
+  (condition-case err
+      (load-and-activate-theme (intern x))
+    (error (user-error "%s" (error-message-string err)))))
 
 (defun change-theme ()
   "Change current theme."
   (interactive)
   (ivy-read "Load custom theme: "
             (mapcar #'symbol-name (custom-available-themes))
-            :action #'my-load-theme-action
+            :action #'change-theme--action
             :preselect (symbol-name (or (when custom-enabled-themes
                                           (car custom-enabled-themes))
                                         default-theme))))
 
-(defun set-current-theme-default ()
+(defun sync-current-theme ()
   (interactive)
   (if-let* ((current-theme (car custom-enabled-themes)))
-      (customize-save-variable 'default-theme current-theme)))
+    (customize-save-variable 'default-theme current-theme)))
+
+(defun current-theme-bg-hex ()
+  "Return the current default face background color as #rrggbb."
+  (let ((color (face-attribute 'default :background nil t)))
+    (when (or (null color) (equal color "unspecified-bg"))
+      (user-error "Default face background is not specified"))
+    (let ((rgb (color-values color)))
+      (unless rgb
+        (user-error "Unable to resolve color values for %s" color))
+      (format "#%02x%02x%02x"
+              (/ (nth 0 rgb) 257)
+              (/ (nth 1 rgb) 257)
+              (/ (nth 2 rgb) 257)))))
+
+(defun current-theme-fg-hex ()
+  "Return the current default face foreground color as #rrggbb."
+  (let ((color (face-attribute 'default :foreground nil t)))
+    (when (or (null color) (equal color "unspecified-fg"))
+      (user-error "Default face foreground is not specified"))
+    (let ((rgb (color-values color)))
+      (unless rgb
+        (user-error "Unable to resolve color values for %s" color))
+      (format "#%02x%02x%02x"
+              (/ (nth 0 rgb) 257)
+              (/ (nth 1 rgb) 257)
+              (/ (nth 2 rgb) 257)))))
+
+(defun sync-reader-theme-colors ()
+  "Rebuild reader assets to match the current reader theme."
+  (interactive)
+  (let* ((theme (reader-css-theme-resolved))
+         (use-stock-light (reader-css-theme-use-stock-light-p))
+         (foreground (current-theme-fg-hex))
+         (script (expand-file-name "scripts/update_reader_theme_colors.py"
+                                   user-emacs-directory))
+         (output-buffer (get-buffer-create "*update-reader-theme-colors*"))
+         (default-directory user-emacs-directory)
+         (args (if use-stock-light
+                   (list script "--restore-stock-light-assets")
+                 (list script (symbol-name theme) foreground)))
+         (exit-code (with-current-buffer output-buffer
+                      (erase-buffer)
+                      (apply #'call-process "python3" nil output-buffer nil args))))
+    (if (zerop exit-code)
+        (progn
+          (message
+           (if use-stock-light
+               "Restored stock light reader assets"
+             (format "Rebuilt reader assets for %s theme with transparent background and foreground %s"
+                     theme foreground)))
+          (when (buffer-live-p output-buffer)
+            (kill-buffer output-buffer)))
+      (display-buffer output-buffer)
+      (error "%s"
+             (if use-stock-light
+                 (format "Failed to restore stock light reader assets (exit %s)" exit-code)
+               (format "Failed to rebuild reader assets for %s theme with transparent background and foreground %s (exit %s)"
+                       theme foreground exit-code))))))
+
+(after-load-theme
+ (when (theme-dark-p)
+   (let* ((color (face-attribute 'default :foreground))
+          (hsl (nth 2 (apply #'color-rgb-to-hsl (color-name-to-rgb color)))))
+     (if (> hsl 0.8)
+         (set-face-attribute 'default nil :foreground "#C0C0C0"))))
+ (sync-reader-theme-colors))
 
 (provide 'init-ui)
