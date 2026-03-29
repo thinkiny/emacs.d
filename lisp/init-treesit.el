@@ -27,18 +27,7 @@
   (cl-loop for i in treesit-language-source-alist
            do (treesit-install-language-grammar (car i))))
 
-;; (dolist (lang '(
-;;                 ;; ("c" . c)
-;;                 ;; ("c++" . cpp)
-;;                 ("go" . go)
-;;                 ("rust" . rust)
-;;                 ("scala" . scala)
-;;                 ("java" . java)))
-;;   (when-let* ((hook (intern (concat (car lang) "-mode-hook")))
-;;               (ts-mode (intern (concat (car lang) "-ts-mode"))))
-;;     (add-hook hook (lambda ()
-;;                      (when (treesit-ready-p (cdr lang))
-;;                        (funcall ts-mode)
-;;                        (yas-activate-extra-mode (intern (concat (car lang) "-mode")))))))))
+(add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode))
+(add-to-list 'major-mode-remap-alist '(go-mode . go-ts-mode))
 
 (provide 'init-treesit)

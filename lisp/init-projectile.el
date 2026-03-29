@@ -7,7 +7,6 @@
         (append projectile-globally-ignored-directories
                 '("node_modules" ".bloop" ".metals" ".bsp"
                   ".github" ".venv" "target" "vendor")))
-
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (define-key projectile-command-map (kbd "K") #'projectile-kill-not-project-buffers)
   (define-key projectile-command-map (kbd "0") #'projectile-kill-no-files)
@@ -20,6 +19,8 @@
   (setq projectile-enable-caching 'persistent)
   (setq projectile-file-exists-remote-cache-expire nil)
 
+  (remove-hook 'projectile-find-dir-hook #'projectile-track-known-projects-find-file-hook)
+  (remove-hook 'dired-before-readin-hook #'projectile-track-known-projects-find-file-hook)
 
   ;; don't use file-truename
   ;; (ignore-file-truename 'projectile-project-root 'projectile-project-buffer-p)

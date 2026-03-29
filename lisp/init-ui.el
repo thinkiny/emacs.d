@@ -91,13 +91,13 @@
   (add-to-list 'initial-frame-alist no-border))
 
 (defcustom frame-transparency 100
-  "The Transparency of frame"
+  "Transparency of frame."
   :group 'faces
   :type 'integer
-  :set (lambda (var val)
-         (set-default var val)
-         (if *is-a-nt*
-             (set-frame-parameter nil 'alpha val)
+  :set (lambda (symbol val)
+         (set-default symbol val)
+         (if (bound-and-true-p *is-a-nt*) ; Windows
+             (set-frame-parameter nil 'alpha (cons val val))
            (set-frame-parameter nil 'alpha-background val))))
 
 (defun set-transparency ()
@@ -143,7 +143,8 @@ reader assets."
   "Disable active themes, load THEME, and run theme hooks."
   (mapc #'disable-theme custom-enabled-themes)
   (load-theme theme t)
-  (run-hooks 'load-theme-hook))
+  (run-hooks 'load-theme-hook)
+  (customize-save-variable 'default-theme theme))
 
 (after-load-theme
  (set-face-attribute 'button nil :background 'unspecified)
@@ -298,11 +299,6 @@ reader assets."
                                           (car custom-enabled-themes))
                                         default-theme))))
 
-(defun sync-current-theme ()
-  (interactive)
-  (if-let* ((current-theme (car custom-enabled-themes)))
-    (customize-save-variable 'default-theme current-theme)))
-
 (defun current-theme-bg-hex ()
   "Return the current default face background color as #rrggbb."
   (let ((color (face-attribute 'default :background nil t)))
@@ -361,12 +357,15 @@ reader assets."
                (format "Failed to rebuild reader assets for %s theme with transparent background and foreground %s (exit %s)"
                        theme foreground exit-code))))))
 
+(defun cap-brightness-in-dark-theme()
+  (when (theme-dark-p)
+    (let* ((color (face-attribute 'default :foreground))
+           (hsl (nth 2 (apply #'color-rgb-to-hsl (color-name-to-rgb color)))))
+      (if (> hsl 0.9)
+          (set-face-attribute 'default nil :foreground "#E0E0E0")))))
+
 (after-load-theme
- (when (theme-dark-p)
-   (let* ((color (face-attribute 'default :foreground))
-          (hsl (nth 2 (apply #'color-rgb-to-hsl (color-name-to-rgb color)))))
-     (if (> hsl 0.8)
-         (set-face-attribute 'default nil :foreground "#C0C0C0"))))
+ (cap-brightness-in-dark-theme)
  (sync-reader-theme-colors))
 
 (provide 'init-ui)

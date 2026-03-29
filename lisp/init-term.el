@@ -26,8 +26,9 @@
   (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
   (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
-  (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
+  (define-key vterm-mode-map (kbd "C-c C-v") 'vterm--self-insert)
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
+  (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
 
   (defun vterm--get-directory (path)

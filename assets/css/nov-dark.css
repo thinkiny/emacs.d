@@ -6,9 +6,10 @@ body {
   width: 95% !important;
   height: 50% !important;
   position: absolute !important;
-  left: 49% !important;
+  left: 50% !important;
   top: 30% !important;
   transform: translate(-50%, -55%) !important;
+  overflow-x: hidden;
 }
 h1, h2, h3, h4, h5, h6 {
   /*color: #d4d4d4 !important;*/

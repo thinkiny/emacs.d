@@ -8,12 +8,12 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Callable, Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-NOV_STOCK_LIGHT_CSS = REPO_ROOT / "assets" / "css" / "nov-light.css"
-NOV_STOCK_DARK_CSS = REPO_ROOT / "assets" / "css" / "nov-dark.css"
+NOV_SOURCE_LIGHT_CSS = REPO_ROOT / "assets" / "css" / "nov-light.css"
+NOV_SOURCE_DARK_CSS = REPO_ROOT / "assets" / "css" / "nov-dark.css"
 NOV_OVERRIDE_CSS = REPO_ROOT / "assets" / "css" / "nov-override.css"
 PDFJS_VIEWER_HTML = REPO_ROOT / "assets" / "pdfjs" / "web" / "viewer.html"
 PDFJS_VIEWER_CSS = REPO_ROOT / "assets" / "pdfjs" / "web" / "viewer.css"
@@ -26,41 +26,11 @@ PDFJS_CSS_MARKER_START = "/* reader-color-override:pdfjs:start */"
 PDFJS_CSS_MARKER_END = "/* reader-color-override:pdfjs:end */"
 PDFJS_THEME_HOOK_ANCHOR = '  <script src="viewer.mjs" type="module"></script>'
 
-NOV_TEMPLATE = """html,
-body,
-body > * ,
-section,
-main,
-article,
-div,
-p,
-span,
-pre,
-code,
-blockquote,
-dl,
-dt,
-dd,
-ol,
-ul,
-li,
-table,
-thead,
-tbody,
-tr,
-th,
-td,
-figure,
-figcaption {{
-  background: {background} !important;
-  background-color: {background} !important;
-}}
-
-html,
-body {{
+NOV_TEMPLATE = """html,body {{
+  background: transparent !important;
+  background-color: transparent !important;
   color: {foreground} !important;
-}}
-"""
+}}"""
 
 PDFJS_THEME_TEMPLATE = """<script>
 document.addEventListener(
@@ -76,27 +46,27 @@ document.addEventListener(
 </script>"""
 
 PDFJS_CHROME_TEMPLATE = """:root {{
-  --page-bg-color: {background};
+  --page-bg-color: transparent;
   --page-fg-color: {foreground};
-  --body-bg-color: {background};
-  --toolbar-bg-color: {background};
-  --sidebar-toolbar-bg-color: {background};
-  --sidebar-narrow-bg-color: {background};
-  --doorhanger-bg-color: {background};
-  --sidebar-bg-color: {background};
+  --body-bg-color: transparent;
+  --toolbar-bg-color: transparent;
+  --sidebar-toolbar-bg-color: transparent;
+  --sidebar-narrow-bg-color: transparent;
+  --doorhanger-bg-color: transparent;
+  --sidebar-bg-color: transparent;
   --main-color: {foreground};
   --text-primary-color: {foreground};
   --text-secondary-color: {foreground};
   --toolbar-icon-bg-color: {foreground};
   --toolbar-icon-hover-bg-color: {foreground};
   --field-color: {foreground};
-  --field-bg-color: {background};
-  --input-text-bg-color: {background};
+  --field-bg-color: transparent;
+  --input-text-bg-color: transparent;
   --input-text-fg-color: {foreground};
-  --textarea-bg-color: {background};
+  --textarea-bg-color: transparent;
   --textarea-fg-color: {foreground};
-  --dialog-bg-color: {background};
-  --dialog-border-color: {background};
+  --dialog-bg-color: transparent;
+  --dialog-border-color: transparent;
 }}
 
 body,
@@ -160,30 +130,49 @@ select,
 textarea {{
   background-color: var(--input-text-bg-color);
   color: var(--input-text-fg-color);
-}}
-"""
+}}"""
 
 
 @dataclass(frozen=True)
 class ThemeMode:
-    name: str
     pdfjs_viewer_css_theme: int
 
 
+@dataclass(frozen=True)
+class AssetOperation:
+    label: str
+    path: Path
+    build_expected: Callable[[], str]
+    changed_message: str
+
+
 THEME_MODES: dict[str, ThemeMode] = {
-    "light": ThemeMode(name="light", pdfjs_viewer_css_theme=1),
-    "dark": ThemeMode(name="dark", pdfjs_viewer_css_theme=2),
+    "light": ThemeMode(pdfjs_viewer_css_theme=1),
+    "dark": ThemeMode(pdfjs_viewer_css_theme=2),
 }
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Update generated EPUB/PDF.js reader assets to match a provided theme mode and theme colors."
+        description="Update generated EPUB/PDF.js reader assets to match a provided theme mode and foreground color.",
+        epilog=(
+            "Examples:\n"
+            "  python3 scripts/update_reader_theme_colors.py dark f8f8f2\n"
+            "  python3 scripts/update_reader_theme_colors.py light '#202020'\n"
+            "  python3 scripts/update_reader_theme_colors.py --restore-stock-light-assets\n"
+            "  python3 scripts/update_reader_theme_colors.py --check dark f8f8f2"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--restore-stock-light-assets",
         action="store_true",
-        help="Rebuild generated EPUB CSS from stock light CSS and restore stock light PDF.js assets.",
+        help="Rebuild generated EPUB CSS from light source CSS and remove generated PDF.js overrides.",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Validate the expected reader asset state without writing files.",
     )
     parser.add_argument(
         "theme",
@@ -236,7 +225,19 @@ def build_marker_block(marker_start: str, marker_end: str, body: str) -> str:
     return f"{marker_start}\n{body.rstrip()}\n{marker_end}"
 
 
+def ensure_single_marker_block(contents: str, marker_start: str, marker_end: str) -> None:
+    start_count = contents.count(marker_start)
+    end_count = contents.count(marker_end)
+    if start_count != end_count:
+        raise ValueError(
+            f"Mismatched marker counts for {marker_start!r} and {marker_end!r}."
+        )
+    if start_count > 1:
+        raise ValueError(f"Duplicate marker block found for {marker_start!r}.")
+
+
 def remove_marker_block(contents: str, marker_start: str, marker_end: str) -> str:
+    ensure_single_marker_block(contents, marker_start, marker_end)
     pattern = re.compile(
         r"\n*"
         + re.escape(marker_start)
@@ -252,6 +253,7 @@ def remove_marker_block(contents: str, marker_start: str, marker_end: str) -> st
 
 
 def set_marker_block(contents: str, marker_start: str, marker_end: str, body: str) -> str:
+    ensure_single_marker_block(contents, marker_start, marker_end)
     block = build_marker_block(marker_start, marker_end, body)
     pattern = re.compile(
         re.escape(marker_start) + r".*?" + re.escape(marker_end),
@@ -280,50 +282,33 @@ def write_text_if_changed(path: Path, updated: str) -> bool:
     return True
 
 
-def nov_stock_source(theme_mode: ThemeMode) -> Path:
-    if theme_mode.name == "light":
-        return NOV_STOCK_LIGHT_CSS
-    return NOV_STOCK_DARK_CSS
+def nov_source_path(theme_name: str) -> Path:
+    if theme_name == "light":
+        return NOV_SOURCE_LIGHT_CSS
+    return NOV_SOURCE_DARK_CSS
 
 
-def resolve_background(background: str, transparent_background: bool) -> str:
-    return "transparent"
+def build_nov_override_body(foreground: str) -> str:
+    return NOV_TEMPLATE.format(foreground=foreground)
 
 
-# EPUB rebuild helpers
-
-def build_nov_override_body(background: str, foreground: str, *, transparent_background: bool = False) -> str:
-    return NOV_TEMPLATE.format(
-        background="transparent",
-        foreground=foreground,
-    )
-
-
-def sanitize_nov_stock_contents(source_path: Path) -> str:
+def strip_nov_generated_block(source_path: Path) -> str:
     contents = source_path.read_text(encoding="utf-8")
     return remove_marker_block(contents, NOV_MARKER_START, NOV_MARKER_END)
 
 
-def rebuild_nov_override(
-    theme_mode: ThemeMode,
-    background: str,
-    foreground: str,
-    *,
-    transparent_background: bool = False,
-) -> bool:
-    stock_contents = sanitize_nov_stock_contents(nov_stock_source(theme_mode))
-    updated = set_marker_block(
-        stock_contents,
+def build_nov_override_contents(theme_name: str, foreground: str) -> str:
+    source_contents = strip_nov_generated_block(nov_source_path(theme_name))
+    return set_marker_block(
+        source_contents,
         NOV_MARKER_START,
         NOV_MARKER_END,
-        build_nov_override_body(background, foreground, transparent_background=True),
+        build_nov_override_body(foreground),
     )
-    return write_text_if_changed(NOV_OVERRIDE_CSS, updated)
 
 
-def restore_stock_light_nov_override() -> bool:
-    updated = sanitize_nov_stock_contents(NOV_STOCK_LIGHT_CSS)
-    return write_text_if_changed(NOV_OVERRIDE_CSS, updated)
+def build_restored_light_nov_override_contents() -> str:
+    return strip_nov_generated_block(NOV_SOURCE_LIGHT_CSS)
 
 
 # PDF.js patch helpers
@@ -334,161 +319,238 @@ def build_pdfjs_theme_hook(theme_mode: ThemeMode) -> str:
     )
 
 
-def build_pdfjs_chrome_override(
-    background: str,
-    foreground: str,
-    *,
-    transparent_background: bool = False,
-) -> str:
-    return PDFJS_CHROME_TEMPLATE.format(
-        background="transparent",
-        foreground=foreground,
-    )
+def build_pdfjs_chrome_override(foreground: str) -> str:
+    return PDFJS_CHROME_TEMPLATE.format(foreground=foreground)
 
 
-def insert_pdfjs_theme_hook(contents: str, body: str) -> str:
-    cleaned = remove_marker_block(
-        contents,
-        PDFJS_THEME_MARKER_START,
-        PDFJS_THEME_MARKER_END,
-    )
+def insert_before_anchor(contents: str, anchor: str, block: str, path: Path) -> str:
+    before, separator, after = contents.partition(anchor)
+    if not separator:
+        raise ValueError(f"Unable to find insertion anchor in {path}")
+    return f"{before.rstrip()}\n\n{block}\n\n{anchor}{after}"
+
+
+def build_pdfjs_theme_html_contents(theme_mode: ThemeMode) -> str:
+    contents = PDFJS_VIEWER_HTML.read_text(encoding="utf-8")
     block = build_marker_block(
         PDFJS_THEME_MARKER_START,
         PDFJS_THEME_MARKER_END,
-        body,
+        build_pdfjs_theme_hook(theme_mode),
     )
-    before, separator, after = cleaned.partition(PDFJS_THEME_HOOK_ANCHOR)
-    if not separator:
-        raise ValueError(f"Unable to find insertion anchor in {PDFJS_VIEWER_HTML}")
-    return f"{before.rstrip()}\n\n{block}\n\n{PDFJS_THEME_HOOK_ANCHOR}{after}"
-
-
-def sync_pdfjs_theme_hook(theme_mode: ThemeMode) -> bool:
-    contents = PDFJS_VIEWER_HTML.read_text(encoding="utf-8")
-    updated = insert_pdfjs_theme_hook(contents, build_pdfjs_theme_hook(theme_mode))
-    return write_text_if_changed(PDFJS_VIEWER_HTML, updated)
-
-
-def restore_pdfjs_theme_hook() -> bool:
-    contents = PDFJS_VIEWER_HTML.read_text(encoding="utf-8")
-    updated = remove_marker_block(
+    ensure_single_marker_block(
         contents,
         PDFJS_THEME_MARKER_START,
         PDFJS_THEME_MARKER_END,
     )
-    return write_text_if_changed(PDFJS_VIEWER_HTML, updated)
+    if PDFJS_THEME_MARKER_START in contents:
+        return set_marker_block(
+            contents,
+            PDFJS_THEME_MARKER_START,
+            PDFJS_THEME_MARKER_END,
+            build_pdfjs_theme_hook(theme_mode),
+        )
+    return insert_before_anchor(contents, PDFJS_THEME_HOOK_ANCHOR, block, PDFJS_VIEWER_HTML)
 
 
-def sync_pdfjs_chrome_override(
-    background: str,
-    foreground: str,
+def build_restored_pdfjs_theme_html_contents() -> str:
+    contents = PDFJS_VIEWER_HTML.read_text(encoding="utf-8")
+    return remove_marker_block(
+        contents,
+        PDFJS_THEME_MARKER_START,
+        PDFJS_THEME_MARKER_END,
+    )
+
+
+def build_pdfjs_viewer_css_contents(foreground: str) -> str:
+    contents = PDFJS_VIEWER_CSS.read_text(encoding="utf-8")
+    return set_marker_block(
+        contents,
+        PDFJS_CSS_MARKER_START,
+        PDFJS_CSS_MARKER_END,
+        build_pdfjs_chrome_override(foreground),
+    )
+
+
+def build_restored_pdfjs_viewer_css_contents() -> str:
+    contents = PDFJS_VIEWER_CSS.read_text(encoding="utf-8")
+    return remove_marker_block(
+        contents,
+        PDFJS_CSS_MARKER_START,
+        PDFJS_CSS_MARKER_END,
+    )
+
+
+def apply_operation(operation: AssetOperation) -> bool:
+    updated = operation.build_expected()
+    return write_text_if_changed(operation.path, updated)
+
+
+def check_operation(operation: AssetOperation) -> bool:
+    expected = operation.build_expected()
+    current = operation.path.read_text(encoding="utf-8")
+    return current == expected
+
+
+def run_operations(
+    operations: Sequence[AssetOperation],
     *,
-    transparent_background: bool = False,
-) -> bool:
-    contents = PDFJS_VIEWER_CSS.read_text(encoding="utf-8")
-    updated = set_marker_block(
-        contents,
-        PDFJS_CSS_MARKER_START,
-        PDFJS_CSS_MARKER_END,
-        build_pdfjs_chrome_override(background, foreground, transparent_background=True),
-    )
-    return write_text_if_changed(PDFJS_VIEWER_CSS, updated)
+    check: bool,
+    success_message: str,
+    unchanged_message: str,
+) -> int:
+    changed_or_drifted = False
+    for operation in operations:
+        if check:
+            if check_operation(operation):
+                print(f"OK: {operation.path.name} already matches {operation.label}")
+            else:
+                changed_or_drifted = True
+                print(f"DRIFT: {operation.path.name} does not match {operation.label}")
+        elif apply_operation(operation):
+            changed_or_drifted = True
+            print(operation.changed_message)
+
+    if check:
+        if changed_or_drifted:
+            print("Reader asset validation failed")
+            return 1
+        print(success_message)
+        return 0
+
+    if not changed_or_drifted:
+        print(unchanged_message)
+    return 0
 
 
-def restore_pdfjs_chrome_override() -> bool:
-    contents = PDFJS_VIEWER_CSS.read_text(encoding="utf-8")
-    updated = remove_marker_block(
-        contents,
-        PDFJS_CSS_MARKER_START,
-        PDFJS_CSS_MARKER_END,
-    )
-    return write_text_if_changed(PDFJS_VIEWER_CSS, updated)
+def build_restore_operations() -> list[AssetOperation]:
+    return [
+        AssetOperation(
+            label="light-source EPUB CSS",
+            path=NOV_OVERRIDE_CSS,
+            build_expected=build_restored_light_nov_override_contents,
+            changed_message=(
+                f"Rebuilt {NOV_OVERRIDE_CSS.name} from {NOV_SOURCE_LIGHT_CSS.name}"
+            ),
+        ),
+        AssetOperation(
+            label="stock viewer.html without generated PDF.js theme hook",
+            path=PDFJS_VIEWER_HTML,
+            build_expected=build_restored_pdfjs_theme_html_contents,
+            changed_message=(
+                f"Removed generated PDF.js theme hook from {PDFJS_VIEWER_HTML.name}"
+            ),
+        ),
+        AssetOperation(
+            label="stock viewer.css without generated PDF.js override block",
+            path=PDFJS_VIEWER_CSS,
+            build_expected=build_restored_pdfjs_viewer_css_contents,
+            changed_message=(
+                f"Removed generated PDF.js CSS override block from {PDFJS_VIEWER_CSS.name}"
+            ),
+        ),
+    ]
+
+
+def build_sync_operations(theme_name: str, foreground: str) -> list[AssetOperation]:
+    theme_mode = THEME_MODES[theme_name]
+    source_css = nov_source_path(theme_name)
+    return [
+        AssetOperation(
+            label=f"{theme_name} EPUB reader override state",
+            path=NOV_OVERRIDE_CSS,
+            build_expected=lambda: build_nov_override_contents(theme_name, foreground),
+            changed_message=(
+                f"Rebuilt {NOV_OVERRIDE_CSS.name} from {source_css.name} "
+                f"for {theme_name} theme using transparent background and foreground {foreground}"
+            ),
+        ),
+        AssetOperation(
+            label=f"{theme_name} PDF.js theme hook state",
+            path=PDFJS_VIEWER_HTML,
+            build_expected=lambda: build_pdfjs_theme_html_contents(theme_mode),
+            changed_message=(
+                f"Updated {PDFJS_VIEWER_HTML.name} for {theme_name} PDF.js theme hook"
+            ),
+        ),
+        AssetOperation(
+            label=f"{theme_name} PDF.js CSS override state",
+            path=PDFJS_VIEWER_CSS,
+            build_expected=lambda: build_pdfjs_viewer_css_contents(foreground),
+            changed_message=(
+                f"Updated {PDFJS_VIEWER_CSS.name} for {theme_name} PDF.js foreground {foreground}"
+            ),
+        ),
+    ]
 
 
 # Top-level workflows
 
-def restore_stock_light_reader_assets() -> int:
+def restore_stock_light_reader_assets(check: bool = False) -> int:
     try:
-        ensure_paths_exist([NOV_STOCK_LIGHT_CSS, PDFJS_VIEWER_HTML, PDFJS_VIEWER_CSS])
+        ensure_paths_exist([NOV_SOURCE_LIGHT_CSS, PDFJS_VIEWER_HTML, PDFJS_VIEWER_CSS])
     except FileNotFoundError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 3
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 4
 
-    changed = False
-    if restore_stock_light_nov_override():
-        changed = True
-        print(
-            f"Restored {NOV_OVERRIDE_CSS.name} from stock light EPUB CSS ({NOV_STOCK_LIGHT_CSS.name})"
-        )
-    if restore_pdfjs_theme_hook():
-        changed = True
-        print("Restored stock light asset in pdf.js-theme-hook")
-    if restore_pdfjs_chrome_override():
-        changed = True
-        print("Restored stock light asset in pdf.js-chrome-override")
-    if not changed:
-        print(
-            "No changes needed; nov-override.css already matches stock light EPUB CSS "
-            "and PDF.js reader assets are already restored"
-        )
-    return 0
-
-
-def sync_reader_assets(
-    theme_mode: ThemeMode,
-    background: str,
-    foreground: str,
-    *,
-    transparent_background: bool = False,
-) -> int:
-    stock_source = nov_stock_source(theme_mode)
     try:
-        ensure_paths_exist([stock_source, PDFJS_VIEWER_HTML, PDFJS_VIEWER_CSS])
+        return run_operations(
+            build_restore_operations(),
+            check=check,
+            success_message="Reader assets already match restored light-source state",
+            unchanged_message=(
+                "No changes needed; reader assets already match restored light-source state"
+            ),
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 4
+
+
+def sync_reader_assets(theme_name: str, foreground: str, check: bool = False) -> int:
+    source_css = nov_source_path(theme_name)
+    try:
+        ensure_paths_exist([source_css, PDFJS_VIEWER_HTML, PDFJS_VIEWER_CSS])
     except FileNotFoundError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 3
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 4
 
-    changed = False
-    if rebuild_nov_override(theme_mode, background, foreground, transparent_background=True):
-        changed = True
-        print(
-            f"Rebuilt {NOV_OVERRIDE_CSS.name} from {stock_source.name} for {theme_mode.name} theme "
-            f"with transparent background and foreground {foreground}"
+    try:
+        return run_operations(
+            build_sync_operations(theme_name, foreground),
+            check=check,
+            success_message=(
+                f"Reader assets already match {theme_name} theme with transparent background "
+                f"and foreground {foreground}"
+            ),
+            unchanged_message=(
+                f"No changes needed; reader assets already match {theme_name} theme "
+                f"with transparent background and foreground {foreground}"
+            ),
         )
-    if sync_pdfjs_theme_hook(theme_mode):
-        changed = True
-        print(
-            f"Updated pdf.js-theme-hook for {theme_mode.name} theme with transparent background "
-            f"and foreground {foreground}"
-        )
-    if sync_pdfjs_chrome_override(background, foreground, transparent_background=True):
-        changed = True
-        print(
-            f"Updated pdf.js-chrome-override for {theme_mode.name} theme with transparent background "
-            f"and foreground {foreground}"
-        )
-    if not changed:
-        print(
-            "No changes needed; EPUB/PDF.js reader assets already match "
-            f"{theme_mode.name} theme with transparent background and foreground {foreground}"
-        )
-    return 0
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 4
 
 
 def main() -> int:
     args = parse_args()
 
     if args.restore_stock_light_assets:
-        return restore_stock_light_reader_assets()
+        return restore_stock_light_reader_assets(check=args.check)
 
-    theme_mode = THEME_MODES[args.theme]
     try:
         foreground = normalize_hex_color(args.foreground)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
-    return sync_reader_assets(theme_mode, "", foreground, transparent_background=True)
+    return sync_reader_assets(args.theme, foreground, check=args.check)
 
 
 if __name__ == "__main__":

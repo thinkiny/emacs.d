@@ -2,13 +2,14 @@
 
 const CURSOR_ID = "__caret-emacs-cursor";
 const STYLE_ID = "__caret-emacs-style";
-const DEBUG_VERSION = "2026-03-19e";
+const DEBUG_VERSION = "2026-03-30d";
+const WORD_CHAR_RE = /[\p{L}\p{N}\p{M}\p{Pc}]/u;
 
 const CURSOR_CSS = `
 #${CURSOR_ID}{
   position:absolute;pointer-events:none;z-index:2147483647;
   background:transparent;display:none;box-sizing:border-box;
-  border:1px solid Highlight;opacity:.95;border-radius:1px;
+  border-radius:1px;
   box-shadow:0 0 0 1px Canvas,0 0 0 2px CanvasText;
 }`.trim();
 
@@ -503,6 +504,11 @@ class CaretEmacs {
     }
   }
 
+  /** Unicode-aware word character classifier (handles CJK and other scripts). */
+  _isWordChar(ch) {
+    return Boolean(ch) && WORD_CHAR_RE.test(ch);
+  }
+
   /** Visual word movement for PDF text layers (bypass DOM order). */
   _moveWordVisual(sel, fwd) {
     const focus = sel.focusNode;
@@ -519,10 +525,10 @@ class CaretEmacs {
     if (fwd) {
       let node = focus, off = focusOff, idx = curIdx;
       // Skip past current word
-      while (off < node.textContent.length && /\w/.test(node.textContent[off])) off++;
+      while (off < node.textContent.length && this._isWordChar(node.textContent[off])) off++;
       // Skip non-word chars, crossing node boundaries as needed
       while (true) {
-        while (off < node.textContent.length && !/\w/.test(node.textContent[off])) off++;
+        while (off < node.textContent.length && !this._isWordChar(node.textContent[off])) off++;
         if (off < node.textContent.length) {
           sel.collapse(node, off);
           return true;
@@ -545,7 +551,7 @@ class CaretEmacs {
       }
       // Skip non-word chars backward, crossing node boundaries
       while (true) {
-        while (off >= 0 && !/\w/.test(node.textContent[off])) off--;
+        while (off >= 0 && !this._isWordChar(node.textContent[off])) off--;
         if (off >= 0) break;
         idx--;
         if (idx < 0) return false;
@@ -553,7 +559,7 @@ class CaretEmacs {
         off = node.textContent.length - 1;
       }
       // Skip word chars backward to find word start
-      while (off > 0 && /\w/.test(node.textContent[off - 1])) off--;
+      while (off > 0 && this._isWordChar(node.textContent[off - 1])) off--;
       sel.collapse(node, off);
       return true;
     }
@@ -860,34 +866,55 @@ class CaretEmacs {
     };
   }
 
-  _pdfAdjacentLineBlockCheck(currentLine, candidateLine, fwd) {
+  _pdfAdjacentLineBlockCheck(currentLine, candidateLine, fwd, gapThreshold) {
     const current = this._lineBounds(currentLine);
     const candidate = this._lineBounds(candidateLine);
     if (!current || !candidate) return false;
 
     const minHeight = Math.min(current.height, candidate.height);
 
-    // Alignment: reject lines at very different X positions
     if (Math.abs(candidate.left - current.left) > minHeight * 1.5) return false;
 
-    // Gap: reject lines with too much vertical space between them
     const upperBounds = fwd ? current : candidate;
     const lowerBounds = fwd ? candidate : current;
     const gap = Math.max(0, lowerBounds.top - upperBounds.bottom);
-    return gap <= minHeight * 1.2;
+    return gap <= (gapThreshold != null ? gapThreshold : minHeight * 1.2);
+  }
+
+  _paragraphGapThreshold(lines) {
+    if (lines.length < 3) return null;
+    const gaps = [];
+    for (let i = 0; i < lines.length - 1; i++) {
+      const upper = this._lineBounds(lines[i]);
+      const lower = this._lineBounds(lines[i + 1]);
+      if (!upper || !lower) continue;
+      if (Math.abs(lower.left - upper.left) > upper.height * 1.5) continue;
+      gaps.push(Math.max(0, lower.top - upper.bottom));
+    }
+    if (gaps.length < 2) return null;
+    gaps.sort((a, b) => a - b);
+
+    let maxJump = 0, splitIdx = 0;
+    for (let i = 0; i < gaps.length - 1; i++) {
+      const jump = gaps[i + 1] - gaps[i];
+      if (jump > maxJump) { maxJump = jump; splitIdx = i; }
+    }
+    if (maxJump <= gaps[0] * 0.5) return null;
+    return (gaps[splitIdx] + gaps[splitIdx + 1]) / 2;
   }
 
   _expandPdfLineBlock(lines, startIdx, endIdx) {
     let start = startIdx;
     let end = endIdx;
+    const gapThreshold = this._paragraphGapThreshold(lines);
 
     while (start > 0) {
-      if (!this._pdfAdjacentLineBlockCheck(lines[start], lines[start - 1], false)) break;
+      if (!this._pdfAdjacentLineBlockCheck(lines[start], lines[start - 1], false, gapThreshold)) break;
       start--;
     }
 
     while (end < lines.length - 1) {
-      if (!this._pdfAdjacentLineBlockCheck(lines[end], lines[end + 1], true)) break;
+      if (!this._pdfAdjacentLineBlockCheck(lines[end], lines[end + 1], true, gapThreshold)) break;
       end++;
     }
 
@@ -942,10 +969,8 @@ class CaretEmacs {
 
     const text = sel.toString();
     const trimmedText = text.trim();
-    const sentenceEndings = trimmedText.match(/[.!?](?=\s|$)/g) || [];
-    if (sentenceEndings.length > 1) return 'paragraph';
-    if (/[.!?]\s*$/.test(trimmedText)) return 'sentence';
-    return (end > start || /\n/.test(text)) ? 'paragraph' : 'word';
+    if (/[.!?]/.test(trimmedText) || end > start || /\n/.test(text)) return 'sentence';
+    return 'word';
   }
 
   _pdfTextRangeModel(lines, startIdx, endIdx) {
@@ -1009,12 +1034,13 @@ class CaretEmacs {
         break;
       }
     }
-    while (start < text.length && /[\s\n]/.test(text[start])) start++;
+    while (start < text.length && /[\s\n"'"\u201D\u2019)\]]/.test(text[start])) start++;
 
     let end = text.length;
     for (let idx = normalizedCaret; idx < text.length; idx++) {
       if (/[.!?]/.test(text[idx])) {
         end = idx + 1;
+        while (end < text.length && /["'"\u201D\u2019)\]]/.test(text[end])) end++;
         break;
       }
     }
@@ -1023,7 +1049,7 @@ class CaretEmacs {
     return { start, end };
   }
 
-  _expandPdf(sel, mode) {
+  _expandPdfSentence(sel) {
     const context = this._pdfLineContext(sel);
     if (!context) {
       return false;
@@ -1035,23 +1061,15 @@ class CaretEmacs {
     const anchorEnd = selectedRange ? Math.max(currentLine, selectedRange.end) : currentLine;
     const { start, end } = this._expandPdfLineBlock(lines, anchorStart, anchorEnd);
 
-    if (mode === 'sentence') {
-      const model = this._pdfTextRangeModel(lines, start, end);
-      const caretPoint = this._resolveCursorPosition(sel.anchorNode, sel.anchorOffset);
-      const caretOffset = model.offsetFromPoint(caretPoint.node, caretPoint.offset);
-      const offsets = this._pdfSentenceOffsets(model.text, caretOffset);
+    const model = this._pdfTextRangeModel(lines, start, end);
+    const caretPoint = this._resolveCursorPosition(sel.anchorNode, sel.anchorOffset);
+    const caretOffset = model.offsetFromPoint(caretPoint.node, caretPoint.offset);
+    const offsets = this._pdfSentenceOffsets(model.text, caretOffset);
 
-      const sp = model.pointFromOffset(offsets.start);
-      const ep = model.pointFromOffset(offsets.end);
-      if (!sp?.node || !ep?.node) return false;
-      sel.setBaseAndExtent(ep.node, ep.offset, sp.node, sp.offset);
-    } else {
-      const startBounds = this._lineBounds(lines[start]);
-      const endBounds = this._lineBounds(lines[end]);
-      if (!startBounds || !endBounds) return false;
-
-      sel.setBaseAndExtent(endBounds.last.node, endBounds.last.node.length, startBounds.first.node, 0);
-    }
+    const sp = model.pointFromOffset(offsets.start);
+    const ep = model.pointFromOffset(offsets.end);
+    if (!sp?.node || !ep?.node) return false;
+    sel.setBaseAndExtent(ep.node, ep.offset, sp.node, sp.offset);
 
     this.markActive = true;
     return true;
@@ -1059,8 +1077,7 @@ class CaretEmacs {
 
   _expandTo(sel, granularity) {
     if (this.scrollContainer) {
-      if (granularity === 'sentenceboundary' && this._expandPdf(sel, 'sentence')) return;
-      if (granularity === 'paragraphboundary' && this._expandPdf(sel, 'paragraph')) return;
+      if (granularity === 'sentenceboundary' && this._expandPdfSentence(sel)) return;
     }
     const range = sel.getRangeAt(0);
     const refNode = range.startContainer;
@@ -1116,8 +1133,6 @@ class CaretEmacs {
       this.markActive = true;
     } else if (scope === 'word') {
       this._expandTo(sel, 'sentenceboundary');
-    } else {
-      this._expandTo(sel, 'paragraphboundary');
     }
     this._scrollToSelection();
     this._updateCursor();
@@ -1135,6 +1150,7 @@ class CaretEmacs {
   _visuallyOrderedTextNodes(root) {
     const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
+    let domIndex = 0;
     while (tw.nextNode()) {
       const textNode = tw.currentNode;
       if (!textNode.textContent.trim()) continue;
@@ -1151,22 +1167,35 @@ class CaretEmacs {
         width: clientRect.width,
         height: clientRect.height
       };
-      nodes.push({ node: textNode, rect });
+      nodes.push({ node: textNode, rect, domIndex: domIndex++ });
     }
+    if (!nodes.length) return [];
+
+    // Deterministic pre-sort: fully transitive ordering by vertical position,
+    // then horizontal position, then DOM order.
     nodes.sort((a, b) => {
-      // Calculate vertical midpoints for more accurate line detection
       const aMid = a.rect.top + a.rect.height / 2;
       const bMid = b.rect.top + b.rect.height / 2;
-      const dy = aMid - bMid;
-
-      // Use adaptive tolerance based on the heights of both elements
-      // This handles superscripts, subscripts, and varying font sizes
-      const tolerance = Math.max(a.rect.height, b.rect.height) / 2;
-
-      if (Math.abs(dy) > tolerance) return dy;
-      return a.rect.left - b.rect.left;
+      return (aMid - bMid) ||
+        (a.rect.left - b.rect.left) ||
+        (a.domIndex - b.domIndex);
     });
-    return nodes;
+
+    // Reuse shared line-grouping logic after deterministic pre-sort.
+    const lines = this._groupIntoLines(nodes);
+
+    // Deterministic per-line ordering by X, then DOM order.
+    const ordered = [];
+    for (const line of lines) {
+      line.sort((a, b) =>
+        (a.rect.left - b.rect.left) ||
+        (a.domIndex - b.domIndex));
+      for (const entry of line) {
+        ordered.push({ node: entry.node, rect: entry.rect });
+      }
+    }
+
+    return ordered;
   }
 
   /** Find the visually next/previous text node using visual ordering. */

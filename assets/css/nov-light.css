@@ -4,9 +4,10 @@ body {
   width: 95% !important;
   height: 50% !important;
   position: absolute !important;
-  left: 49% !important;
+  left: 50% !important;
   top: 30% !important;
   transform: translate(-50%, -55%) !important;
+  overflow-x: hidden;
 }
 p {
   line-height: 2em !important;
@@ -38,34 +39,22 @@ a, em, caption, th, tr, td, h1, h2, h3, h4, h5, h6, p, body {
   font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 h1 {
-  font-size: 2em !important;
   color: #2e3440 !important;
-  margin-bottom: 10px !important;
 }
 h2 {
-  font-size: 1.5em !important;
   color: #2e3440 !important;
-  margin-bottom: 10px !important;
 }
 h3 {
-  font-size: 1.3em !important;
   color: #2e3440 !important;
-  margin-bottom: 10px !important;
 }
 h4 {
-  font-size: 1.2em !important;
   color: #2e3440 !important;
-  margin-bottom: 10px !important;
 }
 h5 {
-  font-size: 1.1em !important;
   color: #2e3440 !important;
-  margin-bottom: 10px !important;
 }
 h6 {
-  font-size: 1em !important;
   color: #2e3440 !important;
-  margin-bottom: 10px !important;
 }
 :root {
   color-scheme: light; /* both supported */
