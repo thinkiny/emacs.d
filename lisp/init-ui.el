@@ -77,13 +77,9 @@
 ;; icons/advice
 (use-package nerd-icons)
 
-(use-package treemacs-icons-dired
+(use-package nerd-icons-dired
   :when window-system
-  :config
-  (defun treemacs-icons-dired-display-local-p ()
-    (not (file-remote-p default-directory)))
-  (advice-add 'treemacs-icons-dired--display :before-while #'treemacs-icons-dired-display-local-p)
-  (treemacs-icons-dired-mode))
+  :hook (dired-mode . nerd-icons-dired-mode))
 
 ;; frame appearance and theme support
 (let ((no-border '(internal-border-width . 0)))

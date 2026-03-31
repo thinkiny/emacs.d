@@ -93,33 +93,47 @@ Each element should be a string representing a project root directory path."
   :type '(repeat string)
   :group 'tramp-caches)
 
-(defcustom projectile-root-ignore-paths nil
+(defcustom projectile-ignored-root-paths '()
   "List of directory paths where projectile should stop searching for project roots."
   :type '(repeat string)
   :group 'projectile)
 
-(defconst projectile-current-user-home (expand-file-name "~/"))
-(defun projectile-stop-at-home(dir)
+(defun projectile-root-stop-at-home-p (dir)
   (if (file-remote-p dir)
       (string-equal dir (concat (file-remote-p dir) "~/"))
-    (string-equal dir projectile-current-user-home)))
+    (string-equal dir (expand-file-name "~/"))))
 
-(defun projectile-project-root-around-advice (orig-fun &rest args)
+(defun projectile-root-parent-at-home-p (dir)
+  (when-let* ((parent-dir (file-name-directory (directory-file-name dir))))
+    (projectile-root-stop-at-home-p parent-dir)))
+
+(defun projectile-root-ignored-path-p (dir)
+  (seq-some (lambda (path)
+              (let ((expanded (expand-file-name path)))
+                (string-equal dir expanded)))
+            projectile-ignored-root-paths))
+
+(defun projectile-project-root-stop-and-cache-advice (orig-fun &rest args)
   (let ((current-dir (expand-file-name (or (car args) default-directory))))
-    (if (or (member current-dir projectile-root-ignore-paths)
-            (projectile-stop-at-home current-dir))
-        nil
-      (if (file-remote-p current-dir)
-          (if-let* ((cached-project (find-longest-matching current-dir projectile-known-tramp-cache)))
-              cached-project
-            (let ((project-root (apply orig-fun args)))
-              (when project-root
-                (unless (member project-root projectile-known-tramp-cache)
-                  (push project-root projectile-known-tramp-cache)
-                  (customize-save-variable 'projectile-known-tramp-cache projectile-known-tramp-cache)))
-              project-root))
-        (apply orig-fun args)))))
+    (cond
+     ((projectile-root-ignored-path-p current-dir)
+      nil)
+     ((projectile-root-stop-at-home-p current-dir)
+      nil)
+     ((projectile-root-parent-at-home-p current-dir)
+      current-dir)
+     ((not (file-remote-p current-dir))
+      (apply orig-fun args))
+     ((if-let* ((cached-project
+                 (find-longest-matching current-dir projectile-known-tramp-cache)))
+          cached-project
+        (let ((project-root (apply orig-fun args)))
+          (when (and project-root
+                     (not (member project-root projectile-known-tramp-cache)))
+            (push project-root projectile-known-tramp-cache)
+            (customize-save-variable 'projectile-known-tramp-cache projectile-known-tramp-cache))
+          project-root))))))
 
-(advice-add 'projectile-project-root :around #'projectile-project-root-around-advice)
+(advice-add 'projectile-project-root :around #'projectile-project-root-stop-and-cache-advice)
 
 (provide 'init-projectile)

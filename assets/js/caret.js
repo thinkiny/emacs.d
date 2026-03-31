@@ -10,7 +10,7 @@ const CURSOR_CSS = `
   position:absolute;pointer-events:none;z-index:2147483647;
   background:transparent;display:none;box-sizing:border-box;
   border-radius:1px;
-  box-shadow:0 0 0 1px Canvas,0 0 0 2px CanvasText;
+  box-shadow: 0 0 0 1px CanvasText;
 }`.trim();
 
 class CaretEmacs {
@@ -191,7 +191,7 @@ class CaretEmacs {
   _rangeRectAt(node, off) {
     if (node.nodeType !== Node.TEXT_NODE || !node.length) return null;
     const range = document.createRange();
-    const clampedOff = Math.min(off, node.length - 1);
+    const clampedOff = Math.max(0, Math.min(off, node.length - 1));
     range.setStart(node, clampedOff);
     range.setEnd(node, clampedOff + 1);
     const rect = range.getClientRects()[0] || range.getBoundingClientRect();
@@ -358,6 +358,10 @@ class CaretEmacs {
     else sel.collapse(node, off);
   }
 
+  _isPdfMode() {
+    return Boolean(this.scrollContainer);
+  }
+
   /* ── cursor overlay ─────────────────────────────────────────── */
 
   _initCursor() {
@@ -374,6 +378,57 @@ class CaretEmacs {
       })();
   }
 
+  /** Return visible text bounds within a text node, excluding leading/trailing whitespace. */
+  _textVisibleBounds(textNode) {
+    if (textNode.nodeType !== Node.TEXT_NODE) return { start: 0, end: 0, length: 0 };
+    const text = textNode.textContent || "";
+    const length = text.length;
+    if (!text.trim()) return { start: 0, end: length, length };
+
+    const start = text.search(/\S/u);
+    let end = length;
+    for (let i = length - 1; i >= 0; i--) {
+      if (/\S/u.test(text[i])) { end = i + 1; break; }
+    }
+    return { start: Math.max(0, start), end, length };
+  }
+
+  /** Return start/end caret edge for visible content in a text node. */
+  _textVisibleEdgeOffset(textNode, atStart) {
+    const { start, end } = this._textVisibleBounds(textNode);
+    return atStart ? start : end;
+  }
+
+  /** Return probe offset for geometry lookup (always a real character position). */
+  _textVisibleProbeOffset(textNode, atStart) {
+    const { start, end } = this._textVisibleBounds(textNode);
+    if (atStart) return start;
+    return Math.max(start, end - 1);
+  }
+
+  /** Collapse/extend selection to a text node edge. */
+  _collapseToTextEdge(sel, textNode, atStart, anchorNode, anchorOff) {
+    if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return false;
+    const off = this._textVisibleEdgeOffset(textNode, atStart);
+    this._setFocus(sel, textNode, off, anchorNode, anchorOff);
+    return true;
+  }
+
+  /** Create a collapsed range at a text node edge. */
+  _rangeAtTextEdge(textNode, atStart) {
+    return this._collapsedRange(textNode, this._textVisibleEdgeOffset(textNode, atStart));
+  }
+
+  /** Clamp a caret offset to visible content bounds when possible. */
+  _normalizeTextOffset(node, offset) {
+    if (node.nodeType !== Node.TEXT_NODE) return offset;
+    const { start, end, length } = this._textVisibleBounds(node);
+    const clamped = Math.min(Math.max(0, offset), length);
+    if (clamped < start) return start;
+    if (clamped > end) return end;
+    return clamped;
+  }
+
   /** Resolve element/whitespace focus to a visible text position. */
   _resolveCursorPosition(node, offset, preferFwd = false) {
     if (node.nodeType === Node.ELEMENT_NODE) {
@@ -384,25 +439,25 @@ class CaretEmacs {
       // Check direct child and its firstChild before walking
       if (preferFwd) {
         if (child?.nodeType === Node.TEXT_NODE && child.textContent.trim())
-          return { node: child, offset: 0 };
+          return { node: child, offset: this._textVisibleEdgeOffset(child, true) };
         if (child?.nodeType === Node.ELEMENT_NODE) {
           const inner = child.firstChild;
           if (inner?.nodeType === Node.TEXT_NODE && inner.textContent.trim())
-            return { node: inner, offset: 0 };
+            return { node: inner, offset: this._textVisibleEdgeOffset(inner, true) };
         }
       }
 
       const start = child || node;
       const t = this._walkToVisible(start, true) || this._walkToVisible(start, false);
-      if (t) return { node: t, offset: 0 };
+      if (t) return { node: t, offset: this._textVisibleEdgeOffset(t, true) };
     }
     if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
       const prev = this._walkToVisible(node, false);
-      if (prev) return { node: prev, offset: prev.length };
+      if (prev) return { node: prev, offset: this._textVisibleEdgeOffset(prev, false) };
       const next = this._walkToVisible(node, true);
-      if (next) return { node: next, offset: 0 };
+      if (next) return { node: next, offset: this._textVisibleEdgeOffset(next, true) };
     }
-    return { node, offset };
+    return { node, offset: this._normalizeTextOffset(node, offset) };
   }
 
   /** Get a client rect for cursor display at the given text position. */
@@ -474,7 +529,9 @@ class CaretEmacs {
 
     const textNode = this._walkToVisible(focus, lookFwdFirst)
       || this._walkToVisible(focus, !lookFwdFirst);
-    if (textNode) sel.collapse(textNode, fwd ? textNode.length : 0);
+    if (textNode) {
+      this._collapseToTextEdge(sel, textNode, !fwd);
+    }
   }
 
   /** Visual character movement for PDF text layers (bypass DOM order). */
@@ -484,7 +541,7 @@ class CaretEmacs {
     if (focus.nodeType !== Node.TEXT_NODE) return false;
 
     if (fwd) {
-      if (focusOff + 1 < focus.length) {
+      if (focusOff < focus.length) {
         sel.collapse(focus, focusOff + 1);
         return true;
       }
@@ -499,7 +556,7 @@ class CaretEmacs {
       }
       const prev = this._visuallyAdjacentTextNode(false);
       if (!prev) return false;
-      sel.collapse(prev, Math.max(0, prev.length - 1));
+      sel.collapse(prev, prev.length);
       return true;
     }
   }
@@ -565,6 +622,43 @@ class CaretEmacs {
     }
   }
 
+  _wordStartOffsetInText(text, offset, fwd) {
+    let idx = fwd
+      ? Math.max(0, Math.min(offset, text.length))
+      : Math.max(0, Math.min(offset, text.length)) - 1;
+    while (idx >= 0 && idx < text.length && !this._isWordChar(text[idx])) {
+      idx += fwd ? 1 : -1;
+    }
+    if (idx < 0 || idx >= text.length) return -1;
+    while (idx > 0 && this._isWordChar(text[idx - 1])) idx--;
+    return idx;
+  }
+
+  _findWordStart(node, offset, fwd) {
+    let curNode = node;
+    let curOff = offset;
+    while (curNode) {
+      const text = curNode.nodeType === Node.TEXT_NODE ? (curNode.textContent || "") : "";
+      const idx = this._wordStartOffsetInText(text, curOff, fwd);
+      if (idx >= 0) return { node: curNode, offset: idx };
+      curNode = this._walkToVisible(curNode, fwd);
+      curOff = fwd ? 0 : (curNode ? curNode.textContent.length : 0);
+    }
+    return null;
+  }
+
+  /** Normalize DOM word movement to the beginning of a word (HTML/EPUB path). */
+  _snapToWordStart(sel, fwd) {
+    const { node, offset } = this._resolveCursorPosition(sel.focusNode, sel.focusOffset, fwd);
+    if (node.nodeType !== Node.TEXT_NODE) return false;
+    const target = this._findWordStart(node, offset, fwd);
+    if (!target?.node) return false;
+    const normalizedOff = this._normalizeTextOffset(target.node, target.offset);
+    if (target.node === sel.focusNode && normalizedOff === sel.focusOffset) return false;
+    sel.collapse(target.node, normalizedOff);
+    return true;
+  }
+
   _moveCaret(direction, granularity) {
     const sel = this._ensureSelection(true);
     if (!sel) { return false; }
@@ -605,8 +699,8 @@ class CaretEmacs {
       return moved;
     };
 
-    // Character / word: visual ordering (PDF text layers have DOM ≠ visual order)
-    if (granularity === "character" || granularity === "word") {
+    // PDF text layers require visual ordering because DOM order can differ from reading order.
+    if (this._isPdfMode() && (granularity === "character" || granularity === "word")) {
       const moved = granularity === "character"
         ? this._moveCharVisual(sel, fwd)
         : this._moveWordVisual(sel, fwd);
@@ -614,7 +708,7 @@ class CaretEmacs {
     }
 
     // Line: caretRangeFromPoint for visual line movement
-    if (granularity === "line" && this.scrollContainer) {
+    if (granularity === "line" && this._isPdfMode()) {
       const lineRange = this._moveLine(fwd);
       if (!lineRange) { this._hitBoundary = true; return false; }
       sel.removeAllRanges();
@@ -626,6 +720,10 @@ class CaretEmacs {
     let moved = this._stepModify(sel, direction, granularity, fwd);
     this._snapToText(sel, fwd);
     if (sel.focusNode === startNode && sel.focusOffset === startOff) { moved = false; }
+    if (moved && granularity === "word" && !this._isPdfMode()) {
+      this._snapToWordStart(sel, fwd);
+      if (sel.focusNode === startNode && sel.focusOffset === startOff) { moved = false; }
+    }
 
     if (moved && this._movedWrongWay(startNode, startOff, sel.focusNode, sel.focusOffset, fwd)) {
       this._setFocus(sel, startNode, startOff,
@@ -635,7 +733,9 @@ class CaretEmacs {
     }
 
     // Fallback: void elements that sel.modify cannot cross
-    if (!moved && this._fallbackToAdjacentText(sel, fwd)) return true;
+    if (!moved) {
+      moved = this._fallbackToAdjacentText(sel, fwd, markAnchorNode, markAnchorOff);
+    }
 
     return finish(moved);
   }
@@ -664,18 +764,15 @@ class CaretEmacs {
   }
 
   /** Jump to the next/prev visible text node when sel.modify fails. */
-  _fallbackToAdjacentText(sel, fwd) {
+  _fallbackToAdjacentText(sel, fwd, anchorNode = null, anchorOff = null) {
     const startNode = sel.focusNode.nodeType === Node.TEXT_NODE
       ? sel.focusNode
       : (sel.focusNode.childNodes[sel.focusOffset] || sel.focusNode);
     const textNode = this._walkToVisible(startNode, fwd);
     if (!textNode) return false;
-    this._setFocus(sel, textNode, fwd ? 0 : textNode.length,
-      this.markActive ? sel.anchorNode : null,
-      this.markActive ? sel.anchorOffset : null);
-    this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
-    this._scrollToSelection();
-    this._updateCursor();
+    this._collapseToTextEdge(sel, textNode, fwd,
+      anchorNode,
+      anchorOff);
     return true;
   }
 
@@ -796,7 +893,7 @@ class CaretEmacs {
     const fwd = direction === "forward";
     if (node.nodeType !== Node.TEXT_NODE) return false;
     if (!node.textContent.trim()) return !this._walkToVisible(node, fwd);
-    if (fwd ? offset < node.length - 1 : offset > 0) return false;
+    if (fwd ? offset < node.length : offset > 0) return false;
     const hasNextVisible = !!this._walkToVisible(node, fwd);
     if (hasNextVisible) return false;
     // No more text in DOM, but in multi-page PDF, adjacent pages may
@@ -1157,7 +1254,8 @@ class CaretEmacs {
       const range = document.createRange();
       range.selectNodeContents(textNode);
       const rects = range.getClientRects();
-      const clientRect = rects[0] || range.getBoundingClientRect();
+      const nonEmptyRect = Array.from(rects).find((r) => r?.height && r?.width);
+      const clientRect = nonEmptyRect || range.getBoundingClientRect();
       if (!clientRect || !clientRect.height || !clientRect.width) {
         continue;
       }
@@ -1290,7 +1388,7 @@ class CaretEmacs {
     while (tw.nextNode()) {
       const textNode = tw.currentNode;
       if (!textNode.textContent.trim()) continue;
-      const off = toStart ? 0 : Math.max(0, textNode.length - 1);
+      const off = this._textVisibleProbeOffset(textNode, toStart);
       const rect = this._rangeRectAt(textNode, off);
       if (!rect) continue;
       if (bestNode === null) {
@@ -1307,7 +1405,7 @@ class CaretEmacs {
     }
     let range;
     if (bestNode) {
-      range = this._collapsedRange(bestNode, toStart ? 0 : Math.max(0, bestNode.length - 1));
+      range = this._rangeAtTextEdge(bestNode, toStart);
     } else {
       range = document.createRange();
       range.selectNodeContents(scopeRoot);
