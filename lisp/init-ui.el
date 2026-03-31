@@ -75,7 +75,7 @@
   (pixel-scroll-precision-scroll-up-page (get-precision-scroll-page-height)))
 
 ;; icons/advice
-(use-package all-the-icons)
+(use-package nerd-icons)
 
 (use-package treemacs-icons-dired
   :when window-system
@@ -109,7 +109,11 @@
 
 ;; themes
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-(use-package modus-themes)
+(use-package modus-themes
+  :config
+  (setq modus-themes-italic-constructs t
+        modus-themes-bold-constructs t))
+
 (use-package ef-themes)
 
 (defcustom default-theme 'modus-operandi

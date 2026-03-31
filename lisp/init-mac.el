@@ -105,16 +105,4 @@ fi"
             (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback)
           (toggle-frame-maximized))))))
 
-;; italic font
-(defun set-italic-font-if-available(&rest args)
-  (when-let* ((font (font-face-attributes (face-attribute 'italic :font)))
-              (family (plist-get font :family))
-              (italic-family (concat family " Italic")))
-
-    (if (member italic-family (font-family-list))
-        (set-face-attribute 'italic nil :family italic-family))))
-
-(if window-system
-    (advice-add #'cnfonts-set-font :after #'set-italic-font-if-available))
-
 (provide 'init-mac)
