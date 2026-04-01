@@ -19,20 +19,21 @@
   (define-key ivy-minibuffer-map (kbd "TAB") #'ivy-insert-current)
   (add-to-list 'ivy-ignore-buffers "\\*TERM")
 
-  ;; (add-hook 'ivy-occur-mode-hook #'ivy-occur-calling-auto)
+  (define-key ivy-occur-mode-map (kbd "n") #'ivy-occur-next-line)
+  (define-key ivy-occur-mode-map (kbd "p") #'ivy-occur-previous-line)
+  (add-hook 'ivy-occur-mode-hook #'ivy-occur-focus)
+
   (global-set-key (kbd "C-c z") 'ivy-resume)
   (global-set-key (kbd "C-x b") 'persp-ivy-switch-buffer)
   (after-load-theme
    ;;(set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
    (set-face-attribute 'ivy-virtual nil :inherit nil)))
 
-(defun ivy-occur-calling-auto ()
+(defun ivy-occur-focus ()
   (run-at-time 0.1 nil (lambda ()
-                         (ivy-occur-toggle-calling)
+                         ;; (ivy-occur-toggle-calling)
                          (goto-char (point-min))
-                         ;;(ivy-occur-next-line)
-                         )))
-
+                         (ivy-occur-next-line))))
 
 ;; counsel
 (use-package counsel

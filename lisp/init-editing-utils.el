@@ -37,6 +37,7 @@
 (add-hook 'after-init-hook 'transient-mark-mode)
 (make-local-variable 'truncate-lines)
 (global-set-key (kbd "C-c $") 'toggle-truncate-lines)
+(global-set-key (kbd "<RET>") #'newline-and-indent)
 
 ;;; Optimizations
 (setq read-process-output-max (* 4096 1024))

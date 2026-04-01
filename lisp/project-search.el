@@ -473,9 +473,7 @@ responses."
                  (push (project-search--rg-match-to-xref match query) xrefs)
                  (cl-incf count))))
 
-           
-          (project-search--update-ivy-candidates (nreverse (copy-sequence xrefs))))
-
+           (project-search--update-ivy-candidates (nreverse (copy-sequence xrefs))))
          ;; True global cap: stop rg as soon as we have enough.
          (when (and (>= count max-results) (process-live-p process))
            (kill-process process)))))
@@ -520,14 +518,15 @@ INPUT is the current minibuffer text."
 ;;;###autoload
 (defun ivy-project-rg (&optional options)
   "Search project with ripgrep using xref-based ivy display.
-OPTIONS is an optional string of extra rg flags (e.g. \"-tgo -i\")."
+OPTIONS is an optional string of extra rg flags (e.g. \"-tgo -i\").
+Session variables are set with `setq' so they survive `ivy-resume'."
   (interactive)
   (let* ((project-root (project-search--project-root))
-         (project-search--ivy-project-root project-root)
-         (project-search--ivy-server nil)
-         (project-search--ivy-rg-extra-args options)
-         (project-search--ivy-default-directory default-directory)
          (default-directory project-root))
+    (setq project-search--ivy-project-root project-root
+          project-search--ivy-server nil
+          project-search--ivy-rg-extra-args options
+          project-search--ivy-default-directory default-directory)
     (ivy-read (format "[%s] rg: " (projectile-project-name))
               #'project-search--ivy-rg-function
               :dynamic-collection t
@@ -541,14 +540,15 @@ OPTIONS is an optional string of extra rg flags (e.g. \"-tgo -i\")."
 When an active Eglot server exists for the project, queries
 workspace/symbol asynchronously.  Otherwise falls back to async
 ripgrep text search.  Results are limited to
-`project-search-max-results'."
+`project-search-max-results'.
+Session variables are set with `setq' so they survive `ivy-resume'."
   (interactive)
   (let* ((project-root (project-search--project-root))
          (server (project-search--find-eglot-server project-root))
-         (project-search--ivy-project-root project-root)
-         (project-search--ivy-server server)
-         (project-search--ivy-default-directory default-directory)
          (default-directory project-root))
+    (setq project-search--ivy-project-root project-root
+          project-search--ivy-server server
+          project-search--ivy-default-directory default-directory)
     (ivy-read (format "[%s] symbol: " (projectile-project-name))
               #'project-search--ivy-function
               :dynamic-collection t
@@ -564,8 +564,23 @@ ripgrep text search.  Results are limited to
   (when (process-live-p project-search--rg-process)
     (kill-process project-search--rg-process)))
 
+(defun project-search--ivy-occur (_cands)
+  "Populate an ivy-occur buffer from the current project-search session.
+The dynamic collection functions return 0 to signal async results,
+which crashes `ivy--occur-default'.  This handler reads from
+`ivy--all-candidates' instead."
+  (let ((cands ivy--all-candidates))
+    (ivy-occur-mode)
+    (insert (format "%d candidates:\n" (length cands)))
+    (ivy--occur-insert-lines cands)
+    (read-only-mode)))
+
 (with-eval-after-load 'ivy
   (ivy-configure 'ivy-project-search
+    :occur #'project-search--ivy-occur
+    :unwind-fn #'project-search--unwind)
+  (ivy-configure 'ivy-project-rg
+    :occur #'project-search--ivy-occur
     :unwind-fn #'project-search--unwind)
   (add-to-list 'ivy-more-chars-alist '(ivy-project-search . 2))
   (add-to-list 'ivy-more-chars-alist '(ivy-project-rg . 2)))
