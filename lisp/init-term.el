@@ -9,6 +9,7 @@
   :commands (vterm-mode vterm)
   :config
   (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash -l"))
+  (add-to-list 'vterm-tramp-shells '("rpc" "/bin/bash -l"))
   (ignore-tramp-ssh-control-master 'vterm-mode)
   (setq vterm-always-compile-module t)
   (setq vterm-min-window-width 40)

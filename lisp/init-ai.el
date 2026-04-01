@@ -2,7 +2,7 @@
 
 (use-package claude-code-ide
   :ensure t
-  :vc (:url "https://github.com/thinkiny/claude-code-ide.el" :branch "tramp")
+  :vc (:url "https://github.com/thinkiny/claude-code-ide.el" :branch "mine")
   :bind (:map global-map
               ("C-c y" . claude-code-ide-menu))
   :config
@@ -44,6 +44,7 @@
               ("C-c s a" . agent-shell))
   :config
   (setq agent-shell-header-style 'text)
+  (setq agent-shell-show-config-icons nil)
   (setq agent-shell-show-welcome-message nil)
   (setq agent-shell-cursor-environment
         (agent-shell-make-environment-variables

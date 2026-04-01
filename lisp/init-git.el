@@ -65,6 +65,26 @@
 (advice-add 'magit-toplevel :around #'cache-tramp-magit-toplevel)
 
 ;; rsync functions
+(defun tramp-vec-to-rsync-address (vec)
+  "Build rsync destination string from TRAMP vector VEC."
+  (let ((user (tramp-file-name-user vec))
+        (host (tramp-file-name-host vec))
+        (remote-path (tramp-file-name-localname vec)))
+    (if user
+        (format "%s@%s:%s" user host remote-path)
+      (format "%s:%s" host remote-path))))
+
+(defun tramp-to-rsync-address (tramp-path)
+  "Convert TRAMP-PATH to rsync address format.
+Example: /ssh:user@host:/path/to/dir -> user@host:/path/to/dir"
+  (if (tramp-tramp-file-p tramp-path)
+        (let* ((parsed (tramp-dissect-file-name tramp-path))
+               (method (tramp-file-name-method parsed)))
+          (if (string= method "ssh")
+              (tramp-vec-to-rsync-address parsed)
+            tramp-path))
+    tramp-path))
+
 (defun magit-rsync-to-src()
   "Find matching entry in `magit-toplevel-tramp-cache` and run rsync.
 Looks for an entry where the value matches current project root,
