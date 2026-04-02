@@ -53,7 +53,7 @@
   (defun google-translate-echo-area-output-translation (gtos)
     "Output translation to the echo area (See
 http://www.gnu.org/software/emacs/manual/html_node/elisp/The-Echo-Area.html)"
-    (message
+    (message "%s"
      (google-translate--trim-string
       (if (google-translate--word-p (gtos-text gtos))
           (google-translate--format-word-output gtos)
