@@ -59,6 +59,7 @@ browser defined by `browse-url-generic-program'."
 
 (defun my-elfeed-show-mode-hook()
   (visual-line-mode)
+  (eldoc-mode -1)
   (unbind-key (kbd "v") 'shr-map)
   (unbind-key (kbd "w") 'shr-map)
   (face-remap-add-relative 'shr-text :inherit 'default)

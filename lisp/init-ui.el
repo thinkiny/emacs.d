@@ -40,7 +40,7 @@
         scroll-conservatively 101))
 
 (defconst precision-scroll-step-height 90)
-(defconst precision-scroll-taller-line 150)
+(defconst precision-scroll-nontext-height 200)
 (defconst precision-scroll-page-lines 20)
 
 (defun precision-scroll-line-height ()
@@ -49,21 +49,33 @@
 (defun get-precision-scroll-page-height ()
   (* precision-scroll-page-lines (precision-scroll-line-height)))
 
-(defun precision-scroll-current-line-taller-p ()
-  (> (car (window-line-height)) (frame-char-height)))
+(defun precision-scroll--line-non-text-p (&optional dir)
+  "Non-nil if point (or adjacent line in DIR) has non-text display content."
+  (save-excursion
+    (when dir (vertical-motion dir))
+    (let* ((pos (point))
+           (line-h (car (window-line-height)))
+           (has-disp (or (get-char-property pos 'display)
+                         (cl-some (lambda (ov) (overlay-get ov 'display))
+                                  (overlays-at pos)))))
+      (and has-disp
+           line-h
+           (> line-h precision-scroll-nontext-height)))))
 
 (defun precision-scroll-forward-line ()
   (interactive)
-  (if (precision-scroll-current-line-taller-p)
+  (if (and (precision-scroll--line-non-text-p)
+           (precision-scroll--line-non-text-p 1))
       (ignore-errors
-        (pixel-scroll-precision-scroll-down precision-scroll-taller-line))
+        (pixel-scroll-precision-scroll-down precision-scroll-nontext-height))
     (vertical-motion 1)))
 
 (defun precision-scroll-backward-line ()
   (interactive)
-  (if (precision-scroll-current-line-taller-p)
+  (if (and (precision-scroll--line-non-text-p)
+           (precision-scroll--line-non-text-p -1))
       (ignore-errors
-        (pixel-scroll-precision-scroll-up precision-scroll-taller-line))
+        (pixel-scroll-precision-scroll-up precision-scroll-nontext-height))
     (vertical-motion -1)))
 
 (defun precision-scroll-up-page ()

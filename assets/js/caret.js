@@ -1,9 +1,11 @@
 /** CaretEmacs – Emacs-like caret navigation for WebKit. */
 
+/* ── Constants ────────────────────────────────────────────── */
+
 const CURSOR_ID = "__caret-emacs-cursor";
 const STYLE_ID = "__caret-emacs-style";
-const DEBUG_VERSION = "2026-03-30d";
 const WORD_CHAR_RE = /[\p{L}\p{N}\p{M}\p{Pc}]/u;
+const SCROLL_PX = 200;
 
 const CURSOR_CSS = `
 #${CURSOR_ID}{
@@ -14,6 +16,9 @@ const CURSOR_CSS = `
 }`.trim();
 
 class CaretEmacs {
+
+  /* ── Construction ──────────────────────────────────────────── */
+
   constructor(el = document, opts = {}) {
     this.el = el;
     this.markActive = false;
@@ -24,7 +29,6 @@ class CaretEmacs {
     this._cursorEl = null;
     this._scrollRafPending = false;
     this._lastScrollTop = 0;
-    this._logDebug("init", { version: DEBUG_VERSION, hasScrollContainer: Boolean(this.scrollContainer) });
 
     const init = () => {
       this._initCursor();
@@ -52,15 +56,7 @@ class CaretEmacs {
 
   get _root() { return this.el === document ? document.body : this.el; }
 
-  /* ── debug helpers ─────────────────────────────────────────── */
-  dumpDebug() {
-    return this._debugLog.map((entry) => JSON.stringify(entry)).join("\n");
-  }
-
-  _logDebug(event, data) {
-    if (!this._debug) return;
-    this._debugLog.push({ event, ...data });
-  }
+  /* ── Debug ─────────────────────────────────────────────────── */
 
   enableDebug(enabled = true) {
     this._debug = Boolean(enabled);
@@ -71,44 +67,97 @@ class CaretEmacs {
     this._debugLog = [];
   }
 
-  /* ── scroll / viewport abstraction ───────────────────────── */
-  _isContained(node) {
-    return node && this._root.contains(node);
+  dumpDebug() {
+    return this._debugLog.map((entry) => JSON.stringify(entry)).join("\n");
   }
 
-  _pageScopeRoot(node) {
-    const el = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
-    return el?.closest('.page[data-page-number]')
-      || el?.closest('.textLayer')
-      || this._currentPage()
-      || this._root;
+  _logDebug(event, data) {
+    if (!this._debug) return;
+    this._debugLog.push({ event, ...data });
   }
+
+  /* ── Viewport & Scroll ─────────────────────────────────────── */
 
   get _scrollTop() {
     return this.scrollContainer
       ? this.scrollContainer.scrollTop : window.scrollY;
   }
+
   get _viewportHeight() {
     return this.scrollContainer
       ? this.scrollContainer.clientHeight : window.innerHeight;
   }
+
   get _scrollHeight() {
     return this.scrollContainer
       ? this.scrollContainer.scrollHeight
       : document.documentElement.scrollHeight;
   }
+
   _viewportRect() {
     if (this.scrollContainer)
       return this.scrollContainer.getBoundingClientRect();
     return { top: 0, left: 0, right: window.innerWidth, bottom: window.innerHeight };
   }
+
   _scrollBy(dy) {
     if (this.scrollContainer) this.scrollContainer.scrollTop += dy;
     else window.scrollBy(0, dy);
   }
+
   _scrollTo(y) {
     if (this.scrollContainer) this.scrollContainer.scrollTop = y;
     else window.scrollTo(0, y);
+  }
+
+  /** Scroll the viewport to keep the selection focus visible. Returns true if scrolled. */
+  _scrollToSelection() {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return false;
+
+    // Use _rangeRectAt for a proper rect with height, fallback to collapsed range
+    let rect = this._rangeRectAt(sel.focusNode, sel.focusOffset);
+    if (!rect) {
+      rect = this._collapsedRange(sel.focusNode, sel.focusOffset).getBoundingClientRect();
+    }
+    if (!rect || !rect.height) return false;
+
+    const { top, bottom } = rect;
+    const vp = this._viewportRect();
+    if (bottom > vp.bottom) {
+      if (Math.ceil(this._scrollTop + this._viewportHeight) >= this._scrollHeight) return false;
+      // Scroll to place cursor at 1/3 from bottom of viewport
+      const vpHeight = this._viewportHeight;
+      const delta = bottom - (vp.top + vpHeight * 1 / 3);
+      if (delta <= 0) return false;
+      this._scrollBy(delta);
+      return true;
+    } else if (top < vp.top) {
+      if (Math.floor(this._scrollTop) <= 0) return false;
+      // Scroll to place cursor at 2/3 from top of viewport
+      const vpHeight = this._viewportHeight;
+      const delta = top - (vp.top + vpHeight * 2 / 3);
+      if (delta >= 0) return false;
+      this._scrollBy(delta);
+      return true;
+    }
+    return false;
+  }
+
+  /** Page down/up: scroll viewport, then re-place caret using caretRangeFromPoint. */
+  _scrollPage(direction) {
+    const sel = this._ensureSelection();
+    if (!sel?.rangeCount) return;
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    const caretX = rect.left;
+    const caretY = rect.top;
+    const delta = this._viewportHeight / 3;
+    this._scrollBy(direction === "down" ? delta : -delta);
+    const newY = direction === "down" ? caretY - delta : caretY + delta;
+    const range = this._probeTextAt(caretX, newY);
+    if (!range) return;
+    this._applyRange(sel, range);
+    this._updateCursor();
   }
 
   _initPdfScroll() {
@@ -138,19 +187,154 @@ class CaretEmacs {
     poll();
   }
 
-  /** Probe for a text range at screen coordinates; returns a collapsed Range or null. */
-  _probeTextAt(cx, cy) {
-    const range = document.caretRangeFromPoint(cx, cy);
-    if (!range || !this._isContained(range.startContainer)) return null;
-    if (this.scrollContainer) {
-      const parentEl = range.startContainer.nodeType === Node.TEXT_NODE
-        ? range.startContainer.parentElement : range.startContainer;
-      if (!parentEl?.closest('.textLayer')) return null;
-    }
-    return this._rangeToText(range);
+  _onUserScroll() {
+    if (this._scrollRafPending) return;
+    this._scrollRafPending = true;
+    requestAnimationFrame(() => {
+      this._scrollRafPending = false;
+      const scrollTop = this._scrollTop;
+      const fwd = scrollTop > this._lastScrollTop;
+      this._lastScrollTop = scrollTop;
+
+      const sel = window.getSelection();
+      if (!sel?.rangeCount) {
+        this._ensureSelection();
+        this._updateCursor();
+        return;
+      }
+
+      const vp = this._viewportRect();
+      const caretRect = this._isContained(sel.focusNode)
+        ? this._rangeRectAt(sel.focusNode, sel.focusOffset) : null;
+      if (caretRect && caretRect.bottom >= vp.top && caretRect.top <= vp.bottom) return;
+
+      // Use caret's current X (still valid even if off-screen), or viewport center
+      const cx = caretRect
+        ? caretRect.left + caretRect.width / 2
+        : (vp.left + vp.right) / 2;
+      const cy = fwd ? vp.top + 20 : vp.bottom - 20;
+
+      const resolved = this._probeTextAt(cx, cy);
+      if (resolved) {
+        sel.removeAllRanges();
+        sel.addRange(resolved);
+        this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+      }
+      this._updateCursor();
+    });
   }
 
-  /* ── tree-walker helpers ─────────────────────────────────── */
+  /* ── Cursor Overlay ────────────────────────────────────────── */
+
+  _initCursor() {
+    if (!document.getElementById(STYLE_ID)) {
+      const style = Object.assign(document.createElement("style"),
+        { id: STYLE_ID, textContent: CURSOR_CSS });
+      document.head.appendChild(style);
+    }
+    this._cursorEl = document.getElementById(CURSOR_ID)
+      ?? (() => {
+        const el = Object.assign(document.createElement("div"), { id: CURSOR_ID });
+        document.documentElement.appendChild(el);
+        return el;
+      })();
+  }
+
+  _updateCursor() {
+    const el = this._cursorEl;
+    if (!el) return;
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) {
+      // Selection unexpectedly lost — restore from last rendered position
+      const c = this._lastRenderedPos;
+      if (c?.node && this._root.contains(c.node)) {
+        sel.removeAllRanges();
+        sel.addRange(this._collapsedRange(c.node, c.offset));
+      }
+      if (!sel?.rangeCount) { el.style.display = "none"; return; }
+    }
+    if (!this._isContained(sel.focusNode)) { el.style.display = "none"; return; }
+    const { node, offset } = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
+    const rect = this._cursorRectAt(node, offset);
+    if (!rect?.height) { el.style.display = "none"; return; }
+    const cw = this._cursorWidth(rect);
+    let cursorTop = rect.top + window.scrollY;
+    let cursorLeft = rect.left + window.scrollX;
+    let cursorHeight = rect.height;
+    const parent = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    if (parent) {
+      const fontSize = parseFloat(getComputedStyle(parent).fontSize);
+      if (fontSize > 0 && cursorHeight > fontSize) {
+        cursorTop += (cursorHeight - fontSize) / 2;
+        cursorHeight = fontSize;
+      }
+    }
+    Object.assign(el.style, {
+      display: "block",
+      left: `${cursorLeft}px`,
+      top: `${cursorTop}px`,
+      width: `${cw}px`,
+      height: `${cursorHeight}px`,
+    });
+
+    // Save current focus as last-rendered position
+    this._lastRenderedPos = { node: sel.focusNode, offset: sel.focusOffset };
+  }
+
+  /** Get a client rect for cursor display at the given text position. */
+  _cursorRectAt(node, offset) {
+    const rect = this._rangeRectAt(node, offset) || this._rangeRectAt(node, offset - 1);
+    if (rect) return rect;
+    const cr = this._collapsedRange(node, offset);
+    return cr.getClientRects()[0] || cr.getBoundingClientRect();
+  }
+
+  /** Compute cursor width: use the rect's width if it looks like a single character, else approximate. */
+  _cursorWidth(rect) {
+    const isCharSized = rect.width > 1 && rect.width <= rect.height * 1.2;
+    return isCharSized ? rect.width : rect.height * 0.6;
+  }
+
+  /* ── DOM Helpers ───────────────────────────────────────────── */
+
+  _isContained(node) {
+    return node && this._root.contains(node);
+  }
+
+  _isPdfMode() {
+    return Boolean(this.scrollContainer);
+  }
+
+  /** Create a collapsed range at the given node and offset. */
+  _collapsedRange(node, offset) {
+    const range = document.createRange();
+    const max = node.nodeType === Node.TEXT_NODE ? node.length : node.childNodes.length;
+    range.setStart(node, Math.min(Math.max(0, offset), max));
+    range.collapse(true);
+    return range;
+  }
+
+  /** Make a 1-char range at (node, offset) and return its rect, or null. */
+  _rangeRectAt(node, offset) {
+    if (node.nodeType !== Node.TEXT_NODE || !node.length) return null;
+    const range = document.createRange();
+    const clampedOff = Math.max(0, Math.min(offset, node.length - 1));
+    range.setStart(node, clampedOff);
+    range.setEnd(node, clampedOff + 1);
+    const rect = range.getClientRects()[0] || range.getBoundingClientRect();
+    return (rect?.height && rect?.width) ? rect : null;
+  }
+
+  /** Clone a DOMRect into a plain object. */
+  _cloneRect(r) {
+    return { top: r.top, left: r.left, width: r.width, height: r.height };
+  }
+
+  /** True when two rects share the same visual line. */
+  _isSameLine(rectA, rectB) {
+    const tolerance = Math.max(rectA.height, rectB.height) / 2;
+    return Math.abs((rectA.top + rectA.height / 2) - (rectB.top + rectB.height / 2)) <= tolerance;
+  }
 
   /** Return a TreeWalker for text nodes, positioned at `node`. */
   _textWalker(node) {
@@ -178,27 +362,104 @@ class CaretEmacs {
     } catch (e) { return false; }
   }
 
-  /** Create a collapsed range at the given node and offset. */
-  _collapsedRange(node, offset) {
-    const range = document.createRange();
-    const max = node.nodeType === Node.TEXT_NODE ? node.length : node.childNodes.length;
-    range.setStart(node, Math.min(Math.max(0, offset), max));
-    range.collapse(true);
-    return range;
+  /** Return visible text bounds within a text node, excluding leading/trailing whitespace. */
+  _textVisibleBounds(textNode) {
+    if (textNode.nodeType !== Node.TEXT_NODE) return { start: 0, end: 0, length: 0 };
+    const text = textNode.textContent || "";
+    const length = text.length;
+    if (!text.trim()) return { start: 0, end: length, length };
+
+    const start = text.search(/\S/u);
+    let end = length;
+    for (let i = length - 1; i >= 0; i--) {
+      if (/\S/u.test(text[i])) { end = i + 1; break; }
+    }
+    return { start: Math.max(0, start), end, length };
   }
 
-  /** Make a 1-char range at (node, off) and return its rect, or null. */
-  _rangeRectAt(node, off) {
-    if (node.nodeType !== Node.TEXT_NODE || !node.length) return null;
-    const range = document.createRange();
-    const clampedOff = Math.max(0, Math.min(off, node.length - 1));
-    range.setStart(node, clampedOff);
-    range.setEnd(node, clampedOff + 1);
-    const rect = range.getClientRects()[0] || range.getBoundingClientRect();
-    return (rect?.height && rect?.width) ? rect : null;
+  /** Return start/end caret edge for visible content in a text node. */
+  _textVisibleEdgeOffset(textNode, atStart) {
+    const { start, end } = this._textVisibleBounds(textNode);
+    return atStart ? start : end;
   }
 
-  /* ── selection helpers ──────────────────────────────────────── */
+  /** Return probe offset for geometry lookup (always a real character position). */
+  _textVisibleProbeOffset(textNode, atStart) {
+    const { start, end } = this._textVisibleBounds(textNode);
+    if (atStart) return start;
+    return Math.max(start, end - 1);
+  }
+
+  /** Clamp a caret offset to visible content bounds when possible. */
+  _normalizeTextOffset(node, offset) {
+    if (node.nodeType !== Node.TEXT_NODE) return offset;
+    const { start, end, length } = this._textVisibleBounds(node);
+    const clamped = Math.min(Math.max(0, offset), length);
+    if (clamped < start) return start;
+    if (clamped > end) return end;
+    return clamped;
+  }
+
+  /** Resolve element/whitespace focus to a visible text position. */
+  _resolveCursorPosition(node, offset, preferFwd = false) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const child = offset < node.childNodes.length
+        ? node.childNodes[offset]
+        : node.lastChild;
+
+      // Check direct child and its firstChild before walking
+      if (preferFwd) {
+        if (child?.nodeType === Node.TEXT_NODE && child.textContent.trim())
+          return { node: child, offset: this._textVisibleEdgeOffset(child, true) };
+        if (child?.nodeType === Node.ELEMENT_NODE) {
+          const inner = child.firstChild;
+          if (inner?.nodeType === Node.TEXT_NODE && inner.textContent.trim())
+            return { node: inner, offset: this._textVisibleEdgeOffset(inner, true) };
+        }
+      }
+
+      const start = child || node;
+      const t = this._walkToVisible(start, true) || this._walkToVisible(start, false);
+      if (t) return { node: t, offset: this._textVisibleEdgeOffset(t, true) };
+    }
+    if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
+      const prev = this._walkToVisible(node, false);
+      if (prev) return { node: prev, offset: this._textVisibleEdgeOffset(prev, false) };
+      const next = this._walkToVisible(node, true);
+      if (next) return { node: next, offset: this._textVisibleEdgeOffset(next, true) };
+    }
+    return { node, offset: this._normalizeTextOffset(node, offset) };
+  }
+
+  /** Resolve a range from caretRangeFromPoint to a visible text node, or null. */
+  _rangeToText(range) {
+    const { node, offset } = this._resolveCursorPosition(
+      range.startContainer, range.startOffset, true);
+    if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return null;
+    return this._collapsedRange(node, offset);
+  }
+
+  /** Get a rect with real dimensions at a range's start position. */
+  _charRect(range) {
+    const rect = this._rangeRectAt(range.startContainer, range.startOffset);
+    if (rect) return rect;
+    const fallbackRect = range.getBoundingClientRect();
+    return fallbackRect?.height ? fallbackRect : null;
+  }
+
+  /** Probe for a text range at screen coordinates; returns a collapsed Range or null. */
+  _probeTextAt(cx, cy) {
+    const range = document.caretRangeFromPoint(cx, cy);
+    if (!range || !this._isContained(range.startContainer)) return null;
+    if (this.scrollContainer) {
+      const parentEl = range.startContainer.nodeType === Node.TEXT_NODE
+        ? range.startContainer.parentElement : range.startContainer;
+      if (!parentEl?.closest('.textLayer')) return null;
+    }
+    return this._rangeToText(range);
+  }
+
+  /* ── Selection Management ──────────────────────────────────── */
 
   _ensureSelection(skipRelocate = false) {
     const sel = window.getSelection();
@@ -245,41 +506,15 @@ class CaretEmacs {
     }
   }
 
-  _onUserScroll() {
-    if (this._scrollRafPending) return;
-    this._scrollRafPending = true;
-    requestAnimationFrame(() => {
-      this._scrollRafPending = false;
-      const scrollTop = this._scrollTop;
-      const fwd = scrollTop > this._lastScrollTop;
-      this._lastScrollTop = scrollTop;
-
-      const sel = window.getSelection();
-      if (!sel?.rangeCount) {
-        this._ensureSelection();
-        this._updateCursor();
-        return;
-      }
-
-      const vp = this._viewportRect();
-      const caretRect = this._isContained(sel.focusNode)
-        ? this._rangeRectAt(sel.focusNode, sel.focusOffset) : null;
-      if (caretRect && caretRect.bottom >= vp.top && caretRect.top <= vp.bottom) return;
-
-      // Use caret's current X (still valid even if off-screen), or viewport center
-      const cx = caretRect
-        ? caretRect.left + caretRect.width / 2
-        : (vp.left + vp.right) / 2;
-      const cy = fwd ? vp.top + 20 : vp.bottom - 20;
-
-      const resolved = this._probeTextAt(cx, cy);
-      if (resolved) {
-        sel.removeAllRanges();
-        sel.addRange(resolved);
-        this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
-      }
-      this._updateCursor();
-    });
+  _restoreCaretIfLost() {
+    const sel = window.getSelection();
+    if (sel?.rangeCount) return;
+    const c = this._savedFocus;
+    if (!c?.node || !this._root.contains(c.node)) return;
+    const r = this._collapsedRange(c.node, c.offset);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    this._updateCursor();
   }
 
   _setMark(active) {
@@ -297,51 +532,6 @@ class CaretEmacs {
     this._updateCursor();
   }
 
-  _restoreCaretIfLost() {
-    const sel = window.getSelection();
-    if (sel?.rangeCount) return;
-    const c = this._savedFocus;
-    if (!c?.node || !this._root.contains(c.node)) return;
-    const r = this._collapsedRange(c.node, c.offset);
-    sel.removeAllRanges();
-    sel.addRange(r);
-    this._updateCursor();
-  }
-
-  /** Scroll the viewport to keep the selection focus visible. Returns true if scrolled. */
-  _scrollToSelection() {
-    const sel = window.getSelection();
-    if (!sel?.rangeCount) return false;
-
-    // Use _rangeRectAt for a proper rect with height, fallback to collapsed range
-    let rect = this._rangeRectAt(sel.focusNode, sel.focusOffset);
-    if (!rect) {
-      rect = this._collapsedRange(sel.focusNode, sel.focusOffset).getBoundingClientRect();
-    }
-    if (!rect || !rect.height) return false;
-
-    const { top, bottom } = rect;
-    const vp = this._viewportRect();
-    if (bottom > vp.bottom) {
-      if (Math.ceil(this._scrollTop + this._viewportHeight) >= this._scrollHeight) return false;
-      // Scroll to place cursor at 1/3 from bottom of viewport
-      const vpHeight = this._viewportHeight;
-      const delta = bottom - (vp.top + vpHeight * 1 / 3);
-      if (delta <= 0) return false;
-      this._scrollBy(delta);
-      return true;
-    } else if (top < vp.top) {
-      if (Math.floor(this._scrollTop) <= 0) return false;
-      // Scroll to place cursor at 2/3 from top of viewport
-      const vpHeight = this._viewportHeight;
-      const delta = top - (vp.top + vpHeight * 2 / 3);
-      if (delta >= 0) return false;
-      this._scrollBy(delta);
-      return true;
-    }
-    return false;
-  }
-
   _applyRange(sel, range) {
     if (this.markActive) {
       sel.setBaseAndExtent(sel.anchorNode, sel.anchorOffset,
@@ -353,185 +543,278 @@ class CaretEmacs {
   }
 
   /** Set selection focus; extend from anchor if mark is active. */
-  _setFocus(sel, node, off, anchorNode, anchorOff) {
-    if (anchorNode != null) sel.setBaseAndExtent(anchorNode, anchorOff, node, off);
-    else sel.collapse(node, off);
+  _setFocus(sel, node, offset, anchorNode, anchorOff) {
+    if (anchorNode != null) sel.setBaseAndExtent(anchorNode, anchorOff, node, offset);
+    else sel.collapse(node, offset);
   }
 
-  _isPdfMode() {
-    return Boolean(this.scrollContainer);
+  /* ── Visual Ordering ───────────────────────────────────────── */
+
+  _pageScopeRoot(node) {
+    const el = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+    return el?.closest('.page[data-page-number]')
+      || el?.closest('.textLayer')
+      || this._currentPage()
+      || this._root;
   }
 
-  /* ── cursor overlay ─────────────────────────────────────────── */
-
-  _initCursor() {
-    if (!document.getElementById(STYLE_ID)) {
-      const style = Object.assign(document.createElement("style"),
-        { id: STYLE_ID, textContent: CURSOR_CSS });
-      document.head.appendChild(style);
-    }
-    this._cursorEl = document.getElementById(CURSOR_ID)
-      ?? (() => {
-        const el = Object.assign(document.createElement("div"), { id: CURSOR_ID });
-        document.documentElement.appendChild(el);
-        return el;
-      })();
-  }
-
-  /** Return visible text bounds within a text node, excluding leading/trailing whitespace. */
-  _textVisibleBounds(textNode) {
-    if (textNode.nodeType !== Node.TEXT_NODE) return { start: 0, end: 0, length: 0 };
-    const text = textNode.textContent || "";
-    const length = text.length;
-    if (!text.trim()) return { start: 0, end: length, length };
-
-    const start = text.search(/\S/u);
-    let end = length;
-    for (let i = length - 1; i >= 0; i--) {
-      if (/\S/u.test(text[i])) { end = i + 1; break; }
-    }
-    return { start: Math.max(0, start), end, length };
-  }
-
-  /** Return start/end caret edge for visible content in a text node. */
-  _textVisibleEdgeOffset(textNode, atStart) {
-    const { start, end } = this._textVisibleBounds(textNode);
-    return atStart ? start : end;
-  }
-
-  /** Return probe offset for geometry lookup (always a real character position). */
-  _textVisibleProbeOffset(textNode, atStart) {
-    const { start, end } = this._textVisibleBounds(textNode);
-    if (atStart) return start;
-    return Math.max(start, end - 1);
-  }
-
-  /** Collapse/extend selection to a text node edge. */
-  _collapseToTextEdge(sel, textNode, atStart, anchorNode, anchorOff) {
-    if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return false;
-    const off = this._textVisibleEdgeOffset(textNode, atStart);
-    this._setFocus(sel, textNode, off, anchorNode, anchorOff);
-    return true;
-  }
-
-  /** Create a collapsed range at a text node edge. */
-  _rangeAtTextEdge(textNode, atStart) {
-    return this._collapsedRange(textNode, this._textVisibleEdgeOffset(textNode, atStart));
-  }
-
-  /** Clamp a caret offset to visible content bounds when possible. */
-  _normalizeTextOffset(node, offset) {
-    if (node.nodeType !== Node.TEXT_NODE) return offset;
-    const { start, end, length } = this._textVisibleBounds(node);
-    const clamped = Math.min(Math.max(0, offset), length);
-    if (clamped < start) return start;
-    if (clamped > end) return end;
-    return clamped;
-  }
-
-  /** Resolve element/whitespace focus to a visible text position. */
-  _resolveCursorPosition(node, offset, preferFwd = false) {
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const child = offset < node.childNodes.length
-        ? node.childNodes[offset]
-        : node.lastChild;
-
-      // Check direct child and its firstChild before walking
-      if (preferFwd) {
-        if (child?.nodeType === Node.TEXT_NODE && child.textContent.trim())
-          return { node: child, offset: this._textVisibleEdgeOffset(child, true) };
-        if (child?.nodeType === Node.ELEMENT_NODE) {
-          const inner = child.firstChild;
-          if (inner?.nodeType === Node.TEXT_NODE && inner.textContent.trim())
-            return { node: inner, offset: this._textVisibleEdgeOffset(inner, true) };
-        }
-      }
-
-      const start = child || node;
-      const t = this._walkToVisible(start, true) || this._walkToVisible(start, false);
-      if (t) return { node: t, offset: this._textVisibleEdgeOffset(t, true) };
-    }
-    if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
-      const prev = this._walkToVisible(node, false);
-      if (prev) return { node: prev, offset: this._textVisibleEdgeOffset(prev, false) };
-      const next = this._walkToVisible(node, true);
-      if (next) return { node: next, offset: this._textVisibleEdgeOffset(next, true) };
-    }
-    return { node, offset: this._normalizeTextOffset(node, offset) };
-  }
-
-  /** Get a client rect for cursor display at the given text position. */
-  _cursorRectAt(node, offset) {
-    const rect = this._rangeRectAt(node, offset) || this._rangeRectAt(node, offset - 1);
-    if (rect) return rect;
-    const cr = this._collapsedRange(node, offset);
-    return cr.getClientRects()[0] || cr.getBoundingClientRect();
-  }
-
-  /** Compute cursor width: use the rect's width if it looks like a single character, else approximate. */
-  _cursorWidth(rect) {
-    const isCharSized = rect.width > 1 && rect.width <= rect.height * 1.2;
-    return isCharSized ? rect.width : rect.height * 0.6;
-  }
-
-  _updateCursor() {
-    const el = this._cursorEl;
-    if (!el) return;
+  _currentPage() {
     const sel = window.getSelection();
-    if (!sel?.rangeCount) {
-      // Selection unexpectedly lost — restore from last rendered position
-      const c = this._lastRenderedPos;
-      if (c?.node && this._root.contains(c.node)) {
-        sel.removeAllRanges();
-        sel.addRange(this._collapsedRange(c.node, c.offset));
-      }
-      if (!sel?.rangeCount) { el.style.display = "none"; return; }
+    if (sel?.focusNode) {
+      const el = sel.focusNode.nodeType === Node.ELEMENT_NODE
+        ? sel.focusNode : sel.focusNode.parentElement;
+      const page = el?.closest('.page[data-page-number]');
+      if (page) return page;
     }
-    if (!this._isContained(sel.focusNode)) { el.style.display = "none"; return; }
-    const { node, offset } = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
-    const rect = this._cursorRectAt(node, offset);
-    if (!rect?.height) { el.style.display = "none"; return; }
-    const cw = this._cursorWidth(rect);
-    let cursorTop = rect.top + window.scrollY;
-    let cursorLeft = rect.left + window.scrollX;
-    let cursorHeight = rect.height;
-    const parent = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-    if (parent) {
-      const fontSize = parseFloat(getComputedStyle(parent).fontSize);
-      if (fontSize > 0 && cursorHeight > fontSize) {
-        cursorTop += (cursorHeight - fontSize) / 2;
-        cursorHeight = fontSize;
-      }
+    // Fallback: element at viewport center
+    const vp = this._viewportRect();
+    const cx = (vp.left + vp.right) / 2;
+    const cy = (vp.top + vp.bottom) / 2;
+    return document.elementFromPoint(cx, cy)?.closest('.page[data-page-number]') || null;
+  }
+
+  _visuallyAdjacentPage(currentPage, fwd) {
+    const pages = Array.from(this._root.querySelectorAll('.page[data-page-number]'));
+    if (pages.length < 2) return null;
+    pages.sort((a, b) => {
+      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      const dy = ra.top - rb.top;
+      return Math.abs(dy) > 5 ? dy : ra.left - rb.left;
+    });
+    const idx = pages.indexOf(currentPage);
+    if (idx === -1) return null;
+    const adjIdx = fwd ? idx + 1 : idx - 1;
+    return (adjIdx >= 0 && adjIdx < pages.length) ? pages[adjIdx] : null;
+  }
+
+  _visuallyOrderedTextNodes(root) {
+    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let domIndex = 0;
+    while (tw.nextNode()) {
+      const textNode = tw.currentNode;
+      if (!textNode.textContent.trim()) continue;
+      const segments = this._splitNodeIntoLineSegments(textNode, domIndex++);
+      for (const seg of segments) nodes.push(seg);
     }
-    Object.assign(el.style, {
-      display: "block",
-      left: `${cursorLeft}px`,
-      top: `${cursorTop}px`,
-      width: `${cw}px`,
-      height: `${cursorHeight}px`,
+    if (!nodes.length) return [];
+
+    // Deterministic pre-sort: fully transitive ordering by vertical position,
+    // then horizontal position, then DOM order.
+    nodes.sort((a, b) => {
+      const aMid = a.rect.top + a.rect.height / 2;
+      const bMid = b.rect.top + b.rect.height / 2;
+      return (aMid - bMid) ||
+        (a.rect.left - b.rect.left) ||
+        (a.domIndex - b.domIndex);
     });
 
-    // Save current focus as last-rendered position
-    this._lastRenderedPos = { node: sel.focusNode, offset: sel.focusOffset };
+    // Reuse shared line-grouping logic after deterministic pre-sort.
+    const lines = this._groupIntoLines(nodes);
+
+    // Deterministic per-line ordering by X, then DOM order.
+    const ordered = [];
+    for (const line of lines) {
+      line.sort((a, b) =>
+        (a.rect.left - b.rect.left) ||
+        (a.domIndex - b.domIndex));
+      for (const entry of line) {
+        ordered.push({
+          node: entry.node, rect: entry.rect,
+          startOffset: entry.startOffset, endOffset: entry.endOffset
+        });
+      }
+    }
+
+    return ordered;
   }
 
-  /* ── movement ───────────────────────────────────────────────── */
-
-  /** Snap the selection focus onto a visible text node. */
-  _snapToText(sel, fwd) {
-    const focus = sel.focusNode;
-    if (focus.nodeType === Node.TEXT_NODE && focus.textContent.trim()) return;
-
-    const pastEnd = focus.nodeType === Node.ELEMENT_NODE &&
-      fwd && sel.focusOffset >= focus.childNodes.length;
-    const lookFwdFirst = pastEnd ? false
-      : focus.nodeType === Node.ELEMENT_NODE ? fwd : !fwd;
-
-    const textNode = this._walkToVisible(focus, lookFwdFirst)
-      || this._walkToVisible(focus, !lookFwdFirst);
-    if (textNode) {
-      this._collapseToTextEdge(sel, textNode, !fwd);
+  /** Split a text node into per-visual-line segments.
+   *  Returns [{ node, rect, startOffset, endOffset, domIndex }]. */
+  _splitNodeIntoLineSegments(textNode, domIndex) {
+    const range = document.createRange();
+    range.selectNodeContents(textNode);
+    const rects = Array.from(range.getClientRects()).filter(r => r.height && r.width);
+    if (!rects.length) return [];
+    // Fast path: single visual line (common in PDF spans and short HTML text)
+    if (rects.length === 1) {
+      return [{
+        node: textNode, rect: this._cloneRect(rects[0]),
+        startOffset: 0, endOffset: textNode.length, domIndex
+      }];
     }
+    // Group fragment rects into visual lines by Y-band
+    const lineRects = this._groupFragmentRects(rects);
+    if (lineRects.length <= 1) {
+      return [{
+        node: textNode, rect: this._cloneRect(lineRects[0]),
+        startOffset: 0, endOffset: textNode.length, domIndex
+      }];
+    }
+    // Binary-search break offsets between consecutive visual lines
+    const segments = [];
+    let segStart = 0;
+    for (let li = 0; li < lineRects.length; li++) {
+      const lr = lineRects[li];
+      const lrMid = lr.top + lr.height / 2;
+      if (li < lineRects.length - 1) {
+        // Find the first offset that belongs to the next line
+        const nextLr = lineRects[li + 1];
+        const nextMid = nextLr.top + nextLr.height / 2;
+        let lo = segStart, hi = textNode.length;
+        while (lo < hi) {
+          const mid = (lo + hi) >>> 1;
+          const cr = this._rangeRectAt(textNode, mid);
+          if (!cr) { lo = mid + 1; continue; }
+          const charMid = cr.top + cr.height / 2;
+          // Does this char belong to the next line or beyond?
+          if (Math.abs(charMid - nextMid) < Math.abs(charMid - lrMid)) {
+            hi = mid;
+          } else {
+            lo = mid + 1;
+          }
+        }
+        if (lo > segStart) {
+          segments.push({
+            node: textNode, rect: this._cloneRect(lr),
+            startOffset: segStart, endOffset: lo, domIndex
+          });
+        }
+        segStart = lo;
+      } else {
+        // Last line: rest of the text
+        if (textNode.length > segStart) {
+          segments.push({
+            node: textNode, rect: this._cloneRect(lr),
+            startOffset: segStart, endOffset: textNode.length, domIndex
+          });
+        }
+      }
+    }
+    return segments;
+  }
+
+  /** Group an array of DOMRects by Y-band, returning one representative rect per visual line. */
+  _groupFragmentRects(rects) {
+    const lineRects = [rects[0]];
+    for (let i = 1; i < rects.length; i++) {
+      if (!this._isSameLine(rects[i], lineRects[lineRects.length - 1])) {
+        lineRects.push(rects[i]);
+      }
+    }
+    return lineRects;
+  }
+
+  _groupIntoLines(orderedNodes) {
+    if (!orderedNodes.length) return [];
+    const lines = [];
+    let currentLine = [orderedNodes[0]];
+    for (let i = 1; i < orderedNodes.length; i++) {
+      const entry = orderedNodes[i];
+      const firstRect = currentLine[0].rect;
+      if (this._isSameLine(entry.rect, firstRect)) {
+        currentLine.push(entry);
+      } else {
+        lines.push(currentLine);
+        currentLine = [entry];
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  }
+
+  _findCaretLine(lines, caretRect) {
+    const caretMid = caretRect.top + caretRect.height / 2;
+    let bestIdx = -1, bestDist = Infinity;
+    for (let i = 0; i < lines.length; i++) {
+      const firstRect = lines[i][0].rect;
+      const lineMid = firstRect.top + firstRect.height / 2;
+      const dist = Math.abs(caretMid - lineMid);
+      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+    }
+    const lineH = lines[bestIdx]?.[0].rect.height || 0;
+    return bestDist > lineH * 1.5 ? -1 : bestIdx;
+  }
+
+  _pickPositionOnLine(line, goalX) {
+    const repRect = line[0].rect;
+    const lineMidY = repRect.top + repRect.height / 2;
+    // Build a set of nodes on this line for membership check
+    const lineNodes = new Set(line.map(e => e.node));
+    // Try caretRangeFromPoint for precision
+    const probe = document.caretRangeFromPoint(goalX, lineMidY);
+    if (probe) {
+      const resolved = this._rangeToText(probe);
+      if (resolved && this._isContained(resolved.startContainer)
+        && lineNodes.has(resolved.startContainer)) {
+        const cr = this._charRect(resolved);
+        if (cr && Math.abs(cr.top - repRect.top) < repRect.height) return resolved;
+      }
+    }
+
+    // Fallback: character-level walk (respects segment bounds)
+    let bestRange = null, bestDist = Infinity;
+    for (const entry of line) {
+      const start = entry.startOffset ?? 0;
+      const end = entry.endOffset ?? entry.node.length;
+      for (let off = start; off < end; off++) {
+        const r = document.createRange();
+        r.setStart(entry.node, off); r.setEnd(entry.node, off + 1);
+        const cr = r.getBoundingClientRect();
+        if (!cr.width || !cr.height) continue;
+        const d = Math.abs(cr.left + cr.width / 2 - goalX);
+        if (d < bestDist) {
+          bestDist = d;
+          bestRange = this._collapsedRange(entry.node, off);
+        }
+      }
+    }
+    return bestRange;
+  }
+
+  /** Find the visually next/previous text node using visual ordering. */
+  _visuallyAdjacentTextNode(fwd) {
+    const sel = window.getSelection();
+    if (!sel?.focusNode) return null;
+    const focus = sel.focusNode;
+    const scopeRoot = this._pageScopeRoot(focus);
+    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
+    if (!ordered.length) return null;
+    const curIdx = ordered.findIndex(e => e.node === focus);
+    if (curIdx === -1) return null;
+    const targetIdx = fwd ? curIdx + 1 : curIdx - 1;
+    if (targetIdx < 0 || targetIdx >= ordered.length) return null;
+    return ordered[targetIdx].node;
+  }
+
+  _lineBounds(line) {
+    if (!line?.length) return null;
+    const first = line[0];
+    const last = line[line.length - 1];
+    let top = first.rect.top;
+    let bottom = first.rect.top + first.rect.height;
+    let height = first.rect.height;
+    for (const entry of line) {
+      top = Math.min(top, entry.rect.top);
+      bottom = Math.max(bottom, entry.rect.top + entry.rect.height);
+      height = Math.max(height, entry.rect.height);
+    }
+    return {
+      first,
+      last,
+      left: first.rect.left,
+      right: last.rect.left + last.rect.width,
+      top,
+      bottom,
+      height: Math.max(height, bottom - top)
+    };
+  }
+
+  /* ── Character & Word Movement ─────────────────────────────── */
+
+  /** Unicode-aware word character classifier (handles CJK and other scripts). */
+  _isWordChar(ch) {
+    return Boolean(ch) && WORD_CHAR_RE.test(ch);
   }
 
   /** Visual character movement for PDF text layers (bypass DOM order). */
@@ -559,11 +842,6 @@ class CaretEmacs {
       sel.collapse(prev, prev.length);
       return true;
     }
-  }
-
-  /** Unicode-aware word character classifier (handles CJK and other scripts). */
-  _isWordChar(ch) {
-    return Boolean(ch) && WORD_CHAR_RE.test(ch);
   }
 
   /** Visual word movement for PDF text layers (bypass DOM order). */
@@ -659,6 +937,138 @@ class CaretEmacs {
     return true;
   }
 
+  /** Snap the selection focus onto a visible text node. */
+  _snapToText(sel, fwd) {
+    const focus = sel.focusNode;
+    if (focus.nodeType === Node.TEXT_NODE && focus.textContent.trim()) return;
+
+    const pastEnd = focus.nodeType === Node.ELEMENT_NODE &&
+      fwd && sel.focusOffset >= focus.childNodes.length;
+    const lookFwdFirst = pastEnd ? false
+      : focus.nodeType === Node.ELEMENT_NODE ? fwd : !fwd;
+
+    const textNode = this._walkToVisible(focus, lookFwdFirst)
+      || this._walkToVisible(focus, !lookFwdFirst);
+    if (textNode) {
+      this._collapseToTextEdge(sel, textNode, !fwd);
+    }
+  }
+
+  /** Collapse/extend selection to a text node edge. */
+  _collapseToTextEdge(sel, textNode, atStart, anchorNode, anchorOff) {
+    if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return false;
+    const offset = this._textVisibleEdgeOffset(textNode, atStart);
+    this._setFocus(sel, textNode, offset, anchorNode, anchorOff);
+    return true;
+  }
+
+  /** Create a collapsed range at a text node edge. */
+  _rangeAtTextEdge(textNode, atStart) {
+    return this._collapsedRange(textNode, this._textVisibleEdgeOffset(textNode, atStart));
+  }
+
+  /* ── Line Movement ─────────────────────────────────────────── */
+
+  /** DOM-based visual line movement. Returns a collapsed Range on success, or null. */
+  _moveLine(fwd) {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return null;
+    const r0 = this._collapsedRange(sel.focusNode, sel.focusOffset);
+    const rect = this._charRect(r0);
+    if (!rect?.height) return null;
+    const goalX = rect.left;
+
+    // Phase 1: move within current scope (PDF page or full HTML body)
+    const page = this._currentPage();
+    const scopeRoot = page || this._root;
+    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
+    if (!ordered.length) return null;
+    const lines = this._groupIntoLines(ordered);
+    if (!lines.length) return null;
+    const curLineIdx = this._findCaretLine(lines, rect);
+    if (curLineIdx >= 0) {
+      const targetIdx = fwd ? curLineIdx + 1 : curLineIdx - 1;
+      if (targetIdx >= 0 && targetIdx < lines.length) {
+        const curRect = lines[curLineIdx][0].rect;
+        const tgtRect = lines[targetIdx][0].rect;
+        const gap = fwd
+          ? tgtRect.top - (curRect.top + curRect.height)
+          : curRect.top - (tgtRect.top + tgtRect.height);
+        if (gap > SCROLL_PX)
+          return this._scrollAndProbe(fwd, goalX, rect);
+        return this._pickPositionOnLine(lines[targetIdx], goalX);
+      }
+      // No target line in scope (HTML only) — scroll past non-text content
+      if (!page)
+        return this._scrollAndProbe(fwd, goalX, rect);
+    }
+
+    // Phase 2 (PDF only): cross page boundary
+    return this._moveLineCrossPage(page, fwd, goalX);
+  }
+
+  /**
+   * Scroll SCROLL_PX toward non-text content, then probe for a text line
+   * that has entered the near viewport. Returns a Range or null.
+   */
+  _scrollAndProbe(fwd, goalX, caretRect) {
+    const canScroll = fwd
+      ? Math.ceil(this._scrollTop + this._viewportHeight) < this._scrollHeight
+      : Math.floor(this._scrollTop) > 0;
+    if (!canScroll) return null;
+
+    this._scrollBy(fwd ? SCROLL_PX : -SCROLL_PX);
+    this._scrolledPastNonText = true;
+
+    const scopeRoot = this._currentPage() || this._root;
+    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
+    if (!ordered.length) return null;
+    const lines = this._groupIntoLines(ordered);
+    if (!lines.length) return null;
+
+    // After scroll the caret shifted ±SCROLL_PX in viewport coords;
+    // find the closest in-viewport text line on the correct side.
+    const vp = this._viewportRect();
+    const caretEdge = fwd
+      ? caretRect.bottom - SCROLL_PX
+      : caretRect.top + SCROLL_PX;
+    const scan = fwd ? lines : [...lines].reverse();
+    for (const line of scan) {
+      const mid = line[0].rect.top + line[0].rect.height / 2;
+      if (mid < vp.top || mid > vp.bottom) continue;
+      if (fwd ? mid <= caretEdge : mid >= caretEdge) continue;
+      return this._pickPositionOnLine(line, goalX);
+    }
+    return null;
+  }
+
+  /** Cross PDF page boundary for line movement. Returns a collapsed Range or null. */
+  _moveLineCrossPage(page, fwd, goalX) {
+    if (!page) return null;
+    let adj = page;
+    let skipped = 0;
+    while ((adj = this._visuallyAdjacentPage(adj, fwd)) && skipped < 5) {
+      const adjOrdered = this._visuallyOrderedTextNodes(adj);
+      if (!adjOrdered.length) { skipped++; continue; }
+      // Found text — scroll into view if needed, then pick line
+      const adjRect = adj.getBoundingClientRect();
+      const vp = this._viewportRect();
+      if (adjRect.bottom < vp.top || adjRect.top > vp.bottom)
+        adj.scrollIntoView({ block: fwd ? 'start' : 'end' });
+      const adjLines = this._groupIntoLines(adjOrdered);
+      if (!adjLines.length) { skipped++; continue; }
+      const targetLine = fwd ? adjLines[0] : adjLines[adjLines.length - 1];
+      return this._pickPositionOnLine(targetLine, goalX);
+    }
+    // Scroll first adjacent page into view to trigger text layer loading
+    const firstAdj = this._visuallyAdjacentPage(page, fwd);
+    if (firstAdj)
+      firstAdj.scrollIntoView({ block: fwd ? 'start' : 'end' });
+    return null;
+  }
+
+  /* ── Movement Dispatcher ───────────────────────────────────── */
+
   _moveCaret(direction, granularity) {
     const sel = this._ensureSelection(true);
     if (!sel) { return false; }
@@ -686,34 +1096,25 @@ class CaretEmacs {
     const markAnchorOff = this.markActive ? sel.anchorOffset : null;
     if (this.markActive) { sel.collapse(sel.focusNode, sel.focusOffset); }
 
-    // Common epilogue: restore mark, save caret, scroll & redraw
-    const finish = (moved) => {
-      if (this.markActive) {
-        sel.setBaseAndExtent(markAnchorNode, markAnchorOff, sel.focusNode, sel.focusOffset);
-      }
-      if (moved) {
-        this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
-        this._scrollToSelection();
-        this._updateCursor();
-      }
-      return moved;
-    };
-
     // PDF text layers require visual ordering because DOM order can differ from reading order.
     if (this._isPdfMode() && (granularity === "character" || granularity === "word")) {
       const moved = granularity === "character"
         ? this._moveCharVisual(sel, fwd)
         : this._moveWordVisual(sel, fwd);
-      return finish(moved);
+      return this._finishMove(sel, moved, markAnchorNode, markAnchorOff);
     }
 
-    // Line: caretRangeFromPoint for visual line movement
-    if (granularity === "line" && this._isPdfMode()) {
+    // Line: unified visual line movement for both PDF and HTML.
+    if (granularity === "line") {
+      this._scrolledPastNonText = false;
       const lineRange = this._moveLine(fwd);
-      if (!lineRange) { this._hitBoundary = true; return false; }
+      if (!lineRange) {
+        if (!this._scrolledPastNonText) this._hitBoundary = true;
+        return false;
+      }
       sel.removeAllRanges();
       sel.addRange(lineRange);
-      return finish(true);
+      return this._finishMove(sel, true, markAnchorNode, markAnchorOff);
     }
 
     // Default (sentence, paragraph, etc.): sel.modify with guards
@@ -737,7 +1138,20 @@ class CaretEmacs {
       moved = this._fallbackToAdjacentText(sel, fwd, markAnchorNode, markAnchorOff);
     }
 
-    return finish(moved);
+    return this._finishMove(sel, moved, markAnchorNode, markAnchorOff);
+  }
+
+  /** Common epilogue: restore mark, save caret, scroll & redraw. */
+  _finishMove(sel, moved, anchorNode, anchorOff) {
+    if (this.markActive && anchorNode != null) {
+      sel.setBaseAndExtent(anchorNode, anchorOff, sel.focusNode, sel.focusOffset);
+    }
+    if (moved) {
+      this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+      this._scrollToSelection();
+      this._updateCursor();
+    }
+    return moved;
   }
 
   _stepModify(sel, direction, granularity, fwd) {
@@ -761,19 +1175,6 @@ class CaretEmacs {
       if (!step()) { break; }
     }
     return moved;
-  }
-
-  /** Jump to the next/prev visible text node when sel.modify fails. */
-  _fallbackToAdjacentText(sel, fwd, anchorNode = null, anchorOff = null) {
-    const startNode = sel.focusNode.nodeType === Node.TEXT_NODE
-      ? sel.focusNode
-      : (sel.focusNode.childNodes[sel.focusOffset] || sel.focusNode);
-    const textNode = this._walkToVisible(startNode, fwd);
-    if (!textNode) return false;
-    this._collapseToTextEdge(sel, textNode, fwd,
-      anchorNode,
-      anchorOff);
-    return true;
   }
 
   /** Nudge the caret past elements that sel.modify cannot cross. */
@@ -805,86 +1206,20 @@ class CaretEmacs {
     }
   }
 
-  /** Get a rect with real dimensions at a range's start position. */
-  _charRect(range) {
-    const rect = this._rangeRectAt(range.startContainer, range.startOffset);
-    if (rect) return rect;
-    const fallbackRect = range.getBoundingClientRect();
-    return fallbackRect?.height ? fallbackRect : null;
+  /** Jump to the next/prev visible text node when sel.modify fails. */
+  _fallbackToAdjacentText(sel, fwd, anchorNode = null, anchorOff = null) {
+    const startNode = sel.focusNode.nodeType === Node.TEXT_NODE
+      ? sel.focusNode
+      : (sel.focusNode.childNodes[sel.focusOffset] || sel.focusNode);
+    const textNode = this._walkToVisible(startNode, fwd);
+    if (!textNode) return false;
+    this._collapseToTextEdge(sel, textNode, fwd,
+      anchorNode,
+      anchorOff);
+    return true;
   }
 
-  /** Resolve a range from caretRangeFromPoint to a visible text node, or null. */
-  _rangeToText(range) {
-    const { node, offset } = this._resolveCursorPosition(
-      range.startContainer, range.startOffset, true);
-    if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return null;
-    return this._collapsedRange(node, offset);
-  }
-
-  /** DOM-based visual line movement. Returns a collapsed Range on success, or null. */
-  _moveLine(fwd) {
-    const sel = window.getSelection();
-    if (!sel?.rangeCount) return null;
-    const r0 = this._collapsedRange(sel.focusNode, sel.focusOffset);
-    const rect = this._charRect(r0);
-    if (!rect?.height) return null;
-    const goalX = rect.left;
-
-    // Phase 1: move within current page
-    const page = this._currentPage();
-    const scopeRoot = page || this._root;
-    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
-    if (!ordered.length) return null;
-    const lines = this._groupIntoLines(ordered);
-    if (!lines.length) return null;
-    const curLineIdx = this._findCaretLine(lines, rect);
-    if (curLineIdx >= 0) {
-      const targetIdx = fwd ? curLineIdx + 1 : curLineIdx - 1;
-      if (targetIdx >= 0 && targetIdx < lines.length)
-        return this._pickPositionOnLine(lines[targetIdx], goalX);
-    }
-
-    // Phase 2: cross page boundary (skip pages with no text)
-    if (!page) return null;
-    let adj = page;
-    let skipped = 0;
-    while ((adj = this._visuallyAdjacentPage(adj, fwd)) && skipped < 5) {
-      const adjOrdered = this._visuallyOrderedTextNodes(adj);
-      if (!adjOrdered.length) { skipped++; continue; }
-      // Found text — scroll into view if needed, then pick line
-      const adjRect = adj.getBoundingClientRect();
-      const vp = this._viewportRect();
-      if (adjRect.bottom < vp.top || adjRect.top > vp.bottom)
-        adj.scrollIntoView({ block: fwd ? 'start' : 'end' });
-      const adjLines = this._groupIntoLines(adjOrdered);
-      if (!adjLines.length) { skipped++; continue; }
-      const targetLine = fwd ? adjLines[0] : adjLines[adjLines.length - 1];
-      return this._pickPositionOnLine(targetLine, goalX);
-    }
-    // Scroll first adjacent page into view to trigger text layer loading
-    const firstAdj = this._visuallyAdjacentPage(page, fwd);
-    if (firstAdj)
-      firstAdj.scrollIntoView({ block: fwd ? 'start' : 'end' });
-    return null;
-  }
-
-  /** Page down/up: scroll viewport, then re-place caret using caretRangeFromPoint. */
-  _scrollPage(direction) {
-    const sel = this._ensureSelection();
-    if (!sel?.rangeCount) return;
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
-    const caretX = rect.left;
-    const caretY = rect.top;
-    const delta = this._viewportHeight / 3;
-    this._scrollBy(direction === "down" ? delta : -delta);
-    const newY = direction === "down" ? caretY - delta : caretY + delta;
-    const range = this._probeTextAt(caretX, newY);
-    if (!range) return;
-    this._applyRange(sel, range);
-    this._updateCursor();
-  }
-
-  /* ── boundary detection ──────────────────────────────────────── */
+  /* ── Boundary Detection ────────────────────────────────────── */
 
   _isAtVisibleBoundary(direction) {
     const sel = window.getSelection();
@@ -912,6 +1247,8 @@ class CaretEmacs {
     return Math.floor(this._scrollTop) <= 0;
   }
 
+  /* ── PDF Selection & Expansion ─────────────────────────────── */
+
   _detectSelectionScope() {
     const sel = window.getSelection();
     if (!sel?.rangeCount || sel.isCollapsed) return 'none';
@@ -922,119 +1259,6 @@ class CaretEmacs {
       }
     }
     return /[.!?]|\S\s+\S/.test(sel.toString()) ? 'sentence' : 'word';
-  }
-
-  _lineBounds(line) {
-    if (!line?.length) return null;
-    const first = line[0];
-    const last = line[line.length - 1];
-    let top = first.rect.top;
-    let bottom = first.rect.top + first.rect.height;
-    let height = first.rect.height;
-    for (const entry of line) {
-      top = Math.min(top, entry.rect.top);
-      bottom = Math.max(bottom, entry.rect.top + entry.rect.height);
-      height = Math.max(height, entry.rect.height);
-    }
-    return {
-      first,
-      last,
-      left: first.rect.left,
-      right: last.rect.left + last.rect.width,
-      top,
-      bottom,
-      height: Math.max(height, bottom - top)
-    };
-  }
-
-  _selectedPdfLineRange(sel, lines) {
-    if (!sel?.rangeCount || sel.isCollapsed) return null;
-    const range = sel.getRangeAt(0);
-    const find = (node) => {
-      if (!lines?.length || node?.nodeType !== Node.TEXT_NODE) return -1;
-      return lines.findIndex((line) => line.some((entry) => entry.node === node));
-    };
-    const startLine = find(range.startContainer);
-    const endLine = find(range.endContainer);
-    if (startLine < 0 || endLine < 0) return null;
-    return {
-      start: Math.min(startLine, endLine),
-      end: Math.max(startLine, endLine)
-    };
-  }
-
-  _pdfAdjacentLineBlockCheck(currentLine, candidateLine, fwd, gapThreshold) {
-    const current = this._lineBounds(currentLine);
-    const candidate = this._lineBounds(candidateLine);
-    if (!current || !candidate) return false;
-
-    const minHeight = Math.min(current.height, candidate.height);
-
-    if (Math.abs(candidate.left - current.left) > minHeight * 1.5) return false;
-
-    const upperBounds = fwd ? current : candidate;
-    const lowerBounds = fwd ? candidate : current;
-    const gap = Math.max(0, lowerBounds.top - upperBounds.bottom);
-    return gap <= (gapThreshold != null ? gapThreshold : minHeight * 1.2);
-  }
-
-  _paragraphGapThreshold(lines) {
-    if (lines.length < 3) return null;
-    const gaps = [];
-    for (let i = 0; i < lines.length - 1; i++) {
-      const upper = this._lineBounds(lines[i]);
-      const lower = this._lineBounds(lines[i + 1]);
-      if (!upper || !lower) continue;
-      if (Math.abs(lower.left - upper.left) > upper.height * 1.5) continue;
-      gaps.push(Math.max(0, lower.top - upper.bottom));
-    }
-    if (gaps.length < 2) return null;
-    gaps.sort((a, b) => a - b);
-
-    let maxJump = 0, splitIdx = 0;
-    for (let i = 0; i < gaps.length - 1; i++) {
-      const jump = gaps[i + 1] - gaps[i];
-      if (jump > maxJump) { maxJump = jump; splitIdx = i; }
-    }
-    if (maxJump <= gaps[0] * 0.5) return null;
-    return (gaps[splitIdx] + gaps[splitIdx + 1]) / 2;
-  }
-
-  _expandPdfLineBlock(lines, startIdx, endIdx) {
-    let start = startIdx;
-    let end = endIdx;
-    const gapThreshold = this._paragraphGapThreshold(lines);
-
-    while (start > 0) {
-      if (!this._pdfAdjacentLineBlockCheck(lines[start], lines[start - 1], false, gapThreshold)) break;
-      start--;
-    }
-
-    while (end < lines.length - 1) {
-      if (!this._pdfAdjacentLineBlockCheck(lines[end], lines[end + 1], true, gapThreshold)) break;
-      end++;
-    }
-
-    return { start, end };
-  }
-
-  _pdfLineContext(sel) {
-    const { node, offset } = this._resolveCursorPosition(sel.anchorNode, sel.anchorOffset);
-    if (node.nodeType !== Node.TEXT_NODE || !this._isContained(node)) return null;
-
-    const scopeRoot = this._pageScopeRoot(node);
-    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
-    if (!ordered.length) return null;
-
-    const lines = this._groupIntoLines(ordered);
-    if (!lines.length) return null;
-
-    const caretRange = this._collapsedRange(node, offset);
-    const caretRect = this._charRect(caretRange) || caretRange.getBoundingClientRect();
-    if (!caretRect?.height) return null;
-
-    const currentLine = this._findCaretLine(lines, caretRect);
-    return currentLine < 0 ? null : { lines, currentLine };
   }
 
   _selectionCoversPdfLines(sel) {
@@ -1068,6 +1292,96 @@ class CaretEmacs {
     const trimmedText = text.trim();
     if (/[.!?]/.test(trimmedText) || end > start || /\n/.test(text)) return 'sentence';
     return 'word';
+  }
+
+  _selectedPdfLineRange(sel, lines) {
+    if (!sel?.rangeCount || sel.isCollapsed) return null;
+    const range = sel.getRangeAt(0);
+    const find = (node) => {
+      if (!lines?.length || node?.nodeType !== Node.TEXT_NODE) return -1;
+      return lines.findIndex((line) => line.some((entry) => entry.node === node));
+    };
+    const startLine = find(range.startContainer);
+    const endLine = find(range.endContainer);
+    if (startLine < 0 || endLine < 0) return null;
+    return {
+      start: Math.min(startLine, endLine),
+      end: Math.max(startLine, endLine)
+    };
+  }
+
+  _pdfLineContext(sel) {
+    const { node, offset } = this._resolveCursorPosition(sel.anchorNode, sel.anchorOffset);
+    if (node.nodeType !== Node.TEXT_NODE || !this._isContained(node)) return null;
+
+    const scopeRoot = this._pageScopeRoot(node);
+    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
+    if (!ordered.length) return null;
+
+    const lines = this._groupIntoLines(ordered);
+    if (!lines.length) return null;
+
+    const caretRange = this._collapsedRange(node, offset);
+    const caretRect = this._charRect(caretRange) || caretRange.getBoundingClientRect();
+    if (!caretRect?.height) return null;
+
+    const currentLine = this._findCaretLine(lines, caretRect);
+    return currentLine < 0 ? null : { lines, currentLine };
+  }
+
+  _pdfAdjacentLineBlockCheck(currentLine, candidateLine, fwd, gapThreshold) {
+    const current = this._lineBounds(currentLine);
+    const candidate = this._lineBounds(candidateLine);
+    if (!current || !candidate) return false;
+
+    const minHeight = Math.min(current.height, candidate.height);
+
+    if (Math.abs(candidate.left - current.left) > minHeight * 1.5) return false;
+
+    const upperBounds = fwd ? current : candidate;
+    const lowerBounds = fwd ? candidate : current;
+    const gap = Math.max(0, lowerBounds.top - upperBounds.bottom);
+    return gap <= (gapThreshold != null ? gapThreshold : minHeight * 1.2);
+  }
+
+  _expandPdfLineBlock(lines, startIdx, endIdx) {
+    let start = startIdx;
+    let end = endIdx;
+    const gapThreshold = this._paragraphGapThreshold(lines);
+
+    while (start > 0) {
+      if (!this._pdfAdjacentLineBlockCheck(lines[start], lines[start - 1], false, gapThreshold)) break;
+      start--;
+    }
+
+    while (end < lines.length - 1) {
+      if (!this._pdfAdjacentLineBlockCheck(lines[end], lines[end + 1], true, gapThreshold)) break;
+      end++;
+    }
+
+    return { start, end };
+  }
+
+  _paragraphGapThreshold(lines) {
+    if (lines.length < 3) return null;
+    const gaps = [];
+    for (let i = 0; i < lines.length - 1; i++) {
+      const upper = this._lineBounds(lines[i]);
+      const lower = this._lineBounds(lines[i + 1]);
+      if (!upper || !lower) continue;
+      if (Math.abs(lower.left - upper.left) > upper.height * 1.5) continue;
+      gaps.push(Math.max(0, lower.top - upper.bottom));
+    }
+    if (gaps.length < 2) return null;
+    gaps.sort((a, b) => a - b);
+
+    let maxJump = 0, splitIdx = 0;
+    for (let i = 0; i < gaps.length - 1; i++) {
+      const jump = gaps[i + 1] - gaps[i];
+      if (jump > maxJump) { maxJump = jump; splitIdx = i; }
+    }
+    if (maxJump <= gaps[0] * 0.5) return null;
+    return (gaps[splitIdx] + gaps[splitIdx + 1]) / 2;
   }
 
   _pdfTextRangeModel(lines, startIdx, endIdx) {
@@ -1190,16 +1504,58 @@ class CaretEmacs {
     this.markActive = true;
   }
 
-  /* ── public API (for programmatic / Emacs xwidget dispatch) ── */
+  /* ── Navigation ────────────────────────────────────────────── */
+
+  _jumpToEdge(toStart, root) {
+    const sel = this._ensureSelection();
+    if (!sel) return;
+    const scopeRoot = root || this._root;
+    const tw = document.createTreeWalker(scopeRoot, NodeFilter.SHOW_TEXT);
+    let bestNode = null, bestTop = null, bestLeft = null;
+    while (tw.nextNode()) {
+      const textNode = tw.currentNode;
+      if (!textNode.textContent.trim()) continue;
+      const off = this._textVisibleProbeOffset(textNode, toStart);
+      const rect = this._rangeRectAt(textNode, off);
+      if (!rect) continue;
+      if (bestNode === null) {
+        bestNode = textNode; bestTop = rect.top; bestLeft = rect.left;
+        continue;
+      }
+      const dy = rect.top - bestTop;
+      const better = toStart
+        ? (dy < -2 || (Math.abs(dy) <= 2 && rect.left < bestLeft))
+        : (dy > 2 || (Math.abs(dy) <= 2 && rect.left > bestLeft));
+      if (better) {
+        bestNode = textNode; bestTop = rect.top; bestLeft = rect.left;
+      }
+    }
+    let range;
+    if (bestNode) {
+      range = this._rangeAtTextEdge(bestNode, toStart);
+    } else {
+      range = document.createRange();
+      range.selectNodeContents(scopeRoot);
+      range.collapse(toStart);
+    }
+    this._applyRange(sel, range);
+    if (root) this._scrollToSelection();
+    else this._scrollTo(toStart ? 0 : this._scrollHeight);
+    this._updateCursor();
+  }
+
+  /* ── Public API ────────────────────────────────────────────── */
 
   forward(granularity) {
     this._lastMoved = this._moveCaret("forward", granularity);
     this._lastDir = "forward";
   }
+
   backward(granularity) {
     this._lastMoved = this._moveCaret("backward", granularity);
     this._lastDir = "backward";
   }
+
   pageDown() { this._scrollPage("down"); }
   pageUp() { this._scrollPage("up"); }
   toggleMark() { this._setMark(!this.markActive); }
@@ -1244,215 +1600,14 @@ class CaretEmacs {
     return "ok";
   }
 
-  _visuallyOrderedTextNodes(root) {
-    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const nodes = [];
-    let domIndex = 0;
-    while (tw.nextNode()) {
-      const textNode = tw.currentNode;
-      if (!textNode.textContent.trim()) continue;
-      const range = document.createRange();
-      range.selectNodeContents(textNode);
-      const rects = range.getClientRects();
-      const nonEmptyRect = Array.from(rects).find((r) => r?.height && r?.width);
-      const clientRect = nonEmptyRect || range.getBoundingClientRect();
-      if (!clientRect || !clientRect.height || !clientRect.width) {
-        continue;
-      }
-      const rect = {
-        top: clientRect.top,
-        left: clientRect.left,
-        width: clientRect.width,
-        height: clientRect.height
-      };
-      nodes.push({ node: textNode, rect, domIndex: domIndex++ });
-    }
-    if (!nodes.length) return [];
-
-    // Deterministic pre-sort: fully transitive ordering by vertical position,
-    // then horizontal position, then DOM order.
-    nodes.sort((a, b) => {
-      const aMid = a.rect.top + a.rect.height / 2;
-      const bMid = b.rect.top + b.rect.height / 2;
-      return (aMid - bMid) ||
-        (a.rect.left - b.rect.left) ||
-        (a.domIndex - b.domIndex);
-    });
-
-    // Reuse shared line-grouping logic after deterministic pre-sort.
-    const lines = this._groupIntoLines(nodes);
-
-    // Deterministic per-line ordering by X, then DOM order.
-    const ordered = [];
-    for (const line of lines) {
-      line.sort((a, b) =>
-        (a.rect.left - b.rect.left) ||
-        (a.domIndex - b.domIndex));
-      for (const entry of line) {
-        ordered.push({ node: entry.node, rect: entry.rect });
-      }
-    }
-
-    return ordered;
-  }
-
-  /** Find the visually next/previous text node using visual ordering. */
-  _visuallyAdjacentTextNode(fwd) {
-    const sel = window.getSelection();
-    if (!sel?.focusNode) return null;
-    const focus = sel.focusNode;
-    const scopeRoot = this._pageScopeRoot(focus);
-    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
-    if (!ordered.length) return null;
-    const curIdx = ordered.findIndex(e => e.node === focus);
-    if (curIdx === -1) return null;
-    const targetIdx = fwd ? curIdx + 1 : curIdx - 1;
-    if (targetIdx < 0 || targetIdx >= ordered.length) return null;
-    return ordered[targetIdx].node;
-  }
-
-  _groupIntoLines(orderedNodes) {
-    if (!orderedNodes.length) return [];
-    const lines = [];
-    let currentLine = [orderedNodes[0]];
-    for (let i = 1; i < orderedNodes.length; i++) {
-      const entry = orderedNodes[i];
-      const firstRect = currentLine[0].rect;
-      const entryMid = entry.rect.top + entry.rect.height / 2;
-      const repMid = firstRect.top + firstRect.height / 2;
-      const tolerance = Math.max(entry.rect.height, firstRect.height) / 2;
-      if (Math.abs(entryMid - repMid) <= tolerance) {
-        currentLine.push(entry);
-      } else {
-        lines.push(currentLine);
-        currentLine = [entry];
-      }
-    }
-    lines.push(currentLine);
-    return lines;
-  }
-
-  _findCaretLine(lines, caretRect) {
-    const caretMid = caretRect.top + caretRect.height / 2;
-    let bestIdx = -1, bestDist = Infinity;
-    for (let i = 0; i < lines.length; i++) {
-      const firstRect = lines[i][0].rect;
-      const lineMid = firstRect.top + firstRect.height / 2;
-      const dist = Math.abs(caretMid - lineMid);
-      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
-    }
-    const lineH = lines[bestIdx]?.[0].rect.height || 0;
-    return bestDist > lineH * 1.5 ? -1 : bestIdx;
-  }
-
-  _pickPositionOnLine(line, goalX) {
-    const repRect = line[0].rect;
-    const lineMidY = repRect.top + repRect.height / 2;
-    // Build a set of nodes on this line for membership check
-    const lineNodes = new Set(line.map(e => e.node));
-    // Try caretRangeFromPoint for precision
-    const probe = document.caretRangeFromPoint(goalX, lineMidY);
-    if (probe) {
-      const resolved = this._rangeToText(probe);
-      if (resolved && this._isContained(resolved.startContainer)
-        && lineNodes.has(resolved.startContainer)) {
-        const cr = this._charRect(resolved);
-        if (cr && Math.abs(cr.top - repRect.top) < repRect.height) return resolved;
-      }
-    }
-
-    // Fallback: character-level walk
-    let bestRange = null, bestDist = Infinity;
-    for (const { node, rect } of line) {
-      for (let off = 0; off < node.length; off++) {
-        const r = document.createRange();
-        r.setStart(node, off); r.setEnd(node, off + 1);
-        const cr = r.getBoundingClientRect();
-        if (!cr.width || !cr.height) continue;
-        const d = Math.abs(cr.left + cr.width / 2 - goalX);
-        if (d < bestDist) {
-          bestDist = d;
-          bestRange = this._collapsedRange(node, off);
-        }
-      }
-    }
-    return bestRange;
-  }
-
-  _jumpToEdge(toStart, root) {
-    const sel = this._ensureSelection();
-    if (!sel) return;
-    const scopeRoot = root || this._root;
-    const tw = document.createTreeWalker(scopeRoot, NodeFilter.SHOW_TEXT);
-    let bestNode = null, bestTop = null, bestLeft = null;
-    while (tw.nextNode()) {
-      const textNode = tw.currentNode;
-      if (!textNode.textContent.trim()) continue;
-      const off = this._textVisibleProbeOffset(textNode, toStart);
-      const rect = this._rangeRectAt(textNode, off);
-      if (!rect) continue;
-      if (bestNode === null) {
-        bestNode = textNode; bestTop = rect.top; bestLeft = rect.left;
-        continue;
-      }
-      const dy = rect.top - bestTop;
-      const better = toStart
-        ? (dy < -2 || (Math.abs(dy) <= 2 && rect.left < bestLeft))
-        : (dy > 2 || (Math.abs(dy) <= 2 && rect.left > bestLeft));
-      if (better) {
-        bestNode = textNode; bestTop = rect.top; bestLeft = rect.left;
-      }
-    }
-    let range;
-    if (bestNode) {
-      range = this._rangeAtTextEdge(bestNode, toStart);
-    } else {
-      range = document.createRange();
-      range.selectNodeContents(scopeRoot);
-      range.collapse(toStart);
-    }
-    this._applyRange(sel, range);
-    if (root) this._scrollToSelection();
-    else this._scrollTo(toStart ? 0 : this._scrollHeight);
-    this._updateCursor();
-  }
-
   beginningOfBuffer() { this._jumpToEdge(true); }
   endOfBuffer() { this._jumpToEdge(false); }
-
-  _currentPage() {
-    const sel = window.getSelection();
-    if (sel?.focusNode) {
-      const el = sel.focusNode.nodeType === Node.ELEMENT_NODE
-        ? sel.focusNode : sel.focusNode.parentElement;
-      const page = el?.closest('.page[data-page-number]');
-      if (page) return page;
-    }
-    // Fallback: element at viewport center
-    const vp = this._viewportRect();
-    const cx = (vp.left + vp.right) / 2;
-    const cy = (vp.top + vp.bottom) / 2;
-    return document.elementFromPoint(cx, cy)?.closest('.page[data-page-number]') || null;
-  }
-
-  _visuallyAdjacentPage(currentPage, fwd) {
-    const pages = Array.from(this._root.querySelectorAll('.page[data-page-number]'));
-    if (pages.length < 2) return null;
-    pages.sort((a, b) => {
-      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-      const dy = ra.top - rb.top;
-      return Math.abs(dy) > 5 ? dy : ra.left - rb.left;
-    });
-    const idx = pages.indexOf(currentPage);
-    if (idx === -1) return null;
-    const adjIdx = fwd ? idx + 1 : idx - 1;
-    return (adjIdx >= 0 && adjIdx < pages.length) ? pages[adjIdx] : null;
-  }
 
   beginningOfPage() {
     const p = this._currentPage();
     if (p) this._jumpToEdge(true, p);
   }
+
   endOfPage() {
     const p = this._currentPage();
     if (p) this._jumpToEdge(false, p);

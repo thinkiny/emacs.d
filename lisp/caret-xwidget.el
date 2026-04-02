@@ -13,7 +13,7 @@
 The file is read at load time and injected into xwidget-webkit pages."
   :type 'file)
 
-(defcustom caret-xwidget-reload-js-on-inject nil
+(defcustom caret-xwidget-reload-js-on-inject t
   "If non-nil, reload `caret-xwidget-js-file' on every injection."
   :type 'boolean)
 
