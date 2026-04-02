@@ -52,6 +52,7 @@ update_lsp() {
     pipx upgrade rassumfrassum
     npm install -g @vtsls/language-server
     npm install -g @t1ckbase/vscode-langservers-extracted
+    npm install -g @tailwindcss/language-server
 }
 
 # Download all configured files

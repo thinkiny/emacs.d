@@ -2,6 +2,8 @@
 
 (use-package sideline
   :config
+  (setq sideline-force-display-if-exceeds t)
+  (setq sideline-truncate nil)
   ;;(setq sideline-backends-left '((sideline-blame . down)))
   (setq sideline-backends-right '((sideline-flymake . down)
                                   ;; (sideline-eglot . up)
@@ -9,12 +11,6 @@
   :hook (prog-mode . sideline-mode))
 
 (with-eval-after-load 'sideline
-  (defun sideline-truncate-candidate (text)
-    (let ((max-width (window-width)))
-      (if (> (string-width text) max-width)
-          (substring text 0 (- max-width 3))
-        text)))
-
   (defun sideline-basedpyright-update (text)
     (if (eq major-mode 'python-ts-mode)
         (replace-regexp-in-string "basedpyright \\[\\w+\\]: \\(.*\\)" "\\1" text)

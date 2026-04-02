@@ -113,26 +113,25 @@ Each element should be a string representing a project root directory path."
                 (string-equal dir expanded)))
             projectile-ignored-root-paths))
 
+(defun projectile--tramp-cached-root (dir orig-fun args)
+  "Get project root for remote DIR, using cache when possible."
+  (or (find-longest-matching dir projectile-known-tramp-cache)
+      (let ((root (apply orig-fun args)))
+        (when (and root (not (member root projectile-known-tramp-cache)))
+          (push root projectile-known-tramp-cache)
+          (customize-save-variable 'projectile-known-tramp-cache projectile-known-tramp-cache))
+        root)))
+
 (defun projectile-project-root-stop-and-cache-advice (orig-fun &rest args)
-  (let ((current-dir (expand-file-name (or (car args) default-directory))))
-    (cond
-     ((projectile-root-ignored-path-p current-dir)
-      nil)
-     ((projectile-root-stop-at-home-p current-dir)
-      nil)
-     ((projectile-root-parent-at-home-p current-dir)
-      current-dir)
-     ((not (file-remote-p current-dir))
-      (apply orig-fun args))
-     ((if-let* ((cached-project
-                 (find-longest-matching current-dir projectile-known-tramp-cache)))
-          cached-project
-        (let ((project-root (apply orig-fun args)))
-          (when (and project-root
-                     (not (member project-root projectile-known-tramp-cache)))
-            (push project-root projectile-known-tramp-cache)
-            (customize-save-variable 'projectile-known-tramp-cache projectile-known-tramp-cache))
-          project-root))))))
+  (let* ((current-dir (expand-file-name (or (car args) default-directory)))
+         (root (cond
+                ((projectile-root-ignored-path-p current-dir) nil)
+                ((projectile-root-parent-at-home-p current-dir) current-dir)
+                ((file-remote-p current-dir)
+                 (projectile--tramp-cached-root current-dir orig-fun args))
+                (t (apply orig-fun args)))))
+    (unless (and root (projectile-root-stop-at-home-p root))
+      root)))
 
 (advice-add 'projectile-project-root :around #'projectile-project-root-stop-and-cache-advice)
 
