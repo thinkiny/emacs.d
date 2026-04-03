@@ -20,7 +20,7 @@
   (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-mcp-selection-delay 0.2)
   (setq claude-code-ide-mcp-initial-notification-delay 0.5)
-  (setq claude-code-ide-vterm-render-delay 0.03)
+  (setq claude-code-ide-vterm-render-delay 0.05)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 80)
   (claude-code-ide-emacs-tools-setup)

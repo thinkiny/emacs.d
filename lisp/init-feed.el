@@ -11,7 +11,7 @@
     (kill-buffer buffer)))
 
 (defun elfeed-show-visit-xwidget ()
-  (interactive "P")
+  (interactive)
   (when-let* ((link (elfeed-entry-link elfeed-show-entry)))
     (xwidget-webkit-browse-open-url link)
     (with-current-buffer (xwidget-webkit-get-browse-buffer)
@@ -59,39 +59,49 @@
   (interactive)
   (elfeed-open-in-chrome t))
 
+(defvar-local elfeed--pre-selection-point nil
+  "Point position before `elfeed-expand-selection' was first invoked.")
+
+(defconst elfeed--sentence-end-re "\\(?:[.!?]\\s-\\|[。！？]\\)"
+  "Regexp matching a sentence boundary (ASCII or CJK).")
+
 (defun elfeed--sentence-bounds ()
-  "Return bounds of sentence at point.
-Returns (START . END) or nil."
-  (let (start end)
-    (save-excursion
-      (unless (re-search-backward "[.!?]\\s-" nil t)
-        (goto-char (point-min)))
-      (when (looking-at "[.!?]") (forward-char 1))
-      (skip-chars-forward " \t\n")
-      (setq start (point)))
-    (save-excursion
-      (goto-char start)
-      (setq end (if (re-search-forward "[.!?]\\s-" nil t) (point) (point-max))))
-    (and (< start end) (cons start end))))
+  "Return (START . END) of the sentence at point, or nil."
+  (save-excursion
+    (unless (re-search-backward elfeed--sentence-end-re nil t)
+      (goto-char (point-min)))
+    (when (looking-at "[.!?。！？]") (forward-char 1))
+    (skip-chars-forward " \t\n")
+    (let ((start (point))
+          (end (if (re-search-forward elfeed--sentence-end-re nil t)
+                   (point)
+                 (point-max))))
+      (and (< start end) (cons start end)))))
 
 (defun elfeed-expand-selection ()
   "Expand selection progressively: word → sentence."
   (interactive)
   (if (not (region-active-p))
-      (when-let ((bounds (bounds-of-thing-at-point 'word)))
-        (goto-char (car bounds))
-        (push-mark (cdr bounds) nil t))
+      (progn
+        (setq elfeed--pre-selection-point (point))
+        (when-let* ((bounds (bounds-of-thing-at-point 'word)))
+          (goto-char (car bounds))
+          (push-mark (cdr bounds) nil t)))
     (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
-      (unless (string-match-p "[.!?]\\|\\S-\\s-+\\S-" text)
+      (unless (string-match-p "[.!?。！？]\\|\\S-\\s-+\\S-" text)
         (goto-char (region-beginning))
-        (when-let ((bounds (elfeed--sentence-bounds)))
+        (when-let* ((bounds (elfeed--sentence-bounds)))
           (goto-char (car bounds))
           (push-mark (cdr bounds) nil t))))))
 
 (defun elfeed-keyboard-quit()
   (interactive)
   (if (region-active-p)
-      (deactivate-mark)
+      (progn
+        (when elfeed--pre-selection-point
+          (goto-char elfeed--pre-selection-point)
+          (setq elfeed--pre-selection-point nil))
+        (deactivate-mark))
     (keyboard-quit)))
 
 (defun my-elfeed-show-mode-hook()

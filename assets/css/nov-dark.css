@@ -63,8 +63,8 @@ pre, code {
   line-height: 1.2em !important;
   font-family: "JetBrains Mono", "SF Mono", Monaco, monospace !important;
 }
-a, em, caption, th, tr, td, h1, h2, h3, h4, h5, h6, p, body {
-  font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
+*:not(pre):not(code) {
+  font-family: "IoskeleyMono", "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 :root {
   color-scheme: dark; /* both supported */

@@ -13,7 +13,7 @@
 The file is read at load time and injected into xwidget-webkit pages."
   :type 'file)
 
-(defcustom caret-xwidget-reload-js-on-inject t
+(defcustom caret-xwidget-reload-js-on-inject nil
   "If non-nil, reload `caret-xwidget-js-file' on every injection."
   :type 'boolean)
 
@@ -303,7 +303,6 @@ Set this to navigate to the previous document/chapter.")
   (define-key xwidget-webkit-mode-map (kbd "SPC")   #'caret-xwidget-scroll-up)
   (define-key xwidget-webkit-mode-map (kbd "C-SPC") #'caret-xwidget-toggle-mark)
   (define-key xwidget-webkit-mode-map (kbd "C-g")   #'caret-xwidget-quit-mark)
-  (define-key xwidget-webkit-mode-map (kbd "q")     #'caret-xwidget-quit-mark)
   (define-key xwidget-webkit-mode-map (kbd "M-<")   #'caret-xwidget-beginning-of-buffer)
   (define-key xwidget-webkit-mode-map (kbd "M->")   #'caret-xwidget-end-of-buffer)
   (define-key xwidget-webkit-mode-map (kbd "RET")   #'caret-xwidget-click)

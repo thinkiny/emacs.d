@@ -21,10 +21,8 @@
 
   (define-key ivy-occur-mode-map (kbd "n") #'ivy-occur-next-line)
   (define-key ivy-occur-mode-map (kbd "p") #'ivy-occur-previous-line)
-  (add-hook 'ivy-occur-mode-hook #'ivy-occur-focus)
-
   (global-set-key (kbd "C-c z") 'ivy-resume)
-  (global-set-key (kbd "C-x b") 'persp-ivy-switch-buffer)
+  (add-hook 'ivy-occur-mode-hook #'ivy-occur-focus)
   (after-load-theme
    ;;(set-face-attribute 'swiper-line-face nil :background (face-attribute 'highlight :background))
    (set-face-attribute 'ivy-virtual nil :inherit nil)))
@@ -41,6 +39,7 @@
   :config
   (setq-default counsel-mode-override-describe-bindings t)
   (setq counsel-preselect-current-file t)
+  (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
   (add-to-list 'ivy-more-chars-alist '(counsel-rg . 2))
   (define-key counsel-find-file-map (kbd "C-l") #'counsel-up-directory)
   (setq counsel-find-file-ignore-regexp (regexp-opt '(".cache$" ".metals$" "bazel-.*" ".o$" ".elc$" ".so$")))

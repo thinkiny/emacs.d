@@ -12,6 +12,7 @@
   :custom
   (persp-mode-prefix-key (kbd "C-x p"))
   :config
+  (global-set-key (kbd "C-x b") 'persp-ivy-switch-buffer)
   (defun persp-close-all-buffers ()
     "Kill all buffers in the current perspective excludes the perspective's scratch buffer."
     (interactive)
