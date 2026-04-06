@@ -36,8 +36,6 @@ class CaretEmacs {
     // Performance caches
     this._visualOrderCache = null;       // { root, ordered, lines, frameId }
     this._visualOrderGen = 0;
-    this._lineBoundsCache = new WeakMap();
-    this._textBoundsCache = new WeakMap();
     this._fontSizeCache = new WeakMap();
 
     this._onKeyDown = (e) => {
@@ -407,17 +405,13 @@ class CaretEmacs {
   /** Return visible text bounds within a text node, excluding leading/trailing whitespace. */
   _textVisibleBounds(textNode) {
     if (textNode.nodeType !== Node.TEXT_NODE) return { start: 0, end: 0, length: 0 };
-    const cached = this._textBoundsCache.get(textNode);
-    if (cached) return cached;
     const text = textNode.textContent || "";
     const length = text.length;
-    if (!text.trim()) { const r = { start: 0, end: length, length }; this._textBoundsCache.set(textNode, r); return r; }
+    if (!text.trim()) return { start: 0, end: length, length };
 
     const start = text.search(/\S/u);
     const end = text.trimEnd().length || length;
-    const result = { start: Math.max(0, start), end, length };
-    this._textBoundsCache.set(textNode, result);
-    return result;
+    return { start: Math.max(0, start), end, length };
   }
 
   /** Return start/end caret edge for visible content in a text node. */
@@ -829,8 +823,6 @@ class CaretEmacs {
 
   _lineBounds(line) {
     if (!line?.length) return null;
-    const cached = this._lineBoundsCache.get(line);
-    if (cached) return cached;
     const first = line[0];
     const last = line[line.length - 1];
     let top = first.rect.top;
@@ -841,7 +833,7 @@ class CaretEmacs {
       bottom = Math.max(bottom, entry.rect.top + entry.rect.height);
       height = Math.max(height, entry.rect.height);
     }
-    const result = {
+    return {
       first,
       last,
       left: first.rect.left,
@@ -850,8 +842,6 @@ class CaretEmacs {
       bottom,
       height: Math.max(height, bottom - top)
     };
-    this._lineBoundsCache.set(line, result);
-    return result;
   }
 
   /* ── Character & Word Movement ─────────────────────────────── */
