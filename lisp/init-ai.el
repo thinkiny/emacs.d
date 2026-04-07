@@ -9,9 +9,8 @@
   (setq claude-code-ide-debug nil)
   (setq claude-code-ide-cli-debug nil)
   (setq claude-code-ide-emacs-prompt
-"# IMPORTANT
-- Review Emacs MCP tool descriptions thoroughly.
-- Prioritize Emacs MCP tools over any other tools or agents.
+"# CONSTRAINTS
+- Review Emacs MCP tool descriptions thoroughly. Prioritize Emacs MCP tools over any other tools or agents.
 - Avoid reading any binary files (e.g., PDFs or EPUBs).
 - Line numbers are 1-based; column numbers are 0-based.")
 
@@ -20,24 +19,25 @@
   (setq claude-code-ide-show-claude-window-in-ediff nil)
   (setq claude-code-ide-mcp-selection-delay 0.2)
   (setq claude-code-ide-mcp-initial-notification-delay 0.5)
-  (setq claude-code-ide-vterm-render-delay 0.05)
+  (setq claude-code-ide-vterm-render-delay 0.02)
   (setq claude-code-ide-window-side 'right
-        claude-code-ide-window-width 80)
+        claude-code-ide-use-side-window nil
+        claude-code-ide-window-width (max vterm-min-window-width 80))
   (claude-code-ide-emacs-tools-setup)
+
+  ;; add more tools
   (require 'claude-extra-mcp-tools)
   (claude-extra-mcp-tools-setup)
-  (setq claude-code-ide-use-side-window nil))
+
+  (add-to-list 'display-buffer-alist
+               `("\\*claude-code"
+                 (claude-code--display-buffer)
+                 (direction . right)
+                 (window-width . (body-columns . ,claude-code-ide-window-width)))))
 
 (defun claude-code--display-buffer (buffer alist)
   (delete-other-windows)
   (display-buffer-in-direction buffer alist))
-
-(add-to-list 'display-buffer-alist
-             '("\\*claude-code*"
-               (display-buffer-use-some-frame
-                claude-code--display-buffer)
-               (direction . right)
-               (window-width . 0.5)))
 
 (use-package agent-shell
   :bind (:map global-map

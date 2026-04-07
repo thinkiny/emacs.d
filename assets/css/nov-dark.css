@@ -64,7 +64,7 @@ pre, code {
   font-family: "JetBrains Mono", "SF Mono", Monaco, monospace !important;
 }
 *:not(pre):not(code) {
-  font-family: "IoskeleyMono", "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
+  font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 :root {
   color-scheme: dark; /* both supported */

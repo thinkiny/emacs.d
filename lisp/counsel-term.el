@@ -16,6 +16,10 @@
 (defvar counsel-mt-shell-type 'vterm
   "Terminal backend to use.  Either `vterm' or `eshell'.")
 
+(defcustom counsel-mt-refresh-interval 1
+  "Idle seconds between terminal buffer name refreshes."
+  :type 'number :group 'convenience)
+
 (defconst counsel-mt-name-header "*TERM-"
   "Prefix string for managed terminal buffer names.")
 
@@ -71,6 +75,15 @@ and prepends a \"Launch new terminal\" entry."
                               (< (counsel-mt--buf-index (cdr a))
                                  (counsel-mt--buf-index (cdr b)))))))))))
 
+(defun counsel-mt--refresh-names ()
+  "Rename all managed terminal buffers to reflect current directory."
+  (dolist (buf (buffer-list))
+    (when-let* ((idx (buffer-local-value 'counsel-mt-index buf)))
+      (with-current-buffer buf
+        (let ((new-name (counsel-mt--buf-name idx)))
+          (unless (equal (buffer-name) new-name)
+            (rename-buffer new-name)))))))
+
 (defun counsel-mt--preselect ()
   "Return the ivy preselect string for `counsel-term'.
 If the current buffer is managed, preselect its index.
@@ -112,6 +125,23 @@ longest prefix of the current directory."
             :caller 'counsel-term))
 
 (ignore-tramp-ssh-control-master 'counsel-mt--launch)
+
+(defvar counsel-mt--refresh-timer nil)
+
+(defun counsel-mt--start-refresh-timer ()
+  "Start or restart the idle timer for buffer name refresh."
+  (counsel-mt-stop-refresh-timer)
+  (setq counsel-mt--refresh-timer
+        (run-with-idle-timer counsel-mt-refresh-interval t
+                             #'counsel-mt--refresh-names)))
+
+(defun counsel-mt-stop-refresh-timer ()
+  "Cancel the buffer name refresh timer."
+  (when counsel-mt--refresh-timer
+    (cancel-timer counsel-mt--refresh-timer)
+    (setq counsel-mt--refresh-timer nil)))
+
+(counsel-mt--start-refresh-timer)
 
 (provide 'counsel-term)
 ;;; counsel-term.el ends here

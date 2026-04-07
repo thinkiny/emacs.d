@@ -12,7 +12,7 @@
   (add-to-list 'vterm-tramp-shells '("rpc" "/bin/bash -l"))
   (ignore-tramp-ssh-control-master 'vterm-mode)
   (setq vterm-always-compile-module t)
-  (setq vterm-min-window-width 40)
+  (setq vterm-min-window-width 60)
   (setq vterm-max-scrollback 10000)
   (setq vterm-shell (concat shell-file-name " -l"))
 
@@ -32,24 +32,18 @@
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
 
-  (defun vterm--get-directory (path)
-    "Get normalized directory to PATH."
-    (when path
-      (let (directory)
-        (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
-            (progn
-              (let ((user (match-string 1 path))
-                    (host (match-string 2 path))
-                    (dir (match-string 3 path)))
-                (if (and (string-equal user user-login-name)
-                         (string-equal host (system-name)))
-                    (progn
-                      (when (file-directory-p dir)
-                        (setq directory (file-name-as-directory dir))))
-                  (setq directory (file-name-as-directory (concat "/" tramp-default-method ":" path))))))
-          (when (file-directory-p path)
-            (setq directory (file-name-as-directory path))))
-        directory))))
+(defun vterm--get-directory(path)
+  "Get normalized directory to PATH, handling TRAMP paths specifically,
+else mirroring original vterm logic."
+  (when path
+    (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
+        (let ((dir (match-string 3 path))
+              (remote-prefix (file-remote-p default-directory)))
+          (if remote-prefix
+              (file-name-as-directory (concat remote-prefix dir))
+            (file-name-as-directory dir)))
+      (file-name-as-directory path))))
+)
 
 ;; vterm--pixel-scroll
 (defvar-local vterm--scroll-timer nil)

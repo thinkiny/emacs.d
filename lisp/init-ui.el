@@ -195,18 +195,22 @@ reader assets."
 (apply-frame-size-for-display)
 (add-hook 'after-make-frame-functions #'apply-frame-size-for-display)
 
-;; disable fringe in xwidget-webkit-mode
-(defun sync-fringe-for-xwidget (frame)
-  "Update fringes only for the selected window in FRAME."
+;; disable fringe based on major-mode
+(defun no-fringe-mode-p ()
+  "Return non-nil if current buffer should hide fringes."
+  (derived-mode-p 'xwidget-webkit-mode 'vterm-mode))
+
+(defun sync-fringe-by-mode (frame)
+  "Sync fringe width for all non-minibuffer windows in FRAME."
   (when (frame-live-p frame)
     (let ((window (frame-selected-window frame)))
       (unless (window-minibuffer-p window)
         (with-current-buffer (window-buffer window)
           (set-window-fringes window
-                              (if (derived-mode-p 'xwidget-webkit-mode) 0 nil)
-                              (if (derived-mode-p 'xwidget-webkit-mode) 0 nil)))))))
+                              (if (no-fringe-mode-p) 1 nil)
+                              (if (no-fringe-mode-p) 1 nil)))))))
 
-(add-hook 'window-state-change-functions #'sync-fringe-for-xwidget)
+(add-hook 'window-state-change-functions #'sync-fringe-by-mode)
 
 ;; mode-line support
 (use-package hide-mode-line)

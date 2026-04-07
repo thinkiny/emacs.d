@@ -54,9 +54,12 @@
   (or (string-equal ".cache" file)
       (string-equal "bazel-out" file)))
 
+(with-eval-after-load-theme 'treemacs
+  (set-face-attribute 'treemacs-root-face nil :height 1.1))
+
 (with-eval-after-load 'treemacs
-  (set-face-attribute 'treemacs-root-face nil :height 1.0)
   (push #'treemacs-custom-filter treemacs-ignored-file-predicates)
+  (add-hook 'treemacs-mode-hook 'hide-mode-line-mode)
   (add-to-list 'treemacs-pre-file-insert-predicates #'treemacs-is-file-git-ignored?)
   (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action))
 

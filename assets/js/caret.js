@@ -37,6 +37,7 @@ class CaretEmacs {
     this._visualOrderCache = null;       // { root, ordered, lines, frameId }
     this._visualOrderGen = 0;
     this._fontSizeCache = new WeakMap();
+    this._textBoundsCache = new WeakMap();
 
     this._onKeyDown = (e) => {
       if (e.ctrlKey && e.key === 'g' && !e.shiftKey && !e.altKey && !e.metaKey)
@@ -68,6 +69,7 @@ class CaretEmacs {
   _invalidateLayoutCaches() {
     this._visualOrderGen++;
     this._fontSizeCache = new WeakMap();
+    this._textBoundsCache = new WeakMap();
   }
 
   /* ── Debug ─────────────────────────────────────────────────── */
@@ -388,7 +390,9 @@ class CaretEmacs {
     if (!this._isContained(node)) return null;
     const tw = this._textWalker(node);
     let textNode = fwd ? tw.nextNode() : tw.previousNode();
-    while (textNode && !textNode.textContent.trim()) textNode = fwd ? tw.nextNode() : tw.previousNode();
+    while (textNode && !this._isNavigableTextNode(textNode)) {
+      textNode = fwd ? tw.nextNode() : tw.previousNode();
+    }
     return textNode;
   }
 
@@ -402,16 +406,35 @@ class CaretEmacs {
     } catch (e) { return false; }
   }
 
-  /** Return visible text bounds within a text node, excluding leading/trailing whitespace. */
+  _preservesWhitespace(node) {
+    const el = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+    if (!el) return false;
+    const ws = getComputedStyle(el).whiteSpace;
+    return ws === 'pre' || ws === 'pre-wrap' || ws === 'break-spaces';
+  }
+
+  _isNavigableTextNode(textNode) {
+    if (textNode?.nodeType !== Node.TEXT_NODE) return false;
+    const text = textNode.textContent || "";
+    if (!text.length) return false;
+    return this._preservesWhitespace(textNode) || !!text.trim();
+  }
+
+  /** Return visible text bounds within a text node, excluding leading/trailing whitespace except preserved whitespace contexts. */
   _textVisibleBounds(textNode) {
     if (textNode.nodeType !== Node.TEXT_NODE) return { start: 0, end: 0, length: 0 };
+    const cached = this._textBoundsCache.get(textNode);
+    if (cached) return cached;
     const text = textNode.textContent || "";
     const length = text.length;
+    if (this._preservesWhitespace(textNode)) return { start: 0, end: length, length };
     if (!text.trim()) return { start: 0, end: length, length };
 
     const start = text.search(/\S/u);
     const end = text.trimEnd().length || length;
-    return { start: Math.max(0, start), end, length };
+    const result = { start: Math.max(0, start), end, length };
+    this._textBoundsCache.set(textNode, result);
+    return result;
   }
 
   /** Return start/end caret edge for visible content in a text node. */
@@ -441,7 +464,7 @@ class CaretEmacs {
       if (preferFwd && child) {
         const text = child.nodeType === Node.TEXT_NODE ? child
           : child.firstChild?.nodeType === Node.TEXT_NODE ? child.firstChild : null;
-        if (text?.textContent.trim())
+        if (this._isNavigableTextNode(text))
           return { node: text, offset: this._textVisibleEdgeOffset(text, true) };
       }
 
@@ -449,7 +472,7 @@ class CaretEmacs {
       const t = this._walkToVisible(start, true) || this._walkToVisible(start, false);
       if (t) return { node: t, offset: this._textVisibleEdgeOffset(t, true) };
     }
-    if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
+    if (node.nodeType === Node.TEXT_NODE && !(node.textContent || "").trim()) {
       const prev = this._walkToVisible(node, false);
       if (prev) return { node: prev, offset: this._textVisibleEdgeOffset(prev, false) };
       const next = this._walkToVisible(node, true);
@@ -462,7 +485,7 @@ class CaretEmacs {
   _rangeToText(range) {
     const { node, offset } = this._resolveCursorPosition(
       range.startContainer, range.startOffset, true);
-    if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return null;
+    if (node.nodeType !== Node.TEXT_NODE || !this._isNavigableTextNode(node)) return null;
     return this._collapsedRange(node, offset);
   }
 
@@ -472,6 +495,28 @@ class CaretEmacs {
     if (rect) return rect;
     const fallbackRect = range.getBoundingClientRect();
     return fallbackRect?.height ? fallbackRect : null;
+  }
+
+  /** Rect used for line movement; keeps caret-before-newline on the current line. */
+  _lineMoveRect(node, offset) {
+    if (node?.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent || "";
+      const len = text.length;
+      const off = Math.max(0, Math.min(offset, len));
+      if (off > 0 && off < len && text[off] === '\n') {
+        const prevRect = this._rangeRectAt(node, off - 1);
+        if (prevRect) return prevRect;
+      }
+      const curRect = this._rangeRectAt(node, off);
+      if (curRect) return curRect;
+      if (off > 0) {
+        const prevRect = this._rangeRectAt(node, off - 1);
+        if (prevRect) return prevRect;
+      }
+      const fallback = this._collapsedRange(node, off).getBoundingClientRect();
+      return fallback?.height ? fallback : null;
+    }
+    return this._charRect(this._collapsedRange(node, offset));
   }
 
   /** Resolve the current selection focus to a visible rect, or null. */
@@ -589,6 +634,7 @@ class CaretEmacs {
   }
 
   _currentPage() {
+    if (!this._isPdfMode()) return null;
     const sel = window.getSelection();
     if (sel?.focusNode) {
       const el = sel.focusNode.nodeType === Node.ELEMENT_NODE
@@ -627,8 +673,8 @@ class CaretEmacs {
     let domIndex = 0;
     while (tw.nextNode()) {
       const textNode = tw.currentNode;
-      if (!textNode.textContent.trim()) continue;
-      const segments = this._splitNodeIntoLineSegments(textNode, domIndex++);
+      if (!this._isNavigableTextNode(textNode)) continue;
+      const segments = this._splitNodeIntoLineSegments(textNode, domIndex++, root);
       for (const seg of segments) nodes.push(seg);
     }
     if (!nodes.length) {
@@ -671,7 +717,8 @@ class CaretEmacs {
 
   /** Split a text node into per-visual-line segments.
    *  Returns [{ node, rect, startOffset, endOffset, domIndex }]. */
-  _splitNodeIntoLineSegments(textNode, domIndex) {
+  _splitNodeIntoLineSegments(textNode, domIndex, scopeRoot = null) {
+    const groupRoot = this._isPdfMode() ? null : this._lineGroupingRoot(textNode, scopeRoot);
     const range = document.createRange();
     range.selectNodeContents(textNode);
     const rects = Array.from(range.getClientRects()).filter(r => r.height && r.width);
@@ -682,7 +729,7 @@ class CaretEmacs {
     if (lineRects.length <= 1) {
       return [{
         node: textNode, rect: cloneRect(lineRects[0]),
-        startOffset: 0, endOffset: textNode.length, domIndex
+        startOffset: 0, endOffset: textNode.length, domIndex, groupRoot
       }];
     }
     // Binary-search break offsets between consecutive visual lines
@@ -711,7 +758,7 @@ class CaretEmacs {
         if (lo > segStart) {
           segments.push({
             node: textNode, rect: cloneRect(lr),
-            startOffset: segStart, endOffset: lo, domIndex
+            startOffset: segStart, endOffset: lo, domIndex, groupRoot
           });
         }
         segStart = lo;
@@ -720,12 +767,24 @@ class CaretEmacs {
         if (textNode.length > segStart) {
           segments.push({
             node: textNode, rect: cloneRect(lr),
-            startOffset: segStart, endOffset: textNode.length, domIndex
+            startOffset: segStart, endOffset: textNode.length, domIndex, groupRoot
           });
         }
       }
     }
     return segments;
+  }
+
+  /** Nearest non-inline ancestor used as an HTML line-group boundary. */
+  _lineGroupingRoot(textNode, scopeRoot = null) {
+    const scopeEl = scopeRoot?.nodeType === Node.ELEMENT_NODE ? scopeRoot : this._root;
+    let el = textNode?.parentElement || null;
+    while (el && el !== scopeEl) {
+      const display = getComputedStyle(el).display;
+      if (display !== 'inline' && display !== 'contents') return el;
+      el = el.parentElement;
+    }
+    return scopeEl;
   }
 
   /** Group an array of DOMRects by Y-band, returning one representative rect per visual line. */
@@ -746,7 +805,9 @@ class CaretEmacs {
     for (let i = 1; i < orderedNodes.length; i++) {
       const entry = orderedNodes[i];
       const firstRect = currentLine[0].rect;
-      if (this._isSameLine(entry.rect, firstRect)) {
+      const sameVisualLine = this._isSameLine(entry.rect, firstRect);
+      const sameGroup = this._isPdfMode() || entry.groupRoot === currentLine[0].groupRoot;
+      if (sameVisualLine && sameGroup) {
         currentLine.push(entry);
       } else {
         lines.push(currentLine);
@@ -974,7 +1035,7 @@ class CaretEmacs {
   /** Snap the selection focus onto a visible text node. */
   _snapToText(sel, fwd) {
     const focus = sel.focusNode;
-    if (focus.nodeType === Node.TEXT_NODE && focus.textContent.trim()) return;
+    if (focus.nodeType === Node.TEXT_NODE && this._isNavigableTextNode(focus)) return;
 
     const pastEnd = focus.nodeType === Node.ELEMENT_NODE &&
       fwd && sel.focusOffset >= focus.childNodes.length;
@@ -1008,15 +1069,54 @@ class CaretEmacs {
     return lineTop >= viewportRect.top && (lineTop - viewportRect.top) <= thresholdPx;
   }
 
+  /** Move by logical line/column within a single preserved-whitespace text node. */
+  _moveWithinPreservedTextNode(node, offset, fwd) {
+    if (this._isPdfMode() || node?.nodeType !== Node.TEXT_NODE) return null;
+    if (!this._preservesWhitespace(node)) return null;
+    const text = node.textContent || "";
+    if (!text.includes('\n')) return null;
+
+    const len = text.length;
+    const off = Math.max(0, Math.min(offset, len));
+    const currentStart = text.lastIndexOf('\n', Math.max(0, off - 1)) + 1;
+    let currentEnd = text.indexOf('\n', currentStart);
+    if (currentEnd < 0) currentEnd = len;
+    const clampedOff = Math.max(currentStart, Math.min(off, currentEnd));
+    const column = clampedOff - currentStart;
+
+    let targetStart = -1;
+    let targetEnd = -1;
+    if (fwd) {
+      if (currentEnd >= len) return null;
+      targetStart = currentEnd + 1;
+      targetEnd = text.indexOf('\n', targetStart);
+      if (targetEnd < 0) targetEnd = len;
+    } else {
+      if (currentStart <= 0) return null;
+      targetEnd = currentStart - 1;
+      const prevBreak = text.lastIndexOf('\n', Math.max(0, targetEnd - 1));
+      targetStart = prevBreak + 1;
+    }
+
+    if (targetStart < 0 || targetEnd < targetStart) return null;
+    const targetOff = Math.min(targetStart + column, targetEnd);
+    return this._collapsedRange(node, targetOff);
+  }
+
   /** DOM-based visual line movement. Returns { range, scrolled }. */
   _moveLine(fwd) {
     const sel = window.getSelection();
     if (!sel?.rangeCount) return { range: null, scrolled: false };
 
-    const startRange = this._collapsedRange(sel.focusNode, sel.focusOffset);
-    const caretRect = this._charRect(startRange);
+    const { node: lineNode, offset: lineOffset } =
+      this._resolveCursorPosition(sel.focusNode, sel.focusOffset, true);
+    const startRange = this._collapsedRange(lineNode, lineOffset);
+    const caretRect = this._lineMoveRect(lineNode, lineOffset) || this._charRect(startRange);
     if (!caretRect?.height) return { range: null, scrolled: false };
     const goalX = caretRect.left;
+
+    const preservedTextRange = this._moveWithinPreservedTextNode(lineNode, lineOffset, fwd);
+    if (preservedTextRange) return { range: preservedTextRange, scrolled: false };
 
     // Phase 1: move within current scope (PDF page or full HTML body)
     const currentPage = this._currentPage();
@@ -1040,8 +1140,10 @@ class CaretEmacs {
           const { lines: refreshedLines } = this._visuallyOrderedWithLines(scopeRoot);
           if (!refreshedLines.length) return { range: null, scrolled: true };
 
-          const postScrollRange = this._collapsedRange(sel.focusNode, sel.focusOffset);
-          const postScrollRect = this._charRect(postScrollRange);
+          const { node: postNode, offset: postOff } =
+            this._resolveCursorPosition(sel.focusNode, sel.focusOffset, true);
+          const postScrollRange = this._collapsedRange(postNode, postOff);
+          const postScrollRect = this._lineMoveRect(postNode, postOff) || this._charRect(postScrollRange);
           if (!postScrollRect?.height) return { range: null, scrolled: true };
 
           const refreshedCurrentLineIndex = this._findCaretLine(refreshedLines, postScrollRect);
@@ -1315,7 +1417,7 @@ class CaretEmacs {
     const node = sel.focusNode, offset = sel.focusOffset;
     const fwd = direction === "forward";
     if (node.nodeType !== Node.TEXT_NODE) return false;
-    if (!node.textContent.trim()) return !this._walkToVisible(node, fwd);
+    if (!this._isNavigableTextNode(node)) return !this._walkToVisible(node, fwd);
     if (fwd ? offset < node.length : offset > 0) return false;
     const hasNextVisible = !!this._walkToVisible(node, fwd);
     if (hasNextVisible) return false;

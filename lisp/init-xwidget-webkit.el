@@ -30,8 +30,7 @@ When current major mode is derived from `xwidget-webkit-mode',
 reload in the current buffer; otherwise use or create the global
 browse session."
   (if (derived-mode-p 'xwidget-webkit-mode)
-      (when-let* ((session (xwidget-webkit-current-session)))
-        (xwidget-webkit-goto-uri session url))
+      (xwidget-webkit-goto-uri (xwidget-at (point-min)) url)
     (let ((buffer (xwidget-webkit-get-browse-buffer)))
       (if buffer
           (progn

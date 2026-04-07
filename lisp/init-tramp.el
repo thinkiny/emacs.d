@@ -7,7 +7,6 @@
 (setq remote-file-name-inhibit-auto-save-visited t)
 (setq remote-file-name-inhibit-auto-save t)
 ;; (setq tramp-use-scp-direct-remote-copying t)
-(setq tramp-default-method "ssh")
 (setq tramp-verbose 0)
 (setq tramp-chunksize nil)
 (setq tramp-inline-compress-start-size (* 2 1024 1024))

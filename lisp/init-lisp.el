@@ -170,6 +170,4 @@ there is no current file, eval the current buffer."
   :bind (:map emacs-lisp-mode-map
               ("C-c r" . #'erefactor-rename-symbol-in-buffer)))
 
-;; (use-package elisp-def)
-
 (provide 'init-lisp)

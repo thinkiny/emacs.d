@@ -21,6 +21,11 @@
   :type 'number
   :group 'claude-extra-mcp-tools)
 
+(defcustom claude-extra-mcp-treesit-max-chars 4096
+  "Maximum character size for `claude-code-ide-mcp-treesit-info' responses."
+  :type 'integer
+  :group 'claude-extra-mcp-tools)
+
 (defconst claude-xwidgets--selected-text-js
   "(function() {
   var s = window.getSelection().toString();
@@ -241,17 +246,54 @@ function requires `buffer-file-name'.  ORIG-FN is the original function."
       (claude-xwidgets--poll-selection)
     (funcall orig-fn arg)))
 
+;;; treesit-info size guard
+
+(defun claude-extra-mcp-tools--char-length (text)
+  "Return character length of TEXT."
+  (length text))
+
+(defun claude-extra-mcp-tools--truncate-chars (text max-chars)
+  "Truncate TEXT to MAX-CHARS."
+  (let ((limit (max 0 max-chars)))
+    (if (<= (length text) limit)
+        text
+      (substring text 0 limit))))
+
+(defun claude-extra-mcp-tools--treesit-truncation-notice (original-chars cap-chars)
+  "Return a short truncation notice for tree-sitter output."
+  (format "\n\n[truncated treesit output: %d chars, capped at %d chars]"
+          original-chars cap-chars))
+
+(defun claude-extra-mcp-tools--treesit-info-size-around (orig-fn &rest args)
+  "Limit `claude-code-ide-mcp-treesit-info' output size."
+  (let ((result (apply orig-fn args)))
+    (if (not (stringp result))
+        result
+      (let* ((cap-chars (max 0 claude-extra-mcp-treesit-max-chars))
+             (result-chars (claude-extra-mcp-tools--char-length result)))
+        (if (<= result-chars cap-chars)
+            result
+          (let* ((notice (claude-extra-mcp-tools--treesit-truncation-notice
+                          result-chars cap-chars))
+                 (notice-chars (claude-extra-mcp-tools--char-length notice)))
+            (if (>= notice-chars cap-chars)
+                (claude-extra-mcp-tools--truncate-chars notice cap-chars)
+              (let* ((body-budget (- cap-chars notice-chars))
+                     (body (claude-extra-mcp-tools--truncate-chars
+                            result body-budget)))
+                (concat body notice)))))))))
 
 ;;; Registration
 
 ;;;###autoload
 (defun claude-extra-mcp-tools-setup ()
   "Register extra MCP tools for claude-code-ide."
-  (interactive)
   (advice-add 'claude-code-ide-mcp-handle-get-current-selection
               :around #'claude-xwidgets--get-current-selection-around)
   (advice-add 'claude-code-ide-mcp--send-selection-for-project
               :around #'claude-xwidgets--send-selection-for-project-around)
+  (advice-add 'claude-code-ide-mcp-treesit-info
+              :around #'claude-extra-mcp-tools--treesit-info-size-around)
 
   ;; Register get-visible-text tool
   (claude-code-ide-make-tool
