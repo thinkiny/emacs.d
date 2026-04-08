@@ -89,9 +89,7 @@ def extract_pdfjs():
 
 
 def init_http_proxy():
-    proxy_support = urllib.request.ProxyHandler(
-        {"http": "http://127.0.0.1:1087", "https": "http://127.0.0.1:1087"}
-    )
+    proxy_support = urllib.request.ProxyHandler()
     opener = urllib.request.build_opener(proxy_support)
     urllib.request.install_opener(opener)
 

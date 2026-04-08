@@ -2,7 +2,9 @@
 
 (use-package elfeed
   :config
-  (setq elfeed-curl-extra-arguments '("-x" "http://localhost:1087"))
+  (when-let* ((proxy-url (local-proxy-http-url)))
+    (setq elfeed-curl-extra-arguments
+          (list "-x" proxy-url)))
   (setq elfeed-db-directory "~/.emacs.d/elfeed")
   (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"))
 

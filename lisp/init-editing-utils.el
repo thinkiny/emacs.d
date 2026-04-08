@@ -420,4 +420,14 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
             (lambda()
               (add-to-list 'completion-at-point-functions 'cape-file))))
 
+(defun fix-quotes ()
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "[“”＂]" nil t) (replace-match "\""))
+    (goto-char (point-min))
+    (while (re-search-forward "[‘’＇]" nil t) (replace-match "'"))))
+
+(global-set-key (kbd "C-c q f") #'fix-quotes)
+
 (provide 'init-editing-utils)

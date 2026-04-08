@@ -8,6 +8,7 @@
 
 (require 'xwidget)
 (setq xwidget-webkit-buffer-name-format "*WEB: %T")
+(setq xwidget-webkit-proxy (local-proxy-http-url))
 
 (defvar xwidget-webkit-browse-session nil)
 (defun xwidget-webkit-get-browse-buffer()

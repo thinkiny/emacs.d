@@ -21,8 +21,8 @@
   (setq claude-code-ide-mcp-initial-notification-delay 0.5)
   (setq claude-code-ide-vterm-render-delay 0.02)
   (setq claude-code-ide-window-side 'right
-        claude-code-ide-use-side-window nil
-        claude-code-ide-window-width (max vterm-min-window-width 80))
+        claude-code-ide-window-width 80
+        claude-code-ide-use-side-window nil)
   (claude-code-ide-emacs-tools-setup)
 
   ;; add more tools
@@ -31,7 +31,7 @@
 
   (add-to-list 'display-buffer-alist
                `("\\*claude-code"
-                 (claude-code--display-buffer)
+                 (display-buffer-in-direction)
                  (direction . right)
                  (window-width . (body-columns . ,claude-code-ide-window-width)))))
 
@@ -46,11 +46,12 @@
   (setq agent-shell-header-style 'text)
   (setq agent-shell-show-config-icons nil)
   (setq agent-shell-show-welcome-message nil)
-  (setq agent-shell-cursor-environment
-        (agent-shell-make-environment-variables
-         "HTTP_PROXY" "http://127.0.0.1:1087"
-         "HTTPS_PROXY" "http://127.0.0.1:1087"
-         :inherit-env t
-         )))
+  (let ((proxy-env-args
+         (mapcan (lambda (pair)
+                   (list (car pair) (cdr pair)))
+                 (local-proxy-env-alist))))
+    (setq agent-shell-cursor-environment
+          (apply #'agent-shell-make-environment-variables
+                 (append proxy-env-args '(:inherit-env t))))))
 
 (provide 'init-ai)

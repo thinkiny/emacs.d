@@ -108,14 +108,36 @@
                    ,@body)))))
 
 ;; proxy
-(defconst enable-local-proxy t)
-(defvar url-proxy-services-local
-  '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
-    ("http" . "127.0.0.1:1087")
-    ("https" . "127.0.0.1:1087")))
+(defvar local-proxy-endpoint "127.0.0.1:1087")
+(defconst local-proxy-no-proxy-regexp "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
+
+(defun local-proxy-http-url ()
+  "Return HTTP proxy URL from `local-proxy-endpoint'."
+  (when local-proxy-endpoint
+    (format "http://%s" local-proxy-endpoint)))
+
+(defun local-proxy-url-proxy-services ()
+  "Build `url-proxy-services' value from the local proxy settings."
+  (when local-proxy-endpoint
+    `(("no_proxy" . ,local-proxy-no-proxy-regexp)
+      ("http" . ,local-proxy-endpoint)
+      ("https" . ,local-proxy-endpoint))))
+
+(defun local-proxy-env-alist ()
+  "Return proxy environment variables in alist form."
+  (let ((proxy-url (local-proxy-http-url)))
+    (when proxy-url
+      `(("HTTP_PROXY" . ,proxy-url)
+        ("HTTPS_PROXY" . ,proxy-url)
+        ("http_proxy" . ,proxy-url)
+        ("https_proxy" . ,proxy-url)))))
+
+
+(defvar url-proxy-services-local (local-proxy-url-proxy-services))
 
 (defun set-proxy()
   (interactive)
+  (setq url-proxy-services-local (local-proxy-url-proxy-services))
   (setq url-proxy-services url-proxy-services-local))
 
 (defun unset-proxy()
@@ -124,10 +146,11 @@
 
 (defun advice/use-proxy-local (func &rest args)
   (defvar url-proxy-services)
-  (if enable-local-proxy
-      (let ((url-proxy-services url-proxy-services-local))
-        (apply func args))
-    (apply func args)))
+  (let ((proxy-services (local-proxy-url-proxy-services)))
+    (if proxy-services
+        (let ((url-proxy-services proxy-services))
+          (apply func args))
+      (apply func args))))
 
 (defun use-proxy-local(&rest funcs)
   (dolist (func funcs)

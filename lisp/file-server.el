@@ -17,10 +17,13 @@
 (defun file-server-start ()
   (interactive)
   (unless (get-process "file-server")
-    (set-process-sentinel
-     (start-process "file-server" "*file-server*" "python3" file-server-script file-server-port)
-     (lambda (process event)
-       (message (format "%s: %s" process event))))
+    (let ((process-environment (copy-sequence process-environment)))
+      (dolist (pair (local-proxy-env-alist))
+        (setenv (car pair) (cdr pair)))
+      (set-process-sentinel
+       (start-process "file-server" "*file-server*" "python3" file-server-script file-server-port)
+       (lambda (process event)
+         (message (format "%s: %s" process event)))))
     (sit-for 1)))
 
 (provide 'file-server)
