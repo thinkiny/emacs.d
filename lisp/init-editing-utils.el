@@ -303,18 +303,12 @@ With arg N, insert N newlines."
          ([remap dired-smart-shell-command] . dwim-shell-command)))
 
 ;; forward-word to beginning
-(defun forward-word-begin (arg)
-  "Move forward a word and end up with the point being at the beginning of the
-next word.  Move point forward ARG words (backward if ARG is negative).
-If ARG is omitted or nil, move point forward one word."
-  (interactive "p")
-  (dotimes (_ (or arg 1))
-    (forward-whitespace 1)))
-
-(defun backward-symbol(arg)
-  (interactive "p")
-  (or arg (setq arg 1))
-  (forward-symbol (* -1 arg)))
+(defun forward-word-begin ()
+  "Move point to the beginning of the next word."
+  (interactive)
+  (forward-word 1)
+  (forward-word 1)
+  (backward-word 1))
 
 ;; direnv
 (use-package direnv

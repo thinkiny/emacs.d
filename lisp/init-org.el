@@ -478,8 +478,8 @@ _d_: delete row   _k_: delete column  _s_: shorten
   (unbind-key (kbd "C-c [") org-mode-map)
   (unbind-key (kbd "C-c ]") org-mode-map)
 
-  (define-key org-mode-map (kbd "C-n") #'precision-scroll-forward-line)
-  (define-key org-mode-map (kbd "C-p") #'precision-scroll-backward-line)
+  (define-key org-mode-map (kbd "C-n") #'precision-scroll-next-line)
+  (define-key org-mode-map (kbd "C-p") #'precision-scroll-prev-line)
   (define-key org-mode-map (kbd "C-v") #'precision-scroll-up-page)
   (define-key org-mode-map (kbd "M-v") #'precision-scroll-down-page)
   (define-key org-mode-map (kbd "C-c v") #'org-overview)

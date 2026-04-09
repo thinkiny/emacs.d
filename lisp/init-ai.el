@@ -30,10 +30,10 @@
   (claude-extra-mcp-tools-setup)
 
   (add-to-list 'display-buffer-alist
-               `("\\*claude-code"
-                 (display-buffer-in-direction)
+               '("\\*claude-code"
+                 (claude-code--display-buffer)
                  (direction . right)
-                 (window-width . (body-columns . ,claude-code-ide-window-width)))))
+                 (window-width . 0.5))))
 
 (defun claude-code--display-buffer (buffer alist)
   (delete-other-windows)

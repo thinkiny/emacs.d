@@ -395,11 +395,11 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 
 (defun nov-xwidget-scroll-up-page ()
   (interactive)
-  (nov-xwidget--scroll-by (get-precision-scroll-page-height)))
+  (nov-xwidget--scroll-by (precision-scroll-page-height)))
 
 (defun nov-xwidget-scroll-down-page ()
   (interactive)
-  (nov-xwidget--scroll-by (* -1 (get-precision-scroll-page-height))))
+  (nov-xwidget--scroll-by (* -1 (precision-scroll-page-height))))
 
 (defun nov-xwidget-scroll-up-step ()
   (interactive)

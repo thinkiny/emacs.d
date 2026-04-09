@@ -43,48 +43,76 @@
 (defconst precision-scroll-nontext-height 200)
 (defconst precision-scroll-page-lines 20)
 
-(defun precision-scroll-line-height ()
-  (frame-char-height))
-
-(defun get-precision-scroll-page-height ()
-  (* precision-scroll-page-lines (precision-scroll-line-height)))
-
 (defun precision-scroll--line-non-text-p (&optional dir)
-  "Non-nil if point (or adjacent line in DIR) has non-text display content."
+  "Non-nil if point (or adjacent line in DIR) has tall non-text display content."
   (save-excursion
     (when dir (vertical-motion dir))
     (let* ((pos (point))
            (line-h (car (window-line-height)))
-           (has-disp (or (get-char-property pos 'display)
-                         (cl-some (lambda (ov) (overlay-get ov 'display))
-                                  (overlays-at pos)))))
-      (and has-disp
-           line-h
+           (has-display (or (get-char-property pos 'display)
+                            (cl-some (lambda (ov) (overlay-get ov 'display))
+                                     (overlays-at pos)))))
+      (and has-display line-h
            (> line-h precision-scroll-nontext-height)))))
 
-(defun precision-scroll-forward-line ()
-  (interactive)
-  (if (and (precision-scroll--line-non-text-p)
-           (precision-scroll--line-non-text-p 1))
-      (ignore-errors
-        (pixel-scroll-precision-scroll-down precision-scroll-nontext-height))
-    (vertical-motion 1)))
+(defun precision-scroll--at-window-boundary-p (dir)
+  "Non-nil when point is on the visible boundary in DIR."
+  (let ((row (cdr (posn-col-row (posn-at-point)))))
+    (and row
+         (if (> dir 0)
+             (>= row (max 0 (1- (window-body-height))))
+           (<= row 0)))))
 
-(defun precision-scroll-backward-line ()
-  (interactive)
-  (if (and (precision-scroll--line-non-text-p)
-           (precision-scroll--line-non-text-p -1))
+(defun precision-scroll--line (dir)
+  "Move one visual line in DIR, pixel-scrolling for non-text and at boundaries."
+  (unless (if (> dir 0) (eobp) (bobp))
+    (cond
+     ((and (precision-scroll--line-non-text-p)
+           (precision-scroll--line-non-text-p dir))
       (ignore-errors
-        (pixel-scroll-precision-scroll-up precision-scroll-nontext-height))
-    (vertical-motion -1)))
+        (if (> dir 0)
+            (pixel-scroll-precision-scroll-down precision-scroll-nontext-height)
+          (pixel-scroll-precision-scroll-up precision-scroll-nontext-height))))
+     ((precision-scroll--at-window-boundary-p dir)
+      (let ((start (window-start)))
+        (ignore-errors
+          (if (> dir 0)
+              (pixel-scroll-precision-scroll-down (frame-char-height))
+            (pixel-scroll-precision-scroll-up (frame-char-height)))
+          (unless (= start (window-start))
+            (recenter (let ((h (max 1 (window-body-height))))
+                        (max 0 (min (1- h)
+                                    (floor (/ (if (> dir 0) h (* 2 h)) 3.0))))))))))
+     (t (vertical-motion dir)))))
+
+(defun precision-scroll-line (&optional arg)
+  "Move ARG visual lines (default 1, negative = backward).
+Pixel-scrolls tall non-text content and repositions at window boundaries."
+  (interactive "p")
+  (let ((dir (if (>= arg 0) 1 -1))
+        (n (abs arg)))
+    (dotimes (_ n)
+      (precision-scroll--line dir))))
+
+(defun precision-scroll-next-line ()
+  "Scroll down one visual line."
+  (interactive)
+  (precision-scroll-line 1))
+
+(defun precision-scroll-prev-line ()
+  "Scroll up one visual line."
+  (interactive)
+  (precision-scroll-line -1))
 
 (defun precision-scroll-up-page ()
   (interactive)
-  (pixel-scroll-precision-scroll-down-page (get-precision-scroll-page-height)))
+  (pixel-scroll-precision-scroll-down-page
+   (* precision-scroll-page-lines (frame-char-height))))
 
 (defun precision-scroll-down-page ()
   (interactive)
-  (pixel-scroll-precision-scroll-up-page (get-precision-scroll-page-height)))
+  (pixel-scroll-precision-scroll-up-page
+   (* precision-scroll-page-lines (frame-char-height))))
 
 ;; icons/advice
 (use-package nerd-icons)
@@ -315,11 +343,11 @@ reader assets."
                                           (car custom-enabled-themes))
                                         default-theme))))
 
-(defun current-theme-bg-hex ()
-  "Return the current default face background color as #rrggbb."
-  (let ((color (face-attribute 'default :background nil t)))
-    (when (or (null color) (equal color "unspecified-bg"))
-      (user-error "Default face background is not specified"))
+(defun face-attribute-hex (attr unspec-tag)
+  "Return face ATTR of the default face as #rrggbb."
+  (let ((color (face-attribute 'default attr nil t)))
+    (when (or (null color) (equal color unspec-tag))
+      (user-error "Default face %s is not specified" attr))
     (let ((rgb (color-values color)))
       (unless rgb
         (user-error "Unable to resolve color values for %s" color))
@@ -328,18 +356,13 @@ reader assets."
               (/ (nth 1 rgb) 257)
               (/ (nth 2 rgb) 257)))))
 
+(defun current-theme-bg-hex ()
+  "Return the current default face background color as #rrggbb."
+  (face-attribute-hex :background "unspecified-bg"))
+
 (defun current-theme-fg-hex ()
   "Return the current default face foreground color as #rrggbb."
-  (let ((color (face-attribute 'default :foreground nil t)))
-    (when (or (null color) (equal color "unspecified-fg"))
-      (user-error "Default face foreground is not specified"))
-    (let ((rgb (color-values color)))
-      (unless rgb
-        (user-error "Unable to resolve color values for %s" color))
-      (format "#%02x%02x%02x"
-              (/ (nth 0 rgb) 257)
-              (/ (nth 1 rgb) 257)
-              (/ (nth 2 rgb) 257)))))
+  (face-attribute-hex :foreground "unspecified-fg"))
 
 (defun sync-reader-theme-colors ()
   "Rebuild reader assets to match the current reader theme."
@@ -373,12 +396,13 @@ reader assets."
                (format "Failed to rebuild reader assets for %s theme with transparent background and foreground %s (exit %s)"
                        theme foreground exit-code))))))
 
-(defun cap-brightness-in-dark-theme()
+(defun cap-brightness-in-dark-theme ()
   (when (theme-dark-p)
-    (let* ((color (face-attribute 'default :foreground))
-           (hsl (nth 2 (apply #'color-rgb-to-hsl (color-name-to-rgb color)))))
-      (if (> hsl 0.9)
-          (set-face-attribute 'default nil :foreground "#E0E0E0")))))
+    (let ((hsl (nth 2 (apply #'color-rgb-to-hsl
+                             (color-name-to-rgb
+                              (face-attribute 'default :foreground))))))
+      (when (> hsl 0.9)
+        (set-face-attribute 'default nil :foreground "#E0E0E0")))))
 
 (after-load-theme
  (cap-brightness-in-dark-theme)

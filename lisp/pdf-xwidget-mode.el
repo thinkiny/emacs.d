@@ -56,12 +56,12 @@
 (defun pdf-xwidget-scroll-up-page ()
   "Scroll PDF up by one page."
   (interactive)
-  (pdf-xwidget--scroll (get-precision-scroll-page-height)))
+  (pdf-xwidget--scroll (precision-scroll-page-height)))
 
 (defun pdf-xwidget-scroll-down-page ()
   "Scroll PDF down by one page."
   (interactive)
-  (pdf-xwidget--scroll (- (get-precision-scroll-page-height))))
+  (pdf-xwidget--scroll (- (precision-scroll-page-height))))
 
 ;; pdf xwidget toolbar
 (defvar-local pdf-xwidget-toolbar-show t

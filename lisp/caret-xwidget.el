@@ -13,10 +13,6 @@
 The file is read at load time and injected into xwidget-webkit pages."
   :type 'file)
 
-(defcustom caret-xwidget-reload-js-on-inject nil
-  "If non-nil, reload `caret-xwidget-js-file' on every injection."
-  :type 'boolean)
-
 ;; ---------------------------------------------------------------------------
 ;; Load caret.js source from file
 ;; ---------------------------------------------------------------------------
@@ -24,15 +20,19 @@ The file is read at load time and injected into xwidget-webkit pages."
 (defvar caret-xwidget--js-source nil
   "The caret.js source code to inject into xwidget pages.")
 
+(defvar caret-xwidget--js-mtime nil
+  "Modification time of `caret-xwidget-js-file' when last loaded.")
+
 (defun caret-xwidget--load-js ()
   "Load the caret.js source from `caret-xwidget-js-file'."
   (let ((file (expand-file-name caret-xwidget-js-file)))
     (unless (file-readable-p file)
-      (user-error "caret-xwidget: cannot read %s" file))
+      (user-error "caret-xwidget: Cannot read %s" file))
     (setq caret-xwidget--js-source
           (with-temp-buffer
             (insert-file-contents file)
-            (buffer-string)))))
+            (buffer-string)))
+    (setq caret-xwidget--js-mtime (file-attribute-modification-time (file-attributes file)))))
 
 ;; Load the JS source at require time.
 (caret-xwidget--load-js)
@@ -44,8 +44,10 @@ The file is read at load time and injected into xwidget-webkit pages."
 (defun caret-xwidget--inject ()
   "Inject caret.js into the current xwidget-webkit session."
   (when-let* ((xw (xwidget-webkit-current-session)))
-    (when caret-xwidget-reload-js-on-inject
-      (caret-xwidget--load-js))
+    (let ((file (expand-file-name caret-xwidget-js-file)))
+      (when (time-less-p caret-xwidget--js-mtime
+                         (file-attribute-modification-time (file-attributes file)))
+        (caret-xwidget--load-js)))
     (let ((post caret-xwidget--after-inject-js))
       (setq caret-xwidget--after-inject-js nil)
       (xwidget-webkit-execute-script xw

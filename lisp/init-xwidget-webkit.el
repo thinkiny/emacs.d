@@ -155,11 +155,11 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (defun xwidget-scroll-up-page()
   (interactive)
-  (xwidget-webkit-scroll-up (get-precision-scroll-page-height)))
+  (xwidget-webkit-scroll-up (precision-scroll-page-height)))
 
 (defun xwidget-scroll-down-page()
   (interactive)
-  (xwidget-webkit-scroll-down (get-precision-scroll-page-height)))
+  (xwidget-webkit-scroll-down (precision-scroll-page-height)))
 
 (with-eval-after-load 'xwidget
   (easy-menu-define nil xwidget-webkit-mode-map "Xwidget WebKit menu."

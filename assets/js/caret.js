@@ -779,11 +779,40 @@ class CaretEmacs {
   _lineGroupingRoot(textNode, scopeRoot = null) {
     const scopeEl = scopeRoot?.nodeType === Node.ELEMENT_NODE ? scopeRoot : this._root;
     let el = textNode?.parentElement || null;
+
     while (el && el !== scopeEl) {
-      const display = getComputedStyle(el).display;
-      if (display !== 'inline' && display !== 'contents') return el;
-      el = el.parentElement;
+      const style = getComputedStyle(el);
+      const display = style.display;
+      const position = style.position;
+
+      // Out-of-flow elements don't define line-group boundaries.
+      if (position === 'absolute' || position === 'fixed') {
+        el = el.parentElement;
+        continue;
+      }
+
+      const parent = el.parentElement;
+      const parentStyle = parent ? getComputedStyle(parent) : null;
+      const parentDisplay = parentStyle?.display || '';
+      const parentFlow = parentStyle?.flexDirection || '';
+      const isInlineSelf = display === 'inline' || display === 'contents';
+      const isRowItem = parent && (
+        display === 'list-item'
+        || ((parentDisplay === 'flex' || parentDisplay === 'inline-flex') && !parentFlow.startsWith('column'))
+        || parentDisplay === 'grid'
+        || parentDisplay === 'inline-grid'
+        || (display.startsWith('inline-') && parentDisplay !== 'inline' && parentDisplay !== 'contents')
+      );
+
+      if (isRowItem && parent && parent !== scopeEl) {
+        return parent;
+      }
+      if (!isInlineSelf) {
+        return el;
+      }
+      el = parent;
     }
+
     return scopeEl;
   }
 
@@ -806,7 +835,9 @@ class CaretEmacs {
       const entry = orderedNodes[i];
       const firstRect = currentLine[0].rect;
       const sameVisualLine = this._isSameLine(entry.rect, firstRect);
-      const sameGroup = this._isPdfMode() || entry.groupRoot === currentLine[0].groupRoot;
+      const sameGroup = this._isPdfMode() || entry.groupRoot === currentLine[0].groupRoot
+        || currentLine[0].groupRoot?.contains(entry.groupRoot)
+        || entry.groupRoot?.contains(currentLine[0].groupRoot);
       if (sameVisualLine && sameGroup) {
         currentLine.push(entry);
       } else {
@@ -843,7 +874,9 @@ class CaretEmacs {
       if (resolved && this._isContained(resolved.startContainer)
         && lineNodes.has(resolved.startContainer)) {
         const cr = this._charRect(resolved);
-        if (cr && Math.abs(cr.top - repRect.top) < repRect.height) return resolved;
+        if (cr && Math.abs(cr.top - repRect.top) < repRect.height) {
+          return resolved;
+        }
       }
     }
 
@@ -1051,9 +1084,21 @@ class CaretEmacs {
 
   /* ── Line Movement ─────────────────────────────────────────── */
 
-  _lineTargetIndex(currentLineIndex, isForward, lineCount) {
-    const targetLineIndex = isForward ? currentLineIndex + 1 : currentLineIndex - 1;
-    return (targetLineIndex >= 0 && targetLineIndex < lineCount) ? targetLineIndex : -1;
+  _lineTargetIndex(currentLineIndex, isForward, lines) {
+    const currentBounds = this._lineBounds(lines[currentLineIndex]);
+    const curRect = lines[currentLineIndex][0].rect;
+    const start = isForward ? currentLineIndex + 1 : currentLineIndex - 1;
+    const end = isForward ? lines.length : -1;
+    for (let i = start; isForward ? i < end : i > end; i += isForward ? 1 : -1) {
+      const targetRect = lines[i][0].rect;
+      if (this._isSameLine(targetRect, curRect)) continue;
+      const targetBounds = this._lineBounds(lines[i]);
+      if (currentBounds && targetBounds
+          && (currentBounds.right < targetBounds.left
+          || targetBounds.right < currentBounds.left)) continue;
+      return i;
+    }
+    return -1;
   }
 
   _lineVerticalGapPx(currentRect, targetRect, isForward) {
@@ -1116,7 +1161,9 @@ class CaretEmacs {
     const goalX = caretRect.left;
 
     const preservedTextRange = this._moveWithinPreservedTextNode(lineNode, lineOffset, fwd);
-    if (preservedTextRange) return { range: preservedTextRange, scrolled: false };
+    if (preservedTextRange) {
+      return { range: preservedTextRange, scrolled: false };
+    }
 
     // Phase 1: move within current scope (PDF page or full HTML body)
     const currentPage = this._currentPage();
@@ -1127,44 +1174,8 @@ class CaretEmacs {
 
     const currentLineIndex = this._findCaretLine(lines, caretRect);
     if (currentLineIndex >= 0) {
-      const targetLineIndex = this._lineTargetIndex(currentLineIndex, fwd, lines.length);
+      const targetLineIndex = this._lineTargetIndex(currentLineIndex, fwd, lines);
       if (targetLineIndex >= 0) {
-        const currentRect = lines[currentLineIndex][0].rect;
-        const targetRect = lines[targetLineIndex][0].rect;
-        const gapPx = this._lineVerticalGapPx(currentRect, targetRect, fwd);
-
-        if (gapPx > this._scrollPx) {
-          this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
-          this._invalidateLayoutCaches();
-
-          const { lines: refreshedLines } = this._visuallyOrderedWithLines(scopeRoot);
-          if (!refreshedLines.length) return { range: null, scrolled: true };
-
-          const { node: postNode, offset: postOff } =
-            this._resolveCursorPosition(sel.focusNode, sel.focusOffset, true);
-          const postScrollRange = this._collapsedRange(postNode, postOff);
-          const postScrollRect = this._lineMoveRect(postNode, postOff) || this._charRect(postScrollRange);
-          if (!postScrollRect?.height) return { range: null, scrolled: true };
-
-          const refreshedCurrentLineIndex = this._findCaretLine(refreshedLines, postScrollRect);
-          if (refreshedCurrentLineIndex < 0) return { range: null, scrolled: true };
-
-          const refreshedTargetLineIndex = this._lineTargetIndex(refreshedCurrentLineIndex, fwd, refreshedLines.length);
-          if (refreshedTargetLineIndex < 0) return { range: null, scrolled: true };
-
-          const refreshedCurrentRect = refreshedLines[refreshedCurrentLineIndex][0].rect;
-          const refreshedTargetRect = refreshedLines[refreshedTargetLineIndex][0].rect;
-          const refreshedGapPx = this._lineVerticalGapPx(refreshedCurrentRect, refreshedTargetRect, fwd);
-          if (refreshedGapPx <= this._scrollPx) {
-            const candidateLineIndex = fwd ? refreshedCurrentLineIndex : refreshedTargetLineIndex;
-            const candidateLine = refreshedLines[candidateLineIndex];
-            if (this._isLineWithinViewportTopThreshold(candidateLine)) {
-              return { range: this._pickPositionOnLine(candidateLine, goalX), scrolled: true };
-            }
-          }
-          return { range: null, scrolled: true };
-        }
-
         return { range: this._pickPositionOnLine(lines[targetLineIndex], goalX), scrolled: false };
       }
 
