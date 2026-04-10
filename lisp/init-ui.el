@@ -43,47 +43,23 @@
 (defconst precision-scroll-nontext-height 200)
 (defconst precision-scroll-page-lines 20)
 
+(defun precision-scroll-page-height ()
+  (* precision-scroll-page-lines (frame-char-height)))
+
 (defun precision-scroll--line-non-text-p (&optional dir)
   "Non-nil if point (or adjacent line in DIR) has tall non-text display content."
   (save-excursion
     (when dir (vertical-motion dir))
     (let* ((pos (point))
            (line-h (car (window-line-height)))
+           (ovs (overlays-at pos))
            (has-display (or (get-char-property pos 'display)
                             (cl-some (lambda (ov) (overlay-get ov 'display))
-                                     (overlays-at pos)))))
-      (and has-display line-h
-           (> line-h precision-scroll-nontext-height)))))
-
-(defun precision-scroll--at-window-boundary-p (dir)
-  "Non-nil when point is on the visible boundary in DIR."
-  (let ((row (cdr (posn-col-row (posn-at-point)))))
-    (and row
-         (if (> dir 0)
-             (>= row (max 0 (1- (window-body-height))))
-           (<= row 0)))))
-
-(defun precision-scroll--line (dir)
-  "Move one visual line in DIR, pixel-scrolling for non-text and at boundaries."
-  (unless (if (> dir 0) (eobp) (bobp))
-    (cond
-     ((and (precision-scroll--line-non-text-p)
-           (precision-scroll--line-non-text-p dir))
-      (ignore-errors
-        (if (> dir 0)
-            (pixel-scroll-precision-scroll-down precision-scroll-nontext-height)
-          (pixel-scroll-precision-scroll-up precision-scroll-nontext-height))))
-     ((precision-scroll--at-window-boundary-p dir)
-      (let ((start (window-start)))
-        (ignore-errors
-          (if (> dir 0)
-              (pixel-scroll-precision-scroll-down (frame-char-height))
-            (pixel-scroll-precision-scroll-up (frame-char-height)))
-          (unless (= start (window-start))
-            (recenter (let ((h (max 1 (window-body-height))))
-                        (max 0 (min (1- h)
-                                    (floor (/ (if (> dir 0) h (* 2 h)) 3.0))))))))))
-     (t (vertical-motion dir)))))
+                                     ovs))))
+      (or (cl-some (lambda (ov) (eq (overlay-get ov 'face) 'shr-sliced-image))
+                   ovs)
+          (and has-display line-h
+               (> line-h precision-scroll-nontext-height))))))
 
 (defun precision-scroll-line (&optional arg)
   "Move ARG visual lines (default 1, negative = backward).
@@ -92,7 +68,16 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
   (let ((dir (if (>= arg 0) 1 -1))
         (n (abs arg)))
     (dotimes (_ n)
-      (precision-scroll--line dir))))
+      (unless (if (> dir 0) (eobp) (bobp))
+        (cond
+         ((or (precision-scroll--line-non-text-p)
+              (precision-scroll--line-non-text-p dir))
+          (ignore-errors
+            (if (> dir 0)
+                (pixel-scroll-precision-scroll-down precision-scroll-nontext-height)
+              (pixel-scroll-precision-scroll-up precision-scroll-nontext-height))))
+         (t
+          (vertical-motion dir (selected-window) 0)))))))
 
 (defun precision-scroll-next-line ()
   "Scroll down one visual line."

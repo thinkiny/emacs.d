@@ -119,7 +119,7 @@ Return the callback string result, or nil on timeout."
   (or (ignore-errors (claude-xwidgets--eval-sync claude-xwidgets--selected-text-js))
       ""))
 
-(defun claude-xwidgets--xwidget-selection-alist (&optional text)
+(defun claude-xwidgets--selection-alist (&optional text)
   "Build a selection alist for the current xwidget buffer.
 TEXT defaults to the result of `claude-xwidgets--selected-text'."
   (let* ((text (or text (claude-xwidgets--selected-text)))
@@ -135,47 +135,46 @@ TEXT defaults to the result of `claude-xwidgets--selected-text'."
 
 ;;; getCurrentSelection :around advice
 
-(defun claude-xwidgets--get-current-selection-around (orig-fn arguments)
+(defun claude-mcp--current-selection-advice (orig-fn arguments)
   "Around advice: handle xwidget buffers, delegate everything else.
 ORIG-FN is the original `getCurrentSelection' handler.
 ARGUMENTS are the MCP tool arguments (unused)."
   (if (claude-xwidgets--buffer-p)
-      (claude-xwidgets--xwidget-selection-alist)
+      (claude-xwidgets--selection-alist)
     ;; Not an xwidget buffer: call the original handler
     (funcall orig-fn arguments)))
 
 ;;; getVisibleText
 
-(defun claude-xwidgets--get-pdf-visible-text ()
+(defun claude-xwidgets--pdf-visible-text ()
   "Extract text from the current PDF page via the rendered text layer."
   (or (ignore-errors (claude-xwidgets--eval-sync claude-xwidgets--pdf-visible-text-js)) ""))
 
-(defun claude-xwidgets--get-xwidget-visible-text ()
+(defun claude-xwidgets--viewport-text ()
   "Extract visible text from the current xwidget viewport."
   (or (ignore-errors (claude-xwidgets--eval-sync
                       claude-xwidgets--viewport-visible-text-js))
       ""))
 
-(defun claude-xwidgets--get-buffer-visible-text ()
+(defun claude-mcp--window-text ()
   "Extract the text currently visible in the Emacs window."
   (buffer-substring-no-properties (window-start) (window-end nil t)))
 
-(defun claude-xwidgets--get-current-visible-text ()
-  "Get the text content currently visible to the user.
-This is the original implementation extracted from claude-xwidgets--handle-get-visible-text."
+(defun claude-mcp--visible-text ()
+  "Get the text content currently visible to the user."
   (cond
    ((claude-xwidgets--pdf-buffer-p)
-    (claude-xwidgets--get-pdf-visible-text))
+    (claude-xwidgets--pdf-visible-text))
    ((claude-xwidgets--buffer-p)
-    (claude-xwidgets--get-xwidget-visible-text))
+    (claude-xwidgets--viewport-text))
    (t
     (let ((win (get-buffer-window (current-buffer) t)))
       (if win
           (with-selected-window win
-            (claude-xwidgets--get-buffer-visible-text))
+            (claude-mcp--window-text))
         "")))))
 
-(defun claude-xwidgets--get-selected-text-if-available ()
+(defun claude-mcp--selection-text ()
   "Return selected text if available, handling all buffer types.
 Returns nil or empty string if no text is selected."
   (cond
@@ -187,14 +186,14 @@ Returns nil or empty string if no text is selected."
     (when (and (region-active-p) (use-region-p))
       (buffer-substring-no-properties (region-beginning) (region-end))))))
 
-(defun claude-xwidgets--handle-read-screen ()
+(defun claude-mcp--read-screen ()
   "Handle getVisibleText MCP tool call.
 Returns an alist with text and location information."
   (claude-code-ide-mcp-server-with-session-context nil
-    (let* ((selected-text (claude-xwidgets--get-selected-text-if-available))
+    (let* ((selected-text (claude-mcp--selection-text))
            (text (if (and selected-text (not (string-empty-p selected-text)))
                      selected-text
-                   (claude-xwidgets--get-current-visible-text)))
+                   (claude-mcp--visible-text)))
            (file-path (buffer-file-name))
            (uri (cond
                  (file-path (concat "file://" (expand-file-name file-path)))
@@ -209,13 +208,13 @@ Returns an alist with text and location information."
                          (line . ,line)))))))))
 
 ;;; Xwidget selection polling
-(defun claude-xwidgets--handle-selection-change (buf text)
+(defun claude-xwidgets--on-selection-change (buf text)
   "Send notification when selection changes in BUF."
   (when (buffer-live-p buf)
     (with-current-buffer buf
       (claude-code-ide-mcp--send-notification
        "selection_changed"
-       (claude-xwidgets--xwidget-selection-alist text)))))
+       (claude-xwidgets--selection-alist text)))))
 
 (defun claude-xwidgets--poll-selection ()
   "Poll xwidget selection and send notification if changed.
@@ -230,15 +229,15 @@ buffer is not an xwidget buffer."
          claude-xwidgets--selected-text-js
          (lambda (text)
            (ignore-errors
-             (claude-xwidgets--handle-selection-change buf text))))))))
+             (claude-xwidgets--on-selection-change buf text))))))))
 
 ;;; Project search (delegates to project-search.el)
-(defun claude-xwidgets--handle-project-search (query)
+(defun claude-mcp--project-search (query)
   "Search project for QUERY."
   (claude-code-ide-mcp-server-with-session-context nil
     (project-search-sync-query query)))
 
-(defun claude-xwidgets--send-selection-for-project-around (orig-fn arg)
+(defun claude-mcp--selection-poll-advice (orig-fn arg)
   "Around advice for `claude-code-ide-mcp--track-selection'.
 In xwidget buffers, poll the selection directly since the original
 function requires `buffer-file-name'.  ORIG-FN is the original function."
@@ -248,38 +247,34 @@ function requires `buffer-file-name'.  ORIG-FN is the original function."
 
 ;;; treesit-info size guard
 
-(defun claude-extra-mcp-tools--char-length (text)
-  "Return character length of TEXT."
-  (length text))
-
-(defun claude-extra-mcp-tools--truncate-chars (text max-chars)
+(defun claude-mcp--truncate-string (text max-chars)
   "Truncate TEXT to MAX-CHARS."
   (let ((limit (max 0 max-chars)))
     (if (<= (length text) limit)
         text
       (substring text 0 limit))))
 
-(defun claude-extra-mcp-tools--treesit-truncation-notice (original-chars cap-chars)
+(defun claude-mcp--treesit-truncation-notice (original-chars cap-chars)
   "Return a short truncation notice for tree-sitter output."
   (format "\n\n[truncated treesit output: %d chars, capped at %d chars]"
           original-chars cap-chars))
 
-(defun claude-extra-mcp-tools--treesit-info-size-around (orig-fn &rest args)
+(defun claude-mcp--treesit-size-advice (orig-fn &rest args)
   "Limit `claude-code-ide-mcp-treesit-info' output size."
   (let ((result (apply orig-fn args)))
     (if (not (stringp result))
         result
       (let* ((cap-chars (max 0 claude-extra-mcp-treesit-max-chars))
-             (result-chars (claude-extra-mcp-tools--char-length result)))
+             (result-chars (length result)))
         (if (<= result-chars cap-chars)
             result
-          (let* ((notice (claude-extra-mcp-tools--treesit-truncation-notice
+          (let* ((notice (claude-mcp--treesit-truncation-notice
                           result-chars cap-chars))
-                 (notice-chars (claude-extra-mcp-tools--char-length notice)))
+                 (notice-chars (length notice)))
             (if (>= notice-chars cap-chars)
-                (claude-extra-mcp-tools--truncate-chars notice cap-chars)
+                (claude-mcp--truncate-string notice cap-chars)
               (let* ((body-budget (- cap-chars notice-chars))
-                     (body (claude-extra-mcp-tools--truncate-chars
+                     (body (claude-mcp--truncate-string
                             result body-budget)))
                 (concat body notice)))))))))
 
@@ -289,22 +284,22 @@ function requires `buffer-file-name'.  ORIG-FN is the original function."
 (defun claude-extra-mcp-tools-setup ()
   "Register extra MCP tools for claude-code-ide."
   (advice-add 'claude-code-ide-mcp-handle-get-current-selection
-              :around #'claude-xwidgets--get-current-selection-around)
+              :around #'claude-mcp--current-selection-advice)
   (advice-add 'claude-code-ide-mcp--send-selection-for-project
-              :around #'claude-xwidgets--send-selection-for-project-around)
+              :around #'claude-mcp--selection-poll-advice)
   (advice-add 'claude-code-ide-mcp-treesit-info
-              :around #'claude-extra-mcp-tools--treesit-info-size-around)
+              :around #'claude-mcp--treesit-size-advice)
 
   ;; Register get-visible-text tool
   (claude-code-ide-make-tool
-   :function #'claude-xwidgets--handle-read-screen
+   :function #'claude-mcp--read-screen
    :name "claude-code-ide-mcp-read-screen"
    :description "Use this tool when you lack context; It retrieves the text currently visible in the user's active window."
    :args nil)
 
   ;; Register project-search tool
   (claude-code-ide-make-tool
-   :function #'claude-xwidgets--handle-project-search
+   :function #'claude-mcp--project-search
    :name "claude-code-ide-mcp-project-search"
    :description "Use this tool to search for functions, variables, classes, etc., by name pattern across the project."
    :args '((:name "pattern"
