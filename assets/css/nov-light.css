@@ -17,16 +17,12 @@ p {
 table {
   margin-left: 0 !important;
 }
-tr, td, div.warning {
+tr, td, div,th {
   font-size: 1em !important;
-  background: #d8dee9;
+  color: inherit !important;
 }
 span {
   font-size: 1em !important;
-}
-
-th {
-  font-size: 1em;
 }
 
 /* Same font for all tags */
@@ -73,4 +69,7 @@ dd p {
 }
 code.inlineCode {
   white-space: normal !important;
+}
+[class^="callout"] {
+  background-color: inherit !important;
 }

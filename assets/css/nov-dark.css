@@ -23,20 +23,22 @@ p {
 table {
   margin-left: 0 !important;
 }
-tr, td, div.warning {
+tr, td, div,th {
   font-size: 1em !important;
-  background: #272c35;
+  color: inherit !important;
 }
 span {
   font-size: 1em !important;
-}
-th {
-  font-size: 1em;
-  color: #d4d4d4 !important;
 }
 
-span {
-  color: #d4d4d4 !important;
+/* Same font for all tags */
+pre, code {
+  font-size: 1em !important;
+  line-height: 1.2em !important;
+  font-family: "JetBrains Mono", "SF Mono", Monaco, monospace !important;
+}
+*:not(pre):not(code) {
+  font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 h1 {
   color: #ffaf69 !important;
@@ -55,16 +57,6 @@ h5 {
 }
 h6 {
   color: #cccccc !important;
-}
-
-/* Same font for all tags */
-pre, code {
-  font-size: 1em !important;
-  line-height: 1.2em !important;
-  font-family: "JetBrains Mono", "SF Mono", Monaco, monospace !important;
-}
-*:not(pre):not(code) {
-  font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 :root {
   color-scheme: dark; /* both supported */
@@ -91,4 +83,7 @@ dd p {
 }
 code.inlineCode {
   white-space: normal !important;
+}
+[class^="callout"] {
+  background-color: inherit !important;
 }

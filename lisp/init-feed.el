@@ -8,6 +8,9 @@
   (setq elfeed-db-directory "~/.emacs.d/elfeed")
   (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"))
 
+(with-eval-after-load 'shr
+  (setq shr-use-colors nil))
+
 (defun kill-elfeed-buffer()
   (let* ((buffer (get-buffer "*elfeed-entry*")))
     (kill-buffer buffer)))
