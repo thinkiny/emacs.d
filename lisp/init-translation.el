@@ -44,9 +44,9 @@
 
 (defun google-translate--format-sentence-output (gtos)
   (concat
-   (replace-regexp-in-string "\n" "" (gtos-text gtos))
+   (replace-regexp-in-string "\n" " " (gtos-text gtos))
    "\n"
-   (replace-regexp-in-string "\n" "" (gtos-translation gtos))))
+   (replace-regexp-in-string "\n" " " (gtos-translation gtos))))
 
 
 (with-eval-after-load 'google-translate

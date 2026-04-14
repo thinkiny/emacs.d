@@ -71,17 +71,25 @@
   "Regexp matching a sentence boundary (ASCII or CJK).")
 
 (defun elfeed--sentence-bounds ()
-  "Return (START . END) of the sentence at point, or nil."
+  "Return (START . END) of the sentence at point, limited by empty lines."
   (save-excursion
-    (unless (re-search-backward elfeed--sentence-end-re nil t)
-      (goto-char (point-min)))
-    (when (looking-at "[.!?。！？]") (forward-char 1))
-    (skip-chars-forward " \t\n")
-    (let ((start (point))
-          (end (if (re-search-forward elfeed--sentence-end-re nil t)
-                   (point)
-                 (point-max))))
-      (and (< start end) (cons start end)))))
+    (save-restriction
+      ;; Narrow to current paragraph block
+      (narrow-to-region
+       (save-excursion (if (re-search-backward "^\n" nil t) (point) (point-min)))
+       (save-excursion (if (re-search-forward  "^\n" nil t) (point) (point-max))))
+
+      ;; Move to start of sentence
+      (if (re-search-backward elfeed--sentence-end-re nil t)
+          (goto-char (match-end 0))
+        (goto-char (point-min)))
+      (skip-chars-forward " \t\n")
+
+      (let ((start (point))
+            (end (or (re-search-forward elfeed--sentence-end-re nil t)
+                     (point-max))))
+        (when (< start end)
+          (cons start (- end 1)))))))
 
 (defun elfeed-expand-selection ()
   "Expand selection progressively: word → sentence."
