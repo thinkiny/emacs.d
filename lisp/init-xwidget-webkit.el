@@ -135,15 +135,16 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
                            (lambda (text)
                              (translate-brief text)))))))
 
-(defun xwidget-webkit-open-in-chrome (&optional _rest)
+(defun xwidget-webkit-open-url-in-chrome (url)
+  "Open URL in Chrome."
+  (browse-url-chrome url)
+  (quit-window))
+
+(defun xwidget-webkit-open-in-chrome ()
+  "Open current xwidget URL in Chrome."
   (interactive)
-  (let ((url (xwidget-webkit-uri (xwidget-webkit-current-session)))
-        (frame (selected-frame)))
-    (browse-url-chrome url)
-    (quit-window)
-    (run-with-timer 0.15 nil
-                    (lambda ()
-                      (select-frame-set-input-focus frame)))))
+  (when-let* ((url (xwidget-webkit-uri (xwidget-webkit-current-session))))
+    (xwidget-webkit-open-url-in-chrome url)))
 
 (defun xwidget-scroll-up-step()
   (interactive)
@@ -178,7 +179,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (define-key xwidget-webkit-mode-map (kbd "M-v") 'xwidget-scroll-down-page)
   (define-key xwidget-webkit-mode-map (kbd "M-c") 'xwidget-webkit-copy-selection-as-kill)
   (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-webkit-copy-selection-as-kill)
-  (define-key xwidget-webkit-mode-map (kbd "O") 'xwidget-webkit-open-in-chrome)
+  (define-key xwidget-webkit-mode-map (kbd "o") 'xwidget-webkit-open-in-chrome)
   (define-key xwidget-webkit-mode-map (kbd "C-v") 'xwidget-scroll-up-page)
   ;;(define-key xwidget-webkit-mode-map (kbd "<drag-mouse-1>") #'xwidget-translate-range)
   (define-key xwidget-webkit-mode-map (kbd "C-s") #'isearch-forward)

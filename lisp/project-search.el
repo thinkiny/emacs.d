@@ -300,6 +300,7 @@ MAX-WIDTH controls text truncation (defaults to window width)."
              (append (when extra-args (split-string-and-unquote extra-args))
                      (list "--no-heading" "--line-number" "--column"
                            "--ignore-case" "--color" "never"
+                           "--hidden"
                            "--fixed-strings"  ;; Treat query as literal string
                            "--" query ".")))
       (goto-char (point-min))
@@ -436,6 +437,7 @@ responses."
          (args (append (when extra-args (split-string-and-unquote extra-args))
                       (list "--no-heading" "--line-number" "--column"
                             "--ignore-case" "--color" "never"
+                            "--hidden"
                             "--line-buffered"
                             "--fixed-strings"  ;; Treat query as literal string
                             "--max-count" (number-to-string max-results)
