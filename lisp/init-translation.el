@@ -16,10 +16,11 @@
       (message "can't find word at point"))))
 
 ;; google
+(require 'posframe)
 (use-package google-translate
   :config
   (setq google-translate-show-phonetic t)
-  (setq google-translate-output-destination 'echo-area)
+  (setq google-translate-output-destination 'posframe)
   (setq google-translate-default-source-language "auto")
   (setq google-translate-default-target-language "zh-CN"))
 
@@ -39,7 +40,7 @@
      (google-translate--text-phonetic gtos " [%s]")
      (if (and detail detailed-translation)
          (google-translate--detailed-translation
-          detailed-translation translation "\n%s: " "%d. %s ")
+          detailed-translation translation "\n%s: " "\n%d. %s ")
        (concat ": " translation)))))
 
 (defun google-translate--format-sentence-output (gtos)
@@ -48,16 +49,42 @@
    "\n"
    (replace-regexp-in-string "\n" " " (gtos-translation gtos))))
 
+(defun google-translate--format-output (gtos &optional detail)
+  "Format translation output from GTOS."
+  (google-translate--trim-string
+   (if (google-translate--word-p (gtos-text gtos))
+       (google-translate--format-word-output gtos detail)
+     (google-translate--format-sentence-output gtos))))
 
-(with-eval-after-load 'google-translate
-  (defun google-translate-echo-area-output-translation (gtos)
-    "Output translation to the echo area (See
-http://www.gnu.org/software/emacs/manual/html_node/elisp/The-Echo-Area.html)"
-    (message "%s"
-     (google-translate--trim-string
-      (if (google-translate--word-p (gtos-text gtos))
-          (google-translate--format-word-output gtos)
-        (google-translate--format-sentence-output gtos))))))
+(defun google-translate-echo-area-output-translation (gtos)
+  "Output translation to the echo area. "
+  (message "%s" (google-translate--format-output gtos)))
+
+
+(defun google-translate-posframe-output-translation (gtos)
+  "Output translation to the posframe tooltip using `posframe'
+package."
+  (let ((cleanup-hook nil))
+    (with-current-buffer (get-buffer-create " *google-translate-posframe*")
+      (erase-buffer)
+      (insert (google-translate--format-output gtos t)))
+    (posframe-show " *google-translate-posframe*"
+                   :position (if (derived-mode-p 'xwidget-webkit-mode)
+                                 (or caret-xwidget-translate-pos
+                                     (cdr (mouse-pixel-position)))
+                               (point))
+                   :max-width (round (* 0.95 (window-width)))
+                   :internal-border-width 5
+                   :border-color (face-background 'default)
+                   :background-color (face-background 'default)
+                   )
+    (when (use-region-p)
+      (deactivate-mark))
+    (setq cleanup-hook
+          (lambda ()
+            (posframe-delete " *google-translate-posframe*")
+            (remove-hook 'pre-command-hook cleanup-hook)))
+    (add-hook 'pre-command-hook cleanup-hook)))
 
 (use-proxy-local 'google-translate-request)
 
@@ -75,6 +102,9 @@ http://www.gnu.org/software/emacs/manual/html_node/elisp/The-Echo-Area.html)"
 ;; tranlate functions
 (defvar translate-backend 'google
   "Translation backend to use. Either 'bing or 'google.")
+
+(defvar-local caret-xwidget-translate-pos nil
+  "Saved pixel position (X . Y) for posframe in xwidget buffers.")
 
 (defun translate-brief (text &optional sync-p)
   "Translate TEXT using configured backend."

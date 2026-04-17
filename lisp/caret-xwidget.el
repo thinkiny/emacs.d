@@ -222,22 +222,33 @@ Set this to navigate to the previous document/chapter.")
 
 (defconst caret-xwidget--word-at-caret-js
   (concat "(function(){var s=window.getSelection();"
-          "if(!s.isCollapsed)return s.toString();"
+          "if(!s.isCollapsed){var r=s.getRangeAt(0).getBoundingClientRect();"
+          "return JSON.stringify({t:s.toString(),l:r.left,b:r.bottom})}"
           "var n=s.focusNode,o=s.focusOffset;"
           "if(n.nodeType!==3)return'';"
           "var t=n.textContent;"
           "var b=o;while(b>0&&/[\\w]/.test(t[b-1]))b--;"
           "var m=t.slice(b).match(/^[\\w]+(-[\\w]+)*/);"
-          "return m?m[0]:''})()"))
+          "if(!m)return'';"
+          "var rng=document.createRange();rng.setStart(n,b);rng.setEnd(n,b+m[0].length);"
+          "var rc=rng.getBoundingClientRect();"
+          "return JSON.stringify({t:m[0],l:rc.left,b:rc.bottom})})()"))
 
 (defun caret-xwidget-translate-word ()
   "Translate the word at caret, or the active selection if any."
   (interactive)
   (caret-xwidget--exec caret-xwidget--word-at-caret-js
-    (lambda (text)
-      (let ((word (string-trim (or text "") "\"" "\"")))
-        (when (not (string-empty-p word))
-          (translate-brief word))))))
+    (lambda (result)
+      (when (and result (not (string-empty-p result)))
+        (let* ((data (json-parse-string result))
+               (word (gethash "t" data))
+               (left (gethash "l" data))
+               (bottom (gethash "b" data))
+               (x (round left))
+               (y (round bottom)))
+          (setq caret-xwidget-translate-pos (cons x y))
+          (when (not (string-empty-p word))
+            (translate-brief word)))))))
 
 ;; ---------------------------------------------------------------------------
 ;; Debug helpers (caret.js)
