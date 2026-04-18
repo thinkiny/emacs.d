@@ -48,59 +48,6 @@
   (elfeed-open-entry-in-chrome elfeed-show-entry)
   (kill-buffer (current-buffer)))
 
-(defvar-local elfeed--pre-selection-point nil
-  "Point position before `elfeed-expand-selection' was first invoked.")
-
-(defconst elfeed--sentence-end-re "\\(?:[.!?]\\s-\\|[。！？]\\)"
-  "Regexp matching a sentence boundary (ASCII or CJK).")
-
-(defun elfeed--sentence-bounds ()
-  "Return (START . END) of the sentence at point, limited by empty lines."
-  (save-excursion
-    (save-restriction
-      ;; Narrow to current paragraph block
-      (narrow-to-region
-       (save-excursion (if (re-search-backward "^\n" nil t) (point) (point-min)))
-       (save-excursion (if (re-search-forward  "^\n" nil t) (point) (point-max))))
-
-      ;; Move to start of sentence
-      (if (re-search-backward elfeed--sentence-end-re nil t)
-          (goto-char (match-end 0))
-        (goto-char (point-min)))
-      (skip-chars-forward " \t\n")
-
-      (let ((start (point))
-            (end (or (re-search-forward elfeed--sentence-end-re nil t)
-                     (point-max))))
-        (when (< start end)
-          (cons start (- end 1)))))))
-
-(defun elfeed-expand-selection ()
-  "Expand selection progressively: word → sentence."
-  (interactive)
-  (if (not (region-active-p))
-      (progn
-        (setq elfeed--pre-selection-point (point))
-        (when-let* ((bounds (bounds-of-thing-at-point 'word)))
-          (goto-char (car bounds))
-          (push-mark (cdr bounds) nil t)))
-    (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
-      (unless (string-match-p "[.!?。！？]\\|\\S-\\s-+\\S-" text)
-        (goto-char (region-beginning))
-        (when-let* ((bounds (elfeed--sentence-bounds)))
-          (goto-char (car bounds))
-          (push-mark (cdr bounds) nil t))))))
-
-(defun elfeed-keyboard-quit()
-  (interactive)
-  (if (region-active-p)
-      (progn
-        (when elfeed--pre-selection-point
-          (goto-char elfeed--pre-selection-point)
-          (setq elfeed--pre-selection-point nil))
-        (deactivate-mark))
-    (keyboard-quit)))
-
 (defun my-elfeed-show-mode-hook()
   (visual-line-mode)
   (eldoc-mode -1)
@@ -108,8 +55,15 @@
   (unbind-key (kbd "v") 'shr-map)
   (unbind-key (kbd "w") 'shr-map)
   (face-remap-add-relative 'shr-text :inherit 'default)
-  (define-key elfeed-show-mode-map (kbd "=") #'elfeed-expand-selection)
+  (define-key elfeed-show-mode-map (kbd "=") #'sel/expand)
   (define-key elfeed-show-mode-map (kbd "n") #'precision-scroll-next-line)
+  (define-key elfeed-show-mode-map (kbd "p") #'precision-scroll-prev-line)
+  (define-key elfeed-show-mode-map (kbd "j") #'precision-scroll-next-line)
+  (define-key elfeed-show-mode-map (kbd "k") #'precision-scroll-prev-line)
+  (define-key elfeed-show-mode-map (kbd "h") #'backward-word)
+  (define-key elfeed-show-mode-map (kbd "l") #'forward-word-begin)
+  (define-key elfeed-show-mode-map (kbd "w") #'precision-scroll-prev-line)
+  (define-key elfeed-show-mode-map (kbd "s") #'precision-scroll-next-line)
   (define-key elfeed-show-mode-map (kbd "b") #'backward-word)
   (define-key elfeed-show-mode-map (kbd "f") #'forward-word-begin)
   (define-key elfeed-show-mode-map (kbd "a") #'beginning-of-line)
@@ -119,15 +73,8 @@
   (define-key elfeed-show-mode-map (kbd "M-v") #'precision-scroll-down-page)
   (define-key elfeed-show-mode-map (kbd "SPC") #'precision-scroll-up-page)
   (define-key elfeed-show-mode-map (kbd "o") #'elfeed-open-current-in-chrome)
-  (define-key elfeed-show-mode-map (kbd "C-g") #'elfeed-keyboard-quit)
+  (define-key elfeed-show-mode-map (kbd "C-g") #'sel/quit)
   (define-key elfeed-show-mode-map (kbd "v") #'elfeed-show-visit-xwidget)
-  (define-key elfeed-show-mode-map (kbd "p") #'precision-scroll-prev-line)
-  (define-key elfeed-show-mode-map (kbd "j") #'precision-scroll-next-line)
-  (define-key elfeed-show-mode-map (kbd "k") #'precision-scroll-prev-line)
-  (define-key elfeed-show-mode-map (kbd "h") #'backward-word)
-  (define-key elfeed-show-mode-map (kbd "l") #'forward-word-begin)
-  (define-key elfeed-show-mode-map (kbd "w") #'precision-scroll-prev-line)
-  (define-key elfeed-show-mode-map (kbd "s") #'precision-scroll-next-line)
   (define-key elfeed-show-mode-map (kbd "y") #'elfeed-show-yank)
   (define-key elfeed-show-mode-map (kbd "N") #'elfeed-show-next)
   (define-key elfeed-show-mode-map (kbd "P") #'elfeed-show-prev)

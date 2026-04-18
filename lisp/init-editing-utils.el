@@ -424,4 +424,62 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
 
 (global-set-key (kbd "C-c q f") #'fix-quotes)
 
+;;
+;; Progressive selection expansion (word → sentence)
+;;
+
+(defvar-local sel--pre-selection-point nil
+  "Point position before `sel/expand' was first invoked.")
+
+(defconst sel--sentence-end-re "\\(?:[.!?]\\s-\\|[。！？]\\)"
+  "Regexp matching a sentence boundary (ASCII or CJK).")
+
+(defun sel--sentence-bounds ()
+  "Return (START . END) of the sentence at point, limited by empty lines."
+  (save-excursion
+    (save-restriction
+      ;; Narrow to current paragraph block
+      (narrow-to-region
+       (save-excursion (if (re-search-backward "^\n" nil t) (point) (point-min)))
+       (save-excursion (if (re-search-forward  "^\n" nil t) (point) (point-max))))
+
+      ;; Move to start of sentence
+      (if (re-search-backward sel--sentence-end-re nil t)
+          (goto-char (match-end 0))
+        (goto-char (point-min)))
+      (skip-chars-forward " \t\n")
+
+      (let ((start (point))
+            (end (or (re-search-forward sel--sentence-end-re nil t)
+                     (point-max))))
+        (when (< start end)
+          (cons start (- end 1)))))))
+
+(defun sel/expand ()
+  "Expand selection progressively: word → sentence."
+  (interactive)
+  (if (not (region-active-p))
+      (progn
+        (setq sel--pre-selection-point (point))
+        (when-let* ((bounds (bounds-of-thing-at-point 'word)))
+          (goto-char (car bounds))
+          (push-mark (cdr bounds) nil t)))
+    (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
+      (unless (string-match-p "[.!?。！？]\\|\\S-\\s-+\\S-" text)
+        (goto-char (region-beginning))
+        (when-let* ((bounds (sel--sentence-bounds)))
+          (goto-char (car bounds))
+          (push-mark (cdr bounds) nil t))))))
+
+(defun sel/quit ()
+  "Quit selection, restoring point if `sel/expand' moved it."
+  (interactive)
+  (if (region-active-p)
+      (progn
+        (when sel--pre-selection-point
+          (goto-char sel--pre-selection-point)
+          (setq sel--pre-selection-point nil))
+        (deactivate-mark))
+    (keyboard-quit)))
+
 (provide 'init-editing-utils)
