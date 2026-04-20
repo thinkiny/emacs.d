@@ -77,7 +77,7 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
                 (pixel-scroll-precision-scroll-down precision-scroll-nontext-height)
               (pixel-scroll-precision-scroll-up precision-scroll-nontext-height))))
          (t
-          (vertical-motion dir (selected-window) 0)))))))
+          (line-move dir t)))))))
 
 (defun precision-scroll-next-line ()
   "Scroll down one visual line."

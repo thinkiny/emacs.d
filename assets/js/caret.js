@@ -22,7 +22,7 @@ class CaretEmacs {
   constructor(el = document, opts = {}) {
     this.el = el;
     this.markActive = false;
-    this._debug = false;
+    this._debug = true;
     this._debugLog = [];
     this._onSelectionChange = this._updateCursor.bind(this);
     this.scrollContainer = opts.scrollContainer || null;
@@ -838,7 +838,15 @@ class CaretEmacs {
       const sameGroup = this._isPdfMode() || entry.groupRoot === currentLine[0].groupRoot
         || currentLine[0].groupRoot?.contains(entry.groupRoot)
         || entry.groupRoot?.contains(currentLine[0].groupRoot);
-      if (sameVisualLine && sameGroup) {
+      // Detect column break: horizontal gap exceeding entry height means
+      // the entry belongs to a different column on the same visual line.
+      let sameColumn = true;
+      if (sameVisualLine && sameGroup && currentLine.length > 0) {
+        const last = currentLine[currentLine.length - 1];
+        const hGap = entry.rect.left - (last.rect.left + last.rect.width);
+        sameColumn = hGap <= Math.max(entry.rect.height, last.rect.height);
+      }
+      if (sameVisualLine && sameColumn && sameGroup) {
         currentLine.push(entry);
       } else {
         lines.push(currentLine);
@@ -850,37 +858,29 @@ class CaretEmacs {
   }
 
   _findCaretLine(lines, caretRect) {
-    const caretMid = caretRect.top + caretRect.height / 2;
+    const caretMidY = caretRect.top + caretRect.height / 2;
     let bestIdx = -1, bestDist = Infinity;
     for (let i = 0; i < lines.length; i++) {
       const firstRect = lines[i][0].rect;
-      const lineMid = firstRect.top + firstRect.height / 2;
-      const dist = Math.abs(caretMid - lineMid);
+      const lineMidY = firstRect.top + firstRect.height / 2;
+      const dist = Math.abs(caretMidY - lineMidY);
       if (dist < bestDist) { bestDist = dist; bestIdx = i; }
     }
-    const lineH = lines[bestIdx]?.[0].rect.height || 0;
-    return bestDist > lineH * 1.5 ? -1 : bestIdx;
+    if (bestIdx < 0 || !this._isSameLine(caretRect, lines[bestIdx][0].rect)) return -1;
+    // Among lines at the same Y, prefer the one containing the caret's X.
+    // Reuse _isSameLine for Y-proximity (no new thresholds).
+    const caretX = caretRect.left + caretRect.width / 2;
+    const bestRect = lines[bestIdx][0].rect;
+    for (let i = 0; i < lines.length; i++) {
+      const firstRect = lines[i][0].rect;
+      if (!this._isSameLine(firstRect, bestRect)) continue;
+      const b = this._lineBounds(lines[i]);
+      if (b && caretX >= b.left && caretX <= b.right) return i;
+    }
+    return bestIdx;
   }
 
   _pickPositionOnLine(line, goalX) {
-    const repRect = line[0].rect;
-    const lineMidY = repRect.top + repRect.height / 2;
-    // Build a set of nodes on this line for membership check
-    const lineNodes = new Set(line.map(e => e.node));
-    // Try caretRangeFromPoint for precision
-    const probe = document.caretRangeFromPoint(goalX, lineMidY);
-    if (probe) {
-      const resolved = this._rangeToText(probe);
-      if (resolved && this._isContained(resolved.startContainer)
-        && lineNodes.has(resolved.startContainer)) {
-        const cr = this._charRect(resolved);
-        if (cr && Math.abs(cr.top - repRect.top) < repRect.height) {
-          return resolved;
-        }
-      }
-    }
-
-    // Fallback: character-level walk (respects segment bounds)
     let bestRange = null, bestDist = Infinity;
     for (const entry of line) {
       const start = entry.startOffset ?? 0;
@@ -1094,7 +1094,7 @@ class CaretEmacs {
       if (this._isSameLine(targetRect, curRect)) continue;
       const targetBounds = this._lineBounds(lines[i]);
       if (currentBounds && targetBounds
-          && (currentBounds.right < targetBounds.left
+        && (currentBounds.right < targetBounds.left
           || targetBounds.right < currentBounds.left)) continue;
       return i;
     }
@@ -1158,7 +1158,7 @@ class CaretEmacs {
     const startRange = this._collapsedRange(lineNode, lineOffset);
     const caretRect = this._lineMoveRect(lineNode, lineOffset) || this._charRect(startRange);
     if (!caretRect?.height) return { range: null, scrolled: false };
-    const goalX = caretRect.left;
+    const goalX = caretRect.left + caretRect.width / 2;
 
     const preservedTextRange = this._moveWithinPreservedTextNode(lineNode, lineOffset, fwd);
     if (preservedTextRange) {
@@ -1176,7 +1176,18 @@ class CaretEmacs {
     if (currentLineIndex >= 0) {
       const targetLineIndex = this._lineTargetIndex(currentLineIndex, fwd, lines);
       if (targetLineIndex >= 0) {
-        return { range: this._pickPositionOnLine(lines[targetLineIndex], goalX), scrolled: false };
+        // Merge entries from adjacent line groups at the same visual Y
+        const targetRect = lines[targetLineIndex][0].rect;
+        const mergedLine = [...lines[targetLineIndex]];
+        for (let j = targetLineIndex - 1; j >= 0; j--) {
+          if (!this._isSameLine(lines[j][0].rect, targetRect)) break;
+          mergedLine.unshift(...lines[j]);
+        }
+        for (let j = targetLineIndex + 1; j < lines.length; j++) {
+          if (!this._isSameLine(lines[j][0].rect, targetRect)) break;
+          mergedLine.push(...lines[j]);
+        }
+        return { range: this._pickPositionOnLine(mergedLine, goalX), scrolled: false };
       }
 
       // No target line in scope (HTML only) — scroll past non-text content
@@ -1545,15 +1556,27 @@ class CaretEmacs {
     let start = startIdx;
     let end = endIdx;
     const gapThreshold = this._paragraphGapThreshold(lines);
+    const refLeft = lines[startIdx]?.[0]?.rect?.left;
+
+    const sameCol = (line) => {
+      const first = line?.[0];
+      return first && Math.abs(first.rect.left - refLeft) <= first.rect.height;
+    };
 
     while (start > 0) {
-      if (!this._pdfAdjacentLineBlockCheck(lines[start], lines[start - 1], false, gapThreshold)) break;
-      start--;
+      let cand = start - 1;
+      while (cand > 0 && !sameCol(lines[cand])) cand--;
+      if (cand < 0 || !sameCol(lines[cand])) break;
+      if (!this._pdfAdjacentLineBlockCheck(lines[start], lines[cand], false, gapThreshold)) break;
+      start = cand;
     }
 
     while (end < lines.length - 1) {
-      if (!this._pdfAdjacentLineBlockCheck(lines[end], lines[end + 1], true, gapThreshold)) break;
-      end++;
+      let cand = end + 1;
+      while (cand < lines.length - 1 && !sameCol(lines[cand])) cand++;
+      if (cand >= lines.length || !sameCol(lines[cand])) break;
+      if (!this._pdfAdjacentLineBlockCheck(lines[end], lines[cand], true, gapThreshold)) break;
+      end = cand;
     }
 
     return { start, end };
@@ -1581,11 +1604,19 @@ class CaretEmacs {
     return (gaps[splitIdx] + gaps[splitIdx + 1]) / 2;
   }
 
-  _pdfTextRangeModel(lines, startIdx, endIdx) {
-    const blockLines = lines.slice(startIdx, endIdx + 1).map((line, offset) => ({
-      index: startIdx + offset,
-      entries: line || []
-    }));
+  _pdfTextRangeModel(lines, startIdx, endIdx, columnLeft = null) {
+    const blockLines = [];
+    for (let i = startIdx; i <= endIdx; i++) {
+      let entries = lines[i] || [];
+      if (columnLeft !== null) {
+        entries = entries.filter(e =>
+          e.rect?.height && Math.abs(e.rect.left - columnLeft) <= e.rect.height
+        );
+      }
+      if (entries.length > 0) {
+        blockLines.push({ index: i, entries });
+      }
+    }
     const text = blockLines.map(({ entries }) =>
       entries.map((entry) => entry.node.textContent || '').join('')
     ).join('\n');
@@ -1669,8 +1700,12 @@ class CaretEmacs {
     const anchorEnd = selectedRange ? Math.max(currentLine, selectedRange.end) : currentLine;
     const { start, end } = this._expandPdfLineBlock(lines, anchorStart, anchorEnd);
 
-    const model = this._pdfTextRangeModel(lines, start, end);
     const caretPoint = this._resolveCursorPosition(sel.anchorNode, sel.anchorOffset);
+    const caretEntry = context.lines[context.currentLine]
+      ?.find(e => e.node === caretPoint.node);
+    const columnLeft = caretEntry?.rect?.left ?? null;
+
+    const model = this._pdfTextRangeModel(lines, start, end, columnLeft);
     const caretOffset = model.offsetFromPoint(caretPoint.node, caretPoint.offset);
     const offsets = this._pdfSentenceOffsets(model.text, caretOffset);
 

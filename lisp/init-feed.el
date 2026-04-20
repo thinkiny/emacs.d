@@ -22,31 +22,41 @@
     (with-current-buffer (xwidget-webkit-get-browse-buffer)
       (add-hook 'quit-window-hook #'kill-elfeed-buffer nil t))))
 
-(defun elfeed-open-entry-in-chrome(entry)
+(defun elfeed-open-entry-in-chrome(entry &optional background)
   (let* ((link (or (get-text-property (point) 'shr-url)
                    (elfeed-entry-link entry))))
     (when link
-      (xwidget-webkit-open-url-in-chrome link))))
+      (xwidget-webkit-open-url-in-chrome link background))))
 
-(defun elfeed-open-selected-in-chrome(entry)
+(defun elfeed-open-selected-in-chrome(entry &optional background)
   "Open the selected search entry in Chrome."
   (interactive (list (elfeed-search-selected :ignore-region)))
   (when (elfeed-entry-p entry)
     (elfeed-untag entry 'unread)
     (elfeed-search-update-entry entry)
     (unless elfeed-search-remain-on-entry (forward-line))
-    (elfeed-open-entry-in-chrome entry)))
+    (elfeed-open-entry-in-chrome entry background)))
+
+(defun elfeed-open-selected-in-chrome-background(entry)
+  "Open the selected search entry in Chrome in the background."
+  (interactive (list (elfeed-search-selected :ignore-region)))
+  (elfeed-open-selected-in-chrome entry t))
 
 (with-eval-after-load 'elfeed-search
   (define-key elfeed-search-mode-map (kbd "j") #'next-line)
   (define-key elfeed-search-mode-map (kbd "k") #'previous-line)
   (define-key elfeed-search-mode-map (kbd "d") #'elfeed-search-untag-all-unread)
-  (define-key elfeed-search-mode-map (kbd "o") #'elfeed-open-selected-in-chrome))
+  (define-key elfeed-search-mode-map (kbd "O") #'elfeed-open-selected-in-chrome)
+  (define-key elfeed-search-mode-map (kbd "o") #'elfeed-open-selected-in-chrome-background))
 
-(defun elfeed-open-current-in-chrome()
+(defun elfeed-open-current-in-chrome(&optional background)
   (interactive)
-  (elfeed-open-entry-in-chrome elfeed-show-entry)
+  (elfeed-open-entry-in-chrome elfeed-show-entry background)
   (kill-buffer (current-buffer)))
+
+(defun elfeed-open-current-in-chrome-background()
+  (interactive)
+  (elfeed-open-current-in-chrome t))
 
 (defun my-elfeed-show-mode-hook()
   (visual-line-mode)
@@ -55,7 +65,7 @@
   (unbind-key (kbd "v") 'shr-map)
   (unbind-key (kbd "w") 'shr-map)
   (face-remap-add-relative 'shr-text :inherit 'default)
-  (define-key elfeed-show-mode-map (kbd "=") #'sel/expand)
+  (define-key elfeed-show-mode-map (kbd "=") #'selection/expand)
   (define-key elfeed-show-mode-map (kbd "n") #'precision-scroll-next-line)
   (define-key elfeed-show-mode-map (kbd "p") #'precision-scroll-prev-line)
   (define-key elfeed-show-mode-map (kbd "j") #'precision-scroll-next-line)
@@ -72,8 +82,9 @@
   (define-key elfeed-show-mode-map (kbd "C-v") #'precision-scroll-up-page)
   (define-key elfeed-show-mode-map (kbd "M-v") #'precision-scroll-down-page)
   (define-key elfeed-show-mode-map (kbd "SPC") #'precision-scroll-up-page)
-  (define-key elfeed-show-mode-map (kbd "o") #'elfeed-open-current-in-chrome)
-  (define-key elfeed-show-mode-map (kbd "C-g") #'sel/quit)
+  (define-key elfeed-show-mode-map (kbd "O") #'elfeed-open-current-in-chrome)
+  (define-key elfeed-show-mode-map (kbd "o") #'elfeed-open-current-in-chrome-background)
+  (define-key elfeed-show-mode-map (kbd "C-g") #'selection/quit)
   (define-key elfeed-show-mode-map (kbd "v") #'elfeed-show-visit-xwidget)
   (define-key elfeed-show-mode-map (kbd "y") #'elfeed-show-yank)
   (define-key elfeed-show-mode-map (kbd "N") #'elfeed-show-next)

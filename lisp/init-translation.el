@@ -34,20 +34,25 @@
 
 (defun google-translate--format-word-output (gtos &optional detail)
   (let ((translation (gtos-translation gtos))
+        (text-phonetic (gtos-text-phonetic gtos))
         (detailed-translation (gtos-detailed-translation gtos)))
     (concat
-     (gtos-text gtos)
-     (google-translate--text-phonetic gtos " [%s]")
+     (when (not (string-equal text-phonetic ""))
+       (google-translate-paragraph
+        text-phonetic
+        'google-translate-phonetic-face
+        " [%s]\n"))
      (if (and detail detailed-translation)
          (google-translate--detailed-translation
-          detailed-translation translation "\n- %s: " "\n%d. %s ")
+          detailed-translation translation "- %s:" "\n%d. %s ")
        (concat ": " translation)))))
 
 (defun google-translate--format-sentence-output (gtos)
   (concat
-   (replace-regexp-in-string "\n" " " (gtos-text gtos))
+   (replace-regexp-in-string "\n" " " (gtos-translation gtos))
    "\n"
-   (replace-regexp-in-string "\n" " " (gtos-translation gtos))))
+   (replace-regexp-in-string "\n" " " (gtos-text gtos))
+   ))
 
 (defun google-translate--format-output (gtos &optional detail)
   "Format translation output from GTOS."
