@@ -17,9 +17,10 @@ p {
 table {
   margin-left: 0 !important;
 }
-tr, td, div,th {
+tr, td, div, th, ul {
   font-size: 1em !important;
   color: inherit !important;
+  line-height: inherit !important;
 }
 span {
   font-size: 1em !important;
@@ -35,22 +36,30 @@ pre, code {
   font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 h1 {
-  color: #2e3440 !important;
+  font-size: 1.3em !important;
+  margin-top: 1em !important;
+  margin-bottom: 0.5em !important;
 }
 h2 {
-  color: #2e3440 !important;
+  font-size: 1.2em !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
 }
 h3 {
-  color: #2e3440 !important;
+  font-size: 1.1em !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
 }
 h4 {
-  color: #2e3440 !important;
+  font-size: 1em !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
 }
 h5 {
-  color: #2e3440 !important;
+  font-size: 1em !important;
 }
 h6 {
-  color: #2e3440 !important;
+  font-size: 1em !important;
 }
 :root {
   color-scheme: light; /* both supported */

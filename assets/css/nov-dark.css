@@ -11,10 +11,6 @@ body {
   transform: translate(-50%, -55%) !important;
   overflow-x: hidden;
 }
-h1, h2, h3, h4, h5, h6 {
-  /*color: #d4d4d4 !important;*/
-  border-bottom: 0px solid #d4d4d4 !important;
-}
 p {
   line-height: 2em !important;
   font-size: 1em !important;
@@ -23,9 +19,10 @@ p {
 table {
   margin-left: 0 !important;
 }
-tr, td, div,th {
+tr, td, div, th, ul {
   font-size: 1em !important;
   color: inherit !important;
+  line-height: inherit !important;
 }
 span {
   font-size: 1em !important;
@@ -41,22 +38,30 @@ pre, code {
   font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 h1 {
-  color: #ffaf69 !important;
+  font-size: 1.3em !important;
+  margin-top: 1em !important;
+  margin-bottom: 0.5em !important;
 }
 h2 {
-  color: #3fc6b7 !important;
+  font-size: 1.2em !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
 }
 h3 {
-  color: #88d498 !important;
+  font-size: 1.1em !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
 }
 h4 {
-  color: #80c3f0 !important;
+  font-size: 1em !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
 }
 h5 {
-  color: #cccccc !important;
+  font-size: 1em !important;
 }
 h6 {
-  color: #cccccc !important;
+  font-size: 1em !important;
 }
 :root {
   color-scheme: dark; /* both supported */
