@@ -6,6 +6,8 @@
   :vc (:url "https://github.com/LuciusChen/clutch.git"
        :rev :newest)
   :mode (("\\.sql\\'" . clutch-mode))
+  :config
+  (setq clutch-result-window-height 0.4)
   :bind
   (:map clutch-result-mode-map
         ("f" . clutch-result-next-cell)

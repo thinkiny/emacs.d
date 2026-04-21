@@ -35,6 +35,7 @@
   (put 'dired-find-alternate-file 'disabled nil)
   (define-key dired-mode-map (kbd "^") (lambda () (interactive) (find-alternate-file "..")))
   (define-key dired-mode-map [mouse-2] 'dired-find-file)
+  (define-key dired-mode-map (kbd "<RET>") 'dired-find-alternate-file)
   (define-key dired-mode-map (kbd "C-c '") 'wdired-change-to-wdired-mode))
 
 (defun copy-filename ()
