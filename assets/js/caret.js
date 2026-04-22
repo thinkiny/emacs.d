@@ -1144,6 +1144,9 @@ class CaretEmacs {
     }
 
     if (targetStart < 0 || targetEnd < targetStart) return null;
+    // Skip empty or whitespace-only target segments — let DOM-based visual
+    // line navigation handle the transition to the next visible text line.
+    if (!text.substring(targetStart, targetEnd).trim()) return null;
     const targetOff = Math.min(targetStart + column, targetEnd);
     return this._collapsedRange(node, targetOff);
   }
