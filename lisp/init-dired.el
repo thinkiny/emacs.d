@@ -11,10 +11,13 @@
     (save-excursion
       (goto-char (point-min))
       (let ((inhibit-read-only t)
-            (case-fold-search nil) dotdot-line)
+            (case-fold-search nil)
+            ;; dot-line
+            dotdot-line)
         (when (re-search-forward "^  d.* \\.$" nil t)
           ;; (setq dot-line (buffer-substring (line-beginning-position) (line-end-position)))
           (delete-region (line-beginning-position) (1+ (line-end-position))))
+        (goto-char (point-min))
         (when (re-search-forward "^  d.* \\.\\.$" nil t)
           (setq dotdot-line (buffer-substring (line-beginning-position) (line-end-position)))
           (delete-region (line-beginning-position) (1+ (line-end-position))))

@@ -4,13 +4,17 @@
 
 ;; ztree
 (use-package ztree
-  :bind ((:map global-map
-               ("C-c d d" . ediff-directories)
-               ("C-c d z" . ztree-diff)
-               ("C-c d ." . ztree-dir))
-         (:map ztree-mode-map
-               ("n" . ztree-next-line)
-               ("p" . ztree-previous-line))))
+  :bind (:map global-map
+         ("C-c d e" . ediff-directories)
+         ("C-c d z" . ztree-diff)
+         ("C-c d ." . ztree-dir)
+         :map ztree-mode-map
+         ("n" . ztree-next-line)
+         ("p" . ztree-previous-line))
+  :config
+  (define-key ztreediff-mode-map (kbd "g") #'ztree-diff-partial-rescan)
+  (advice-add 'ztree-diff-ediff-quit-hook-function :after
+              (lambda () (ztree-diff-partial-rescan))))
 
 ;; ediff basic settings
 (setq-default ediff-split-window-function 'split-window-horizontally
