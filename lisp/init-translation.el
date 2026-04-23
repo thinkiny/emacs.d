@@ -16,7 +16,7 @@
       (message "can't find word at point"))))
 
 ;; google
-(require 'posframe)
+(use-package posframe)
 (use-package google-translate
   :config
   (setq google-translate-show-phonetic t)

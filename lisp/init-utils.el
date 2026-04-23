@@ -1,6 +1,7 @@
 ;;; init-utils.el --- some useful functions -*- lexical-binding: t -*-
 (require 'subr-x)
 (require 'cl-lib)
+(use-package async)
 
 ;;----------------------------------------------------------------------------
 ;; Handier way to add modes to auto-mode-alist

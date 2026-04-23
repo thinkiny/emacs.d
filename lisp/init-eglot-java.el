@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t; -*-
+
 (use-package eglot-java
   :config
   (setq eglot-java-server-install-dir (concat user-emacs-directory "java/eclipse.jdt.ls"))

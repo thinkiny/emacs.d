@@ -12,6 +12,7 @@
 
 ;;; Fire up package.el
 (setq package-enable-at-startup nil)
+(setq package-install-upgrade-built-in t)
 (package-initialize)
 
 (unless (package-installed-p 'use-package)
