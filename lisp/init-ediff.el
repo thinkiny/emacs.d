@@ -1,11 +1,12 @@
 ;; -*- lexical-binding: t; -*-
 
-(require 'ediff)
-
 ;; ztree
+(use-package ediff
+  :bind (:map global-map
+         ("C-c d e" . ediff-directories)))
+
 (use-package ztree
   :bind (:map global-map
-         ("C-c d e" . ediff-directories)
          ("C-c d z" . ztree-diff)
          ("C-c d ." . ztree-dir)
          :map ztree-mode-map

@@ -78,7 +78,7 @@ package."
                                  (or caret-xwidget-translate-pos
                                      (cdr (mouse-pixel-position)))
                                (point))
-                   :max-width (round (* 0.95 (window-width)))
+                   :max-width (window-width)
                    :internal-border-width 5
                    :border-color (face-background 'default)
                    :background-color (face-background 'default)

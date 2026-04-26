@@ -32,6 +32,7 @@ class CaretEmacs {
     this._cursorEl = null;
     this._scrollRafPending = false;
     this._lastScrollTop = 0;
+    this._suppressScrollRelocate = false;
 
     // Performance caches
     this._visualOrderCache = null;       // { root, ordered, lines, frameId }
@@ -252,6 +253,10 @@ class CaretEmacs {
       const caretRect = this._isContained(sel.focusNode)
         ? this._rangeRectAt(sel.focusNode, sel.focusOffset) : null;
       if (this._isRectInViewport(caretRect, viewportRect)) return;
+      if (this._suppressScrollRelocate) {
+        this._suppressScrollRelocate = false;
+        return;
+      }
 
       // Use caret's current X (still valid even if off-screen), or viewport center
       const cx = caretRect
@@ -1175,7 +1180,17 @@ class CaretEmacs {
     if (!ordered.length) return { range: null, scrolled: false };
     if (!lines.length) return { range: null, scrolled: false };
 
-    const currentLineIndex = this._findCaretLine(lines, caretRect);
+    let currentLineIndex = this._findCaretLine(lines, caretRect);
+    if (currentLineIndex < 0) {
+      // Fallback: caret rect doesn't match any visual line — use closest by Y
+      const midY = caretRect.top + caretRect.height / 2;
+      let best = -1, bestD = Infinity;
+      for (let i = 0; i < lines.length; i++) {
+        const d = Math.abs(lines[i][0].rect.top + lines[i][0].rect.height / 2 - midY);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      currentLineIndex = best;
+    }
     if (currentLineIndex >= 0) {
       const targetLineIndex = this._lineTargetIndex(currentLineIndex, fwd, lines);
       if (targetLineIndex >= 0) {
@@ -1312,6 +1327,22 @@ class CaretEmacs {
         const atViewportEdge = fwd ? this.isAtBottom() : this.isAtTop();
         this._hitBoundary = atVisibleBoundary || atViewportEdge;
         return false;
+      }
+
+      // Target off-screen (e.g. past an image): scroll _scrollPx without moving caret
+      const targetRect = lineRange.getBoundingClientRect();
+      if (targetRect.height) {
+        const vpNow = this._viewportRect();
+        const offscreen = fwd
+          ? targetRect.top >= vpNow.bottom
+          : targetRect.bottom <= vpNow.top;
+        if (offscreen) {
+          this._suppressScrollRelocate = true;
+          this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
+          this._invalidateLayoutCaches();
+          this._updateCursor();
+          return true;
+        }
       }
 
       sel.removeAllRanges();

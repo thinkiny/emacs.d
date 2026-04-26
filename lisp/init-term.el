@@ -23,13 +23,13 @@
 
   ;; key bindings
   (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
-  (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
+  (define-key vterm-mode-map (kbd "C-c i") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
   (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-mode-map (kbd "C-c C-v") 'vterm--self-insert)
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
-  (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
+  (define-key vterm-copy-mode-map (kbd "C-c i") 'vterm-copy-mode)
   (define-key vterm-copy-mode-map (kbd "=") #'selection/expand)
   (define-key vterm-copy-mode-map (kbd "C-g") #'vterm-copy-mode)
   (define-key vterm-copy-mode-map (kbd ",") #'translate-at-point)
@@ -55,6 +55,11 @@ else mirroring original vterm logic."
             (file-name-as-directory dir)))
       (file-name-as-directory path))))
 )
+
+(use-package vterm-editor
+  :after vterm
+  :bind (:map vterm-mode-map
+         ("C-c e" . vterm-editor-open)))
 
 ;; vterm--pixel-scroll
 (defvar-local vterm--scroll-timer nil)
