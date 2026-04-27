@@ -16,20 +16,16 @@
   (setq vterm-max-scrollback 10000)
   (setq vterm-shell (concat shell-file-name " -l"))
 
-  ;; fix Ctrl-B not working in claude code in some cases
-  (defun vterm-send-key-left()
-    (interactive)
-    (vterm-send-key "<left>"))
-
   ;; key bindings
   (define-key vterm-mode-map (kbd "M-w") 'kill-ring-save)
-  (define-key vterm-mode-map (kbd "C-c i") 'vterm-copy-mode)
+  (define-key vterm-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-mode-map (kbd "C-v") 'scroll-up-command)
   (define-key vterm-mode-map (kbd "C-b") 'vterm-send-key-left)
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-mode-map (kbd "C-c C-v") 'vterm--self-insert)
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
-  (define-key vterm-copy-mode-map (kbd "C-c i") 'vterm-copy-mode)
+  (define-key vterm-mode-map (kbd "M-<") #'vterm-mode-goto-window-start)
+  (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-copy-mode-map (kbd "=") #'selection/expand)
   (define-key vterm-copy-mode-map (kbd "C-g") #'vterm-copy-mode)
   (define-key vterm-copy-mode-map (kbd ",") #'translate-at-point)
@@ -42,8 +38,47 @@
   (define-key vterm-copy-mode-map (kbd "a") #'beginning-of-line)
   (define-key vterm-copy-mode-map (kbd "e") #'end-of-line)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
+  (define-key vterm-copy-mode-map (kbd "M->") #'vterm-copy-mode-end-or-quit)
+  (define-key vterm-copy-mode-map (kbd "M-<") #'vterm-copy-mode-beginning-of-buffer))
 
-(defun vterm--get-directory(path)
+
+(defun vterm-send-key-left()
+  "Fix Ctrl-B not working in claude code in some cases."
+  (interactive)
+  (vterm-send-key "<left>"))
+
+(defun vterm-mode-goto-window-start ()
+  "Enter `vterm-copy-mode and go to the start of the window.
+In *claude-code buffers, go to the last prompt line (❯) instead."
+  (interactive)
+  (vterm-copy-mode 1)
+  (if (string-prefix-p "*claude-code" (buffer-name))
+      (when (re-search-backward "^❯ " nil t)
+        (beginning-of-line))
+    (goto-char (window-start))))
+
+(defun vterm-copy-mode-end-or-quit ()
+  "Go to end of buffer if region is active, otherwise quit 'vterm-copy-mode."
+  (interactive)
+  (if (use-region-p)
+      (goto-char (point-max))
+    (vterm-copy-mode -1)))
+
+(defun vterm-copy-mode-beginning-of-buffer ()
+  "In *claude-code buffers, jump to the last or previous prompt (❯).
+Otherwise go to the beginning of the buffer."
+  (interactive)
+  (if (string-prefix-p "*claude-code" (buffer-name))
+      (progn
+        (beginning-of-line)
+        (if (looking-at "^❯ ")
+            (progn (forward-line -1) (re-search-backward "^❯ " nil t))
+          (re-search-backward "^❯ " nil t))
+        (beginning-of-line))
+    (goto-char (point-min))))
+
+(with-eval-after-load 'vterm
+  (defun vterm--get-directory(path)
   "Get normalized directory to PATH, handling TRAMP paths specifically,
 else mirroring original vterm logic."
   (when path
@@ -53,13 +88,12 @@ else mirroring original vterm logic."
           (if remote-prefix
               (file-name-as-directory (concat remote-prefix dir))
             (file-name-as-directory dir)))
-      (file-name-as-directory path))))
-)
+      (file-name-as-directory path)))))
 
 (use-package vterm-editor
   :after vterm
   :bind (:map vterm-mode-map
-         ("C-c e" . vterm-editor-open)))
+              ("C-c e" . vterm-editor-open)))
 
 ;; vterm--pixel-scroll
 (defvar-local vterm--scroll-timer nil)

@@ -8,14 +8,20 @@
 (use-package ztree
   :bind (:map global-map
          ("C-c d z" . ztree-diff)
-         ("C-c d ." . ztree-dir)
-         :map ztree-mode-map
-         ("n" . ztree-next-line)
-         ("p" . ztree-previous-line))
+         ("C-c d ." . ztree-dir))
   :config
   (define-key ztreediff-mode-map (kbd "g") #'ztree-diff-partial-rescan)
-  (advice-add 'ztree-diff-ediff-quit-hook-function :after
-              (lambda () (ztree-diff-partial-rescan))))
+  (define-key ztreediff-mode-map (kbd "n") #'ztree-next-line)
+  (define-key ztreediff-mode-map (kbd "p") #'ztree-previous-line)
+  (define-key ztree-mode-map (kbd "n") #'ztree-next-line)
+  (define-key ztree-mode-map (kbd "p") #'ztree-previous-line))
+
+(with-eval-after-load 'ztree-diff
+  (defun ztree-diff-ediff-quit-hook-function ()
+    (set-window-configuration (pop ztree-diff-ediff-previous-window-configurations))
+    (unless (ztree-diff-partial-rescan)
+      (ztree-refresh-buffer))
+    (remove-hook 'ediff-quit-hook #'ztree-diff-ediff-quit-hook-function)))
 
 ;; ediff basic settings
 (setq-default ediff-split-window-function 'split-window-horizontally

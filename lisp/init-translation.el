@@ -66,23 +66,36 @@
   (message "%s" (google-translate--format-output gtos)))
 
 
+(defun google-translate-posframe-pos()
+  "Return (PX-POS . MAX-WIDTH) for posframe, clamped to frame right edge.
+PX-POS is a cons (X . Y) in pixels."
+  (let* ((min-cols 25)
+         (px-pos (if (derived-mode-p 'xwidget-webkit-mode)
+                     (or caret-xwidget-translate-pos
+                         (cdr (mouse-pixel-position)))
+                   (posn-x-y (posn-at-point (point)))))
+         (avail (/ (- (frame-pixel-width) (car px-pos)) (frame-char-width))))
+    (when (< avail min-cols)
+      (setcar px-pos (max 0 (- (frame-pixel-width) (* min-cols (frame-char-width)))))
+      (setq avail min-cols))
+    (cons px-pos avail)))
+
 (defun google-translate-posframe-output-translation (gtos)
   "Output translation to the posframe tooltip using `posframe'
 package."
-  (let ((cleanup-hook nil))
+  (let* ((pos+width (google-translate-posframe-pos))
+         (px-pos (car pos+width))
+         (max-width (cdr pos+width))
+         (cleanup-hook nil))
     (with-current-buffer (get-buffer-create " *google-translate-posframe*")
       (erase-buffer)
       (insert (google-translate--format-output gtos t)))
     (posframe-show " *google-translate-posframe*"
-                   :position (if (derived-mode-p 'xwidget-webkit-mode)
-                                 (or caret-xwidget-translate-pos
-                                     (cdr (mouse-pixel-position)))
-                               (point))
-                   :max-width (window-width)
+                   :position px-pos
+                   :max-width (- max-width 5)
                    :internal-border-width 5
                    :border-color (face-background 'default)
-                   :background-color (face-background 'default)
-                   )
+                   :background-color (face-background 'default))
     (when (use-region-p)
       (deactivate-mark))
     (setq cleanup-hook

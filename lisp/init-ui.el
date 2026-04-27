@@ -75,7 +75,12 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
           (ignore-errors
             (if (> dir 0)
                 (pixel-scroll-precision-scroll-down precision-scroll-nontext-height)
-              (pixel-scroll-precision-scroll-up precision-scroll-nontext-height))))
+              (pixel-scroll-precision-scroll-up precision-scroll-nontext-height)))
+          ;; Snap pixel alignment when transitioning from non-text to text,
+          ;; preventing cursor jump on subsequent line-move
+          (unless (precision-scroll--line-non-text-p)
+            (set-window-vscroll nil 0 t)
+            ))
          (t
           (line-move dir t)))))))
 
@@ -92,12 +97,16 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
 (defun precision-scroll-up-page ()
   (interactive)
   (pixel-scroll-precision-scroll-down-page
-   (* precision-scroll-page-lines (frame-char-height))))
+   (* precision-scroll-page-lines (frame-char-height)))
+  (unless (precision-scroll--line-non-text-p)
+    (set-window-vscroll nil 0 t)))
 
 (defun precision-scroll-down-page ()
   (interactive)
   (pixel-scroll-precision-scroll-up-page
-   (* precision-scroll-page-lines (frame-char-height))))
+   (* precision-scroll-page-lines (frame-char-height)))
+  (unless (precision-scroll--line-non-text-p)
+    (set-window-vscroll nil 0 t)))
 
 ;; icons/advice
 (use-package nerd-icons)

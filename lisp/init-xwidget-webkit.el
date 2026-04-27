@@ -175,7 +175,8 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 (with-eval-after-load 'xwidget
   (easy-menu-define nil xwidget-webkit-mode-map "Xwidget WebKit menu."
     (list "Xwidget WebKit"  :visible nil))
-
+  (unbind-key (kbd "-") xwidget-webkit-mode-map)
+  (unbind-key (kbd "+") xwidget-webkit-mode-map)
   (define-key xwidget-webkit-mode-map (kbd "g") #'xwidget-webkit-browse-open-url)
   (define-key xwidget-webkit-mode-map (kbd "F") 'xwidget-webkit-forward)
   (define-key xwidget-webkit-mode-map (kbd "B") 'xwidget-webkit-back)

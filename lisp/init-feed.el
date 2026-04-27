@@ -15,7 +15,7 @@
   (let* ((buffer (get-buffer "*elfeed-entry*")))
     (kill-buffer buffer)))
 
-(defun elfeed-show-visit-xwidget ()
+(defun elfeed-show-open-xwidget ()
   (interactive)
   (when-let* ((link (elfeed-entry-link elfeed-show-entry)))
     (xwidget-webkit-browse-open-url link)
@@ -59,6 +59,10 @@
   (elfeed-open-current-in-chrome t))
 
 (defun my-elfeed-show-mode-hook()
+  ;; from elfeed-goodies/show-mode-setup
+  (setq header-line-format '(:eval (elfeed-goodies/entry-header-line))
+        left-margin-width elfeed-goodies/show-mode-padding
+        right-margin-width elfeed-goodies/show-mode-padding)
   (visual-line-mode)
   (eldoc-mode -1)
   (font-lock-mode -1)
@@ -79,13 +83,13 @@
   (define-key elfeed-show-mode-map (kbd "a") #'beginning-of-line)
   (define-key elfeed-show-mode-map (kbd "e") #'end-of-line)
   (define-key elfeed-show-mode-map (kbd ",") #'translate-at-point)
-  (define-key elfeed-show-mode-map (kbd "C-v") #'precision-scroll-up-page)
+  (define-key elfeed-show-mode-map (kbd "v") #'precision-scroll-up-page)
   (define-key elfeed-show-mode-map (kbd "M-v") #'precision-scroll-down-page)
   (define-key elfeed-show-mode-map (kbd "SPC") #'precision-scroll-up-page)
   (define-key elfeed-show-mode-map (kbd "O") #'elfeed-open-current-in-chrome)
   (define-key elfeed-show-mode-map (kbd "o") #'elfeed-open-current-in-chrome-background)
   (define-key elfeed-show-mode-map (kbd "C-g") #'selection/quit)
-  (define-key elfeed-show-mode-map (kbd "v") #'elfeed-show-visit-xwidget)
+  (define-key elfeed-show-mode-map (kbd "x") #'elfeed-show-open-xwidget)
   (define-key elfeed-show-mode-map (kbd "y") #'elfeed-show-yank)
   (define-key elfeed-show-mode-map (kbd "N") #'elfeed-show-next)
   (define-key elfeed-show-mode-map (kbd "P") #'elfeed-show-prev)
@@ -97,14 +101,10 @@
 
 (use-package elfeed-goodies
   :after elfeed
-  :ensure t
   :config
-  (defun elfeed-goodies/show-mode-setup ()
-    "Setup function providing defaults for show mode buffer."
-    (setq header-line-format '(:eval (elfeed-goodies/entry-header-line))
-          left-margin-width elfeed-goodies/show-mode-padding
-          right-margin-width elfeed-goodies/show-mode-padding)
-    (define-key elfeed-show-mode-map (kbd "M-v") #'scroll-down)))
+  (elfeed-goodies/setup)
+  (remove-hook 'elfeed-show-mode-hook #'elfeed-goodies/show-mode-setup)
+  (setq elfeed-show-entry-switch #'switch-to-buffer))
 
 ;; setup feeds
 (defun feed-github-commit (repo)
@@ -119,10 +119,7 @@
   (let ((name (car (last (split-string repo "/")))))
     `(,(format "https://github.com/%s/releases.atom" repo) ,(intern name) github)))
 
-(with-eval-after-load 'elfeed
-  (elfeed-goodies/setup))
-
 (global-set-key (kbd "C-x e") 'elfeed)
-(use-proxy-local 'elfeed-search-show-entry)
+(use-proxy-local 'url-retrieve)
 
 (provide 'init-feed)
