@@ -321,18 +321,18 @@ reader assets."
 (mode-line-cache-start-timer)
 
 ;; interactive theme commands
-(defun change-theme--action (x)
+(defun set-theme--action (x)
   "Load theme X and run theme hooks once."
   (condition-case err
       (load-and-activate-theme (intern x))
     (error (user-error "%s" (error-message-string err)))))
 
-(defun change-theme ()
+(defun set-theme ()
   "Change current theme."
   (interactive)
   (ivy-read "Load custom theme: "
             (mapcar #'symbol-name (custom-available-themes))
-            :action #'change-theme--action
+            :action #'set-theme--action
             :preselect (symbol-name (or (when custom-enabled-themes
                                           (car custom-enabled-themes))
                                         default-theme))))

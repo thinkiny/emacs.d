@@ -12,7 +12,7 @@
   (add-to-list 'vterm-tramp-shells '("rpc" "/bin/bash -l"))
   (ignore-tramp-ssh-control-master 'vterm-mode)
   (setq vterm-always-compile-module t)
-  (setq vterm-min-window-width 60)
+  (setq vterm-min-window-width 40)
   (setq vterm-max-scrollback 10000)
   (setq vterm-shell (concat shell-file-name " -l"))
 
@@ -37,6 +37,7 @@
   (define-key vterm-copy-mode-map (kbd "f") #'forward-word-begin)
   (define-key vterm-copy-mode-map (kbd "a") #'beginning-of-line)
   (define-key vterm-copy-mode-map (kbd "e") #'end-of-line)
+  (define-key vterm-copy-mode-map (kbd "v") #'scroll-up)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (define-key vterm-copy-mode-map (kbd "M->") #'vterm-copy-mode-end-or-quit)
   (define-key vterm-copy-mode-map (kbd "M-<") #'vterm-copy-mode-beginning-of-buffer))

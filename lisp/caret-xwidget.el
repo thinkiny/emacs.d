@@ -222,8 +222,9 @@ Set this to navigate to the previous document/chapter.")
 
 (defconst caret-xwidget--word-at-caret-js
   (concat "(function(){var s=window.getSelection();"
-          "if(!s.isCollapsed){var r=s.getRangeAt(0).getBoundingClientRect();"
-          "return JSON.stringify({t:s.toString(),l:r.left,b:r.bottom})}"
+          "if(!s.isCollapsed){var txt=s.toString(),rc=s.getRangeAt(0).getClientRects()[0];"
+          "__caretEmacs.deactivateMark();"
+          "return JSON.stringify({t:txt,l:rc.left,b:rc.bottom})}"
           "var n=s.focusNode,o=s.focusOffset;"
           "if(n.nodeType!==3)return'';"
           "var t=n.textContent;"
@@ -311,7 +312,7 @@ Set this to navigate to the previous document/chapter.")
   (define-key xwidget-webkit-mode-map (kbd "C-p")   #'caret-xwidget-previous-line)
   (define-key xwidget-webkit-mode-map (kbd "C-a")   #'caret-xwidget-beginning-of-line)
   (define-key xwidget-webkit-mode-map (kbd "C-e")   #'caret-xwidget-end-of-line)
-  (define-key xwidget-webkit-mode-map (kbd "C-v")   #'caret-xwidget-scroll-up)
+  (define-key xwidget-webkit-mode-map (kbd "v")     #'caret-xwidget-scroll-up)
   (define-key xwidget-webkit-mode-map (kbd "M-v")   #'caret-xwidget-scroll-down)
   (define-key xwidget-webkit-mode-map (kbd "SPC")   #'caret-xwidget-scroll-up)
   (define-key xwidget-webkit-mode-map (kbd "C-SPC") #'caret-xwidget-toggle-mark)
