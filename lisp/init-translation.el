@@ -66,14 +66,21 @@
   (message "%s" (google-translate--format-output gtos)))
 
 
+(defun google-translate-point-pixel-pos ()
+  "Return frame-relative pixel position (X . Y) below point in current window."
+  (let* ((edges (window-inside-pixel-edges))
+         (xy (posn-x-y (posn-at-point (point)))))
+    (cons (+ (car edges) (car xy))
+          (+ (cadr edges) (cdr xy) (default-line-height)))))
+
 (defun google-translate-posframe-pos()
   "Return (PX-POS . MAX-WIDTH) for posframe, clamped to frame right edge.
 PX-POS is a cons (X . Y) in pixels."
-  (let* ((min-cols 25)
+  (let* ((min-cols 30)
          (px-pos (if (derived-mode-p 'xwidget-webkit-mode)
                      (or caret-xwidget-translate-pos
                          (cdr (mouse-pixel-position)))
-                   (posn-x-y (posn-at-point (point)))))
+                   (google-translate-point-pixel-pos)))
          (avail (/ (- (frame-pixel-width) (car px-pos)) (frame-char-width))))
     (when (< avail min-cols)
       (setcar px-pos (max 0 (- (frame-pixel-width) (* min-cols (frame-char-width)))))
