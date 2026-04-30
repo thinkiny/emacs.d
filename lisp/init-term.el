@@ -49,14 +49,19 @@
   (vterm-send-key "<left>"))
 
 (defun vterm-mode-goto-window-start ()
-  "Enter `vterm-copy-mode and go to the start of the window.
+  "Enter `vterm-copy-mode' and go to the start of the window.
 In *claude-code buffers, go to the last prompt line (❯) instead."
   (interactive)
   (vterm-copy-mode 1)
-  (if (string-prefix-p "*claude-code" (buffer-name))
-      (when (re-search-backward "^❯ " nil t)
-        (beginning-of-line))
-    (goto-char (window-start))))
+  (let ((buf (current-buffer)))
+    (run-at-time 0 nil
+                 (lambda ()
+                   (when (buffer-live-p buf)
+                     (with-current-buffer buf
+                       (if (string-prefix-p "*claude-code" (buffer-name))
+                           (when (re-search-backward "^❯ " nil t)
+                             (beginning-of-line))
+                         (goto-char (window-start)))))))))
 
 (defun vterm-copy-mode-end-or-quit ()
   "Go to end of buffer if region is active, otherwise quit 'vterm-copy-mode."

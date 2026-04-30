@@ -136,14 +136,14 @@ class CaretEmacs {
     const viewportRect = this._viewportRect();
 
     if (bottom > viewportRect.bottom) {
-      if (Math.ceil(this._scrollTop + this._viewportHeight) >= this._scrollHeight) return false;
+      if (!this._canScroll(true)) return false;
       const delta = Math.min(this._scrollPx, Math.max(0, bottom - viewportRect.bottom));
       if (delta <= 0) return false;
       this._scrollBy(delta);
       return true;
     }
     if (top < viewportRect.top) {
-      if (Math.floor(this._scrollTop) <= 0) return false;
+      if (!this._canScroll(false)) return false;
       const delta = -Math.min(this._scrollPx, Math.max(0, viewportRect.top - top));
       if (delta >= 0) return false;
       this._scrollBy(delta);
@@ -170,7 +170,7 @@ class CaretEmacs {
     const viewportRect = this._viewportRect();
 
     if (bottom > viewportRect.bottom) {
-      if (Math.ceil(this._scrollTop + this._viewportHeight) >= this._scrollHeight) return false;
+      if (!this._canScroll(true)) return false;
       // Scroll to place cursor at 1/3 from bottom of viewport
       const viewportHeight = this._viewportHeight;
       const delta = bottom - (viewportRect.top + viewportHeight * this._scrollDownFraction);
@@ -178,7 +178,7 @@ class CaretEmacs {
       this._scrollBy(delta);
       return true;
     } else if (top < viewportRect.top) {
-      if (Math.floor(this._scrollTop) <= 0) return false;
+      if (!this._canScroll(false)) return false;
       // Scroll to place cursor at 2/3 from top of viewport
       const viewportHeight = this._viewportHeight;
       const delta = top - (viewportRect.top + viewportHeight * this._scrollUpFraction);
@@ -265,6 +265,8 @@ class CaretEmacs {
         ? this._rangeRectAt(sel.focusNode, sel.focusOffset) : null;
       if (this._suppressScrollRelocate) {
         this._suppressScrollRelocate = false;
+        this._updateCursor();
+        return;
       }
       if (this._isRectInViewport(caretRect, viewportRect)) {
         this._updateCursor();
@@ -1284,28 +1286,64 @@ class CaretEmacs {
     if (currentLineIndex >= 0) {
       const targetLineIndex = this._lineTargetIndex(currentLineIndex, fwd, lines);
       if (targetLineIndex >= 0) {
+        // If target line is far off-screen (large non-text gap like an image),
+        // scroll toward it instead of jumping.
+        const currentLineRect = lines[currentLineIndex][0].rect;
+        const targetLineRect = lines[targetLineIndex][0].rect;
+        const currentLineBottom = currentLineRect && (currentLineRect.bottom ?? (currentLineRect.top + currentLineRect.height));
+        const targetLineBottom = targetLineRect && (targetLineRect.bottom ?? (targetLineRect.top + targetLineRect.height));
+        if (currentLineRect && targetLineRect && currentLineBottom != null && targetLineBottom != null) {
+          const lineGap = fwd
+            ? targetLineRect.top - currentLineBottom
+            : currentLineRect.top - targetLineBottom;
+          const vp = this._viewportRect();
+          const targetInViewport = targetLineRect.top < vp.bottom && targetLineBottom > vp.top;
+          if (lineGap > this._scrollPx && !targetInViewport) {
+            if (this._canScroll(fwd)) {
+              this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
+              this._invalidateLayoutCaches();
+              return { range: null, scrolled: true };
+            }
+            // At scroll boundary — fall through to jump
+          }
+        }
+
         // Merge entries from adjacent line groups at the same visual Y
-        const targetRect = lines[targetLineIndex][0].rect;
         const mergedLine = [...lines[targetLineIndex]];
         for (let j = targetLineIndex - 1; j >= 0; j--) {
-          if (!this._isSameLine(lines[j][0].rect, targetRect)) break;
+          if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
           mergedLine.unshift(...lines[j]);
         }
         for (let j = targetLineIndex + 1; j < lines.length; j++) {
-          if (!this._isSameLine(lines[j][0].rect, targetRect)) break;
+          if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
           mergedLine.push(...lines[j]);
         }
         return { range: this._pickPositionOnLine(mergedLine, goalX), scrolled: false };
       }
 
-      // No target line in scope (HTML only) — scroll past non-text content
-      if (!currentPage) {
-        return this._scrollAndProbe(fwd, goalX, caretRect);
+      // No target line in scope — scroll past non-text content
+      if (currentPage) {
+        if (this._canScroll(fwd)) {
+          this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
+          this._invalidateLayoutCaches();
+          // Cross to next page only when it's scrolled near the arrival edge
+          const adjacentPage = this._visuallyAdjacentPage(currentPage, fwd);
+          if (adjacentPage) {
+            const pageRect = adjacentPage.getBoundingClientRect(), vp = this._viewportRect();
+            const pageNearEdge = fwd
+              ? pageRect.top < vp.top + this._scrollPx
+              : pageRect.bottom > vp.bottom - this._scrollPx;
+            if (pageNearEdge) {
+              return { range: this._moveLineCrossPage(currentPage, fwd, goalX), scrolled: true };
+            }
+          }
+          return { range: null, scrolled: true };
+        }
+        // At scroll boundary — cross as last resort
+        return { range: this._moveLineCrossPage(currentPage, fwd, goalX), scrolled: false };
       }
+      return this._scrollAndProbe(fwd, goalX, caretRect);
     }
-
-    // Phase 2 (PDF only): cross page boundary
-    return { range: this._moveLineCrossPage(currentPage, fwd, goalX), scrolled: false };
   }
 
   /**
@@ -1313,10 +1351,7 @@ class CaretEmacs {
    * that has entered the near viewport. Returns a Range or null.
    */
   _scrollAndProbe(fwd, goalX, caretRect) {
-    const canScroll = fwd
-      ? Math.ceil(this._scrollTop + this._viewportHeight) < this._scrollHeight
-      : Math.floor(this._scrollTop) > 0;
-    if (!canScroll) return { range: null, scrolled: false };
+    if (!this._canScroll(fwd)) return { range: null, scrolled: false };
 
     this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
     this._invalidateLayoutCaches();
@@ -1419,25 +1454,10 @@ class CaretEmacs {
         return false;
       }
 
-      // Target off-screen (e.g. past an image): scroll _scrollPx without moving caret
-      const targetRect = lineRange.getBoundingClientRect();
-      if (targetRect.height) {
-        const vpNow = this._viewportRect();
-        const offscreen = fwd
-          ? targetRect.top >= vpNow.bottom
-          : targetRect.bottom <= vpNow.top;
-        if (offscreen && !this._isPdfMode()) {
-          this._suppressScrollRelocate = true;
-          this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
-          this._invalidateLayoutCaches();
-          this._updateCursor();
-          return true;
-        }
-      }
-
       sel.removeAllRanges();
       sel.addRange(lineRange);
 
+      // If caret was off-screen before move, use minimal scroll to reveal
       const vpNow = this._viewportRect();
       const preBottom = preRect ? (preRect.bottom ?? (preRect.top + preRect.height)) : null;
       const preOnscreen = preRect && preBottom >= vpNow.top && preRect.top <= vpNow.bottom;
@@ -1626,6 +1646,12 @@ class CaretEmacs {
 
   isAtTop() {
     return Math.floor(this._scrollTop) <= 0;
+  }
+
+  _canScroll(fwd) {
+    return fwd
+      ? Math.ceil(this._scrollTop + this._viewportHeight) < this._scrollHeight
+      : Math.floor(this._scrollTop) > 0;
   }
 
   /* ── PDF Selection & Expansion ─────────────────────────────── */
