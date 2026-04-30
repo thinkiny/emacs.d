@@ -34,7 +34,8 @@
 ;;; Position save/restore
 
 (defun nov-xwidget--position-key ()
-  (when-let* ((uri (xwidget-webkit-uri (xwidget-webkit-current-session)))
+  (when-let* ((session (xwidget-webkit-current-session))
+              (uri (xwidget-webkit-uri session))
               (url (url-generic-parse-url uri))
               (decode-url (url-unhex-string (url-filename url))))
     (concat "epub-pos-"
@@ -44,20 +45,37 @@
   (interactive)
   (when-let* ((key (nov-xwidget--position-key)))
     (xwidget-execute-script
-     (format "window.localStorage.setItem('%s', window.scrollY);" key))))
+     (format "var s=window.getSelection(),n=s.focusNode;
+if(n&&n.nodeType===3){var idx=0,w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+while(w.nextNode()&&w.currentNode!==n)idx++;
+window.localStorage.setItem('%s',JSON.stringify({i:idx,o:s.focusOffset}));
+}" key))))
 
-(defun nov-xwidget-reset-position ()
+(defun nov-xwidget-restore-position ()
   (interactive)
-  (when-let* ((key (nov-xwidget--position-key)))
-    (xwidget-execute-script
-     (format "window.localStorage.removeItem('%s');" key))))
-
-(defun nov-xwidget--restore-scroll-position ()
   (when nov-xwidget-need-resume-position
     (when-let* ((key (nov-xwidget--position-key)))
       (xwidget-execute-script
-       (format "if(window.localStorage.getItem('%s') != null) { window.scroll(0, localStorage.getItem('%s')); }" key key))))
+       (format "var d=localStorage.getItem('%s');
+if(d){var p=JSON.parse(d),n;
+var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+for(var i=0;i<=p.i&&(w.nextNode());i++)n=w.currentNode;
+if(n){var s=window.getSelection();
+s.collapse(n,Math.min(p.o,n.length));
+var rng=document.createRange();rng.setStart(n,Math.min(p.o,n.length));rng.collapse(true);
+window.scroll(0,rng.getBoundingClientRect().top-window.innerHeight/3);}}
+" key))))
   (setq nov-xwidget-need-resume-position t))
+
+(defun nov-xwidget--inject-scroll-autosave ()
+  (when-let* ((key (nov-xwidget--position-key)))
+    (xwidget-execute-script
+     (format "window.addEventListener('scroll',function(){
+var s=window.getSelection(),n=s.focusNode;
+if(n&&n.nodeType===3){var idx=0,w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+while(w.nextNode()&&w.currentNode!==n)idx++;
+window.localStorage.setItem('%s',JSON.stringify({i:idx,o:s.focusOffset}));
+}});" key))))
 
 ;;; Keymap and mode
 
@@ -245,15 +263,17 @@
 (defun nov-xwidget--webkit-callback (xwidget xwidget-event-type)
   "Callback for xwidgets.
 XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
+  (xwidget-webkit-callback xwidget xwidget-event-type)
   (when (and (eq xwidget-event-type 'load-changed)
              (string-equal (nth 3 last-input-event) "load-finished"))
-    (when-let* ((uri (xwidget-webkit-uri xwidget))
-                (file (nov-xwidget--extract-filepath uri)))
-      (unless (nov-xwidget--skip-restore-p uri)
-        (nov-xwidget--restore-scroll-position))
-      (when-let* ((index (nov-xwidget--find-index-by-file file)))
-        (setq-local nov-documents-index index))))
-  (xwidget-webkit-callback xwidget xwidget-event-type))
+    (with-current-buffer (xwidget-buffer xwidget)
+      (when-let* ((uri (xwidget-webkit-uri xwidget))
+                  (file (nov-xwidget--extract-filepath uri)))
+        (unless (nov-xwidget--skip-restore-p uri)
+          (nov-xwidget-restore-position))
+        (nov-xwidget--inject-scroll-autosave)
+        (when-let* ((index (nov-xwidget--find-index-by-file file)))
+          (setq-local nov-documents-index index))))))
 
 (defun nov-xwidget-view ()
   "View the current document in a xwidget webkit buffer."
