@@ -407,52 +407,6 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
    (xwidget-webkit-current-session)
    (format "window.scrollBy({top: %d, behavior: 'instant'});" arg)))
 
-(defun nov-xwidget--next-step-or-page-cb (end)
-  (setq nov-xwidget-need-resume-position nil)
-  (if (s-equals-p end "1")
-      (nov-xwidget-next-document)
-    (nov-xwidget--scroll-by (precision-scroll-step-height))))
-
-(defun nov-xwidget-scroll-up-page ()
-  (interactive)
-  (nov-xwidget--scroll-by (precision-scroll-page-height)))
-
-(defun nov-xwidget-scroll-down-page ()
-  (interactive)
-  (nov-xwidget--scroll-by (* -1 (precision-scroll-page-height))))
-
-(defun nov-xwidget-scroll-up-step ()
-  (interactive)
-  (xwidget-webkit-execute-script
-   (xwidget-webkit-current-session)
-   "(function () {
-    if (document.documentElement.clientHeight + document.documentElement.scrollTop >= document.documentElement.scrollHeight) {
-        return \"1\";
-    } else {
-        return \"0\";
-    }
-})();" #'nov-xwidget--next-step-or-page-cb))
-
-(defun nov-xwidget--previous-step-or-page-cb (end)
-  (setq nov-xwidget-need-resume-position nil)
-  (if (s-equals-p end "1")
-      (progn
-        (nov-xwidget-previous-document)
-        (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-    (nov-xwidget--scroll-by (* -1 (precision-scroll-step-height)))))
-
-(defun nov-xwidget-scroll-down-step ()
-  (interactive)
-  (xwidget-webkit-execute-script
-   (xwidget-webkit-current-session)
-   "(function () {
-    if (window.scrollY == 0) {
-        return \"1\";
-    } else {
-        return \"0\";
-    }
-})();" #'nov-xwidget--previous-step-or-page-cb))
-
 ;;; Entry point mode
 (defvar-local nov-temp-dir nil)
 

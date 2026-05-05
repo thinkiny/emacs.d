@@ -39,16 +39,9 @@
   (setq scroll-step 1
         scroll-conservatively 101))
 
-(defun precision-scroll-step-height ()
-  "Pixel height for one scroll step, scaled to window size."
-  (/ (window-pixel-height) 10))
-
 (defun precision-scroll-nontext-height ()
   "Pixel threshold for detecting tall non-text content, scaled to window size."
   (/ (window-pixel-height) 5))
-
-(defun precision-scroll-page-height ()
-  (/ (window-pixel-height) 3))
 
 (defun precision-scroll--line-non-text-p (&optional dir)
   "Non-nil if point (or adjacent line in DIR) has tall non-text display content."

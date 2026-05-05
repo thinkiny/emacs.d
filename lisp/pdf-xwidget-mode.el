@@ -43,26 +43,6 @@
    (format "document.getElementById('viewerContainer').scrollBy({top: %d, behavior: 'instant'})"
            pixels)))
 
-(defun pdf-xwidget-scroll-up-step ()
-  "Scroll PDF up by one step."
-  (interactive)
-  (pdf-xwidget--scroll (precision-scroll-step-height)))
-
-(defun pdf-xwidget-scroll-down-step ()
-  "Scroll PDF down by one step."
-  (interactive)
-  (pdf-xwidget--scroll (- (precision-scroll-step-height))))
-
-(defun pdf-xwidget-scroll-up-page ()
-  "Scroll PDF up by one page."
-  (interactive)
-  (pdf-xwidget--scroll (precision-scroll-page-height)))
-
-(defun pdf-xwidget-scroll-down-page ()
-  "Scroll PDF down by one page."
-  (interactive)
-  (pdf-xwidget--scroll (- (precision-scroll-page-height))))
-
 ;; pdf xwidget toolbar
 (defvar-local pdf-xwidget-toolbar-show t
   "Whether the PDF toolbar is currently visible.")
