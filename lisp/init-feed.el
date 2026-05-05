@@ -60,10 +60,6 @@
   (elfeed-open-current-in-chrome t))
 
 (defun my-elfeed-show-mode-hook()
-  ;; from elfeed-goodies/show-mode-setup
-  (setq header-line-format '(:eval (elfeed-goodies/entry-header-line))
-        left-margin-width elfeed-goodies/show-mode-padding
-        right-margin-width elfeed-goodies/show-mode-padding)
   (visual-line-mode)
   (eldoc-mode -1)
   (font-lock-mode -1)
@@ -100,21 +96,6 @@
   (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'translate-at-point))
 
 (add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook)
-
-(use-package elfeed-goodies
-  :after elfeed
-  :config
-  (elfeed-goodies/setup)
-  (remove-hook 'elfeed-show-mode-hook #'elfeed-goodies/show-mode-setup)
-  (setq elfeed-show-entry-switch #'switch-to-buffer))
-
-(with-eval-after-load 'elfeed-goodies-split-pane
-  (defun elfeed-goodies/delete-pane ()
-    (let* ((buff (get-buffer "*elfeed-entry*"))
-           (window (get-buffer-window buff)))
-      (when buff (kill-buffer buff))
-      (when (and window (window-deletable-p window))
-        (delete-window window)))))
 
 ;; setup feeds
 (defun feed-github-commit (repo)
