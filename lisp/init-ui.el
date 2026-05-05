@@ -39,12 +39,16 @@
   (setq scroll-step 1
         scroll-conservatively 101))
 
-(defconst precision-scroll-step-height 90)
-(defconst precision-scroll-nontext-height 200)
-(defconst precision-scroll-page-lines 20)
+(defun precision-scroll-step-height ()
+  "Pixel height for one scroll step, scaled to window size."
+  (/ (window-pixel-height) 10))
+
+(defun precision-scroll-nontext-height ()
+  "Pixel threshold for detecting tall non-text content, scaled to window size."
+  (/ (window-pixel-height) 5))
 
 (defun precision-scroll-page-height ()
-  (* precision-scroll-page-lines (frame-char-height)))
+  (/ (window-pixel-height) 3))
 
 (defun precision-scroll--line-non-text-p (&optional dir)
   "Non-nil if point (or adjacent line in DIR) has tall non-text display content."
@@ -59,7 +63,7 @@
       (or (cl-some (lambda (ov) (eq (overlay-get ov 'face) 'shr-sliced-image))
                    ovs)
           (and has-display line-h
-               (> line-h precision-scroll-nontext-height))))))
+               (> line-h (precision-scroll-nontext-height)))))))
 
 (defun precision-scroll-line (&optional arg)
   "Move ARG visual lines (default 1, negative = backward).
@@ -74,8 +78,8 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
               (precision-scroll--line-non-text-p dir))
           (ignore-errors
             (if (> dir 0)
-                (pixel-scroll-precision-scroll-down precision-scroll-nontext-height)
-              (pixel-scroll-precision-scroll-up precision-scroll-nontext-height)))
+                (pixel-scroll-precision-scroll-down (precision-scroll-nontext-height))
+              (pixel-scroll-precision-scroll-up (precision-scroll-nontext-height))))
           ;; Snap pixel alignment when transitioning from non-text to text,
           ;; preventing cursor jump on subsequent line-move
           (unless (precision-scroll--line-non-text-p)
@@ -96,17 +100,11 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
 
 (defun precision-scroll-up-page ()
   (interactive)
-  (pixel-scroll-precision-scroll-down-page
-   (* precision-scroll-page-lines (frame-char-height)))
-  (unless (precision-scroll--line-non-text-p)
-    (set-window-vscroll nil 0 t)))
+  (scroll-up (/ (window-height) 3)))
 
 (defun precision-scroll-down-page ()
   (interactive)
-  (pixel-scroll-precision-scroll-up-page
-   (* precision-scroll-page-lines (frame-char-height)))
-  (unless (precision-scroll--line-non-text-p)
-    (set-window-vscroll nil 0 t)))
+  (scroll-down (/ (window-height) 3)))
 
 ;; icons/advice
 (use-package nerd-icons)

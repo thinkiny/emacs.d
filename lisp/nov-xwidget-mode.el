@@ -411,7 +411,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
   (setq nov-xwidget-need-resume-position nil)
   (if (s-equals-p end "1")
       (nov-xwidget-next-document)
-    (nov-xwidget--scroll-by precision-scroll-step-height)))
+    (nov-xwidget--scroll-by (precision-scroll-step-height))))
 
 (defun nov-xwidget-scroll-up-page ()
   (interactive)
@@ -439,7 +439,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (progn
         (nov-xwidget-previous-document)
         (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom))
-    (nov-xwidget--scroll-by (* -1 precision-scroll-step-height))))
+    (nov-xwidget--scroll-by (* -1 (precision-scroll-step-height)))))
 
 (defun nov-xwidget-scroll-down-step ()
   (interactive)

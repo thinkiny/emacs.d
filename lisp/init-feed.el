@@ -9,7 +9,8 @@
   (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"))
 
 (with-eval-after-load 'shr
-  (setq shr-use-colors nil))
+  (setq shr-use-colors nil)
+  (setq shr-sliced-image-height 0.3))
 
 (defun kill-elfeed-buffer()
   (let* ((buffer (get-buffer "*elfeed-entry*")))
@@ -106,6 +107,14 @@
   (elfeed-goodies/setup)
   (remove-hook 'elfeed-show-mode-hook #'elfeed-goodies/show-mode-setup)
   (setq elfeed-show-entry-switch #'switch-to-buffer))
+
+(with-eval-after-load 'elfeed-goodies-split-pane
+  (defun elfeed-goodies/delete-pane ()
+    (let* ((buff (get-buffer "*elfeed-entry*"))
+           (window (get-buffer-window buff)))
+      (when buff (kill-buffer buff))
+      (when (and window (window-deletable-p window))
+        (delete-window window)))))
 
 ;; setup feeds
 (defun feed-github-commit (repo)

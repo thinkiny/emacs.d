@@ -46,12 +46,12 @@
 (defun pdf-xwidget-scroll-up-step ()
   "Scroll PDF up by one step."
   (interactive)
-  (pdf-xwidget--scroll precision-scroll-step-height))
+  (pdf-xwidget--scroll (precision-scroll-step-height)))
 
 (defun pdf-xwidget-scroll-down-step ()
   "Scroll PDF down by one step."
   (interactive)
-  (pdf-xwidget--scroll (- precision-scroll-step-height)))
+  (pdf-xwidget--scroll (- (precision-scroll-step-height))))
 
 (defun pdf-xwidget-scroll-up-page ()
   "Scroll PDF up by one page."
