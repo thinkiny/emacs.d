@@ -14,6 +14,11 @@
         ("b" . clutch-result-prev-cell)
         ("F" . clutch-result-fullscreen-toggle)))
 
+(use-package ob-clutch
+  :vc (:url "https://github.com/LuciusChen/ob-clutch.git"
+            :rev :newest)
+  :after clutch)
+
 (use-package sqlite-mode-extras
   :bind (:map
          sqlite-mode-map
