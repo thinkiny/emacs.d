@@ -149,7 +149,7 @@ Override existing value with NEW-VALUE if it's set."
   :config
   (counsel-projectile-mode)
   (define-key projectile-command-map (kbd "s t") #'ivy-project-rg-type)
-  (define-key projectile-command-map (kbd "s g") #'ivy-project-rg)
-  (define-key projectile-command-map (kbd "s s") #'ivy-project-search))
+  (define-key projectile-command-map (kbd "s s") #'ivy-project-rg)
+  (define-key projectile-command-map (kbd "s d") #'ivy-project-search))
 
 (provide 'init-xref)

@@ -10,9 +10,14 @@
   (setq clutch-result-window-height 0.4)
   :bind
   (:map clutch-result-mode-map
+        ("j" . clutch-result-down-cell)
+        ("k" . clutch-result-up-cell)
         ("f" . clutch-result-next-cell)
         ("b" . clutch-result-prev-cell)
         ("F" . clutch-result-fullscreen-toggle)))
+
+(use-package pg)
+(use-package mysql)
 
 (use-package ob-clutch
   :vc (:url "https://github.com/LuciusChen/ob-clutch.git"

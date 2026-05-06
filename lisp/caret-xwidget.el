@@ -220,31 +220,17 @@ Set this to navigate to the previous document/chapter.")
   (interactive)
   (caret-xwidget--js-call "expandSelection()"))
 
-(defconst caret-xwidget--word-at-caret-js
-  (concat "(function(){var s=window.getSelection();"
-          "if(!s.isCollapsed){var txt=s.toString(),rc=s.getRangeAt(0).getClientRects()[0];"
-          "__caretEmacs.deactivateMark();"
-          "return JSON.stringify({t:txt,l:rc.left,b:rc.bottom})}"
-          "var n=s.focusNode,o=s.focusOffset;"
-          "if(n.nodeType!==3)return'';"
-          "var t=n.textContent;"
-          "var b=o;while(b>0&&/[\\w]/.test(t[b-1]))b--;"
-          "var m=t.slice(b).match(/^[\\w]+(-[\\w]+)*/);"
-          "if(!m)return'';"
-          "var rng=document.createRange();rng.setStart(n,b);rng.setEnd(n,b+m[0].length);"
-          "var rc=rng.getBoundingClientRect();"
-          "return JSON.stringify({t:m[0],l:rc.left,b:rc.bottom})})()"))
-
 (defun caret-xwidget-translate-word ()
   "Translate the word at caret, or the active selection if any."
   (interactive)
-  (caret-xwidget--exec caret-xwidget--word-at-caret-js
+  (caret-xwidget--exec
+   (concat caret-xwidget--js-prefix "wordInfo()")
     (lambda (result)
       (when (and result (not (string-empty-p result)))
         (let* ((data (json-parse-string result))
-               (word (gethash "t" data))
-               (left (gethash "l" data))
-               (bottom (gethash "b" data))
+               (word (gethash "text" data))
+               (left (gethash "left" data))
+               (bottom (gethash "bottom" data))
                (x (round left))
                (y (round bottom)))
           (setq caret-xwidget-translate-pos (cons x y))
@@ -315,8 +301,9 @@ Set this to navigate to the previous document/chapter.")
   (define-key xwidget-webkit-mode-map (kbd "C-v")   #'caret-xwidget-scroll-up)
   (define-key xwidget-webkit-mode-map (kbd "v")     #'caret-xwidget-scroll-up)
   (define-key xwidget-webkit-mode-map (kbd "M-v")   #'caret-xwidget-scroll-down)
-  (define-key xwidget-webkit-mode-map (kbd "SPC")   #'caret-xwidget-scroll-up)
+  (define-key xwidget-webkit-mode-map (kbd "SPC")   #'caret-xwidget-toggle-mark)
   (define-key xwidget-webkit-mode-map (kbd "C-SPC") #'caret-xwidget-toggle-mark)
+  (define-key xwidget-webkit-mode-map (kbd "q")     #'caret-xwidget-quit-mark)
   (define-key xwidget-webkit-mode-map (kbd "C-g")   #'caret-xwidget-quit-mark)
   (define-key xwidget-webkit-mode-map (kbd "M-<")   #'caret-xwidget-beginning-of-buffer)
   (define-key xwidget-webkit-mode-map (kbd "M->")   #'caret-xwidget-end-of-buffer)

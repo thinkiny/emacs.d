@@ -266,6 +266,11 @@ MAX-WIDTH controls text truncation (defaults to window width)."
                      (xref-make-file-location file-path line (or col 0))))))
     results)))
 
+(defconst project-search--rg-base-args
+  '("--no-heading" "--line-number" "--column"
+    "--ignore-case" "--color" "never" "--hidden" "--fixed-strings")
+  "Base ripgrep flags shared by sync and async search.")
+
 (defun project-search--parse-rg-line (line project-root)
   "Parse a single ripgrep output LINE.
 
@@ -298,11 +303,8 @@ MAX-WIDTH controls text truncation (defaults to window width)."
     (with-temp-buffer
       (apply #'call-process "rg" nil t nil
              (append (when extra-args (split-string-and-unquote extra-args))
-                     (list "--no-heading" "--line-number" "--column"
-                           "--ignore-case" "--color" "never"
-                           "--hidden"
-                           "--fixed-strings"  ;; Treat query as literal string
-                           "--" query ".")))
+                     (append project-search--rg-base-args
+                             (list "--" query "."))))
       (goto-char (point-min))
       (while (and (not (eobp)) (< (length xrefs) limit))
         (when-let* ((line (buffer-substring-no-properties
@@ -332,18 +334,14 @@ MAX-WIDTH controls text truncation (defaults to window width)."
       (switch-to-buffer (marker-buffer marker))
       (goto-char marker))))
 
-(defun project-search--extract-kind-prefix (input)
-  "Extract the kind filter prefix from INPUT.
-A leading `#word ' is treated as a kind prefix.  Returns the
-prefix as a lowercase string, or nil if none found.
-  e.g. \"#fu myFunc\" -> \"fu\", \"#file foo\" -> \"file\", \"#include\" -> nil."
-  (when (string-match "\\`#\\([a-zA-Z]+\\)\\s-+" input)
-    (downcase (match-string 1 input))))
-
-(defun project-search--extract-query (input)
-  "Extract the search query from INPUT, stripping any `#prefix '.
-  e.g. \"#fu myFunc\" -> \"myFunc\", \"#f foo\" -> \"foo\", \"#include\" -> \"#include\"."
-  (string-trim (replace-regexp-in-string "\\`#[a-zA-Z]+\\s-+" "" input)))
+(defun project-search--parse-input (input)
+  "Parse INPUT into (QUERY . KIND-PREFIX).
+A leading `#word ' is treated as a kind filter prefix.
+e.g. \"#fu myFunc\" -> (\"myFunc\" . \"fu\"), \"foo\" -> (\"foo\" . nil)."
+  (if (string-match "\\`#\\([a-zA-Z]+\\)\\s-+" input)
+      (cons (string-trim (replace-regexp-in-string "\\`#[a-zA-Z]+\\s-+" "" input))
+            (downcase (match-string 1 input)))
+    (cons (string-trim input) nil)))
 
 (defun project-search--kind-matches-prefix-p (kind-int prefix)
   "Return non-nil if LSP SymbolKind KIND-INT matches PREFIX.
@@ -352,7 +350,13 @@ kind name from `eglot--symbol-kind-names'."
   (when-let* ((kind-name (project-search--lsp-kind-to-string kind-int)))
     (string-prefix-p prefix (downcase kind-name))))
 
-(defun project-search--send-lsp-request (server query project-root req-id &optional kind-prefix max-results)
+(defun project-search--rg-fallback-ivy (query project-root req-id max-results)
+  "Run rg fallback and update ivy if REQ-ID is still current."
+  (when (= req-id project-search--request-id)
+    (project-search--update-ivy-candidates
+     (project-search--rg-to-xrefs query project-root max-results))))
+
+(defun project-search--send-lsp-request (req-id server query project-root &optional kind-prefix max-results)
   "Send workspace/symbol request for QUERY to SERVER.
 PROJECT-ROOT is used for candidate formatting.  REQ-ID is checked
 against `project-search--request-id' to discard stale
@@ -377,44 +381,36 @@ non-nil, it caps the rg fallback output."
                 (xrefs (project-search--lsp-to-xrefs ordered query)))
            (if xrefs
                (project-search--update-ivy-candidates xrefs)
-             ;; LSP returned nothing: fall back to rg only
-             (project-search--update-ivy-candidates
-              (project-search--rg-to-xrefs query project-root max-results)))))))
+             (project-search--rg-fallback-ivy query project-root req-id max-results))))))
    :error-fn
    (lambda (&rest _)
-     (when (= req-id project-search--request-id)
-       ;; LSP error: fall back to rg only
-       (project-search--update-ivy-candidates
-        (project-search--rg-to-xrefs query project-root max-results))))
+     (project-search--rg-fallback-ivy query project-root req-id max-results))
    :timeout-fn
    (lambda ()
-     (when (= req-id project-search--request-id)
-       ;; LSP timeout: fall back to rg only
-       (project-search--update-ivy-candidates
-        (project-search--rg-to-xrefs query project-root max-results))))))
+     (project-search--rg-fallback-ivy query project-root req-id max-results))))
+
+(defun project-search--debounce-send (fn &rest args)
+  "Cancel pending timer, schedule FN with ARGS after debounce delay.
+Returns 0 for ivy dynamic collection.
+The current `project-search--request-id' value is prepended to ARGS
+so the scheduled function receives the ID that was current at call time."
+  (when project-search--debounce-timer
+    (cancel-timer project-search--debounce-timer))
+  (cl-incf project-search--request-id)
+  (setq project-search--debounce-timer
+        (apply #'run-with-timer project-search-debounce-delay nil
+               fn project-search--request-id args))
+  0)
 
 (defun project-search--ivy-lsp-query (server query project-root kind-prefix max-results)
-  "Send a debounced async LSP workspace/symbol request.
-SERVER, QUERY, PROJECT-ROOT, KIND-PREFIX and MAX-RESULTS are
-forwarded to `project-search--send-lsp-request'.  Returns 0 to
-tell ivy that results will arrive asynchronously."
-  (let ((req-id (cl-incf project-search--request-id)))
-    (when project-search--debounce-timer
-      (cancel-timer project-search--debounce-timer))
-    (setq project-search--debounce-timer
-          (run-with-timer
-           project-search-debounce-delay nil
-           #'project-search--send-lsp-request
-           server query project-root req-id kind-prefix max-results))
-    0))
+  "Send a debounced async LSP workspace/symbol request."
+  (project-search--debounce-send
+   #'project-search--send-lsp-request
+   server query project-root kind-prefix max-results))
 
-(defun project-search--ivy-function (input)
-  "Dynamic collection function for `ivy-project-search'.
-INPUT is the current minibuffer text.  Both LSP and rg paths are
-debounced.  A `#prefix' at the start of INPUT filters LSP results
-by kind and is stripped before querying."
-  (let ((query (project-search--extract-query input))
-        (kind-prefix (project-search--extract-kind-prefix input)))
+(defun project-search--ivy-function (input &rest _)
+  "Dynamic collection function for `ivy-project-search'."
+  (pcase-let ((`(,query . ,kind-prefix) (project-search--parse-input input)))
     (or (let ((ivy-text query)) (ivy-more-chars))
         (if project-search--ivy-server
             (project-search--ivy-lsp-query
@@ -426,44 +422,30 @@ by kind and is stripped before querying."
            project-search--ivy-rg-extra-args
            project-search-max-results)))))
 
-(defun project-search--send-rg-request (query project-root req-id extra-args max-results)
+(defun project-search--send-rg-request (req-id query project-root extra-args max-results)
   "Send async rg request for QUERY in PROJECT-ROOT.
 REQ-ID is checked against `project-search--request-id' to discard stale
 responses."
   (when (process-live-p project-search--rg-process)
     (kill-process project-search--rg-process))
   (let* ((default-directory project-root)
-         (buf (get-buffer-create "*project-search-rg*"))
+         (buf (generate-new-buffer " *project-search-rg*" t))
          (args (append (when extra-args (split-string-and-unquote extra-args))
-                      (list "--no-heading" "--line-number" "--column"
-                            "--ignore-case" "--color" "never"
-                            "--hidden"
-                            "--line-buffered"
-                            "--fixed-strings"  ;; Treat query as literal string
-                            "--max-count" (number-to-string max-results)
-                            "--" query ".")))
+                      (append project-search--rg-base-args
+                              '("--line-buffered")
+                              (list "--max-count" (number-to-string max-results)
+                                    "--" query "."))))
          (pending "")
          (xrefs '())
          (count 0)
-         (proc (progn
-                 (with-current-buffer buf
-                   (erase-buffer))
-                 (apply #'start-process "project-search-rg" buf "rg" args))))
+         (proc (apply #'start-process "project-search-rg" buf "rg" args)))
     (setq project-search--rg-process proc)
     (set-process-query-on-exit-flag proc nil)
 
     (set-process-filter
      proc
-     (lambda (process chunk)
+     (lambda (_process chunk)
        (when (= req-id project-search--request-id)
-         ;; Keep a transcript for debugging.
-         (when-let* ((pbuf (process-buffer process)))
-           (when (buffer-live-p pbuf)
-             (with-current-buffer pbuf
-               (goto-char (point-max))
-               (insert chunk))))
-
-         ;; Incremental parse so ivy can update before rg exits.
          (setq pending (concat pending chunk))
          (let* ((parts (split-string pending "\n"))
                 (tail (car (last parts)))
@@ -474,48 +456,46 @@ responses."
                (when-let* ((match (project-search--parse-rg-line line project-root)))
                  (push (project-search--rg-match-to-xref match query) xrefs)
                  (cl-incf count))))
-
            (project-search--update-ivy-candidates (nreverse (copy-sequence xrefs))))
-         ;; True global cap: stop rg as soon as we have enough.
-         (when (and (>= count max-results) (process-live-p process))
-           (kill-process process)))))
+         (when (and (>= count max-results) (process-live-p proc))
+           (kill-process proc)))))
 
     (set-process-sentinel
      proc
      (lambda (_process _event)
        (when (= req-id project-search--request-id)
-         ;; Flush a final non-newline-terminated line, just in case.
          (when (and (< count max-results)
                     (not (string-empty-p pending)))
            (when-let* ((match (project-search--parse-rg-line pending project-root)))
              (push (project-search--rg-match-to-xref match query) xrefs)
              (cl-incf count)))
-
          (ignore-errors
            (project-search--update-ivy-candidates (nreverse (copy-sequence xrefs)))))))))
 
 (defun project-search--ivy-rg-query (query project-root extra-args max-results)
-  "Send a debounced async rg request.
-Returns 0 to tell ivy that results will arrive asynchronously."
-  (let ((req-id (cl-incf project-search--request-id)))
-    (when project-search--debounce-timer
-      (cancel-timer project-search--debounce-timer))
-    (setq project-search--debounce-timer
-          (run-with-timer
-           project-search-debounce-delay nil
-           #'project-search--send-rg-request
-           query project-root req-id extra-args max-results))
-    0))
+  "Send a debounced async rg request."
+  (project-search--debounce-send
+   #'project-search--send-rg-request
+   query project-root extra-args max-results))
 
-(defun project-search--ivy-rg-function (input)
-  "Dynamic collection function for `ivy-project-rg' using only ripgrep.
-INPUT is the current minibuffer text."
-  (let ((query (project-search--extract-query input)))
+(defun project-search--ivy-rg-function (input &rest _)
+  "Dynamic collection function for `ivy-project-rg' using only ripgrep."
+  (let ((query (string-trim input)))
     (or (let ((ivy-text query)) (ivy-more-chars))
         (project-search--ivy-rg-query
          query project-search--ivy-project-root
          project-search--ivy-rg-extra-args
          project-search-max-results))))
+
+(defun project-search--ivy-read (prompt collection-fn caller)
+  "Start an ivy session with PROMPT, COLLECTION-FN, and CALLER."
+  (setq project-search--ivy-default-directory default-directory)
+  (ivy-read (format "[%s] %s" (projectile-project-name) prompt)
+            collection-fn
+            :dynamic-collection t
+            :require-match t
+            :action #'project-search--ivy-action
+            :caller caller))
 
 ;;;###autoload
 (defun ivy-project-rg (&optional options)
@@ -527,14 +507,8 @@ Session variables are set with `setq' so they survive `ivy-resume'."
          (default-directory project-root))
     (setq project-search--ivy-project-root project-root
           project-search--ivy-server nil
-          project-search--ivy-rg-extra-args options
-          project-search--ivy-default-directory default-directory)
-    (ivy-read (format "[%s] rg: " (projectile-project-name))
-              #'project-search--ivy-rg-function
-              :dynamic-collection t
-              :require-match t
-              :action #'project-search--ivy-action
-              :caller 'ivy-project-rg)))
+          project-search--ivy-rg-extra-args options)
+    (project-search--ivy-read "rg: " #'project-search--ivy-rg-function 'ivy-project-rg)))
 
 ;;;###autoload
 (defun ivy-project-search ()
@@ -549,14 +523,8 @@ Session variables are set with `setq' so they survive `ivy-resume'."
          (server (project-search--find-eglot-server project-root))
          (default-directory project-root))
     (setq project-search--ivy-project-root project-root
-          project-search--ivy-server server
-          project-search--ivy-default-directory default-directory)
-    (ivy-read (format "[%s] symbol: " (projectile-project-name))
-              #'project-search--ivy-function
-              :dynamic-collection t
-              :require-match t
-              :action #'project-search--ivy-action
-              :caller 'ivy-project-search)))
+          project-search--ivy-server server)
+    (project-search--ivy-read "symbol: " #'project-search--ivy-function 'ivy-project-search)))
 
 (defun project-search--unwind ()
   "Clean up debounce timer on ivy exit."
@@ -578,14 +546,11 @@ which crashes `ivy--occur-default'.  This handler reads from
     (read-only-mode)))
 
 (with-eval-after-load 'ivy
-  (ivy-configure 'ivy-project-search
-    :occur #'project-search--ivy-occur
-    :unwind-fn #'project-search--unwind)
-  (ivy-configure 'ivy-project-rg
-    :occur #'project-search--ivy-occur
-    :unwind-fn #'project-search--unwind)
-  (add-to-list 'ivy-more-chars-alist '(ivy-project-search . 2))
-  (add-to-list 'ivy-more-chars-alist '(ivy-project-rg . 2)))
+  (dolist (cmd '(ivy-project-search ivy-project-rg))
+    (ivy-configure cmd
+      :occur #'project-search--ivy-occur
+      :unwind-fn #'project-search--unwind)
+    (add-to-list 'ivy-more-chars-alist `(,cmd . 2))))
 
 (provide 'project-search)
 ;;; project-search.el ends here

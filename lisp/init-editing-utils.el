@@ -460,6 +460,13 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
           (goto-char (car bounds))
           (push-mark (cdr bounds) nil t))))))
 
+(defun selection/toggle-mark ()
+  "Toggle the mark, like `set-mark-command'."
+  (interactive)
+  (if (region-active-p)
+      (deactivate-mark)
+    (push-mark (point) nil t)))
+
 (defun selection/quit ()
   "Quit selection, restoring point if `selection/expand' moved it."
   (interactive)
@@ -470,5 +477,8 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
           (setq selection--pre-selection-point nil))
         (deactivate-mark))
     (keyboard-quit)))
+
+;; text-mode
+(add-hook 'text-mode-hook 'visual-line-mode)
 
 (provide 'init-editing-utils)

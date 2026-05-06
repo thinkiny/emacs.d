@@ -10,7 +10,7 @@ const cloneRect = (r) => ({ top: r.top, left: r.left, width: r.width, height: r.
 const CURSOR_CSS = `
 #${CURSOR_ID}{
   position:absolute;pointer-events:none;z-index:2147483647;
-  background:#4488ff;display:none;box-sizing:border-box;
+  background:var(--caret-color, #4488ff);display:none;box-sizing:border-box;
   border-radius:1px;min-width:2px;
   animation:caretBlink 1s step-end infinite;
 }
@@ -720,6 +720,7 @@ class CaretEmacs {
 
   _setMark(active) {
     this.markActive = active;
+    document.documentElement.style.setProperty("--caret-color", active ? "#ff4444" : "");
     if (!active) {
       const sel = window.getSelection();
       if (sel?.rangeCount) {
@@ -1556,7 +1557,7 @@ class CaretEmacs {
     let moved = this._stepModify(sel, direction, granularity, fwd);
     this._snapToText(sel, fwd);
     if (sel.focusNode === startNode && sel.focusOffset === startOff) { moved = false; }
-    if (moved && granularity === "word" && !this._isPdfMode()) {
+    if (moved && fwd && granularity === "word" && !this._isPdfMode()) {
       this._snapToWordStart(sel, fwd);
       if (sel.focusNode === startNode && sel.focusOffset === startOff) { moved = false; }
     }
@@ -1953,10 +1954,11 @@ class CaretEmacs {
 
   pageDown() { this._scrollPage("down"); }
   pageUp() { this._scrollPage("up"); }
-  toggleMark() { this._setMark(!this.markActive); }
+  toggleMark() { this._setMark(!this.markActive); return this.markActive; }
 
   deactivateMark() {
     this.markActive = false;
+    document.documentElement.style.setProperty("--caret-color", "");
     const sel = window.getSelection();
     const c = this._savedFocus;
     if (c?.node && this._root.contains(c.node)) {
@@ -2034,6 +2036,26 @@ class CaretEmacs {
     if (!el) return;
     el.dispatchEvent(new MouseEvent("click",
       { bubbles: true, cancelable: true, clientX: x, clientY: y }));
+  }
+
+  wordInfo() {
+    const s = window.getSelection();
+    if (!s.isCollapsed) {
+      const text = s.toString(), rc = s.getRangeAt(0).getClientRects()[0];
+      this.deactivateMark();
+      return JSON.stringify({ text, left: rc.left, bottom: rc.bottom });
+    }
+    const n = s.focusNode, o = s.focusOffset;
+    if (n.nodeType !== 3) return "";
+    const t = n.textContent;
+    let b = o;
+    while (b > 0 && /[\w]/.test(t[b - 1])) b--;
+    const m = t.slice(b).match(/^[\w]+(-[\w]+)*/);
+    if (!m) return "";
+    const rng = document.createRange();
+    rng.setStart(n, b); rng.setEnd(n, b + m[0].length);
+    const rc = rng.getBoundingClientRect();
+    return JSON.stringify({ text: m[0], left: rc.left, bottom: rc.bottom });
   }
 
   /** Remove all event listeners and the cursor overlay. */
