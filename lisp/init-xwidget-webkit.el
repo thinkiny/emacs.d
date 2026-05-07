@@ -1,12 +1,13 @@
 ;; -*- lexical-binding: t; -*-
 
+(require 'xwidget)
+
 (defgroup xwidget-webkit '() "xwidget webkit" :group 'tools)
 (defcustom xwidget-webkit-urls '()
   "Specify xwidgets webkit URLS."
   :type '(alist :key-type string :value-type string)
   :group 'xwidget-webkit)
 
-(require 'xwidget)
 (setq xwidget-webkit-buffer-name-format "*WEB: %T")
 (setq xwidget-webkit-proxy (local-proxy-http-url))
 
@@ -161,7 +162,6 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
     (list "Xwidget WebKit"  :visible nil))
   (unbind-key (kbd "-") xwidget-webkit-mode-map)
   (unbind-key (kbd "+") xwidget-webkit-mode-map)
-  (define-key xwidget-webkit-mode-map (kbd "q") #'keyboard-quit)
   (define-key xwidget-webkit-mode-map (kbd "g") #'xwidget-webkit-browse-open-url)
   (define-key xwidget-webkit-mode-map (kbd "F") 'xwidget-webkit-forward)
   (define-key xwidget-webkit-mode-map (kbd "B") 'xwidget-webkit-back)

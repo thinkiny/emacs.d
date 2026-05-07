@@ -1,12 +1,20 @@
 ;;; init-feed.el  -*- lexical-binding: t -*-
 
 (use-package elfeed
+  :bind (:map global-map
+              ("C-x e" . elfeed))
   :config
+  (use-proxy-local 'url-retrieve)
   (when-let* ((proxy-url (local-proxy-http-url)))
     (setq elfeed-curl-extra-arguments
           (list "-x" proxy-url)))
   (setq elfeed-db-directory "~/.emacs.d/elfeed")
-  (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"))
+  (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
+  (setq elfeed-search-print-entry-function #'my-elfeed-search-print-entry)
+  (define-key elfeed-search-mode-map (kbd "j") #'next-line)
+  (define-key elfeed-search-mode-map (kbd "k") #'previous-line)
+  (define-key elfeed-search-mode-map (kbd "O") #'elfeed-open-selected-in-chrome)
+  (define-key elfeed-search-mode-map (kbd "o") #'elfeed-open-selected-in-chrome-background))
 
 (with-eval-after-load 'shr
   (setq shr-use-colors nil)
@@ -42,13 +50,6 @@
   "Open the selected search entry in Chrome in the background."
   (interactive (list (elfeed-search-selected :ignore-region)))
   (elfeed-open-selected-in-chrome entry t))
-
-(with-eval-after-load 'elfeed-search
-  (define-key elfeed-search-mode-map (kbd "j") #'next-line)
-  (define-key elfeed-search-mode-map (kbd "k") #'previous-line)
-  (define-key elfeed-search-mode-map (kbd "d") #'elfeed-search-untag-all-unread)
-  (define-key elfeed-search-mode-map (kbd "O") #'elfeed-open-selected-in-chrome)
-  (define-key elfeed-search-mode-map (kbd "o") #'elfeed-open-selected-in-chrome-background))
 
 (defun elfeed-open-current-in-chrome(&optional background)
   (interactive)
@@ -111,7 +112,53 @@
   (let ((name (car (last (split-string repo "/")))))
     `(,(format "https://github.com/%s/releases.atom" repo) ,(intern name) github)))
 
-(global-set-key (kbd "C-x e") 'elfeed)
-(use-proxy-local 'url-retrieve)
+;; my-elfeed-search--feed-display-name
+(defcustom my-elfeed-search-source-column-width 16
+  "Width of the feed source column in elfeed-search."
+  :group 'elfeed
+  :type 'integer)
+
+(defcustom my-elfeed-search-tags-column-width 20
+  "Width of the tags column in elfeed-search."
+  :group 'elfeed
+  :type 'integer)
+
+(defcustom my-elfeed-search-source-map nil
+  "Alist mapping URL prefixes to display names for the source column.
+Each entry is (PREFIX . DISPLAY-NAME).  If a feed URL starts with
+PREFIX, DISPLAY-NAME is shown instead of the feed title."
+  :group 'elfeed
+  :type '(alist :key-type string :value-type string))
+
+(defun my-elfeed-search--feed-display-name (feed)
+  "Return display name for FEED, consulting `my-elfeed-search-source-map'."
+  (let ((name (when feed (or (elfeed-meta feed :title) (elfeed-feed-title feed)))))
+    (or (cl-loop for (prefix . alias) in my-elfeed-search-source-map
+                 when (and name (string-prefix-p prefix name))
+                 return alias)
+        name)))
+
+(defun my-elfeed-search-print-entry (entry)
+  "Print ENTRY to the buffer with source, tags, title, date columns."
+  (let* ((title (or (elfeed-meta entry :title) (elfeed-entry-title entry) ""))
+         (title-faces (elfeed-search--faces (elfeed-entry-tags entry)))
+         (feed-title (my-elfeed-search--feed-display-name (elfeed-entry-feed entry)))
+         (tags (concat "[" (mapconcat #'identity
+                                      (mapcar #'symbol-name (elfeed-entry-tags entry)) ",") "]"))
+         (date (elfeed-search-format-date (elfeed-entry-date entry)))
+         (title-width (- (or (window-width (get-buffer-window)) (frame-width))
+                         my-elfeed-search-source-column-width
+                         my-elfeed-search-tags-column-width
+                         (string-width date) 3)))
+    (insert (propertize (elfeed-format-column (or feed-title "") my-elfeed-search-source-column-width :left)
+                        'face 'elfeed-search-feed-face) " "
+            (propertize (elfeed-format-column tags my-elfeed-search-tags-column-width :left)
+                        'face 'elfeed-search-tag-face) " "
+            (propertize (elfeed-format-column
+                         title (elfeed-clamp elfeed-search-title-min-width
+                                             title-width elfeed-search-title-max-width) :left)
+                        'face title-faces 'kbd-help title) " "
+            (propertize date 'face 'elfeed-search-date-face))))
+
 
 (provide 'init-feed)

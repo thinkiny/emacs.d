@@ -163,5 +163,7 @@ and kills the original file-visiting buffer."
     (pdf-xwidget-open pdf-file)
     (kill-buffer init-buf)))
 
+(global-set-key (kbd "C-x / p") #'pdf-xwidget-open)
+
 (provide 'pdf-xwidget-mode)
 ;;; pdf-xwidget-mode.el ends here

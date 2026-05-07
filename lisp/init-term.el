@@ -54,7 +54,7 @@ In *claude-code buffers, go to the last prompt line (❯) instead."
   (interactive)
   (vterm-copy-mode 1)
   (let ((buf (current-buffer)))
-    (run-at-time 0 nil
+    (run-at-time 0.05 nil
                  (lambda ()
                    (when (buffer-live-p buf)
                      (with-current-buffer buf

@@ -718,21 +718,6 @@ class CaretEmacs {
     this._updateCursor();
   }
 
-  _setMark(active) {
-    this.markActive = active;
-    document.documentElement.style.setProperty("--caret-color", active ? "#ff4444" : "");
-    if (!active) {
-      const sel = window.getSelection();
-      if (sel?.rangeCount) {
-        const focus = sel.focusNode;
-        const focusOff = sel.focusOffset;
-        sel.collapse(focus, focusOff);
-        this._savedFocus = { node: focus, offset: focusOff };
-        setTimeout(() => this._restoreCaretIfLost(), 0);
-      }
-    }
-    this._updateCursor();
-  }
 
   _applyRange(sel, range) {
     if (this.markActive) {
@@ -1954,7 +1939,16 @@ class CaretEmacs {
 
   pageDown() { this._scrollPage("down"); }
   pageUp() { this._scrollPage("up"); }
-  toggleMark() { this._setMark(!this.markActive); return this.markActive; }
+  toggleMark() {
+    if (this.markActive) {
+      this.deactivateMark();
+      return false;
+    }
+    this.markActive = true;
+    document.documentElement.style.setProperty("--caret-color", "#ff4444");
+    this._updateCursor();
+    return true;
+  }
 
   deactivateMark() {
     this.markActive = false;

@@ -34,6 +34,10 @@
                          (ivy-occur-next-line))))
 
 ;; counsel
+(use-package amx
+  :config
+  (amx-mode 1))
+
 (use-package counsel
   :after ivy
   :config

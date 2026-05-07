@@ -33,29 +33,22 @@ pre, code {
   font-size: 1em !important;
   line-height: 1.2em !important;
   font-family: "JetBrains Mono", "SF Mono", Monaco, monospace !important;
+  margin: 1em 0em !important;
 }
 *:not(pre):not(code) {
   font-family: "Tabular", "Microsoft YaHei", Georgia,Cambria,"Times New Roman",Times,serif !important;
 }
 h1 {
   font-size: 1.25em !important;
-  margin-top: 1em !important;
-  margin-bottom: 0.5em !important;
 }
 h2 {
   font-size: 1.2em !important;
-  margin-top: 1em !important;
-  margin-bottom: 1em !important;
 }
 h3 {
   font-size: 1.1em !important;
-  margin-top: 1em !important;
-  margin-bottom: 1em !important;
 }
 h4 {
   font-size: 1em !important;
-  margin-top: 1em !important;
-  margin-bottom: 1em !important;
 }
 h5 {
   font-size: 1em !important;
