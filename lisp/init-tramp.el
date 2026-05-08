@@ -119,7 +119,9 @@ ARGS are the arguments to pass to ORIG-FN."
 (use-package tramp-rpc
   :vc (:url "https://github.com/ArthurHeymans/emacs-tramp-rpc.git"
        :rev :newest
-       :lisp-dir "lisp"))
+       :lisp-dir "lisp")
+  :config
+  (setq tramp-rpc-deploy-git-build-policy 'release))
 
 ;; tramp rsync functions
 (defun tramp-vec-to-rsync-address (vec)

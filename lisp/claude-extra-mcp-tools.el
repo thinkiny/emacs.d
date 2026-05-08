@@ -158,9 +158,11 @@ ARGUMENTS are the MCP tool arguments (unused)."
 
 (defun claude-mcp--window-text ()
   "Extract the text currently visible in the Emacs window."
-  (let ((start (window-start))
-        (end (min (window-end nil t) (point-max))))
-    (when (and (<= start end) (<= start (point-max)))
+  (let* ((buf-min (point-min))
+         (buf-max (point-max))
+         (start (max (min (window-start) buf-max) buf-min))
+         (end (min (max (window-end nil t) buf-min) buf-max)))
+    (when (< start end)
       (buffer-substring-no-properties start end))))
 
 (defun claude-mcp--visible-text ()

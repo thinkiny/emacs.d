@@ -41,7 +41,7 @@
     (concat "epub-pos-"
             (string-trim-left decode-url (concat "/" nov-xwidget-cache-dir "/")))))
 
-(defun nov-xwidget-save-position ()
+(defun nov-xwidget-save--position ()
   (interactive)
   (when-let* ((key (nov-xwidget--position-key)))
     (xwidget-execute-script
@@ -96,15 +96,19 @@ window.localStorage.setItem('%s',JSON.stringify({i:idx,o:s.focusOffset}));
   (add-hook 'kill-buffer-hook #'nov-xwidget--save nil t)
   (add-hook 'kill-emacs-hook #'nov-xwidget--save nil t))
 
-(defun nov-xwidget--save ()
-  "Save current reading position."
+(defun nov-xwidget--save-index ()
+  "Save current chapter index."
   (when nov-temp-dir
     (let ((identifier (cdr (assq 'identifier nov-metadata)))
           (index (if (integerp nov-documents-index)
                      nov-documents-index
                    0)))
-      (nov-save-place identifier index (point)))
-    (nov-xwidget-save-position)))
+      (nov-save-place identifier index (point)))))
+
+(defun nov-xwidget--save ()
+  "Save current reading position."
+  (nov-xwidget--save-index)
+  (nov-xwidget-save--position))
 
 ;;; DOM transformation
 
@@ -273,7 +277,8 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
           (nov-xwidget-restore-position))
         (nov-xwidget--inject-scroll-autosave)
         (when-let* ((index (nov-xwidget--find-index-by-file file)))
-          (setq-local nov-documents-index index))))))
+          (setq-local nov-documents-index index)
+          (nov-xwidget--save-index))))))
 
 (defun nov-xwidget-view ()
   "View the current document in a xwidget webkit buffer."
@@ -395,7 +400,6 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 (defun nov-xwidget-goto-toc ()
   "Go to the TOC index and render the TOC document."
   (interactive)
-  (nov-xwidget-save-position)
   (setq-local nov-documents-index nov-toc-id)
   (let ((url (concat "file:///" nov-xwidget-toc-path)))
     (nov-xwidget--browse-url url)))
