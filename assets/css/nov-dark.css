@@ -24,6 +24,9 @@ tr, td, div, th, ul {
   color: inherit !important;
   line-height: inherit !important;
 }
+li {
+  text-align: left !important;
+}
 span {
   font-size: 1em !important;
 }

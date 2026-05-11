@@ -25,6 +25,7 @@
   (define-key vterm-mode-map (kbd "C-c C-v") 'vterm--self-insert)
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (define-key vterm-mode-map (kbd "M-<") #'vterm-mode-goto-window-start)
+  (define-key vterm-mode-map (kbd "M->") #'end-of-buffer)
   (define-key vterm-mode-map (kbd "S-<return>") #'vterm-send-newline-escaped)
   (define-key vterm-mode-map (kbd "C-<escape>") #'vterm-send-escape-key)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)

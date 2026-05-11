@@ -115,15 +115,15 @@
 ;; setup feeds
 (defun feed-github-commit (repo)
   (let ((name (car (last (split-string repo "/")))))
-    `(,(format "https://github.com/%s/commits.atom" repo) ,(intern name) github)))
+    `(,(format "https://github.com/%s/commits.atom" repo) ,(intern name))))
 
 (defun feed-github-commit-branch (repo branch)
   (let ((name (car (last (split-string repo "/")))))
-    `(,(format "https://github.com/%s/commits/%s.atom" repo branch) ,(intern name) github)))
+    `(,(format "https://github.com/%s/commits/%s.atom" repo branch) ,(intern name))))
 
 (defun feed-github-release (repo)
   (let ((name (car (last (split-string repo "/")))))
-    `(,(format "https://github.com/%s/releases.atom" repo) ,(intern name) github)))
+    `(,(format "https://github.com/%s/releases.atom" repo) ,(intern name))))
 
 ;; elfeed-search--feed-display-name
 (defvar elfeed-search--source-column-width 16

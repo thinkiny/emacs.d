@@ -14,7 +14,9 @@
         ("k" . clutch-result-up-cell)
         ("f" . clutch-result-next-cell)
         ("b" . clutch-result-prev-cell)
-        ("F" . clutch-result-fullscreen-toggle)))
+        ("F" . clutch-result-fullscreen-toggle)
+   :map clutch-mode-map
+        ("C-x C-e" . clutch-execute-dwim)))
 
 (use-package pg)
 (use-package mysql)

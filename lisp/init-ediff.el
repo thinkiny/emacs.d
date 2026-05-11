@@ -12,7 +12,9 @@
   :config
   (define-key ztreediff-mode-map (kbd "g") #'ztree-diff-partial-rescan)
   (define-key ztreediff-mode-map (kbd "n") #'ztree-next-line)
-  (define-key ztreediff-mode-map (kbd "p") #'ztree-previous-line)
+  (define-key ztreediff-mode-map (kbd "p") #'ztree-previous-line))
+
+(with-eval-after-load 'ztree-view
   (define-key ztree-mode-map (kbd "n") #'ztree-next-line)
   (define-key ztree-mode-map (kbd "p") #'ztree-previous-line))
 
