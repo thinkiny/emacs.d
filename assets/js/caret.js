@@ -24,13 +24,14 @@ class CaretEmacs {
   constructor(el = document, opts = {}) {
     this.el = el;
     this.markActive = false;
-    this._debug = true;
+    this._debug = false;
     this._debugLog = [];
     this._onSelectionChange = this._updateCursor.bind(this);
     this.scrollContainer = opts.scrollContainer || null;
     this._scrollPx = opts.scrollPx || 200;
     this._scrollDownFraction = opts.scrollDownFraction || 1 / 3;
     this._scrollUpFraction = opts.scrollUpFraction || 2 / 3;
+    this._viewportEdgeOffset = opts.viewportEdgeOffset || 20;
     this._cursorEl = null;
     this._scrollRafPending = false;
     this._lastScrollTop = 0;
@@ -217,9 +218,11 @@ class CaretEmacs {
       this._updateCursor();
       return;
     }
-    const range = this._probeWithFallback(rect.left, rect.top, isForward);
+    const cx = rect.left + rect.width / 2;
+    const cy = isForward ? vp.top + this._viewportEdgeOffset : vp.bottom - this._viewportEdgeOffset;
+    const range = this._probeWithFallback(cx, cy, isForward, vp);
     if (!range) return;
-    this._applyRange(sel, range);
+    this._applyProbeResult(range);
     this._updateCursor();
   }
 
@@ -296,7 +299,7 @@ class CaretEmacs {
       const cx = caretRect
         ? caretRect.left + caretRect.width / 2
         : (viewportRect.left + viewportRect.right) / 2;
-      const cy = isForward ? viewportRect.top + 20 : viewportRect.bottom - 20;
+      const cy = isForward ? viewportRect.top + this._viewportEdgeOffset : viewportRect.bottom - this._viewportEdgeOffset;
 
       let resolved = this._probeTextAt(cx, cy);
       // Reject probe result if it's outside the viewport
@@ -701,7 +704,7 @@ class CaretEmacs {
     const focusRect = this._selectionFocusRect(sel);
     const viewportRect = this._viewportRect();
     if (this._isRectInViewport(focusRect, viewportRect)) return;
-    const resolved = this._probeTextAt((viewportRect.left + viewportRect.right) / 2, viewportRect.top + 1);
+    const resolved = this._probeTextAt((viewportRect.left + viewportRect.right) / 2, viewportRect.top + this._viewportEdgeOffset);
     if (resolved) {
       this._setSelectionRange(sel, resolved);
     }
@@ -987,6 +990,8 @@ class CaretEmacs {
   }
 
   _pickPositionOnLine(line, goalX) {
+    const lineRect = line[0]?.rect;
+    if (!lineRect) return null;
     let bestRange = null, bestDist = Infinity;
     for (const entry of line) {
       const start = entry.startOffset ?? 0;
@@ -996,6 +1001,7 @@ class CaretEmacs {
         r.setStart(entry.node, off); r.setEnd(entry.node, off + 1);
         const cr = r.getBoundingClientRect();
         if (!cr.width || !cr.height) continue;
+        if (!this._isSameLine(cr, lineRect)) continue;
         const d = Math.abs(cr.left + cr.width / 2 - goalX);
         if (d < bestDist) {
           bestDist = d;
@@ -1291,7 +1297,9 @@ class CaretEmacs {
     if (!ordered.length) return { range: null, scrolled: false };
     if (!lines.length) return { range: null, scrolled: false };
 
-    let currentLineIndex = this._findCaretLine(lines, caretRect);
+    const caretLineFound = this._findCaretLine(lines, caretRect);
+    const caretInGap = caretLineFound < 0;
+    let currentLineIndex = caretLineFound;
     if (currentLineIndex < 0) {
       // Fallback: caret rect doesn't match any visual line — use closest by Y
       const midY = caretRect.top + caretRect.height / 2;
@@ -1306,7 +1314,10 @@ class CaretEmacs {
       const targetLineIndex = this._lineTargetIndex(currentLineIndex, fwd, lines);
       if (targetLineIndex >= 0) {
         // If target line is far off-screen (large non-text gap like an image),
-        // scroll toward it instead of jumping.
+        // scroll toward it instead of jumping — unless the caret itself is in
+        // the gap (no text line at its Y position), in which case scrolling
+        // incrementally is futile; fall through to jump and let
+        // _scrollToSelection reveal the target.
         const currentLineRect = lines[currentLineIndex][0].rect;
         const targetLineRect = lines[targetLineIndex][0].rect;
         const currentLineBottom = currentLineRect && (currentLineRect.bottom ?? (currentLineRect.top + currentLineRect.height));
@@ -1317,7 +1328,7 @@ class CaretEmacs {
             : currentLineRect.top - targetLineBottom;
           const vp = this._viewportRect();
           const targetInViewport = targetLineRect.top < vp.bottom && targetLineBottom > vp.top;
-          if (lineGap > this._scrollPx && !targetInViewport) {
+          if (lineGap > this._scrollPx && !targetInViewport && !caretInGap) {
             if (this._canScroll(fwd)) {
               this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
               this._invalidateLayoutCaches();

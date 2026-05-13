@@ -487,15 +487,19 @@ responses."
          project-search--ivy-rg-extra-args
          project-search-max-results))))
 
-(defun project-search--ivy-read (prompt collection-fn caller)
-  "Start an ivy session with PROMPT, COLLECTION-FN, and CALLER."
+(defun project-search--ivy-read (prompt collection-fn caller &optional initial-input)
+  "Start an ivy session with PROMPT, COLLECTION-FN, and CALLER.
+INITIAL-INPUT is inserted into the minibuffer after setup."
   (setq project-search--ivy-default-directory default-directory)
-  (ivy-read (format "[%s] %s" (projectile-project-name) prompt)
-            collection-fn
-            :dynamic-collection t
-            :require-match t
-            :action #'project-search--ivy-action
-            :caller caller))
+  (minibuffer-with-setup-hook
+      (lambda () (when (and initial-input (not (string-empty-p initial-input)))
+                   (insert initial-input)))
+    (ivy-read (format "[%s] %s" (projectile-project-name) prompt)
+              collection-fn
+              :dynamic-collection t
+              :require-match t
+              :action #'project-search--ivy-action
+              :caller caller)))
 
 ;;;###autoload
 (defun ivy-project-rg (&optional options)
@@ -511,20 +515,27 @@ Session variables are set with `setq' so they survive `ivy-resume'."
     (project-search--ivy-read "rg: " #'project-search--ivy-rg-function 'ivy-project-rg)))
 
 ;;;###autoload
-(defun ivy-project-search ()
+(defun ivy-project-search (&optional initial-query)
   "Search project symbols via LSP or ripgrep with ivy completion.
 When an active Eglot server exists for the project, queries
 workspace/symbol asynchronously.  Otherwise falls back to async
 ripgrep text search.  Results are limited to
 `project-search-max-results'.
-Session variables are set with `setq' so they survive `ivy-resume'."
+Session variables are set with `setq' so they survive `ivy-resume'.
+When called interactively with prefix arg, pre-fill with symbol at point."
   (interactive)
   (let* ((project-root (project-search--project-root))
          (server (project-search--find-eglot-server project-root))
          (default-directory project-root))
     (setq project-search--ivy-project-root project-root
           project-search--ivy-server server)
-    (project-search--ivy-read "symbol: " #'project-search--ivy-function 'ivy-project-search)))
+    (project-search--ivy-read "search: " #'project-search--ivy-function 'ivy-project-search initial-query)))
+
+;;;###autoload
+(defun ivy-project-search-at-point ()
+  "Like `ivy-project-search' but pre-filled with symbol at point."
+  (interactive)
+  (ivy-project-search (thing-at-point 'symbol t)))
 
 (defun project-search--unwind ()
   "Clean up debounce timer on ivy exit."
@@ -551,6 +562,32 @@ which crashes `ivy--occur-default'.  This handler reads from
       :occur #'project-search--ivy-occur
       :unwind-fn #'project-search--unwind)
     (add-to-list 'ivy-more-chars-alist `(,cmd . 2))))
+
+
+(defun get-default-args-for-ripgrep()
+  (let ((file-name (buffer-file-name)))
+    (concat (if file-name
+                (pcase (file-name-extension file-name)
+                  ("go" "-tgo")
+                  ("py" "-tpython")
+                  ("js" "-tjs")
+                  ("cc" "-tcpp")
+                  (_ ""))
+              "")
+            " -i")))
+
+(defun ivy-project-rg-type()
+  (interactive)
+  (ivy-project-rg (get-default-args-for-ripgrep)))
+
+(use-package counsel-projectile
+  :after (ivy-xref projectile)
+  :config
+  (counsel-projectile-mode)
+  (define-key projectile-command-map (kbd "s t") #'ivy-project-rg-type)
+  (define-key projectile-command-map (kbd "s g") #'ivy-project-rg)
+  (define-key projectile-command-map (kbd "s s") #'ivy-project-search)
+  (define-key projectile-command-map (kbd "s .") #'ivy-project-search-at-point))
 
 (provide 'project-search)
 ;;; project-search.el ends here

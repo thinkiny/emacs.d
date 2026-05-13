@@ -128,28 +128,4 @@ Override existing value with NEW-VALUE if it's set."
 ;; project search
 (require 'project-search)
 
-(defun get-default-args-for-ripgrep()
-  (let ((file-name (buffer-file-name)))
-    (concat (if file-name
-                (pcase (file-name-extension file-name)
-                  ("go" "-tgo")
-                  ("py" "-tpython")
-                  ("js" "-tjs")
-                  ("cc" "-tcpp")
-                  (_ ""))
-              "")
-            " -i")))
-
-(defun ivy-project-rg-type()
-  (interactive)
-  (ivy-project-rg (get-default-args-for-ripgrep)))
-
-(use-package counsel-projectile
-  :after (ivy-xref projectile)
-  :config
-  (counsel-projectile-mode)
-  (define-key projectile-command-map (kbd "s t") #'ivy-project-rg-type)
-  (define-key projectile-command-map (kbd "s s") #'ivy-project-rg)
-  (define-key projectile-command-map (kbd "s d") #'ivy-project-search))
-
 (provide 'init-xref)
