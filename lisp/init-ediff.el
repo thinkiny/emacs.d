@@ -59,18 +59,15 @@
 
 ;; ediff-quit
 (with-eval-after-load 'ediff-util
-  (defun ediff-quit(reverse-default-keep-variants)
-    "Remove y-or-n-p in edifff-util."
-    (interactive "P")
-    (ediff-barf-if-not-control-buffer)
-    (let ((ctl-buf (current-buffer))
-          (ctl-frm (selected-frame))
-          (minibuffer-auto-raise t))
-      (setq this-command 'ediff-quit) ; bug#38219
-      (set-buffer ctl-buf)
-      (ediff-really-quit reverse-default-keep-variants)
-      (select-frame ctl-frm)
-      (raise-frame ctl-frm))))
+  (advice-add 'ediff-quit :around
+              (lambda (orig &rest args)
+                (let ((real-y-or-n-p (symbol-function 'y-or-n-p)))
+                  (cl-letf (((symbol-function 'y-or-n-p)
+                             (lambda (prompt)
+                               (if (string-match-p "Quit this Ediff session" prompt)
+                                   t
+                                 (funcall real-y-or-n-p prompt)))))
+                    (apply orig args))))))
 
 ;; ediff-directories: make top-level =h consistent with sub-session =h.
 ;; override to compare only common files.

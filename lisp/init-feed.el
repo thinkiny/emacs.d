@@ -146,17 +146,16 @@ PREFIX, DISPLAY-NAME is shown instead of the feed title.")
         name)))
 
 (defun elfeed-search-print-entry--custom (entry)
-  "Print ENTRY to the buffer with source, tags, title, date columns."
+  "Print ENTRY to the buffer with source, tags, title columns."
   (let* ((title (or (elfeed-meta entry :title) (elfeed-entry-title entry) ""))
          (title-faces (elfeed-search--faces (elfeed-entry-tags entry)))
          (feed-title (elfeed-search--feed-display-name (elfeed-entry-feed entry)))
          (tags (concat "[" (mapconcat #'identity
                                       (mapcar #'symbol-name (elfeed-entry-tags entry)) ",") "]"))
-         (date (elfeed-search-format-date (elfeed-entry-date entry)))
          (title-width (- (or (window-width (get-buffer-window)) (frame-width))
                          elfeed-search--source-column-width
                          elfeed-search--tags-column-width
-                         (string-width date) 3)))
+                         2)))
     (insert (propertize (elfeed-format-column (or feed-title "") elfeed-search--source-column-width :left)
                         'face 'elfeed-search-feed-face) " "
             (propertize (elfeed-format-column tags elfeed-search--tags-column-width :left)
@@ -164,7 +163,8 @@ PREFIX, DISPLAY-NAME is shown instead of the feed title.")
             (propertize (elfeed-format-column
                          title (elfeed-clamp elfeed-search-title-min-width
                                              title-width elfeed-search-title-max-width) :left)
-                        'face title-faces 'kbd-help title) " "
-            (propertize date 'face 'elfeed-search-date-face))))
+                        'face title-faces 'kbd-help title
+                        'mouse-face 'highlight
+                        'follow-link [elfeed-entry]))))
 
 (provide 'init-feed)

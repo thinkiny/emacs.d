@@ -4,7 +4,7 @@
   :init
   (setq rust-mode-treesitter-derive t))
 
-(use-package cargo)
+(use-package cargo-mode)
 
 (defun my-rust-mode-hook()
   (setq indent-tabs-mode nil)
