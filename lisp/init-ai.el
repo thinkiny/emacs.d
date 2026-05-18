@@ -9,10 +9,11 @@
   (setq claude-code-ide-debug nil)
   (setq claude-code-ide-cli-debug nil)
   (setq claude-code-ide-emacs-prompt
-"# CONSTRAINTS
-- Review Emacs MCP tool descriptions thoroughly. Prioritize Emacs MCP tools over any other tools or agents.
-- Avoid reading any binary files (e.g., PDFs or EPUBs).
-- Line numbers are 1-based; column numbers are 0-based.")
+"<IMPORTANT>
+- Review MCP tools descriptions thoroughly. Prioritize MCP tools over any other tools or agents.
+- Avoid reading any binary file (e.g., PDF or EPUB).
+- Line numbers are 1-based; column numbers are 0-based.
+</IMPORTANT>")
 
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'vterm)

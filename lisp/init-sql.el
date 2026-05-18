@@ -2,12 +2,18 @@
 ;;; Commentary:
 ;;; Code:
 
+(use-package pg)
+(use-package mysql)
+
+(use-package ob-clutch
+  :vc (:url "https://github.com/LuciusChen/ob-clutch.git"
+            :rev :newest)
+  :after clutch)
+
 (use-package clutch
   :vc (:url "https://github.com/LuciusChen/clutch.git"
        :rev :newest)
   :mode (("\\.sql\\'" . clutch-mode))
-  :config
-  (setq clutch-result-window-height 0.4)
   :bind
   (:map clutch-result-mode-map
         ("j" . clutch-result-down-cell)
@@ -16,15 +22,11 @@
         ("b" . clutch-result-prev-cell)
         ("F" . clutch-result-fullscreen-toggle)
    :map clutch-mode-map
-        ("C-x C-e" . clutch-execute-dwim)))
-
-(use-package pg)
-(use-package mysql)
-
-(use-package ob-clutch
-  :vc (:url "https://github.com/LuciusChen/ob-clutch.git"
-            :rev :newest)
-  :after clutch)
+   ("C-x C-e" . clutch-execute-dwim))
+  :config
+  (setq clutch-result-window-height 0.4)
+  (unbind-key (kbd "M-<") 'clutch-result-mode-map)
+  (unbind-key (kbd "M->") 'clutch-result-mode-map))
 
 (use-package sqlite-mode-extras
   :bind (:map

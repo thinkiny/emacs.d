@@ -25,9 +25,10 @@
   (define-key vterm-mode-map (kbd "C-c C-v") 'vterm--self-insert)
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (define-key vterm-mode-map (kbd "M-<") #'vterm-mode-goto-window-start)
-  (define-key vterm-mode-map (kbd "M->") #'end-of-buffer)
+  (define-key vterm-mode-map (kbd "M->") #'vterm-mode-goto-buffer-end)
   (define-key vterm-mode-map (kbd "S-<return>") #'vterm-send-newline-escaped)
   (define-key vterm-mode-map (kbd "C-<escape>") #'vterm-send-escape-key)
+  (define-key vterm-copy-mode-map (kbd "<SPC>") #'selection/toggle-mark)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-copy-mode-map (kbd "=") #'selection/expand)
   (define-key vterm-copy-mode-map (kbd "C-g") #'vterm-copy-mode)
@@ -42,8 +43,8 @@
   (define-key vterm-copy-mode-map (kbd "e") #'end-of-line)
   (define-key vterm-copy-mode-map (kbd "v") #'scroll-up)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
-  (define-key vterm-copy-mode-map (kbd "M->") #'vterm-copy-mode-end-or-quit)
-  (define-key vterm-copy-mode-map (kbd "M-<") #'vterm-copy-mode-beginning-of-buffer))
+  (define-key vterm-copy-mode-map (kbd "M->") #'vterm-copy-mode-goto-buffer-end)
+  (define-key vterm-copy-mode-map (kbd "M-<") #'vterm-copy-mode-goto-window-start))
 
 (defun vterm-send-key-left()
   "Fix Ctrl-B not working in claude code in some cases."
@@ -62,39 +63,54 @@
   (interactive)
   (vterm-send-escape))
 
+(defconst vterm--claude-previous-re "^\\(?:❯ \\|⏺ \\)"
+  "Regex matching Claude Code prompt lines.")
+
+(defun vterm--claude-buffer-p ()
+  "Return non-nil if current buffer is a Claude Code terminal."
+  (string-prefix-p "*claude-code" (buffer-name)))
+
+(defun vterm--goto-previous-claude-prompt ()
+  "Search backward for a Claude Code prompt line (❯ or ⏺)."
+  (when (re-search-backward vterm--claude-previous-re nil t)
+    (beginning-of-line)))
+
 (defun vterm-mode-goto-window-start ()
   "Enter `vterm-copy-mode' and go to the start of the window.
-In *claude-code buffers, go to the last prompt line (❯) instead."
+In *claude-code buffers, go to the last prompt line (❯ or ⏺) instead."
   (interactive)
   (vterm-copy-mode 1)
   (let ((buf (current-buffer)))
-    (run-at-time 0.05 nil
+    (run-at-time 0.1 nil
                  (lambda ()
                    (when (buffer-live-p buf)
                      (with-current-buffer buf
-                       (if (string-prefix-p "*claude-code" (buffer-name))
-                           (when (re-search-backward "^❯ " nil t)
-                             (beginning-of-line))
+                       (if (vterm--claude-buffer-p)
+                           (vterm--goto-previous-claude-prompt)
                          (goto-char (window-start)))))))))
 
-(defun vterm-copy-mode-end-or-quit ()
+(defun vterm-mode-goto-buffer-end ()
+  (interactive)
+  (vterm-reset-cursor-point))
+
+(defun vterm-copy-mode-goto-buffer-end ()
   "Go to end of buffer if region is active, otherwise quit `vterm-copy-mode."
   (interactive)
   (if (use-region-p)
       (goto-char (point-max))
-    (vterm-copy-mode -1)))
+    (vterm-copy-mode -1)
+    (vterm-reset-cursor-point)))
 
-(defun vterm-copy-mode-beginning-of-buffer ()
-  "In *claude-code buffers, jump to the last or previous prompt (❯).
+(defun vterm-copy-mode-goto-window-start ()
+  "In *claude-code buffers, jump to the last or previous prompt (❯ or ⏺).
 Otherwise go to the beginning of the buffer."
   (interactive)
-  (if (string-prefix-p "*claude-code" (buffer-name))
+  (if (vterm--claude-buffer-p)
       (progn
         (beginning-of-line)
-        (if (looking-at "^❯ ")
-            (progn (forward-line -1) (re-search-backward "^❯ " nil t))
-          (re-search-backward "^❯ " nil t))
-        (beginning-of-line))
+        (if (looking-at vterm--claude-previous-re)
+            (progn (forward-line -1) (vterm--goto-previous-claude-prompt))
+          (vterm--goto-previous-claude-prompt)))
     (goto-char (point-min))))
 
 (with-eval-after-load 'vterm
