@@ -31,7 +31,7 @@
   (define-key vterm-copy-mode-map (kbd "<SPC>") #'selection/toggle-mark)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-copy-mode-map (kbd "=") #'selection/expand)
-  (define-key vterm-copy-mode-map (kbd "C-g") #'vterm-copy-mode)
+  (define-key vterm-copy-mode-map (kbd "C-g") #'selection/quit)
   (define-key vterm-copy-mode-map (kbd ",") #'translate-at-point)
   (define-key vterm-copy-mode-map (kbd "n") #'precision-scroll-next-line)
   (define-key vterm-copy-mode-map (kbd "p") #'precision-scroll-prev-line)

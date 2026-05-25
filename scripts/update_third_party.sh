@@ -47,12 +47,25 @@ update_repos() {
 
 # Update LSP tools
 update_lsp() {
+    echo "updating gopls"
     go install golang.org/x/tools/gopls@latest
-    #npm install -g typescript-language-server typescript
-    pipx upgrade pyrefly
+
+    # echo "updating pyrefly"
+    # pipx upgrade pyrefly
+
+    echo "updating basedpyright"
+    pipx upgrade basedpyright
+
+    echo "updating rassumfrassum"
     pipx upgrade rassumfrassum
+
+    echo "updating ts-language-server"
     npm install -g @vtsls/language-server
+
+    echo "updating vscode-langservers-extracted"
     npm install -g @t1ckbase/vscode-langservers-extracted
+
+    echo "updating tailwindcss-language-server"
     npm install -g @tailwindcss/language-server
 }
 

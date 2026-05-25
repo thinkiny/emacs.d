@@ -92,12 +92,24 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
   (precision-scroll-line -1))
 
 (defun precision-scroll-up-page ()
+  "Scroll viewport down by 1/3 page.
+Keep point if still visible; otherwise move to top of window."
   (interactive)
-  (scroll-up (/ (window-height) 3)))
+  (let ((opoint (point)))
+    (scroll-up (/ (window-height) 3))
+    (if (pos-visible-in-window-p opoint)
+        (goto-char opoint)
+      (goto-char (window-start)))))
 
 (defun precision-scroll-down-page ()
+  "Scroll viewport up by 1/3 page.
+Keep point if still visible; otherwise move to bottom of window."
   (interactive)
-  (scroll-down (/ (window-height) 3)))
+  (let ((opoint (point)))
+    (scroll-down (/ (window-height) 3))
+    (if (pos-visible-in-window-p opoint)
+        (goto-char opoint)
+      (goto-char (window-end)))))
 
 ;; icons/advice
 (use-package nerd-icons)
