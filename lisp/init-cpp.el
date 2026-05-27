@@ -3,6 +3,7 @@
 (use-package cff)
 (use-package cmake-mode)
 (use-package disaster)
+(use-package bison-mode)
 
 (use-package cuda-mode
   :hook (cuda-mode . eglot-ensure))
@@ -120,8 +121,8 @@
           (insert (s-replace "]" "}" (s-replace "[" "{" str)))))))
 
 (with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '((c-mode c++-mode c++-ts-mode) .
-                                        ("clangd" "--header-insertion-decorators=0" "--log=error" "--clang-tidy" "--function-arg-placeholders" "--background-index"))))
+  (set-eglot-server-program '(c++-mode c++-ts-mode)
+                            '("clangd" "--header-insertion-decorators=0" "--log=error" "--clang-tidy" "--function-arg-placeholders" "--background-index")))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.ipp\\'" . c++-mode))

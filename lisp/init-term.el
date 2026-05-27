@@ -188,12 +188,12 @@ else mirroring original vterm logic."
    (set-face-foreground 'term-color-red "IndianRed1")))
 
 ;; eat
-(use-package eat
-  :config
-  (setq eat-term-name "xterm-256color")
-  (ignore-tramp-ssh-control-master 'eat-exec)
-  (with-eval-after-load 'eshell
-    (eat-eshell-mode)
-    (eat-eshell-visual-command-mode)))
+;; (use-package eat
+;;   :config
+;;   (setq eat-term-name "xterm-256color")
+;;   (ignore-tramp-ssh-control-master 'eat-exec)
+;;   (with-eval-after-load 'eshell
+;;     (eat-eshell-mode)
+;;     (eat-eshell-visual-command-mode)))
 
 (provide 'init-term)

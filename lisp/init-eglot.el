@@ -54,14 +54,14 @@
                                                          :preferences (:importModuleSpecifier "relative")))
                                                        ;; :javascript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
                                                        ;; :typescript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
-                                                       ;; :basedpyright.analysis (:typeCheckingMode "standard"
-                                                       ;;                         :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
-                                                       ;;                                                       :reportOptionalSubscript "warning"
-                                                       ;;                                                       :reportReturnType "warning"
-                                                       ;;                                                       :reportTypedDictNotRequiredAccess "warning")
-                                                       ;;                         :useLibraryCodeForTypes t
-                                                       ;;                         :diagnosticMode "workspace"
-                                                       ;;                         :autoSearchPaths t)
+                                                       :basedpyright.analysis (:typeCheckingMode "standard"
+                                                                               :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
+                                                                                                             :reportOptionalSubscript "warning"
+                                                                                                             :reportReturnType "warning"
+                                                                                                             :reportTypedDictNotRequiredAccess "warning")
+                                                                               :useLibraryCodeForTypes t
+                                                                               :diagnosticMode "workspace"
+                                                                               :autoSearchPaths t)
                                                        ))
 
   ;;(setq completion-category-defaults nil)
