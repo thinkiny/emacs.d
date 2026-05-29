@@ -217,4 +217,24 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
       (remove 'xwidget-webkit-adjust-size-in-frame
               window-size-change-functions))
 
+;; transparent-bg
+(defun xwidget-webkit-inject-transparent-bg ()
+  "Inject CSS to make page background transparent."
+  (interactive)
+  (when (not (derived-mode-p 'nov-xwidget-webkit-mode 'pdf-xwidget-mode))
+    (xwidget-execute-script
+     "var s = document.createElement('style');
+      s.textContent = 'html,body,:not(caret-cursor){background:transparent!important}';
+      document.head.appendChild(s);")))
+
+(defun xwidget-webkit--transparent-bg-callback-advice (orig-fn xwidget event-type)
+  "Inject transparent background CSS on page load."
+  (funcall orig-fn xwidget event-type)
+  (when (and (eq event-type 'load-changed)
+             (string-equal (nth 3 last-input-event) "load-finished"))
+    (xwidget-webkit-inject-transparent-bg)))
+
+(advice-add 'xwidget-webkit-callback :around
+            #'xwidget-webkit--transparent-bg-callback-advice)
+
 (provide 'init-xwidget-webkit)

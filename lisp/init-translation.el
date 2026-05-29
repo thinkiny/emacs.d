@@ -76,7 +76,7 @@
 (defun google-translate-posframe-pos()
   "Return (PX-POS . MAX-WIDTH) for posframe, clamped to frame right edge.
 PX-POS is a cons (X . Y) in pixels."
-  (let* ((min-cols 35)
+  (let* ((min-cols 40)
          (px-pos (if (derived-mode-p 'xwidget-webkit-mode)
                      (or caret-xwidget-translate-pos
                          (cdr (mouse-pixel-position)))

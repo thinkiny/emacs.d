@@ -324,8 +324,7 @@ Set this to navigate to the previous document/chapter.")
   (define-key xwidget-webkit-mode-map (kbd "=")     #'caret-xwidget-expand-selection)
 
   ;; Inject caret.js on every page load (initial and subsequent navigations).
-  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice)
-  )
+  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice))
 
 (provide 'caret-xwidget)
 

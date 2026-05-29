@@ -58,6 +58,19 @@
           (and has-display line-h
                (> line-h (precision-scroll-nontext-height)))))))
 
+(defun precision-scroll--skip-to-text (dir)
+  "Walk DIR visual lines from point until reaching a text line.
+Returns the target point, or nil if no text line found before buffer boundary."
+  (save-excursion
+    (let ((limit 1000))
+      (while (and (> limit 0)
+                  (not (if (> dir 0) (eobp) (bobp)))
+                  (precision-scroll--line-non-text-p))
+        (vertical-motion dir)
+        (cl-decf limit))
+      (when (not (precision-scroll--line-non-text-p))
+        (point)))))
+
 (defun precision-scroll-line (&optional arg)
   "Move ARG visual lines (default 1, negative = backward).
 Pixel-scrolls tall non-text content and repositions at window boundaries."
@@ -70,14 +83,16 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
          ((or (precision-scroll--line-non-text-p)
               (precision-scroll--line-non-text-p dir))
           (ignore-errors
-            (if (> dir 0)
-                (pixel-scroll-precision-scroll-down (precision-scroll-nontext-height))
-              (pixel-scroll-precision-scroll-up (precision-scroll-nontext-height))))
-          ;; Snap pixel alignment when transitioning from non-text to text,
-          ;; preventing cursor jump on subsequent line-move
-          (unless (precision-scroll--line-non-text-p)
-            (set-window-vscroll nil 0 t)
-            ))
+            (if (precision-scroll--line-non-text-p)
+                (let* ((row (count-screen-lines (window-start) (point)))
+                       (target (precision-scroll--skip-to-text dir)))
+                  (when target
+                    (goto-char target)
+                    (set-window-vscroll nil 0 t)
+                    (recenter row)))
+              (if (> dir 0)
+                  (pixel-scroll-precision-scroll-down (precision-scroll-nontext-height))
+                (pixel-scroll-precision-scroll-up (precision-scroll-nontext-height))))))
          (t
           (line-move dir t)))))))
 
@@ -394,12 +409,25 @@ reader assets."
                        theme foreground exit-code))))))
 
 (defun cap-brightness-in-dark-theme ()
+  "Cap foreground lightness for faces without explicit background in dark themes.
+Preserves hue and saturation. Skips faces with their own background
+\(highlight/selection faces that need white-on-dark contrast)."
   (when (theme-dark-p)
-    (let ((hsl (nth 2 (apply #'color-rgb-to-hsl
-                             (color-name-to-rgb
-                              (face-attribute 'default :foreground))))))
-      (when (> hsl 0.9)
-        (set-face-attribute 'default nil :foreground "#E0E0E0")))))
+    (let ((max-lightness 0.85))
+      (dolist (face (face-list))
+        (let ((fg (face-attribute face :foreground nil t))
+              (bg (face-attribute face :background nil t)))
+          (when (and (stringp fg)
+                     (not (stringp bg)))
+            (condition-case nil
+                (pcase-let ((`(,h ,s ,l)
+                             (apply #'color-rgb-to-hsl (color-name-to-rgb fg))))
+                  (when (> l max-lightness)
+                    (set-face-attribute
+                     face nil :foreground
+                     (apply #'color-rgb-to-hex
+                            (append (color-hsl-to-rgb h s max-lightness) '(2))))))
+              (error nil))))))))
 
 (after-load-theme
  (cap-brightness-in-dark-theme)

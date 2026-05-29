@@ -2,13 +2,13 @@
 
 /* ── Constants ────────────────────────────────────────────── */
 
-const CURSOR_ID = "__caret-emacs-cursor";
 const STYLE_ID = "__caret-emacs-style";
+const CURSOR_TAG = "caret-cursor";
 const WORD_CHAR_RE = /[\p{L}\p{N}\p{M}\p{Pc}]/u;
 const cloneRect = (r) => ({ top: r.top, left: r.left, width: r.width, height: r.height });
 
 const CURSOR_CSS = `
-#${CURSOR_ID}{
+${CURSOR_TAG}{
   position:absolute;pointer-events:none;z-index:2147483647;
   background:var(--caret-color, #4488ff);display:none;box-sizing:border-box;
   border-radius:1px;min-width:2px;
@@ -334,9 +334,9 @@ class CaretEmacs {
         { id: STYLE_ID, textContent: CURSOR_CSS });
       document.head.appendChild(style);
     }
-    this._cursorEl = document.getElementById(CURSOR_ID)
+    this._cursorEl = document.querySelector(CURSOR_TAG)
       ?? (() => {
-        const el = Object.assign(document.createElement("div"), { id: CURSOR_ID });
+        const el = document.createElement(CURSOR_TAG);
         document.documentElement.appendChild(el);
         return el;
       })();

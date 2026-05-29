@@ -26,9 +26,8 @@ PDFJS_CSS_MARKER_START = "/* reader-color-override:pdfjs:start */"
 PDFJS_CSS_MARKER_END = "/* reader-color-override:pdfjs:end */"
 PDFJS_THEME_HOOK_ANCHOR = '  <script src="viewer.mjs" type="module"></script>'
 
-NOV_TEMPLATE = """html,body {{
+NOV_TEMPLATE = """html,body,:not(caret-cursor) {{
   background: transparent !important;
-  background-color: transparent !important;
   color: {foreground} !important;
 }}"""
 
@@ -225,7 +224,9 @@ def build_marker_block(marker_start: str, marker_end: str, body: str) -> str:
     return f"{marker_start}\n{body.rstrip()}\n{marker_end}"
 
 
-def ensure_single_marker_block(contents: str, marker_start: str, marker_end: str) -> None:
+def ensure_single_marker_block(
+    contents: str, marker_start: str, marker_end: str
+) -> None:
     start_count = contents.count(marker_start)
     end_count = contents.count(marker_end)
     if start_count != end_count:
@@ -239,11 +240,7 @@ def ensure_single_marker_block(contents: str, marker_start: str, marker_end: str
 def remove_marker_block(contents: str, marker_start: str, marker_end: str) -> str:
     ensure_single_marker_block(contents, marker_start, marker_end)
     pattern = re.compile(
-        r"\n*"
-        + re.escape(marker_start)
-        + r".*?"
-        + re.escape(marker_end)
-        + r"\n*",
+        r"\n*" + re.escape(marker_start) + r".*?" + re.escape(marker_end) + r"\n*",
         flags=re.DOTALL,
     )
     updated, count = pattern.subn("\n\n", contents)
@@ -252,7 +249,9 @@ def remove_marker_block(contents: str, marker_start: str, marker_end: str) -> st
     return updated.rstrip() + "\n"
 
 
-def set_marker_block(contents: str, marker_start: str, marker_end: str, body: str) -> str:
+def set_marker_block(
+    contents: str, marker_start: str, marker_end: str, body: str
+) -> str:
     ensure_single_marker_block(contents, marker_start, marker_end)
     block = build_marker_block(marker_start, marker_end, body)
     pattern = re.compile(
@@ -313,6 +312,7 @@ def build_restored_light_nov_override_contents() -> str:
 
 # PDF.js patch helpers
 
+
 def build_pdfjs_theme_hook(theme_mode: ThemeMode) -> str:
     return PDFJS_THEME_TEMPLATE.format(
         viewer_css_theme=theme_mode.pdfjs_viewer_css_theme,
@@ -349,7 +349,9 @@ def build_pdfjs_theme_html_contents(theme_mode: ThemeMode) -> str:
             PDFJS_THEME_MARKER_END,
             build_pdfjs_theme_hook(theme_mode),
         )
-    return insert_before_anchor(contents, PDFJS_THEME_HOOK_ANCHOR, block, PDFJS_VIEWER_HTML)
+    return insert_before_anchor(
+        contents, PDFJS_THEME_HOOK_ANCHOR, block, PDFJS_VIEWER_HTML
+    )
 
 
 def build_restored_pdfjs_theme_html_contents() -> str:
@@ -484,6 +486,7 @@ def build_sync_operations(theme_name: str, foreground: str) -> list[AssetOperati
 
 
 # Top-level workflows
+
 
 def restore_stock_light_reader_assets(check: bool = False) -> int:
     try:
