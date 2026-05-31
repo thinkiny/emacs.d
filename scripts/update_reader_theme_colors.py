@@ -26,7 +26,7 @@ PDFJS_CSS_MARKER_START = "/* reader-color-override:pdfjs:start */"
 PDFJS_CSS_MARKER_END = "/* reader-color-override:pdfjs:end */"
 PDFJS_THEME_HOOK_ANCHOR = '  <script src="viewer.mjs" type="module"></script>'
 
-NOV_TEMPLATE = """html,body,:not(caret-cursor) {{
+NOV_TEMPLATE = """html,body{{
   background: transparent !important;
   color: {foreground} !important;
 }}"""
