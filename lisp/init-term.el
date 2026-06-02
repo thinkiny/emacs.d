@@ -200,6 +200,10 @@ else mirroring original vterm logic."
   (define-key ghostel-semi-char-mode-map (kbd "M-<") #'ghostel-copy-mode-goto-window-start)
   (define-key ghostel-semi-char-mode-map (kbd "M->") #'end-of-buffer)
 
+  ;; ghostel-editor
+  (require 'ghostel-editor)
+  (define-key ghostel-semi-char-mode-map (kbd "C-c e") #'ghostel-editor-open)
+
   ;; readonly/copy mode
   (define-key ghostel-readonly-mode-map (kbd "M-w") 'kill-ring-save)
   (define-key ghostel-readonly-mode-map (kbd "<SPC>") #'selection/toggle-mark)
