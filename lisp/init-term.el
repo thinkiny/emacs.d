@@ -24,7 +24,7 @@
   (define-key vterm-mode-map (kbd "M-v") 'scroll-down-command)
   (define-key vterm-mode-map (kbd "C-c C-v") 'vterm--self-insert)
   (define-key vterm-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
-  (define-key vterm-mode-map (kbd "M-<") #'vterm-mode-goto-window-start)
+  (define-key vterm-mode-map (kbd "M-<") #'vterm-mode-goto-previous)
   (define-key vterm-mode-map (kbd "M->") #'vterm-mode-goto-buffer-end)
   (define-key vterm-mode-map (kbd "S-<return>") #'vterm-send-newline-escaped)
   (define-key vterm-mode-map (kbd "C-<escape>") #'vterm-send-escape-key)
@@ -72,10 +72,11 @@
 
 (defun vterm--goto-previous-claude-prompt ()
   "Search backward for a Claude Code prompt line (❯ or ⏺)."
+  (beginning-of-line)
   (when (re-search-backward vterm--claude-previous-re nil t)
     (beginning-of-line)))
 
-(defun vterm-mode-goto-window-start ()
+(defun vterm-mode-goto-previous ()
   "Enter `vterm-copy-mode' and go to the start of the window.
 In *claude-code buffers, go to the last prompt line (❯ or ⏺) instead."
   (interactive)
@@ -175,9 +176,7 @@ else mirroring original vterm logic."
                               (with-current-buffer buf
                                 (vterm--scroll-session-end))))))))
 
-;; counsel-term
-(require 'counsel-term)
-(global-set-key (kbd "C-x t") 'counsel-term)
+
 
 ;; term-color
 (with-eval-after-load-theme
@@ -187,13 +186,56 @@ else mirroring original vterm logic."
    (set-face-foreground 'term-color-blue "skyblue3")
    (set-face-foreground 'term-color-red "IndianRed1")))
 
-;; eat
-;; (use-package eat
-;;   :config
-;;   (setq eat-term-name "xterm-256color")
-;;   (ignore-tramp-ssh-control-master 'eat-exec)
-;;   (with-eval-after-load 'eshell
-;;     (eat-eshell-mode)
-;;     (eat-eshell-visual-command-mode)))
+;; ghostel
+(use-package ghostel
+  :config
+  (setq ghostel-tramp-shell-integration t)
+  (add-to-list 'ghostel-tramp-shells '("rpc" "/bin/bash"))
+
+  ;; semi-char mode (normal input)
+  (define-key ghostel-semi-char-mode-map (kbd "M-w") #'kill-ring-save)
+  (define-key ghostel-semi-char-mode-map (kbd "C-c v") #'ghostel-copy-mode)
+  (define-key ghostel-semi-char-mode-map (kbd "C-v") #'scroll-up-command)
+  (define-key ghostel-semi-char-mode-map (kbd "M-v") #'scroll-down-command)
+  (define-key ghostel-semi-char-mode-map (kbd "M-<") #'ghostel-copy-mode-goto-window-start)
+  (define-key ghostel-semi-char-mode-map (kbd "M->") #'end-of-buffer)
+
+  ;; readonly/copy mode
+  (define-key ghostel-readonly-mode-map (kbd "M-w") 'kill-ring-save)
+  (define-key ghostel-readonly-mode-map (kbd "<SPC>") #'selection/toggle-mark)
+  (define-key ghostel-readonly-mode-map (kbd "C-c v") #'ghostel-readonly-exit)
+  (define-key ghostel-readonly-mode-map (kbd "=") #'selection/expand)
+  (define-key ghostel-readonly-mode-map (kbd ",") #'translate-at-point)
+  (define-key ghostel-readonly-mode-map (kbd "n") #'precision-scroll-next-line)
+  (define-key ghostel-readonly-mode-map (kbd "p") #'precision-scroll-prev-line)
+  (define-key ghostel-readonly-mode-map (kbd "j") #'precision-scroll-next-line)
+  (define-key ghostel-readonly-mode-map (kbd "k") #'precision-scroll-prev-line)
+  (define-key ghostel-readonly-mode-map (kbd "b") #'backward-word)
+  (define-key ghostel-readonly-mode-map (kbd "f") #'forward-word-begin)
+  (define-key ghostel-readonly-mode-map (kbd "a") #'beginning-of-line)
+  (define-key ghostel-readonly-mode-map (kbd "e") #'end-of-line)
+  (define-key ghostel-readonly-mode-map (kbd "v") #'scroll-up)
+  (define-key ghostel-readonly-mode-map (kbd "M-<") #'vterm-copy-mode-goto-window-start)
+  (define-key ghostel-readonly-mode-map (kbd "M->") #'ghostel-copy-mode-goto-end))
+
+(defun ghostel-copy-mode-goto-window-start ()
+  "Enter copy mode and jump to previous prompt in *claude-code buffers,
+or to window start in other buffers."
+  (interactive)
+  (ghostel-copy-mode)
+  (if (string-prefix-p "*claude-code" (buffer-name))
+      (vterm--goto-previous-claude-prompt)
+    (goto-char (window-start))))
+
+(defun ghostel-copy-mode-goto-end ()
+  "Go to end of buffer if region is active, otherwise exit copy mode."
+  (interactive)
+  (if (use-region-p)
+      (goto-char (point-max))
+    (ghostel-readonly-exit)))
+
+;; counsel-term
+(require 'counsel-term)
+(global-set-key (kbd "C-x t") 'counsel-term)
 
 (provide 'init-term)

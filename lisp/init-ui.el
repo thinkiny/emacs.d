@@ -126,12 +126,17 @@ Keep point if still visible; otherwise move to bottom of window."
         (goto-char opoint)
       (goto-char (window-end)))))
 
-;; icons/advice
+;; icons
 (use-package nerd-icons)
 
 (use-package nerd-icons-dired
   :when window-system
-  :hook (dired-mode . nerd-icons-dired-mode))
+  :hook (dired-mode . nerd-icons-dired-mode)
+  :config
+  (advice-add 'nerd-icons-dired--refresh
+              :before-until
+              (lambda ()
+                (file-remote-p default-directory))))
 
 ;; frame appearance and theme support
 (let ((no-border '(internal-border-width . 0)))

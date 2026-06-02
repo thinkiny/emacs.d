@@ -11,10 +11,11 @@
 (require 'ivy)
 (require 'tramp)
 (require 'vterm)
+(require 'ghostel)
 (require 'perspective)
 
-(defvar counsel-mt-shell-type 'vterm
-  "Terminal backend to use.  Either `vterm' or `eshell'.")
+(defvar counsel-mt-shell-type 'ghostel
+  "Terminal backend to use.  Either `vterm', `eshell', or `ghostel'.")
 
 (defcustom counsel-mt-refresh-interval 1
   "Idle seconds between terminal buffer name refreshes."
@@ -108,7 +109,8 @@ longest prefix of the current directory."
          (name (generate-new-buffer-name (counsel-mt--buf-name idx))))
     (pcase counsel-mt-shell-type
       ('eshell (call-interactively 'eshell) (rename-buffer name))
-      ('vterm (switch-to-buffer (vterm name)) (rename-buffer name)))
+      ('vterm (switch-to-buffer (vterm name)) (rename-buffer name))
+      ('ghostel (ghostel t) (rename-buffer name)))
     (setq-local counsel-mt-index idx)))
 
 (defun counsel-term ()

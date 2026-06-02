@@ -24,7 +24,6 @@
     (setq eglot-events-buffer-config '(:size 0 :format full)))
   (setq eglot-extend-to-xref t)
   (setq eglot-autoshutdown t)
-  (setq eglot-prefer-plaintext t)
   (setq eglot-sync-connect nil)
   (setq eglot-send-changes-idle-time 1)
   (setq eglot-ignored-server-capabilities '(:documentHighlightProvider

@@ -24,7 +24,7 @@
   (unbind-key (kbd "C-c ]") 'sgml-mode-map))
 
 ;; yaml
-(add-auto-mode 'yaml-mode "\\.yml\\'" "\\.erb\\'")
+(add-auto-mode 'yaml-ts-mode "\\.yml\\'" "\\.erb\\'")
 
 ;; rpc-spec
 (use-package rpm-spec-mode
