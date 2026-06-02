@@ -237,6 +237,12 @@ Set this to navigate to the previous document/chapter.")
           (when (not (string-empty-p word))
             (translate-brief word)))))))
 
+(defun caret-xwidget-copy-and-deactivate ()
+  "Copy selection to kill-ring and deactivate mark."
+  (interactive)
+  (xwidget-webkit-copy-selection-as-kill)
+  (caret-xwidget-quit-mark))
+
 ;; ---------------------------------------------------------------------------
 ;; Debug helpers (caret.js)
 ;; ---------------------------------------------------------------------------
@@ -292,6 +298,7 @@ Set this to navigate to the previous document/chapter.")
 ;; ---------------------------------------------------------------------------
 
 (with-eval-after-load 'xwidget
+  (define-key xwidget-webkit-mode-map (kbd "M-w")   #'caret-xwidget-copy-and-deactivate)
   (define-key xwidget-webkit-mode-map (kbd "C-f")   #'caret-xwidget-forward-char)
   (define-key xwidget-webkit-mode-map (kbd "C-b")   #'caret-xwidget-backward-char)
   (define-key xwidget-webkit-mode-map (kbd "C-n")   #'caret-xwidget-next-line)
