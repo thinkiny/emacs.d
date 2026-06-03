@@ -159,15 +159,25 @@ Set this to navigate to the previous document/chapter.")
   (interactive)
   (caret-xwidget--js-call-with-boundary "backward" "line"))
 
-(defun caret-xwidget-end-of-line ()
-  "Move caret to end of line."
+(defun caret-xwidget-forward-sentence ()
+  "Move caret forward to end of sentence."
   (interactive)
-  (caret-xwidget--js-call "forward('lineboundary')"))
+  (caret-xwidget--js-call "forward('sentence')"))
+
+(defun caret-xwidget-backward-sentence ()
+  "Move caret backward to start of sentence."
+  (interactive)
+  (caret-xwidget--js-call "backward('sentence')"))
 
 (defun caret-xwidget-beginning-of-line ()
   "Move caret to beginning of line."
   (interactive)
   (caret-xwidget--js-call "backward('lineboundary')"))
+
+(defun caret-xwidget-end-of-line ()
+  "Move caret to end of line."
+  (interactive)
+  (caret-xwidget--js-call "forward('lineboundary')"))
 
 (defun caret-xwidget-scroll-up ()
   "Scroll content up (advance forward in the document)."
@@ -321,6 +331,8 @@ Set this to navigate to the previous document/chapter.")
   (define-key xwidget-webkit-mode-map (kbd "h")     #'caret-xwidget-backward-word)
   (define-key xwidget-webkit-mode-map (kbd "a")     #'caret-xwidget-beginning-of-line)
   (define-key xwidget-webkit-mode-map (kbd "e")     #'caret-xwidget-end-of-line)
+  (define-key xwidget-webkit-mode-map (kbd "0")     #'caret-xwidget-backward-sentence)
+  (define-key xwidget-webkit-mode-map (kbd "$")     #'caret-xwidget-forward-sentence)
   (define-key xwidget-webkit-mode-map (kbd "n")     #'caret-xwidget-next-line)
   (define-key xwidget-webkit-mode-map (kbd "p")     #'caret-xwidget-previous-line)
   (define-key xwidget-webkit-mode-map (kbd "j")     #'caret-xwidget-next-line)

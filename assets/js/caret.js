@@ -857,8 +857,12 @@ class CaretEmacs {
           const cr = this._rangeRectAt(textNode, mid);
           if (!cr) { lo = mid + 1; continue; }
           const charMid = cr.top + cr.height / 2;
-          // Does this char belong to the next line or beyond?
-          if (Math.abs(charMid - nextMid) < Math.abs(charMid - lrMid)) {
+          // Is this char on the next line or beyond?
+          // Use the midpoint between current and next line centers as the
+          // decision boundary. Chars past this boundary belong to the next
+          // line or further; chars at or before it belong to the current line.
+          const boundary = (lrMid + nextMid) / 2;
+          if (charMid > boundary) {
             hi = mid;
           } else {
             lo = mid + 1;
@@ -949,11 +953,26 @@ class CaretEmacs {
         || entry.groupRoot?.contains(currentLine[0].groupRoot);
       // Detect column break: horizontal gap exceeding entry height means
       // the entry belongs to a different column on the same visual line.
+      // Check gap against ALL segments in the current line (not just the last),
+      // because inline elements like <code> can create gaps between non-adjacent
+      // segments that are later filled by their own segments in sort order.
       let sameColumn = true;
       if (sameVisualLine && sameGroup && currentLine.length > 0) {
-        const last = currentLine[currentLine.length - 1];
-        const hGap = entry.rect.left - (last.rect.left + last.rect.width);
-        sameColumn = hGap <= Math.max(entry.rect.height, last.rect.height);
+        sameColumn = false;
+        for (let j = 0; j < currentLine.length; j++) {
+          const existing = currentLine[j];
+          const gap = entry.rect.left - (existing.rect.left + existing.rect.width);
+          if (gap <= Math.max(entry.rect.height, existing.rect.height)) {
+            sameColumn = true;
+            break;
+          }
+          // Also check reverse: entry to the left of existing
+          const revGap = existing.rect.left - (entry.rect.left + entry.rect.width);
+          if (revGap <= Math.max(entry.rect.height, existing.rect.height)) {
+            sameColumn = true;
+            break;
+          }
+        }
       }
       if (sameVisualLine && sameColumn && sameGroup) {
         currentLine.push(entry);
@@ -1504,28 +1523,61 @@ class CaretEmacs {
       return this._finishMove(sel, true, markAnchorNode, markAnchorOff);
     }
 
-    // PDF lineboundary: use visual line model (DOM order may differ from reading order).
-    if (this._isPdfMode() && granularity === "lineboundary") {
-      const scopeRoot = this._pageScopeRoot(sel.focusNode);
+    // Lineboundary: use visual line model for both PDF and HTML.
+    // sel.modify("lineboundary") is unreliable in xwidget (goes to text node
+    // boundary, produces zero-width rects at element edges).
+    if (granularity === "lineboundary") {
+      const scopeRoot = (this._isPdfMode() ? this._pageScopeRoot(sel.focusNode) : null) || this._root;
       const { lines } = this._visuallyOrderedWithLines(scopeRoot);
       if (!lines.length) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
       const caretRect = this._rangeRectAt(sel.focusNode, sel.focusOffset)
         || this._collapsedRange(sel.focusNode, sel.focusOffset).getBoundingClientRect();
+      if (!caretRect?.height) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
       const lineIdx = this._findCaretLine(lines, caretRect);
       if (lineIdx < 0) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
       const line = lines[lineIdx];
-      const seg = fwd ? line[line.length - 1] : line[0];
-      const off = fwd ? seg.endOffset : seg.startOffset;
-      sel.collapse(seg.node, off);
-      return this._finishMove(sel, true, markAnchorNode, markAnchorOff);
+      // Find the first/last character on this line that has a valid rect.
+      let targetRange = null;
+      if (fwd) {
+        // End of line: scan backwards from last segment's end
+        for (let si = line.length - 1; si >= 0 && !targetRange; si--) {
+          const seg = line[si];
+          for (let off = seg.endOffset - 1; off >= seg.startOffset; off--) {
+            const r = this._rangeRectAt(seg.node, off);
+            if (r) { targetRange = this._collapsedRange(seg.node, off); break; }
+          }
+        }
+      } else {
+        // Beginning of line: scan forwards from first segment's start
+        for (let si = 0; si < line.length && !targetRange; si++) {
+          const seg = line[si];
+          for (let off = seg.startOffset; off < seg.endOffset; off++) {
+            const r = this._rangeRectAt(seg.node, off);
+            if (r) { targetRange = this._collapsedRange(seg.node, off); break; }
+          }
+        }
+      }
+      if (targetRange) {
+        sel.removeAllRanges();
+        sel.addRange(targetRange);
+      }
+      return this._finishMove(sel, !!targetRange, markAnchorNode, markAnchorOff);
     }
 
-    // PDF sentence: use visual line model (DOM order may differ from reading order).
+    // PDF sentence: use visual line model to find [.!?] boundaries.
     if (this._isPdfMode() && granularity === "sentence") {
-      const context = this._pdfLineContext(sel);
-      if (!context) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
-      const { lines, currentLine } = context;
-      const caretPoint = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
+      const { node, offset } = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
+      if (node.nodeType !== Node.TEXT_NODE || !this._isContained(node))
+        return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
+      const scopeRoot = this._pageScopeRoot(node);
+      const { lines } = this._visuallyOrderedWithLines(scopeRoot);
+      if (!lines.length) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
+      const caretRange = this._collapsedRange(node, offset);
+      const caretRect = this._charRect(caretRange) || caretRange.getBoundingClientRect();
+      if (!caretRect?.height) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
+      const currentLine = this._findCaretLine(lines, caretRect);
+      if (currentLine < 0) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
+      const caretPoint = { node, offset };
       const caretEntry = lines[currentLine]?.find(e => e.node === caretPoint.node);
       const columnLeft = caretEntry?.rect?.left ?? null;
       const model = this._pdfTextRangeModel(lines, 0, lines.length - 1, columnLeft);
@@ -1534,7 +1586,6 @@ class CaretEmacs {
       const targetOffset = fwd ? sentenceBounds.end : sentenceBounds.start;
       const target = model.pointFromOffset(targetOffset);
       if (!target?.node) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
-      // If already at boundary, advance to next sentence
       if (target.node === caretPoint.node && target.offset === caretPoint.offset) {
         const nextOffset = fwd
           ? Math.min(caretOffset + 1, model.text.length - 1)

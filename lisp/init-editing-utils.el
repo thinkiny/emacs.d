@@ -395,7 +395,8 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
   (interactive)
   (if auto-revert-mode
       (auto-revert-mode -1)
-    (enable-auto-revert)))
+    (enable-auto-revert))
+  (message "Auto-revert %s" (if auto-revert-mode "enabled" "disabled")))
 
 ;; shell-mode
 (with-eval-after-load 'sh-script
@@ -420,9 +421,6 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
 (defvar-local selection--pre-selection-point nil
   "Point position before `selection/expand' was first invoked.")
 
-(defconst selection--sentence-end-re "\\(?:[.!?]\\s-\\|[。！？]\\)"
-  "Regexp matching a sentence boundary (ASCII or CJK).")
-
 (defun selection--sentence-bounds ()
   "Return (START . END) of the sentence at point, limited by empty lines."
   (save-excursion
@@ -431,18 +429,10 @@ Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and
       (narrow-to-region
        (save-excursion (if (re-search-backward "^\n" nil t) (point) (point-min)))
        (save-excursion (if (re-search-forward  "^\n" nil t) (point) (point-max))))
-
-      ;; Move to start of sentence
-      (if (re-search-backward selection--sentence-end-re nil t)
-          (goto-char (match-end 0))
-        (goto-char (point-min)))
-      (skip-chars-forward " \t\n")
-
-      (let ((start (point))
-            (end (or (re-search-forward selection--sentence-end-re nil t)
-                     (point-max))))
+      (let ((start (progn (backward-sentence) (point)))
+            (end   (progn (forward-sentence) (point))))
         (when (< start end)
-          (cons start (- end 1)))))))
+          (cons start end))))))
 
 (defun selection/expand ()
   "Expand selection progressively: word → sentence."

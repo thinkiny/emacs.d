@@ -39,12 +39,12 @@
   (define-key vterm-copy-mode-map (kbd "k") #'precision-scroll-prev-line)
   (define-key vterm-copy-mode-map (kbd "b") #'backward-word)
   (define-key vterm-copy-mode-map (kbd "f") #'forward-word-begin)
-  (define-key vterm-copy-mode-map (kbd "a") #'beginning-of-line)
-  (define-key vterm-copy-mode-map (kbd "e") #'end-of-line)
+  (define-key vterm-copy-mode-map (kbd "a") #'backward-sentence)
+  (define-key vterm-copy-mode-map (kbd "e") #'forward-sentence)
   (define-key vterm-copy-mode-map (kbd "v") #'scroll-up)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (define-key vterm-copy-mode-map (kbd "M->") #'vterm-copy-mode-goto-buffer-end)
-  (define-key vterm-copy-mode-map (kbd "M-<") #'vterm-copy-mode-goto-window-start))
+  (define-key vterm-copy-mode-map (kbd "M-<") #'term-copy-mode-backward-prompt))
 
 (defun vterm-send-key-left()
   "Fix Ctrl-B not working in claude code in some cases."
@@ -63,17 +63,17 @@
   (interactive)
   (vterm-send-escape))
 
-(defconst vterm--claude-previous-re "^\\(?:❯ \\|⏺ \\)"
+(defconst term--claude-previous-re "^\\(?:❯ \\|⏺ \\)"
   "Regex matching Claude Code prompt lines.")
 
-(defun vterm--claude-buffer-p ()
+(defun term--claude-buffer-p ()
   "Return non-nil if current buffer is a Claude Code terminal."
   (string-prefix-p "*claude-code" (buffer-name)))
 
-(defun vterm--goto-previous-claude-prompt ()
+(defun term--goto-previous-claude-prompt ()
   "Search backward for a Claude Code prompt line (❯ or ⏺)."
   (beginning-of-line)
-  (when (re-search-backward vterm--claude-previous-re nil t)
+  (when (re-search-backward term--claude-previous-re nil t)
     (beginning-of-line)))
 
 (defun vterm-mode-goto-previous ()
@@ -86,11 +86,12 @@ In *claude-code buffers, go to the last prompt line (❯ or ⏺) instead."
                  (lambda ()
                    (when (buffer-live-p buf)
                      (with-current-buffer buf
-                       (if (vterm--claude-buffer-p)
-                           (vterm--goto-previous-claude-prompt)
+                       (if (term--claude-buffer-p)
+                           (term--goto-previous-claude-prompt)
                          (goto-char (window-start)))))))))
 
 (defun vterm-mode-goto-buffer-end ()
+  "Go to end of buffer."
   (interactive)
   (vterm-reset-cursor-point))
 
@@ -102,16 +103,16 @@ In *claude-code buffers, go to the last prompt line (❯ or ⏺) instead."
     (vterm-copy-mode -1)
     (vterm-reset-cursor-point)))
 
-(defun vterm-copy-mode-goto-window-start ()
+(defun term-copy-mode-backward-prompt ()
   "In *claude-code buffers, jump to the last or previous prompt (❯ or ⏺).
 Otherwise go to the beginning of the buffer."
   (interactive)
-  (if (vterm--claude-buffer-p)
+  (if (term--claude-buffer-p)
       (progn
         (beginning-of-line)
-        (if (looking-at vterm--claude-previous-re)
-            (progn (forward-line -1) (vterm--goto-previous-claude-prompt))
-          (vterm--goto-previous-claude-prompt)))
+        (if (looking-at term--claude-previous-re)
+            (progn (forward-line -1) (term--goto-previous-claude-prompt))
+          (term--goto-previous-claude-prompt)))
     (goto-char (point-min))))
 
 (with-eval-after-load 'vterm
@@ -176,8 +177,6 @@ else mirroring original vterm logic."
                               (with-current-buffer buf
                                 (vterm--scroll-session-end))))))))
 
-
-
 ;; term-color
 (with-eval-after-load-theme
  'term
@@ -197,7 +196,7 @@ else mirroring original vterm logic."
   (define-key ghostel-semi-char-mode-map (kbd "C-c v") #'ghostel-copy-mode)
   (define-key ghostel-semi-char-mode-map (kbd "C-v") #'scroll-up-command)
   (define-key ghostel-semi-char-mode-map (kbd "M-v") #'scroll-down-command)
-  (define-key ghostel-semi-char-mode-map (kbd "M-<") #'ghostel-copy-mode-goto-window-start)
+  (define-key ghostel-semi-char-mode-map (kbd "M-<") #'ghostel-mode-backward-prompt)
   (define-key ghostel-semi-char-mode-map (kbd "M->") #'end-of-buffer)
 
   ;; ghostel-editor
@@ -209,6 +208,7 @@ else mirroring original vterm logic."
   (define-key ghostel-readonly-mode-map (kbd "<SPC>") #'selection/toggle-mark)
   (define-key ghostel-readonly-mode-map (kbd "C-c v") #'ghostel-readonly-exit)
   (define-key ghostel-readonly-mode-map (kbd "=") #'selection/expand)
+  (define-key ghostel-readonly-mode-map (kbd "C-g") #'selection/quit)
   (define-key ghostel-readonly-mode-map (kbd ",") #'translate-at-point)
   (define-key ghostel-readonly-mode-map (kbd "n") #'precision-scroll-next-line)
   (define-key ghostel-readonly-mode-map (kbd "p") #'precision-scroll-prev-line)
@@ -216,22 +216,22 @@ else mirroring original vterm logic."
   (define-key ghostel-readonly-mode-map (kbd "k") #'precision-scroll-prev-line)
   (define-key ghostel-readonly-mode-map (kbd "b") #'backward-word)
   (define-key ghostel-readonly-mode-map (kbd "f") #'forward-word-begin)
-  (define-key ghostel-readonly-mode-map (kbd "a") #'beginning-of-line)
-  (define-key ghostel-readonly-mode-map (kbd "e") #'end-of-line)
+  (define-key ghostel-readonly-mode-map (kbd "a") #'backward-sentence)
+  (define-key ghostel-readonly-mode-map (kbd "e") #'forward-sentence)
   (define-key ghostel-readonly-mode-map (kbd "v") #'scroll-up)
-  (define-key ghostel-readonly-mode-map (kbd "M-<") #'vterm-copy-mode-goto-window-start)
-  (define-key ghostel-readonly-mode-map (kbd "M->") #'ghostel-copy-mode-goto-end))
+  (define-key ghostel-readonly-mode-map (kbd "M-<") #'term-copy-mode-backward-prompt)
+  (define-key ghostel-readonly-mode-map (kbd "M->") #'ghostel-copy-mode-goto-buffer-end))
 
-(defun ghostel-copy-mode-goto-window-start ()
-  "Enter copy mode and jump to previous prompt in *claude-code buffers,
-or to window start in other buffers."
+(defun ghostel-mode-backward-prompt ()
+  "In *claude-code buffers, enter copy mode and jump to previous prompt (❯ or ⏺).
+Otherwise, enter copy mode and go to window start."
   (interactive)
   (ghostel-copy-mode)
   (if (string-prefix-p "*claude-code" (buffer-name))
-      (vterm--goto-previous-claude-prompt)
+      (term--goto-previous-claude-prompt)
     (goto-char (window-start))))
 
-(defun ghostel-copy-mode-goto-end ()
+(defun ghostel-copy-mode-goto-buffer-end ()
   "Go to end of buffer if region is active, otherwise exit copy mode."
   (interactive)
   (if (use-region-p)
