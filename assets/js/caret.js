@@ -1469,7 +1469,11 @@ class CaretEmacs {
     const { node: snapNode, offset: snapOff } =
       this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
     if (snapNode !== sel.focusNode || snapOff !== sel.focusOffset) {
-      sel.collapse(snapNode, snapOff);
+      if (this.markActive) {
+        sel.setBaseAndExtent(sel.anchorNode, sel.anchorOffset, snapNode, snapOff);
+      } else {
+        sel.collapse(snapNode, snapOff);
+      }
     }
 
     if (!this.markActive && !sel.isCollapsed) {

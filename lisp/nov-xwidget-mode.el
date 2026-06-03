@@ -416,18 +416,14 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
 
 (defun nov-xwidget--extract-epub ()
   (unless (file-exists-p nov-temp-dir)
-    (let ((exit-code (nov-unzip-epub nov-temp-dir buffer-file-name)))
-      (unless (integerp exit-code)
-        (nov-clean-up)
-        (error "EPUB extraction aborted by signal %s" exit-code))
-      (when (> exit-code 1)
-        (nov-clean-up)
-        (error "EPUB extraction failed with exit code %d (see *nov unzip* buffer)"
-               exit-code)))
-    (unless (nov-epub-valid-p nov-temp-dir)
-      (nov-clean-up)
-      (error "Invalid EPUB file"))
-    t))
+    (make-directory nov-temp-dir t)
+    (let ((exit-code (call-process (executable-find "bsdtar") nil "*nov unzip*" t
+                                   "-x" "-f" buffer-file-name "-C" nov-temp-dir)))
+      (when (or (not (integerp exit-code))
+                (> exit-code 0))
+        (delete-directory nov-temp-dir t)
+        (error "EPUB extraction failed (see *nov unzip* buffer)"))
+      t)))
 
 (define-derived-mode nov-xwidget-mode special-mode "EPUB"
   "Major mode for reading EPUB documents"
