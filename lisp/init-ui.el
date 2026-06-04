@@ -196,11 +196,6 @@ reader assets."
       'light
     (if (theme-dark-p) 'dark 'light)))
 
-(defun reader-css-theme-use-stock-light-p ()
-  "Return non-nil when the reader should use stock light assets."
-  (and (eq reader-css-theme 'light)
-       (theme-dark-p)))
-
 (defun load-and-activate-theme (theme)
   "Disable active themes, load THEME, and run theme hooks."
   (mapc #'disable-theme custom-enabled-themes)
@@ -386,37 +381,35 @@ reader assets."
   "Return the current default face foreground color as #rrggbb."
   (face-attribute-hex :foreground "unspecified-fg"))
 
+(defun reader-css-theme-colors ()
+  "Return (FOREGROUND BACKGROUND) for the reader."
+  (if (and (eq reader-css-theme 'light) (theme-dark-p))
+      (list (current-theme-bg-hex) (current-theme-fg-hex))
+    (list (current-theme-fg-hex) "transparent")))
+
 (defun sync-reader-theme-colors ()
   "Rebuild reader assets to match the current reader theme."
   (interactive)
-  (let* ((theme (reader-css-theme-resolved))
-         (use-stock-light (reader-css-theme-use-stock-light-p))
-         (foreground (current-theme-fg-hex))
-         (script (expand-file-name "scripts/update_reader_theme_colors.py"
-                                   user-emacs-directory))
-         (output-buffer (get-buffer-create "*update-reader-theme-colors*"))
-         (default-directory user-emacs-directory)
-         (args (if use-stock-light
-                   (list script "--restore-stock-light-assets")
-                 (list script (symbol-name theme) foreground)))
-         (exit-code (with-current-buffer output-buffer
-                      (erase-buffer)
-                      (apply #'call-process "python3" nil output-buffer nil args))))
+  (pcase-let* ((theme (reader-css-theme-resolved))
+               (`(,foreground ,background) (reader-css-theme-colors))
+               (script (expand-file-name "scripts/update_reader_theme_colors.py"
+                                         user-emacs-directory))
+               (output-buffer (get-buffer-create "*update-reader-theme-colors*"))
+               (default-directory user-emacs-directory)
+               (args (if (equal background "transparent")
+                         (list script (symbol-name theme) foreground)
+                       (list script "--background" background (symbol-name theme) foreground)))
+               (exit-code (with-current-buffer output-buffer
+                            (erase-buffer)
+                            (apply #'call-process "python3" nil output-buffer nil args))))
     (if (zerop exit-code)
         (progn
-          (message
-           (if use-stock-light
-               "Restored stock light reader assets"
-             (format "Rebuilt reader assets for %s theme with transparent background and foreground %s"
-                     theme foreground)))
+          (message "Rebuilt reader assets for %s theme" theme)
           (when (buffer-live-p output-buffer)
             (kill-buffer output-buffer)))
       (display-buffer output-buffer)
-      (error "%s"
-             (if use-stock-light
-                 (format "Failed to restore stock light reader assets (exit %s)" exit-code)
-               (format "Failed to rebuild reader assets for %s theme with transparent background and foreground %s (exit %s)"
-                       theme foreground exit-code))))))
+      (error "Failed to rebuild reader assets for %s theme (exit %s)"
+             theme exit-code))))
 
 (defun cap-brightness-in-dark-theme ()
   "Cap foreground lightness for faces without explicit background in dark themes.
