@@ -198,6 +198,8 @@ else mirroring original vterm logic."
   (define-key ghostel-semi-char-mode-map (kbd "M-v") #'scroll-down-command)
   (define-key ghostel-semi-char-mode-map (kbd "M-<") #'ghostel-mode-backward-prompt)
   (define-key ghostel-semi-char-mode-map (kbd "M->") #'end-of-buffer)
+  (define-key ghostel-semi-char-mode-map (kbd "C-c C-v") #'ghostel-send-C-v)
+  (define-key ghostel-semi-char-mode-map [remap pixel-scroll-precision] #'ghostel-pixel-scroll-precision)
 
   ;; ghostel-editor
   (require 'ghostel-editor)
@@ -220,7 +222,55 @@ else mirroring original vterm logic."
   (define-key ghostel-readonly-mode-map (kbd "e") #'forward-sentence)
   (define-key ghostel-readonly-mode-map (kbd "v") #'scroll-up)
   (define-key ghostel-readonly-mode-map (kbd "M-<") #'term-copy-mode-backward-prompt)
-  (define-key ghostel-readonly-mode-map (kbd "M->") #'ghostel-copy-mode-goto-buffer-end))
+  (define-key ghostel-readonly-mode-map (kbd "M->") #'ghostel-copy-mode-goto-buffer-end)
+  (define-key ghostel-readonly-mode-map [remap pixel-scroll-precision] #'ghostel-pixel-scroll-precision))
+
+(defun ghostel-send-C-v ()
+  "Send C-v to the terminal."
+  (interactive)
+  (ghostel--send-string "\x16"))
+
+;; ghostel--pixel-scroll
+(defvar-local ghostel--scroll-timer nil)
+
+(defun ghostel--pixel-scroll-precision-up ()
+  (when ghostel--scroll-timer
+    (cancel-timer ghostel--scroll-timer)
+    (setq ghostel--scroll-timer nil))
+  (when (and (derived-mode-p 'ghostel-mode)
+             (not (memq ghostel--input-mode '(copy emacs))))
+    (ghostel-copy-mode)))
+
+(defun ghostel--scroll-session-end ()
+  "Handle scroll session end."
+  (setq ghostel--scroll-timer nil)
+  (when (and (derived-mode-p 'ghostel-mode)
+             (memq ghostel--input-mode '(copy emacs))
+             (>= (window-end) (point-max)))
+    (ghostel-readonly-exit)))
+
+(defun ghostel-pixel-scroll-precision (event)
+  "Wrapper for pixel-scroll-precision in ghostel - handles copy mode."
+  (interactive "e")
+  (when (nth 4 event)
+    (let ((delta (round (cdr (nth 4 event)))))
+      (unless (zerop delta)
+        (when (> delta 0)
+          (ghostel--pixel-scroll-precision-up))
+        (pixel-scroll-precision event)
+        (when (< delta 0)
+          (ghostel--pixel-scroll-precision-down))))))
+
+(defun ghostel--pixel-scroll-precision-down ()
+  (when ghostel--scroll-timer
+    (cancel-timer ghostel--scroll-timer))
+  (let ((buf (current-buffer)))
+    (setq ghostel--scroll-timer
+          (run-with-timer 0.05 nil
+                          (lambda ()
+                            (when (buffer-live-p buf)
+                              (with-current-buffer buf
+                                (ghostel--scroll-session-end))))))))
 
 (defun ghostel-mode-backward-prompt ()
   "In *claude-code buffers, enter copy mode and jump to previous prompt (❯ or ⏺).

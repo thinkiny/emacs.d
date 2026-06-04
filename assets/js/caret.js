@@ -4,7 +4,8 @@
 
 const STYLE_ID = "__caret-emacs-style";
 const CURSOR_TAG = "caret-cursor";
-const WORD_CHAR_RE = /[\p{L}\p{N}\p{M}\p{Pc}]/u;
+const WORD_CHAR_RE = /[\p{L}\p{N}\p{M}\p{Pc}'-]/u;
+
 const cloneRect = (r) => ({ top: r.top, left: r.left, width: r.width, height: r.height });
 
 const CURSOR_CSS = `
@@ -1031,19 +1032,18 @@ class CaretEmacs {
     return bestRange;
   }
 
-  /** Find the visually next/previous text node using visual ordering. */
-  _visuallyAdjacentTextNode(fwd) {
-    const sel = window.getSelection();
-    if (!sel?.focusNode) return null;
-    const focus = sel.focusNode;
-    const scopeRoot = this._pageScopeRoot(focus);
+  /** Find the segment containing the caret offset in the visual ordering.
+   *  Returns { ordered, idx } or null. Shared by char/word movement. */
+  _findCaretSegment(focus, focusOff, scopeRoot) {
     const ordered = this._visuallyOrderedTextNodes(scopeRoot);
     if (!ordered.length) return null;
-    const curIdx = ordered.findIndex(e => e.node === focus);
-    if (curIdx === -1) return null;
-    const targetIdx = fwd ? curIdx + 1 : curIdx - 1;
-    if (targetIdx < 0 || targetIdx >= ordered.length) return null;
-    return ordered[targetIdx].node;
+    for (let i = 0; i < ordered.length; i++) {
+      const e = ordered[i];
+      if (e.node === focus && focusOff >= e.startOffset && focusOff <= e.endOffset) {
+        return { ordered, idx: i };
+      }
+    }
+    return null;
   }
 
   _lineBounds(line) {
@@ -1076,124 +1076,106 @@ class CaretEmacs {
     return Boolean(ch) && WORD_CHAR_RE.test(ch);
   }
 
-  /** Visual character movement for PDF text layers (bypass DOM order). */
+
+
   _moveCharVisual(sel, fwd) {
     const focus = sel.focusNode;
     const focusOff = sel.focusOffset;
     if (focus.nodeType !== Node.TEXT_NODE) return false;
+    const text = focus.textContent;
 
     if (fwd) {
       if (focusOff < focus.length) {
-        sel.collapse(focus, focusOff + 1);
+        let step = 1;
+        if (text.charCodeAt(focusOff) >= 0xD800 && text.charCodeAt(focusOff) <= 0xDBFF
+            && focusOff + 1 < focus.length
+            && text.charCodeAt(focusOff + 1) >= 0xDC00 && text.charCodeAt(focusOff + 1) <= 0xDFFF) {
+          step = 2;
+        }
+        sel.collapse(focus, focusOff + step);
         return true;
       }
-      const next = this._visuallyAdjacentTextNode(true);
-      if (!next) return false;
-      sel.collapse(next, 0);
+      // At end of node — cross to next distinct node via visual ordering
+      const scopeRoot = this._pageScopeRoot(focus);
+      const result = this._findCaretSegment(focus, focusOff, scopeRoot);
+      if (!result) return false;
+      const { ordered, idx } = result;
+      let targetIdx = idx + 1;
+      while (targetIdx < ordered.length && ordered[targetIdx].node === focus) targetIdx++;
+      if (targetIdx >= ordered.length) return false;
+      sel.collapse(ordered[targetIdx].node, 0);
       return true;
     } else {
       if (focusOff > 0) {
-        sel.collapse(focus, focusOff - 1);
+        let step = 1;
+        if (text.charCodeAt(focusOff - 1) >= 0xDC00 && text.charCodeAt(focusOff - 1) <= 0xDFFF
+            && focusOff - 2 >= 0
+            && text.charCodeAt(focusOff - 2) >= 0xD800 && text.charCodeAt(focusOff - 2) <= 0xDBFF) {
+          step = 2;
+        }
+        sel.collapse(focus, focusOff - step);
         return true;
       }
-      const prev = this._visuallyAdjacentTextNode(false);
-      if (!prev) return false;
-      sel.collapse(prev, prev.length);
+      // At start of node — cross to previous distinct node via visual ordering
+      const scopeRoot = this._pageScopeRoot(focus);
+      const result = this._findCaretSegment(focus, focusOff, scopeRoot);
+      if (!result) return false;
+      const { ordered, idx } = result;
+      let targetIdx = idx - 1;
+      while (targetIdx >= 0 && ordered[targetIdx].node === focus) targetIdx--;
+      if (targetIdx < 0) return false;
+      sel.collapse(ordered[targetIdx].node, ordered[targetIdx].endOffset);
       return true;
     }
   }
 
-  /** Visual word movement for PDF text layers (bypass DOM order). */
+  /** Visual word movement (handles CJK, multi-segment nodes, Unicode word chars). */
   _moveWordVisual(sel, fwd) {
     const focus = sel.focusNode;
     const focusOff = sel.focusOffset;
     if (focus.nodeType !== Node.TEXT_NODE) return false;
 
     const scopeRoot = this._pageScopeRoot(focus);
-    const ordered = this._visuallyOrderedTextNodes(scopeRoot);
-    if (!ordered.length) return false;
-
-    const curIdx = ordered.findIndex(e => e.node === focus);
-    if (curIdx === -1) return false;
+    const result = this._findCaretSegment(focus, focusOff, scopeRoot);
+    if (!result) return false;
+    const { ordered, idx: curIdx } = result;
 
     if (fwd) {
       let node = focus, off = focusOff, idx = curIdx;
-      // Skip past current word
       while (off < node.textContent.length && this._isWordChar(node.textContent[off])) off++;
-      // Skip non-word chars, crossing node boundaries as needed
       while (true) {
         while (off < node.textContent.length && !this._isWordChar(node.textContent[off])) off++;
         if (off < node.textContent.length) {
           sel.collapse(node, off);
           return true;
         }
-        idx++;
+        do { idx++; } while (idx < ordered.length && ordered[idx].node === node);
         if (idx >= ordered.length) return false;
         node = ordered[idx].node;
         off = 0;
       }
     } else {
       let node = focus, off = focusOff, idx = curIdx;
-      // Step back one position
       if (off > 0) {
         off--;
       } else {
-        idx--;
+        do { idx--; } while (idx >= 0 && ordered[idx].node === node);
         if (idx < 0) return false;
         node = ordered[idx].node;
         off = node.textContent.length - 1;
       }
-      // Skip non-word chars backward, crossing node boundaries
       while (true) {
         while (off >= 0 && !this._isWordChar(node.textContent[off])) off--;
         if (off >= 0) break;
-        idx--;
+        do { idx--; } while (idx >= 0 && ordered[idx].node === node);
         if (idx < 0) return false;
         node = ordered[idx].node;
         off = node.textContent.length - 1;
       }
-      // Skip word chars backward to find word start
       while (off > 0 && this._isWordChar(node.textContent[off - 1])) off--;
       sel.collapse(node, off);
       return true;
     }
-  }
-
-  _wordStartOffsetInText(text, offset, fwd) {
-    let idx = fwd
-      ? Math.max(0, Math.min(offset, text.length))
-      : Math.max(0, Math.min(offset, text.length)) - 1;
-    while (idx >= 0 && idx < text.length && !this._isWordChar(text[idx])) {
-      idx += fwd ? 1 : -1;
-    }
-    if (idx < 0 || idx >= text.length) return -1;
-    while (idx > 0 && this._isWordChar(text[idx - 1])) idx--;
-    return idx;
-  }
-
-  _findWordStart(node, offset, fwd) {
-    let curNode = node;
-    let curOff = offset;
-    while (curNode) {
-      const text = curNode.nodeType === Node.TEXT_NODE ? (curNode.textContent || "") : "";
-      const idx = this._wordStartOffsetInText(text, curOff, fwd);
-      if (idx >= 0) return { node: curNode, offset: idx };
-      curNode = this._walkToVisible(curNode, fwd);
-      curOff = fwd ? 0 : (curNode ? curNode.textContent.length : 0);
-    }
-    return null;
-  }
-
-  /** Normalize DOM word movement to the beginning of a word (HTML/EPUB path). */
-  _snapToWordStart(sel, fwd) {
-    const { node, offset } = this._resolveCursorPosition(sel.focusNode, sel.focusOffset, fwd);
-    if (node.nodeType !== Node.TEXT_NODE) return false;
-    const target = this._findWordStart(node, offset, fwd);
-    if (!target?.node) return false;
-    const normalizedOff = this._normalizeTextOffset(target.node, target.offset);
-    if (target.node === sel.focusNode && normalizedOff === sel.focusOffset) return false;
-    sel.collapse(target.node, normalizedOff);
-    return true;
   }
 
   /** Snap the selection focus onto a visible text node. */
@@ -1486,11 +1468,16 @@ class CaretEmacs {
     const markAnchorOff = this.markActive ? sel.anchorOffset : null;
     if (this.markActive) { sel.collapse(sel.focusNode, sel.focusOffset); }
 
-    // PDF text layers require visual ordering because DOM order can differ from reading order.
-    if (this._isPdfMode() && (granularity === "character" || granularity === "word")) {
-      const moved = granularity === "character"
+    // PDF text layers and HTML both use visual ordering for char/word movement.
+    if (granularity === "character" || granularity === "word") {
+      let moved = granularity === "character"
         ? this._moveCharVisual(sel, fwd)
         : this._moveWordVisual(sel, fwd);
+      if (moved) this._snapToText(sel, fwd);
+      if (moved && this._movedWrongWay(startNode, startOff, sel.focusNode, sel.focusOffset, fwd)) {
+        sel.collapse(startNode, startOff);
+        moved = false;
+      }
       return this._finishMove(sel, moved, markAnchorNode, markAnchorOff);
     }
 
@@ -1608,10 +1595,6 @@ class CaretEmacs {
     let moved = this._stepModify(sel, direction, granularity, fwd);
     this._snapToText(sel, fwd);
     if (sel.focusNode === startNode && sel.focusOffset === startOff) { moved = false; }
-    if (moved && fwd && granularity === "word" && !this._isPdfMode()) {
-      this._snapToWordStart(sel, fwd);
-      if (sel.focusNode === startNode && sel.focusOffset === startOff) { moved = false; }
-    }
 
     if (moved && this._movedWrongWay(startNode, startOff, sel.focusNode, sel.focusOffset, fwd)) {
       if (this.markActive) sel.setBaseAndExtent(sel.anchorNode, sel.anchorOffset, startNode, startOff);
@@ -2038,8 +2021,30 @@ class CaretEmacs {
     const scope = this._detectSelectionScope();
     if (scope === 'none') {
       this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
-      sel.modify('move', 'forward', 'word');
-      sel.modify('extend', 'backward', 'word');
+      const node = sel.focusNode;
+      const off = sel.focusOffset;
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent;
+        let start = off;
+        while (start > 0 && this._isWordChar(text[start - 1])) start--;
+        let end = off;
+        if (start === end && (end >= text.length || !this._isWordChar(text[end]))) {
+          while (end < text.length && !this._isWordChar(text[end])) end++;
+          start = end;
+          while (end < text.length && this._isWordChar(text[end])) end++;
+          if (start === end) { this.markActive = true; return; }
+        } else {
+          while (end < text.length && this._isWordChar(text[end])) end++;
+        }
+        const rng = document.createRange();
+        rng.setStart(node, start);
+        rng.setEnd(node, end);
+        sel.removeAllRanges();
+        sel.addRange(rng);
+      } else {
+        sel.modify('move', 'forward', 'word');
+        sel.modify('extend', 'backward', 'word');
+      }
       this.markActive = true;
     } else if (scope === 'word') {
       this._expandTo(sel, 'sentenceboundary');
@@ -2109,8 +2114,9 @@ class CaretEmacs {
     if (n.nodeType !== 3) return "";
     const t = n.textContent;
     let b = o;
-    while (b > 0 && /[\w]/.test(t[b - 1])) b--;
-    const m = t.slice(b).match(/^[\w]+(-[\w]+)*/);
+    while (b > 0 && this._isWordChar(t[b - 1])) b--;
+    const wcSrc = WORD_CHAR_RE.source;
+    const m = t.slice(b).match(new RegExp('^' + wcSrc + '+', 'u'));
     if (!m) return "";
     const rng = document.createRange();
     rng.setStart(n, b); rng.setEnd(n, b + m[0].length);
