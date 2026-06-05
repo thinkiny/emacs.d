@@ -11,11 +11,11 @@
 (setq zencoding-preview-default nil)
 
 (with-eval-after-load 'nxml-mode
-  (setq nxml-slash-auto-complete-flag t))
+  (setq nxml-slash-auto-complete-flag t)
+  (unbind-key (kbd "C-c ]") 'nxml-mode-map))
 
 (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.css\\'" . css-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
 
 (defun my-html-mode-hook()
   (eglot-ensure)
@@ -28,26 +28,10 @@
   (setq css-indent-offset 2))
 
 (add-hook 'web-mode-hook #'my-html-mode-hook)
-(add-hook 'json-ts-mode-hook #'eglot-ensure)
 (add-hook 'css-ts-mode-hook #'my-css-mode-hook)
-
-(defun sort-json-buffer ()
-  "Sort JSON keys in the current buffer using jq."
-  (interactive)
-  (shell-command-on-region (point-min) (point-max)
-                           "jq -S ." nil t))
 
 (with-eval-after-load 'eglot
   ;; npm i -g @t1ckbase/vscode-langservers-extracted
-  (defclass eglot-json-ls (eglot-lsp-server) ()
-    :documentation "JSON language server.")
-
-  (cl-defmethod eglot-execute ((_server eglot-json-ls) action)
-    "Handle JSON LS commands locally when possible."
-    (if (equal (plist-get action :command) "json.sort")
-        (sort-json-buffer)
-      (cl-call-next-method)))
-
   (set-eglot-server-program 'web-mode
                             '("vscode-html-language-server" "--stdio"))
   (set-eglot-server-program 'css-ts-mode

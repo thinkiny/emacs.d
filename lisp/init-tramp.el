@@ -144,4 +144,59 @@ Example: /ssh:user@host:/path/to/dir -> user@host:/path/to/dir"
             tramp-path))
     tramp-path))
 
+;; async save buffer via rsync for SSH-based TRAMP files
+(defun save-buffer-async--rsync-save (file-name vec)
+  "Save buffer asynchronously using rsync for SSH-based TRAMP files.
+FILE-NAME is the remote file path, VEC is the parsed TRAMP vector."
+  (let* ((buffer (current-buffer))
+         (coding (or buffer-file-coding-system 'utf-8-unix))
+         (temp-file (make-temp-file "emacs-rsync-"))
+         (rsync-dest (tramp-vec-to-rsync-address vec))
+         (mod-time (current-time))
+         (tick (buffer-modified-tick)))
+    (ignore-errors (run-hooks 'before-save-hook))
+    (let ((coding-system-for-write coding))
+      (write-region (point-min) (point-max) temp-file nil 'quiet))
+    (let ((process (start-process "rsync-save" nil
+                                  "rsync" "-a" "--inplace"
+                                  temp-file rsync-dest)))
+      (set-process-sentinel
+       process
+       (lambda (_ event)
+         (unwind-protect
+             (when (buffer-live-p buffer)
+               (with-current-buffer buffer
+                 (if (string-match-p "finished" event)
+                     (progn
+                       (let ((tramp-file-name-handler-alist nil))
+                         (with-parsed-tramp-file-name file-name nil
+                           (tramp-flush-file-properties v localname)
+                           (tramp-flush-directory-properties v (file-name-directory localname))))
+                       (set-visited-file-modtime mod-time)
+                       (when (= tick (buffer-modified-tick))
+                         (set-buffer-modified-p nil))
+                       (ignore-errors (run-hooks 'after-save-hook))
+                       (message "Wrote %s" file-name))
+                   (message "Rsync save error: %s" (string-trim event)))))
+           (ignore-errors (delete-file temp-file))))))))
+
+(defun save-buffer-async-ssh ()
+  "Save buffer asynchronously for SSH-based TRAMP files.
+Use rsync for SSH-based TRAMP methods, regular 'save-buffer' for local files and non-SSH TRAMP methods."
+  (interactive)
+  (cond
+   ((not (buffer-file-name)) nil)
+   ((not (buffer-modified-p)) nil)
+   ((file-remote-p (buffer-file-name))
+    (let* ((file-name (buffer-file-name))
+           (vec (tramp-dissect-file-name file-name))
+           (method (tramp-file-name-method vec)))
+      (if (member method '("ssh" "sshx" "scp" "rsync"))
+          (save-buffer-async--rsync-save file-name vec)
+        (save-buffer))))
+   (t
+    (save-buffer))))
+
+(global-set-key (kbd "C-x C-s") 'save-buffer-async-ssh)
+
 (provide 'init-tramp)

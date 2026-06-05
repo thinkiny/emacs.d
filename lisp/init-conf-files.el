@@ -33,4 +33,14 @@
 ;; csv
 (use-package csv-mode)
 
+;; hcl
+(use-package hcl-mode
+  :mode (("\\.conf\\'" . hcl-mode)))
+
+;; shell script
+(with-eval-after-load 'sh-script
+  (add-hook 'sh-base-mode-hook
+            (lambda()
+              (add-to-list 'completion-at-point-functions 'cape-file))))
+
 (provide 'init-conf-files)

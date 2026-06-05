@@ -112,4 +112,25 @@
 (add-auto-mode 'tsx-ts-mode "\\.tsx\\'")
 (add-auto-mode 'typescript-ts-mode "\\.ts\\'")
 
+;; json
+(add-auto-mode 'json-ts-mode "\\.json\\'")
+(add-hook 'json-ts-mode-hook #'eglot-ensure)
+
+(defun sort-json-buffer ()
+  "Sort JSON keys in the current buffer using jq."
+  (interactive)
+  (shell-command-on-region (point-min) (point-max)
+                           "jq -S ." nil t))
+
+(with-eval-after-load 'eglot
+  ;; npm i -g @t1ckbase/vscode-langservers-extracted
+  (defclass eglot-json-ls (eglot-lsp-server) ()
+    :documentation "JSON language server.")
+
+  (cl-defmethod eglot-execute ((_server eglot-json-ls) action)
+    "Handle JSON LS commands locally when possible."
+    (if (equal (plist-get action :command) "json.sort")
+        (sort-json-buffer)
+      (cl-call-next-method))))
+
 (provide 'init-js)
