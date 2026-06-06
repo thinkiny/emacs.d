@@ -53,7 +53,7 @@ or \\[ghostel-editor-abort] to cancel."
         (buf (get-buffer-create "*ghostel-editor*")))
     (with-current-buffer buf
       (erase-buffer)
-      (text-mode)
+      (markdown-mode)
       (ghostel-editor-mode 1)
       (setq ghostel-editor--source-buffer source)
       (setq header-line-format

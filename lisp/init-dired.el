@@ -29,9 +29,6 @@
 
 (with-eval-after-load 'dired
   (add-hook 'dired-after-readin-hook #'dired-keep-up-dir-on-top)
-  ;;(require 'ls-lisp)
-  ;; (setq ls-lisp-dirs-first t)
-  ;; (setq ls-lisp-use-insert-directory-program nil)
   (setq dired-free-space nil)
   (setq dired-omit-verbose nil)
   (setq dired-listing-switches "-alh --group-directories-first")

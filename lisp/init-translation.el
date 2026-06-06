@@ -76,7 +76,7 @@
 (defun google-translate-posframe-pos()
   "Return (PX-POS . MAX-WIDTH) for posframe, clamped to frame right edge.
 PX-POS is a cons (X . Y) in pixels."
-  (let* ((min-cols 40)
+  (let* ((min-cols 55)
          (max-cols 80)
          (px-pos (if (derived-mode-p 'xwidget-webkit-mode)
                      (or caret-xwidget-translate-pos
@@ -89,8 +89,7 @@ PX-POS is a cons (X . Y) in pixels."
     (cons px-pos (min avail max-cols))))
 
 (defun google-translate-posframe-output-translation (gtos)
-  "Output translation to the posframe tooltip using `posframe'
-package."
+  "Output translation to the posframe tooltip based on `GTOS` using `posframe' package."
   (let* ((pos+width (google-translate-posframe-pos))
          (px-pos (car pos+width))
          (max-width (cdr pos+width))

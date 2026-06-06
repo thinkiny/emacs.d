@@ -323,9 +323,9 @@ reader assets."
     (cancel-timer mode-line-cache-timer))
   (mode-line-cache-refresh-current-buffer)
   (setq mode-line-cache-timer
-        (run-with-timer mode-line-cache-refresh-interval
-                        mode-line-cache-refresh-interval
-                        #'mode-line-cache-refresh-current-buffer)))
+        (run-with-idle-timer mode-line-cache-refresh-interval
+                            mode-line-cache-refresh-interval
+                            #'mode-line-cache-refresh-current-buffer)))
 
 (defun mode-line-persp-project ()
   (mode-line-cache-persp-project (mode-line-cache-get)))

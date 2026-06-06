@@ -27,7 +27,7 @@
   (setq shr-sliced-image-height 0.3))
 
 (defun kill-elfeed-show-buffer()
-  (let* ((buffer (get-buffer "*elfeed-entry*")))
+  (when-let* ((buffer (get-buffer "*elfeed-entry*")))
     (kill-buffer buffer)))
 
 (defun elfeed-show-open-xwidget ()
@@ -93,8 +93,8 @@
   (define-key elfeed-show-mode-map (kbd "f")   #'forward-word-begin)
   (define-key elfeed-show-mode-map (kbd "a")   #'beginning-of-line)
   (define-key elfeed-show-mode-map (kbd "e")   #'end-of-line)
-  (define-key elfeed-show-mode-map (kbd "0")   #'backward-sentence)
-  (define-key elfeed-show-mode-map (kbd "$")   #'forward-sentence)
+  (define-key elfeed-show-mode-map (kbd "(")   #'backward-sentence)
+  (define-key elfeed-show-mode-map (kbd ")")   #'forward-sentence)
   (define-key elfeed-show-mode-map (kbd "q")   #'elfeed--show-quit)
   (define-key elfeed-show-mode-map (kbd ",")   #'translate-at-point)
   (define-key elfeed-show-mode-map (kbd "SPC") #'selection/toggle-mark)

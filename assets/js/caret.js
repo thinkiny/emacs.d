@@ -5,6 +5,7 @@
 const STYLE_ID = "__caret-emacs-style";
 const CURSOR_TAG = "caret-cursor";
 const WORD_CHAR_RE = /[\p{L}\p{N}\p{M}\p{Pc}'-]/u;
+const SENT_CLOSE = '"“”‘’)';
 
 const cloneRect = (r) => ({ top: r.top, left: r.left, width: r.width, height: r.height });
 
@@ -435,8 +436,14 @@ class CaretEmacs {
     const clampedOff = Math.max(0, Math.min(offset, node.length - 1));
     range.setStart(node, clampedOff);
     range.setEnd(node, clampedOff + 1);
-    const rect = range.getClientRects()[0] || range.getBoundingClientRect();
-    return (rect?.height && rect?.width) ? rect : null;
+    const rects = range.getClientRects();
+    // Skip zero-width rects (line-break artifacts in pre-wrap) and take
+    // the first rect with both height and width.
+    for (let i = 0; i < rects.length; i++) {
+      if (rects[i].height && rects[i].width) return rects[i];
+    }
+    const bcr = range.getBoundingClientRect();
+    return (bcr?.height && bcr?.width) ? bcr : null;
   }
 
   /** True when two rects share the same visual line. */
@@ -731,6 +738,29 @@ class CaretEmacs {
       sel.removeAllRanges();
       sel.addRange(range);
     }
+  }
+
+  /** Apply mark selection from anchor to current focus.
+   *  When extend is true, shifts the forward endpoint by +1 char so the
+   *  character at cursor position is included (needed for end-of-line).
+   *  Returns the real (pre-extension) focus for saving to _savedFocus. */
+  _applyMarkSelection(sel, anchorNode, anchorOff, extend = false) {
+    const focusNode = sel.focusNode;
+    const focusOff = sel.focusOffset;
+    if (extend) {
+      const fwd = anchorNode === focusNode
+        ? anchorOff < focusOff
+        : !!(anchorNode.compareDocumentPosition(focusNode) & Node.DOCUMENT_POSITION_FOLLOWING);
+      if (fwd && focusNode.nodeType === Node.TEXT_NODE) {
+        sel.setBaseAndExtent(anchorNode, anchorOff, focusNode,
+                             Math.min(focusOff + 1, focusNode.textContent.length));
+      } else {
+        sel.setBaseAndExtent(anchorNode, anchorOff, focusNode, focusOff);
+      }
+    } else {
+      sel.setBaseAndExtent(anchorNode, anchorOff, focusNode, focusOff);
+    }
+    return { node: focusNode, offset: focusOff };
   }
 
   /* ── Visual Ordering ───────────────────────────────────────── */
@@ -1441,6 +1471,16 @@ class CaretEmacs {
     const sel = this._ensureSelection(true);
     if (!sel) { return false; }
 
+    // Capture mark anchor before any collapse that would lose it.
+    const markAnchorNode = this.markActive ? sel.anchorNode : null;
+    const markAnchorOff = this.markActive ? sel.anchorOffset : null;
+
+    // Restore real cursor position (before mark extension) so movement
+    // starts from the actual caret, not the extended selection endpoint.
+    if (this._savedFocus && this.markActive && sel.rangeCount) {
+      sel.collapse(this._savedFocus.node, this._savedFocus.offset);
+    }
+
     this._hitBoundary = false;
     if (this._isAtVisibleBoundary(direction)) {
       this._hitBoundary = true;
@@ -1452,7 +1492,7 @@ class CaretEmacs {
       this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
     if (snapNode !== sel.focusNode || snapOff !== sel.focusOffset) {
       if (this.markActive) {
-        sel.setBaseAndExtent(sel.anchorNode, sel.anchorOffset, snapNode, snapOff);
+        sel.setBaseAndExtent(markAnchorNode, markAnchorOff, snapNode, snapOff);
       } else {
         sel.collapse(snapNode, snapOff);
       }
@@ -1464,8 +1504,6 @@ class CaretEmacs {
 
     const fwd = direction === "forward";
     const startNode = sel.focusNode, startOff = sel.focusOffset;
-    const markAnchorNode = this.markActive ? sel.anchorNode : null;
-    const markAnchorOff = this.markActive ? sel.anchorOffset : null;
     if (this.markActive) { sel.collapse(sel.focusNode, sel.focusOffset); }
 
     // PDF text layers and HTML both use visual ordering for char/word movement.
@@ -1502,10 +1540,9 @@ class CaretEmacs {
       const preBottom = preRect ? (preRect.bottom ?? (preRect.top + preRect.height)) : null;
       const preOnscreen = preRect && preBottom >= vpNow.top && preRect.top <= vpNow.bottom;
       if (!preOnscreen) {
-        if (this.markActive && markAnchorNode != null) {
-          sel.setBaseAndExtent(markAnchorNode, markAnchorOff, sel.focusNode, sel.focusOffset);
-        }
-        this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+        this._savedFocus = this.markActive && markAnchorNode != null
+          ? this._applyMarkSelection(sel, markAnchorNode, markAnchorOff)
+          : { node: sel.focusNode, offset: sel.focusOffset };
         this._scrollToSelectionLineBounded();
         this._updateCursor();
         return true;
@@ -1552,7 +1589,8 @@ class CaretEmacs {
         sel.removeAllRanges();
         sel.addRange(targetRange);
       }
-      return this._finishMove(sel, !!targetRange, markAnchorNode, markAnchorOff);
+      return this._finishMove(sel, !!targetRange, markAnchorNode, markAnchorOff,
+                               !!targetRange && fwd);
     }
 
     // PDF sentence: use visual line model to find [.!?] boundaries.
@@ -1569,24 +1607,15 @@ class CaretEmacs {
       const currentLine = this._findCaretLine(lines, caretRect);
       if (currentLine < 0) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
       const caretPoint = { node, offset };
-      const caretEntry = lines[currentLine]?.find(e => e.node === caretPoint.node);
-      const columnLeft = caretEntry?.rect?.left ?? null;
+      const columnLeft = this._lineBounds(lines[currentLine])?.left ?? null;
       const model = this._pdfTextRangeModel(lines, 0, lines.length - 1, columnLeft);
       const caretOffset = model.offsetFromPoint(caretPoint.node, caretPoint.offset);
-      const sentenceBounds = this._pdfSentenceOffsets(model.text, caretOffset);
+      const probeOff = this._skipSentenceBoundary(model.text, caretOffset, fwd);
+      const sentenceBounds = this._pdfSentenceOffsets(model.text, probeOff);
       const targetOffset = fwd ? sentenceBounds.end : sentenceBounds.start;
       const target = model.pointFromOffset(targetOffset);
-      if (!target?.node) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
-      if (target.node === caretPoint.node && target.offset === caretPoint.offset) {
-        const nextOffset = fwd
-          ? Math.min(caretOffset + 1, model.text.length - 1)
-          : Math.max(caretOffset - 1, 0);
-        const nextBounds = this._pdfSentenceOffsets(model.text, nextOffset);
-        const nextTarget = model.pointFromOffset(fwd ? nextBounds.end : nextBounds.start);
-        if (!nextTarget?.node) return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
-        sel.collapse(nextTarget.node, nextTarget.offset);
-        return this._finishMove(sel, true, markAnchorNode, markAnchorOff);
-      }
+      if (!target?.node || this._movedWrongWay(caretPoint.node, caretPoint.offset, target.node, target.offset, fwd))
+        return this._finishMove(sel, false, markAnchorNode, markAnchorOff);
       sel.collapse(target.node, target.offset);
       return this._finishMove(sel, true, markAnchorNode, markAnchorOff);
     }
@@ -1610,13 +1639,18 @@ class CaretEmacs {
     return this._finishMove(sel, moved, markAnchorNode, markAnchorOff);
   }
 
-  /** Common epilogue: restore mark, save caret, scroll & redraw. */
-  _finishMove(sel, moved, anchorNode, anchorOff) {
+  /** Common epilogue: restore mark, save caret, scroll & redraw.
+   *  When extend is true (used by end-of-line), the selection endpoint is
+   *  shifted +1 forward so the character at the cursor is included.
+   *  _savedFocus always stores the real (pre-extension) offset. */
+  _finishMove(sel, moved, anchorNode, anchorOff, extend = false) {
     if (this.markActive && anchorNode != null) {
-      sel.setBaseAndExtent(anchorNode, anchorOff, sel.focusNode, sel.focusOffset);
+      this._savedFocus = this._applyMarkSelection(sel, anchorNode, anchorOff, extend);
     }
     if (moved) {
-      this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+      if (!this.markActive || anchorNode == null) {
+        this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+      }
       this._scrollToSelection();
       this._updateCursor();
     }
@@ -1877,35 +1911,29 @@ class CaretEmacs {
     };
   }
 
+  /** Skip past sentence-ending punctuation and whitespace in the given direction.
+   *  Returns an offset inside the adjacent sentence, or the original offset. */
+  _skipSentenceBoundary(text, offset, fwd) {
+    const boundaryRe = RegExp(`[\\s\\n.!?${SENT_CLOSE}]`);
+    let off = offset;
+    if (fwd) {
+      while (off < text.length && boundaryRe.test(text[off])) off++;
+    } else {
+      while (off > 0 && boundaryRe.test(text[off - 1])) off--;
+    }
+    return off;
+  }
+
   _pdfSentenceOffsets(text, caretOffset) {
-    const normalizedCaret = Math.max(0, Math.min(caretOffset, text.length));
-    let start = 0;
-    for (let idx = normalizedCaret - 1; idx >= 0; idx--) {
-      if (text[idx] === '\n' && text[idx - 1] === '\n') {
-        start = idx + 1;
-        break;
-      }
-      if (/[.!?]/.test(text[idx])) {
-        start = idx + 1;
-        break;
-      }
+    const off = Math.max(0, Math.min(caretOffset, text.length));
+    const re = RegExp(`[.!?][${SENT_CLOSE}]*|\\n\\n`, 'g');
+    let start = 0, end = text.length, m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index < off) start = m.index + m[0].length;
+      else { end = m[0] === '\n\n' ? m.index : m.index + m[0].length; break; }
     }
-    while (start < text.length && /[\s\n"''\u201D\u2019)\]]/.test(text[start])) start++;
-
-    let end = text.length;
-    for (let idx = normalizedCaret; idx < text.length; idx++) {
-      if (text[idx] === '\n' && text[idx + 1] === '\n') {
-        end = idx;
-        break;
-      }
-      if (/[.!?]/.test(text[idx])) {
-        end = idx + 1;
-        while (end < text.length && /["'\u201D\u2019)\]]/.test(text[end])) end++;
-        break;
-      }
-    }
+    while (start < end && (/[\s\n]/.test(text[start]) || RegExp(`[${SENT_CLOSE}]`).test(text[start]))) start++;
     while (end > start && /\s/.test(text[end - 1])) end--;
-
     return { start, end };
   }
 
@@ -2025,16 +2053,23 @@ class CaretEmacs {
       const off = sel.focusOffset;
       if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent;
-        let start = off;
+        let start = off, end = off;
+        // Extend start backward over word chars
         while (start > 0 && this._isWordChar(text[start - 1])) start--;
-        let end = off;
-        if (start === end && (end >= text.length || !this._isWordChar(text[end]))) {
-          while (end < text.length && !this._isWordChar(text[end])) end++;
-          start = end;
-          while (end < text.length && this._isWordChar(text[end])) end++;
-          if (start === end) { this.markActive = true; return; }
-        } else {
-          while (end < text.length && this._isWordChar(text[end])) end++;
+        // Extend end forward over word chars
+        while (end < text.length && this._isWordChar(text[end])) end++;
+        if (start === end) {
+          // No word at caret — skip non-word chars and try again
+          if (end < text.length) {
+            while (end < text.length && !this._isWordChar(text[end])) end++;
+            while (end < text.length && this._isWordChar(text[end])) end++;
+            start = end;
+            while (start > 0 && this._isWordChar(text[start - 1])) start--;
+          } else {
+            while (start > 0 && !this._isWordChar(text[start - 1])) start--;
+            while (start > 0 && this._isWordChar(text[start - 1])) start--;
+            end = off;
+          }
         }
         const rng = document.createRange();
         rng.setStart(node, start);
@@ -2143,7 +2178,9 @@ window.CaretEmacs = CaretEmacs;
 const viewerContainer = document.getElementById('viewerContainer');
 const viewer = document.getElementById('viewer');
 if (viewerContainer && viewer) {
+  window.__caretEmacs?.destroy();
   window.__caretEmacs = new CaretEmacs(viewer, { scrollContainer: viewerContainer });
 } else {
+  window.__caretEmacs?.destroy();
   window.__caretEmacs = new CaretEmacs(document);
 }
