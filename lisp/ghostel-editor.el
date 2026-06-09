@@ -59,7 +59,7 @@ or \\[ghostel-editor-abort] to cancel."
       (setq header-line-format
             (substitute-command-keys
              "Edit, then \\[ghostel-editor-finish] to send or \\[ghostel-editor-abort] to cancel")))
-    (pop-to-buffer buf)))
+    (switch-to-buffer buf)))
 
 (defun ghostel-editor-finish ()
   "Send the buffer content to the source ghostel and close the editor."

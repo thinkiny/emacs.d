@@ -6,6 +6,7 @@
 ;;     PS1=$PS1'\[$(vterm_prompt_end)\]'
 ;; fi
 (use-package vterm
+  :defer t
   :commands (vterm-mode vterm)
   :config
   (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash -l"))
@@ -41,7 +42,7 @@
   (define-key vterm-copy-mode-map (kbd "f") #'forward-word-begin)
   (define-key vterm-copy-mode-map (kbd "a") #'backward-sentence)
   (define-key vterm-copy-mode-map (kbd "e") #'forward-sentence)
-  (define-key vterm-copy-mode-map (kbd "v") #'scroll-up)
+  (define-key vterm-copy-mode-map (kbd "v") #'vterm-copy-mode-scroll-up)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (define-key vterm-copy-mode-map (kbd "M->") #'vterm-copy-mode-goto-buffer-end)
   (define-key vterm-copy-mode-map (kbd "M-<") #'term-copy-mode-backward-prompt))
@@ -94,6 +95,18 @@ In *claude-code buffers, go to the last prompt line (❯ or ⏺) instead."
   "Go to end of buffer."
   (interactive)
   (vterm-reset-cursor-point))
+
+(defun vterm-copy-mode-scroll-up ()
+  "Scroll up, exiting copy mode when reaching buffer end."
+  (interactive)
+  (condition-case nil
+      (progn
+        (scroll-up)
+        (when (pos-visible-in-window-p (point-max))
+          (vterm-copy-mode -1)
+          (vterm-reset-cursor-point)))
+    (error (vterm-copy-mode -1)
+           (vterm-reset-cursor-point))))
 
 (defun vterm-copy-mode-goto-buffer-end ()
   "Go to end of buffer if region is active, otherwise quit `vterm-copy-mode."
@@ -194,6 +207,8 @@ else mirroring original vterm logic."
   ;; semi-char mode (normal input)
   (define-key ghostel-semi-char-mode-map (kbd "M-w") #'kill-ring-save)
   (define-key ghostel-semi-char-mode-map (kbd "C-c v") #'ghostel-copy-mode)
+  (define-key ghostel-semi-char-mode-map (kbd "C-g") #'keyboard-quit)
+  (define-key ghostel-semi-char-mode-map (kbd "C-c C-g") #'ghostel-send-C-g)
   (define-key ghostel-semi-char-mode-map (kbd "C-v") #'scroll-up-command)
   (define-key ghostel-semi-char-mode-map (kbd "M-v") #'scroll-down-command)
   (define-key ghostel-semi-char-mode-map (kbd "M-<") #'ghostel-mode-backward-prompt)
@@ -220,7 +235,7 @@ else mirroring original vterm logic."
   (define-key ghostel-readonly-mode-map (kbd "f") #'forward-word-begin)
   (define-key ghostel-readonly-mode-map (kbd "a") #'backward-sentence)
   (define-key ghostel-readonly-mode-map (kbd "e") #'forward-sentence)
-  (define-key ghostel-readonly-mode-map (kbd "v") #'scroll-up)
+  (define-key ghostel-readonly-mode-map (kbd "v") #'ghostel-readonly-scroll-up)
   (define-key ghostel-readonly-mode-map (kbd "M-<") #'term-copy-mode-backward-prompt)
   (define-key ghostel-readonly-mode-map (kbd "M->") #'ghostel-copy-mode-goto-buffer-end)
   (define-key ghostel-readonly-mode-map [remap pixel-scroll-precision] #'ghostel-pixel-scroll-precision))
@@ -229,6 +244,16 @@ else mirroring original vterm logic."
   "Send C-v to the terminal."
   (interactive)
   (ghostel--send-string "\x16"))
+
+(defun ghostel-readonly-scroll-up ()
+  "Scroll up, exiting readonly mode when reaching buffer end."
+  (interactive)
+  (condition-case nil
+      (progn
+        (scroll-up)
+        (when (pos-visible-in-window-p (point-max))
+          (ghostel-readonly-exit)))
+    (error (ghostel-readonly-exit))))
 
 ;; ghostel--pixel-scroll
 (defvar-local ghostel--scroll-timer nil)

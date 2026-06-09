@@ -5,7 +5,6 @@
 const STYLE_ID = "__caret-emacs-style";
 const CURSOR_TAG = "caret-cursor";
 const WORD_CHAR_RE = /[\p{L}\p{N}\p{M}\p{Pc}'-]/u;
-const SENT_CLOSE = '"“”‘’)';
 
 const cloneRect = (r) => ({ top: r.top, left: r.left, width: r.width, height: r.height });
 
@@ -1593,7 +1592,7 @@ class CaretEmacs {
                                !!targetRange && fwd);
     }
 
-    // PDF sentence: use visual line model to find [.!?] boundaries.
+    // PDF sentence: use visual line model to find [.!?。！？] boundaries.
     if (this._isPdfMode() && granularity === "sentence") {
       const { node, offset } = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
       if (node.nodeType !== Node.TEXT_NODE || !this._isContained(node))
@@ -1914,7 +1913,7 @@ class CaretEmacs {
   /** Skip past sentence-ending punctuation and whitespace in the given direction.
    *  Returns an offset inside the adjacent sentence, or the original offset. */
   _skipSentenceBoundary(text, offset, fwd) {
-    const boundaryRe = RegExp(`[\\s\\n.!?${SENT_CLOSE}]`);
+    const boundaryRe = /[\s\n.!?。！？]/;
     let off = offset;
     if (fwd) {
       while (off < text.length && boundaryRe.test(text[off])) off++;
@@ -1926,13 +1925,13 @@ class CaretEmacs {
 
   _pdfSentenceOffsets(text, caretOffset) {
     const off = Math.max(0, Math.min(caretOffset, text.length));
-    const re = RegExp(`[.!?][${SENT_CLOSE}]*|\\n\\n`, 'g');
+    const re = /[.!?。！？]|\n\n/g;
     let start = 0, end = text.length, m;
     while ((m = re.exec(text)) !== null) {
       if (m.index < off) start = m.index + m[0].length;
       else { end = m[0] === '\n\n' ? m.index : m.index + m[0].length; break; }
     }
-    while (start < end && (/[\s\n]/.test(text[start]) || RegExp(`[${SENT_CLOSE}]`).test(text[start]))) start++;
+    while (start < end && /[\s\n]/.test(text[start])) start++;
     while (end > start && /\s/.test(text[end - 1])) end--;
     return { start, end };
   }

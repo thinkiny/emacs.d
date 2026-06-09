@@ -80,10 +80,16 @@
       (narrow-to-region
        (save-excursion (if (re-search-backward "^\n" nil t) (point) (point-min)))
        (save-excursion (if (re-search-forward  "^\n" nil t) (point) (point-max))))
-      (let ((start (progn (backward-sentence) (point)))
-            (end   (progn (forward-sentence) (point))))
-        (when (< start end)
-          (cons start end))))))
+      (let ((start (if (re-search-backward "[.!?。！？]" nil t)
+                       (progn (forward-char) (point))
+                     (point-min)))
+            (end   (if (re-search-forward  "[.!?。！？]" nil t)
+                       (point)
+                     (point-max))))
+        (goto-char start)
+        (skip-chars-forward " \t\n")
+        (when (< (point) end)
+          (cons (point) end))))))
 
 (defun selection/expand ()
   "Expand selection progressively: word -> sentence."
