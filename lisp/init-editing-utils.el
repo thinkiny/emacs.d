@@ -23,7 +23,6 @@
 (add-hook 'after-init-hook 'transient-mark-mode)
 
 (global-set-key (kbd "C-c $") 'toggle-truncate-lines)
-(global-set-key (kbd "<RET>") #'newline-and-indent)
 
 ;;----------------------------------------------------------------------------
 ;; Paren and Sexp

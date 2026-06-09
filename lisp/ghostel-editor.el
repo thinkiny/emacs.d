@@ -27,6 +27,28 @@
 (defvar-local ghostel-editor--source-buffer nil
   "The ghostel buffer where the edited text will be sent.")
 
+(defun ghostel-editor--find-prompt-line-start (cursor-pos)
+  "Walk backwards from CURSOR-POS to find the primary prompt line.
+Returns position after the prompt prefix, or nil."
+  (save-excursion
+    (goto-char cursor-pos)
+    (catch 'found
+      (while (not (bobp))
+        (when-let* ((prompt-end (ghostel--regex-prompt-end (point))))
+          (throw 'found prompt-end))
+        (forward-line -1)))))
+
+(defun ghostel-editor--extract-input (source)
+  "Extract current input text from a ghostel buffer SOURCE."
+  (with-current-buffer source
+    (let* ((end ghostel--cursor-char-pos)
+           (start (or (and (term--claude-buffer-p)
+                           (ghostel-editor--find-prompt-line-start end))
+                      (and end (ghostel-input-start-point)))))
+      (when (and start end (< start end))
+        (replace-regexp-in-string "^[[:space:]]+" ""
+         (buffer-substring-no-properties start end))))))
+
 (defvar ghostel-editor-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") #'ghostel-editor-finish)
@@ -53,6 +75,9 @@ or \\[ghostel-editor-abort] to cancel."
         (buf (get-buffer-create "*ghostel-editor*")))
     (with-current-buffer buf
       (erase-buffer)
+      (when-let* ((input (ghostel-editor--extract-input source)))
+        (insert input)
+        (goto-char (point-max)))
       (markdown-mode)
       (ghostel-editor-mode 1)
       (setq ghostel-editor--source-buffer source)
@@ -64,13 +89,15 @@ or \\[ghostel-editor-abort] to cancel."
 (defun ghostel-editor-finish ()
   "Send the buffer content to the source ghostel and close the editor."
   (interactive)
-  (let ((content (string-trim-right (buffer-string)))
+  (let ((content (buffer-substring-no-properties (point-min) (point-max)))
         (source ghostel-editor--source-buffer))
     (unless (buffer-live-p source)
       (user-error "Source ghostel buffer no longer exists"))
     (quit-window t)
     (with-current-buffer source
-      (ghostel-paste-string content))))
+      (ghostel-send-string (if (term--claude-buffer-p) "\x03" "\x15"))
+      (ghostel--flush-input source)
+      (ghostel-send-string content))))
 
 (defun ghostel-editor-abort ()
   "Close the editor buffer without sending anything to ghostel."
