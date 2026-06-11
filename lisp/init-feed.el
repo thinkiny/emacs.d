@@ -33,9 +33,8 @@
 (defun elfeed-show-open-xwidget ()
   (interactive)
   (when-let* ((link (elfeed-entry-link elfeed-show-entry)))
-    (xwidget-webkit-browse-open-url link)
-    (with-current-buffer (xwidget-webkit-get-browse-buffer)
-      (add-hook 'quit-window-hook #'kill-elfeed-show-buffer nil t))))
+    (kill-elfeed-show-buffer)
+    (xwidget-webkit-browse-open-url link t)))
 
 (defun elfeed-open-entry-in-chrome(entry &optional background)
   (let* ((link (or (get-text-property (point) 'shr-url)

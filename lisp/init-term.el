@@ -68,6 +68,7 @@ Otherwise, enter copy mode and go to window start."
 
 ;; ghostel semi-char mode keybindings
 (define-key ghostel-semi-char-mode-map (kbd "M-w") #'kill-ring-save)
+(define-key ghostel-semi-char-mode-map (kbd "C-e") #'ghostel--send-event)
 (define-key ghostel-semi-char-mode-map (kbd "C-c v") #'ghostel-copy-mode)
 (define-key ghostel-semi-char-mode-map (kbd "C-g") #'keyboard-quit)
 (define-key ghostel-semi-char-mode-map (kbd "C-c C-g") #'ghostel-send-C-g)

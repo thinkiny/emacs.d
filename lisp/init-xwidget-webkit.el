@@ -2,19 +2,13 @@
 
 (require 'xwidget)
 
-(defgroup xwidget-webkit '() "xwidget webkit" :group 'tools)
-(defcustom xwidget-webkit-urls '()
-  "Specify xwidgets webkit URLS."
-  :type '(alist :key-type string :value-type string)
-  :group 'xwidget-webkit)
+;;; Customization
 
+(defgroup xwidget-webkit '() "xwidget webkit" :group 'tools)
 (setq xwidget-webkit-buffer-name-format "*WEB: %T")
 (setq xwidget-webkit-proxy (local-proxy-http-url))
 
-(defvar xwidget-webkit-browse-session nil)
-(defun xwidget-webkit-get-browse-buffer()
-  (let ((buffer (and xwidget-webkit-browse-session (xwidget-buffer xwidget-webkit-browse-session))))
-    (and (buffer-live-p buffer) buffer)))
+;;; URL & Session Helpers
 
 (defun xwidget-webkit-get-current-url()
   (if (derived-mode-p 'xwidget-webkit-mode)
@@ -27,22 +21,15 @@
       (concat "file://" (buffer-file-name))))
 
 (defun xwidget-webkit-create-or-goto-url (url)
-  "Open or reload URL in an xwidget session.
-When current major mode is derived from `xwidget-webkit-mode',
-reload in the current buffer; otherwise use or create the global
-browse session."
+  "Open or reload URL in an xwidget session."
   (if (derived-mode-p 'xwidget-webkit-mode)
       (xwidget-webkit-goto-uri (xwidget-at (point-min)) url)
-    (let ((buffer (xwidget-webkit-get-browse-buffer)))
-      (if buffer
-          (progn
-            (xwidget-webkit-goto-uri xwidget-webkit-browse-session url)
-            (switch-to-buffer buffer))
-        (xwidget-webkit-new-session url)
-        (setq xwidget-webkit-browse-session (xwidget-webkit-last-session))))))
+    (xwidget-webkit-new-session url)))
 
-(defun xwidget-webkit-browse-open-url(url &optional rest)
-  "Ask xwidget-webkit to browse URL."
+(defun xwidget-webkit-browse-open-url(url &optional new-session)
+  "Ask xwidget-webkit to browse URL.
+When NEW-SESSION is non-nil, open URL in a new xwidget session instead of
+reusing an existing one."
   (interactive (progn
                  (list
                   (read-string "open URL: "
@@ -53,45 +40,46 @@ browse session."
       (setq url (concat "https://" url)))
     (if (s-starts-with? "https://arxiv.org/pdf" url)
         (funcall 'pdf-xwidget-open url)
-      (xwidget-webkit-create-or-goto-url url))))
+      (if new-session
+          (xwidget-webkit-new-session url)
+        (xwidget-webkit-create-or-goto-url url)))))
 
 (setq browse-url-browser-function 'xwidget-webkit-browse-open-url)
 
-;; xwwp-follow-link
+;;; Follow Link
+
 (use-package xwwp-follow-link-ivy
   :custom
   (xwwp-follow-link-completion-system 'ivy)
   :bind (:map xwidget-webkit-mode-map
               ("C-c l" . xwwp-follow-link)))
 
+;;; In-Page Search
 
-;;; Search text in page
-;; Initialize last search text length variable when isearch starts
 (defvar-local xwidget-webkit-isearch-last-length 0)
 (defvar-local xwidget-webkit-searching nil)
 
-;; This is minimal. Regex and incremental search will be nice
 (defconst xwidget-webkit-search-js "
 var xwSearchForward = %s;
 var xwSearchRepeat = %s;
 var xwSearchString = '%s';
 if (window.getSelection() && !window.getSelection().isCollapsed) {
-  if (xwSearchRepeat) {
-    if (xwSearchForward)
-      window.getSelection().collapseToEnd();
-    else
-      window.getSelection().collapseToStart();
-  } else {
-    if (xwSearchForward)
-      window.getSelection().collapseToStart();
-    else {
-      var sel = window.getSelection();
-      window.getSelection().collapse(sel.focusNode, sel.focusOffset + 1);
-    }
-  }
+if (xwSearchRepeat) {
+if (xwSearchForward)
+window.getSelection().collapseToEnd();
+else
+window.getSelection().collapseToStart();
+} else {
+if (xwSearchForward)
+window.getSelection().collapseToStart();
+else {
+var sel = window.getSelection();
+window.getSelection().collapse(sel.focusNode, sel.focusOffset + 1);
+}
+}
 }
 window.find(xwSearchString, false, !xwSearchForward, true, false, true);
-")
+ ")
 
 (defun xwidget-webkit-search-cb(end)
   (setq xwidget-webkit-searching nil))
@@ -105,11 +93,9 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
       (let ((current-length (length string))
             search-forward
             search-repeat)
-        ;; Forward or backward
         (if (eq isearch-forward nil)
             (setq search-forward "false")
           (setq search-forward "true"))
-        ;; Repeat if search string length not changed
         (if (eq current-length xwidget-webkit-isearch-last-length)
             (setq search-repeat "true")
           (setq search-repeat "false"))
@@ -123,6 +109,18 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
          #'xwidget-webkit-search-cb)
         (point-min)))))
 
+;;; Buffer Quit
+
+(defun xwidget-webkit-quit ()
+  "Ask to kill the buffer; if no, quit the window."
+  (interactive)
+  (if (y-or-n-p (format "Close %s? " (buffer-name)))
+      (let ((kill-buffer-query-functions nil))
+        (kill-buffer (current-buffer)))
+    (quit-window)))
+
+;;; Translate
+
 (defvar xwidget-translate-timer nil)
 (defun xwidget-translate-range()
   (interactive)
@@ -135,6 +133,8 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
                           (xwidget-webkit-get-selection
                            (lambda (text)
                              (translate-brief text)))))))
+
+;;; Chrome Integration
 
 (defun xwidget-webkit-open-url-in-chrome (url &optional background)
   "Open URL in Chrome."
@@ -153,13 +153,15 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (defun xwidget-webkit-open-in-chrome-background ()
   "Open current xwidget URL in Chrome."
-    (interactive)
+  (interactive)
   (when-let* ((url (xwidget-webkit-uri (xwidget-webkit-current-session))))
     (xwidget-webkit-open-url-in-chrome url t)))
 
+;;; Keymap
+
 (with-eval-after-load 'xwidget
   (easy-menu-define nil xwidget-webkit-mode-map "Xwidget WebKit menu."
-    (list "Xwidget WebKit"  :visible nil))
+    (list "Xwidget WebKit" :visible nil))
   (unbind-key (kbd "-") xwidget-webkit-mode-map)
   (unbind-key (kbd "+") xwidget-webkit-mode-map)
   (define-key xwidget-webkit-mode-map (kbd "g") #'xwidget-webkit-browse-open-url)
@@ -172,8 +174,10 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   ;;(define-key xwidget-webkit-mode-map (kbd "<drag-mouse-1>") #'xwidget-translate-range)
   (define-key xwidget-webkit-mode-map (kbd "C-s") #'isearch-forward)
   (define-key xwidget-webkit-mode-map (kbd "C-r") #'isearch-backward)
-  ;;(define-key xwidget-webkit-mode-map (kbd "<double-mouse-1>") #'xwidget-translate-range)
+  (define-key xwidget-webkit-mode-map (kbd "q") #'xwidget-webkit-quit)
   (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range))
+
+;;; JS Execution
 
 (defun xwidget-execute-scripts(scripts)
   (xwidget-webkit-execute-script
@@ -183,8 +187,9 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 (defun xwidget-execute-script(script)
   (xwidget-execute-scripts (list script)))
 
+;;; Mode Hook
+
 (defun my-xwidget-webkit-mode-hook()
-  ;;(setq-local auto-translate-mouse-selection t)
   (eldoc-mode -1)
   (setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
   (setq-local isearch-lazy-highlight nil)
@@ -194,11 +199,12 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 (global-set-key (kbd "C-x / /") #'xwidget-webkit-browse-open-url)
 
+;;; Caret.js
 
-;; caret.js
 (require 'caret-xwidget)
 
-;; window change functions
+;;; Window Sizing
+
 (defun xwidget-webkit-auto-adjust-size-derived (window)
   "Adjust xwidget size to fit WINDOW for any `xwidget-webkit-mode' derivative."
   (with-current-buffer (window-buffer window)
@@ -217,15 +223,16 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
       (remove 'xwidget-webkit-adjust-size-in-frame
               window-size-change-functions))
 
-;; transparent-bg
+;;; Transparent Background
+
 (defun xwidget-webkit-inject-transparent-bg ()
   "Inject CSS to make page background transparent."
   (interactive)
   (when (not (derived-mode-p 'nov-xwidget-webkit-mode 'pdf-xwidget-mode))
     (xwidget-execute-script
      "var s = document.createElement('style');
-      s.textContent = 'html,body,:not(caret-cursor){background:transparent!important}';
-      document.head.appendChild(s);")))
+s.textContent = 'html,body,:not(caret-cursor){background:transparent!important}';
+document.head.appendChild(s);")))
 
 (defun xwidget-webkit--transparent-bg-callback-advice (orig-fn xwidget event-type)
   "Inject transparent background CSS on page load."

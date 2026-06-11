@@ -40,19 +40,4 @@
   (delete-other-windows)
   (display-buffer-in-direction buffer alist))
 
-(use-package agent-shell
-  :bind (:map global-map
-              ("C-c s a" . agent-shell))
-  :config
-  (setq agent-shell-header-style 'text)
-  (setq agent-shell-show-config-icons nil)
-  (setq agent-shell-show-welcome-message nil)
-  (let ((proxy-env-args
-         (mapcan (lambda (pair)
-                   (list (car pair) (cdr pair)))
-                 (local-proxy-env-alist))))
-    (setq agent-shell-cursor-environment
-          (apply #'agent-shell-make-environment-variables
-                 (append proxy-env-args '(:inherit-env t))))))
-
 (provide 'init-ai)

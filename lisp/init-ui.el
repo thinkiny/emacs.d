@@ -418,10 +418,8 @@ Preserves hue and saturation. Skips faces with their own background
   (when (theme-dark-p)
     (let ((max-lightness 0.85))
       (dolist (face (face-list))
-        (let ((fg (face-attribute face :foreground nil t))
-              (bg (face-attribute face :background nil t)))
-          (when (and (stringp fg)
-                     (not (stringp bg)))
+        (let ((fg (face-attribute face :foreground nil t)))
+          (when (stringp fg)
             (condition-case nil
                 (pcase-let ((`(,h ,s ,l)
                              (apply #'color-rgb-to-hsl (color-name-to-rgb fg))))

@@ -206,14 +206,8 @@ With arg N, insert N newlines."
 ;;----------------------------------------------------------------------------
 ;; Code Folding
 ;;----------------------------------------------------------------------------
-(defun my/hs-minor-mode()
-  (hs-minor-mode)
-  (local-set-key "\C-c-" 'hs-hide-block)
-  (local-set-key "\C-c=" 'hs-show-block)
-  (local-set-key "\C-c_" 'hs-hide-all)
-  (local-set-key "\C-c+" 'hs-show-all))
-
-(add-hook 'prog-mode-hook  #'my/hs-minor-mode)
+(require 'init-fold)
+(fold-global-mode)
 
 ;;----------------------------------------------------------------------------
 ;; File and Buffer Management
@@ -367,6 +361,7 @@ With arg N, insert N newlines."
 
 ;; text-mode
 (add-hook 'text-mode-hook 'visual-line-mode)
+
 
 ;;----------------------------------------------------------------------------
 ;; Miscellaneous
