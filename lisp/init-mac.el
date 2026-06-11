@@ -105,4 +105,19 @@ fi"
             (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback)
           (toggle-frame-maximized))))))
 
+(defcustom frame-background-blur 36
+  "Background blur of frame (macOS only)."
+  :group 'faces
+  :type 'integer
+  :set (lambda (symbol val)
+         (set-default symbol val)
+         (set-frame-parameter nil 'ns-background-blur val)))
+
+(defun set-background-blur ()
+  "Set the background blur of the frame window (macOS only)."
+  (interactive)
+  (when window-system
+    (let ((value (read-number "change frame background blur: " frame-background-blur)))
+      (customize-save-variable 'frame-background-blur value))))
+
 (provide 'init-mac)
