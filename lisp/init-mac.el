@@ -105,7 +105,7 @@ fi"
             (dwim-shell-commands-show-dock-macos nil #'toggle-frame-maximized-macos-callback)
           (toggle-frame-maximized))))))
 
-(defcustom frame-background-blur 36
+(defcustom frame-background-blur 16
   "Background blur of frame (macOS only)."
   :group 'faces
   :type 'integer

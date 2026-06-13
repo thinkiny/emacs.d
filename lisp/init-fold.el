@@ -82,10 +82,12 @@ Other prog modes use hs-minor-mode."
 ;; Package config
 ;;----------------------------------------------------------------------------
 
+(with-eval-after-load 'hideshow
+  (setq hs-set-up-overlay #'fold-hs-set-up-overlay))
+
 (use-package outline-indent
   :commands outline-indent-minor-mode
   :config
-  (setq outline-indent-ellipsis "▼")
-  (setq hs-set-up-overlay #'fold-hs-set-up-overlay))
+  (setq outline-indent-ellipsis "▼"))
 
 (provide 'init-fold)

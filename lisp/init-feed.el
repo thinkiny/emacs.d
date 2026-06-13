@@ -112,6 +112,13 @@
   )
 
 (add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook)
+(defun elfeed-show--jump-to-content ()
+  "Jump to the main content, past the header metadata."
+  ;; (goto-char (point-min))
+  (forward-paragraph)
+  (forward-line))
+
+(add-hook 'elfeed-show-update-hook #'elfeed-show--jump-to-content)
 
 ;; setup feeds
 (defun feed-github-commit (repo)

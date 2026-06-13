@@ -36,8 +36,7 @@
         (goto-char cursor)
         (let ((eol (line-end-position)))
           (when (< cursor eol)
-            (kill-new (string-trim-right
-                       (buffer-substring-no-properties cursor eol))))))))
+            (kill-new (buffer-substring-no-properties cursor eol)))))))
   (ghostel-send-string "\x0b"))
 
 (defun ghostel-readonly-scroll-up ()

@@ -70,7 +70,9 @@ def append_sfnt_name(font: fontforge.font, name_id: str, value: str) -> None:
     font.appendSFNTName(SFNT_LANGUAGE, name_id, value)
 
 
-def apply_font_metadata(font: fontforge.font, family: str, style: str, tag: str) -> None:
+def apply_font_metadata(
+    font: fontforge.font, family: str, style: str, tag: str
+) -> None:
     """Normalize family/style metadata so apps resolve Regular/Italic correctly."""
     style = (style or "Regular").strip()
     full_name = f"{family} {style}".strip()
@@ -109,7 +111,9 @@ def apply_font_metadata(font: fontforge.font, family: str, style: str, tag: str)
     append_sfnt_name(font, "UniqueID", unique_id)
 
 
-def fix_glyph_widths(input_font: fontforge.font, ref_font: fontforge.font) -> tuple[int, int]:
+def fix_glyph_widths(
+    input_font: fontforge.font, ref_font: fontforge.font
+) -> tuple[int, int]:
     ref_width = ref_font["m"].width if "m" in ref_font else ref_font["A"].width
     single_width = round(ref_width * input_font.em / ref_font.em)
     double_width = single_width * 2
@@ -143,17 +147,36 @@ def scale_glyphs(font: fontforge.font, scale: float) -> None:
 
 
 def adjust_font_properties(font: fontforge.font, factor: float) -> None:
-    """Adjust ascent and descent properties of the font by a line-height factor."""
-    deltas = []
+    """Adjust ascent and descent properties of the font by a line-height factor.
+
+    factor > 1.0 → taller lines; factor < 1.0 → shorter lines.
+    Delta is split symmetrically so the baseline stays centered.
+    Typo line gap is folded into the typo ascent so that all three
+    metric pairs describe the same total line height after scaling.
+    """
+    # Fold the typolinegap into typoascent so all pairs share the same
+    # effective span.  Without this, Emacs adds typolinegap on top of
+    # the typo span, breaking alignment with win/hhea metrics.
+    line_gap = font.os2_typolinegap
+    if line_gap:
+        font.os2_typoascent += line_gap
+        font.os2_typolinegap = 0
+
     for ascent_prop, descent_prop in METRIC_PAIRS:
         ascent_value = getattr(font, ascent_prop)
         descent_value = getattr(font, descent_prop)
-        delta = int((ascent_value - descent_value) * (1.0 - factor))
-        deltas.append(delta)
-
-    for (ascent_prop, descent_prop), delta in zip(METRIC_PAIRS, deltas):
-        setattr(font, descent_prop, getattr(font, descent_prop) + delta)
-        setattr(font, ascent_prop, getattr(font, ascent_prop) - delta)
+        # Win descent is unsigned (positive = below baseline);
+        # typo/hhea descent is signed (negative = below baseline).
+        is_win = "windescent" in descent_prop
+        span = ascent_value + descent_value if is_win else ascent_value - descent_value
+        new_span = round(span * factor)
+        delta = new_span - span
+        half = delta // 2
+        setattr(font, ascent_prop, ascent_value + half)
+        if is_win:
+            setattr(font, descent_prop, descent_value + (delta - half))
+        else:
+            setattr(font, descent_prop, descent_value - (delta - half))
 
 
 def generate_patched_font(
@@ -205,7 +228,9 @@ def main() -> None:
             cjk_count, half_count = fix_glyph_widths(font, ref_font)
             if args.width_scale:
                 scale_glyphs(font, args.width_scale)
-            scale_tag = str(args.width_scale).replace(".", "_") if args.width_scale else "NS"
+            scale_tag = (
+                str(args.width_scale).replace(".", "_") if args.width_scale else "NS"
+            )
             width_tag = f"M{scale_tag}"
 
         tag = "-".join(t for t in (width_tag, line_height_tag) if t)
@@ -224,7 +249,9 @@ def main() -> None:
         backup_original_font(args.input, args.output_dir)
 
         if do_width:
-            print(f"Normalized {half_count} half-width glyphs and {cjk_count} CJK glyphs (2x)")
+            print(
+                f"Normalized {half_count} half-width glyphs and {cjk_count} CJK glyphs (2x)"
+            )
         if do_line_height:
             print(f"Applied line-height factor {args.line_height}")
     finally:
