@@ -68,7 +68,7 @@
 
 (defun pdf-xwidget--toggle-with-toolbar (script &optional state-fn)
   "Execute SCRIPT, showing toolbar first if hidden. Call STATE-FN to update state."
-  (xwidget-execute-scripts
+  (xwidget-webkit-eval-scripts
    (if pdf-xwidget-toolbar-show
        (list script)
      (list pdf-xwidget-show-toolbar-script script)))
@@ -84,7 +84,7 @@
 (defun pdf-xwidget-toggle-toolbar ()
   "Toggle PDF toolbar visibility."
   (interactive)
-  (xwidget-execute-scripts
+  (xwidget-webkit-eval-scripts
    (if pdf-xwidget-toolbar-show
        (list pdf-xwidget-hide-toolbar-script)
      (list pdf-xwidget-show-toolbar-script)))

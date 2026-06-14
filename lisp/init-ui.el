@@ -23,7 +23,6 @@
 
 (setq frame-resize-pixelwise t)
 (setq indicate-empty-lines t)
-(setq-default line-number-display-limit-width 2000000)
 (setq ring-bell-function 'ignore)
 
 (global-set-key (kbd "C-x c f") #'customize-face)
@@ -263,11 +262,28 @@ reader assets."
               mode-line-buffer-identification
               (propertized-buffer-identification "%b"))
 
+(defun mode-line-scroll-percent ()
+  "Return scroll percentage as a number."
+  (cond
+   ((derived-mode-p 'xwidget-webkit-mode)
+    (caret-xwidget-scroll-percent))
+   ((derived-mode-p '(ghostel-mode vterm-mode eshell-mode))
+    nil)
+   (t
+    (if (= (point-max) (point-min)) 0
+      (round (* 100.0 (/ (float (point)) (- (point-max) (point-min)))))))))
+
 (defun mode-line-position ()
-  "Display line number."
-  (if (derived-mode-p '(special-mode vterm-mode))
-      ""
-    (format-mode-line " %l:%C")))
+  "Display line number and position."
+  (let ((percent (mode-line-scroll-percent)))
+    (cond
+     ((derived-mode-p 'xwidget-webkit-mode)
+      (format " %s(%d%%%%) " (buffer-name) percent))
+     ((derived-mode-p '(ghostel-mode vterm-mode eshell-mode))
+      (format-mode-line " %b "))
+     (t
+      (format " %d:%s(%d%%%%) "
+              (line-number-at-pos) (buffer-name) percent)))))
 
 (cl-defstruct (mode-line-cache (:constructor mode-line-cache-create))
   project-name
@@ -276,7 +292,7 @@ reader assets."
 
 (defvar-local mode-line-cache nil)
 (defvar mode-line-cache-timer nil)
-(defconst mode-line-cache-refresh-interval 2)
+(defconst mode-line-cache-refresh-interval 1.5)
 
 (defun mode-line-cache-get ()
   (or mode-line-cache
@@ -298,7 +314,7 @@ reader assets."
 
 (defun mode-line-cache--compute-flymake-counters ()
   (if (bound-and-true-p flymake-mode)
-      (flymake--mode-line-counters)
+      (concat (format-mode-line (flymake--mode-line-counters)) " ")
     ""))
 
 (defun mode-line-cache-refresh (&optional buffer)
@@ -316,16 +332,16 @@ reader assets."
   (let ((buffer (window-buffer (selected-window))))
     (when (buffer-live-p buffer)
       (with-current-buffer buffer
-        (mode-line-cache-refresh)))))
+        (mode-line-cache-refresh)
+        (force-mode-line-update)))))
 
 (defun mode-line-cache-start-timer ()
   (when (timerp mode-line-cache-timer)
     (cancel-timer mode-line-cache-timer))
-  (mode-line-cache-refresh-current-buffer)
   (setq mode-line-cache-timer
-        (run-with-idle-timer mode-line-cache-refresh-interval
-                            mode-line-cache-refresh-interval
-                            #'mode-line-cache-refresh-current-buffer)))
+        (run-at-time  mode-line-cache-refresh-interval
+                      mode-line-cache-refresh-interval
+                      #'mode-line-cache-refresh-current-buffer)))
 
 (defun mode-line-persp-project ()
   (mode-line-cache-persp-project (mode-line-cache-get)))
@@ -335,10 +351,7 @@ reader assets."
 
 (setq-default mode-line-format
               '((:eval (mode-line-position))
-                " "
-                "%b"
                 (:eval (mode-line-flymake-counters))
-                " "
                 (:eval (mode-line-persp-project))))
 
 (mode-line-cache-start-timer)

@@ -179,13 +179,44 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 
 ;;; JS Execution
 
-(defun xwidget-execute-scripts(scripts)
+(defun xwidget-webkit-eval-scripts(scripts)
   (xwidget-webkit-execute-script
    (xwidget-webkit-current-session)
    (format "(function() { %s })();" (string-join scripts "\n"))))
 
-(defun xwidget-execute-script(script)
-  (xwidget-execute-scripts (list script)))
+(defun xwidget-webkit-eval-script(script)
+  (xwidget-webkit-eval-scripts (list script)))
+
+(defun xwidget-webkit-execute-script-sync (js &optional timeout)
+  "Execute JS in current xwidget synchronously, returning the result.
+Buffers user keystrokes during execution and replays them afterward.
+TIMEOUT defaults to 2 seconds."
+  (let ((done nil)
+        (result nil)
+        (timeout (or timeout 2))
+        (start (float-time))
+        (deferred-events nil))
+    (when-let* ((xw (xwidget-webkit-current-session)))
+      ;; Start the async WebKit script execution
+      (xwidget-webkit-execute-script
+       xw js
+       (lambda (response)
+         (setq result response
+               done t)))
+
+      ;; Stay in the loop until JS finishes or timeout is reached
+      (while (and (not done)
+                  (< (- (float-time) start) timeout))
+        (let ((ev (read-event nil nil 0.001)))
+          (when ev
+            ;; Buffer the event locally so it doesn't cause an infinite busy-loop
+            (push ev deferred-events))))
+
+      ;; Execution finished: Replay the buffered keys back into Emacs
+      (when deferred-events
+        (setq unread-command-events
+              (nconc (nreverse deferred-events) unread-command-events)))
+      result)))
 
 ;;; Mode Hook
 
@@ -229,7 +260,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   "Inject CSS to make page background transparent."
   (interactive)
   (when (not (derived-mode-p 'nov-xwidget-webkit-mode 'pdf-xwidget-mode))
-    (xwidget-execute-script
+    (xwidget-webkit-eval-script
      "var s = document.createElement('style');
 s.textContent = 'html,body,:not(caret-cursor){background:transparent!important}';
 document.head.appendChild(s);")))

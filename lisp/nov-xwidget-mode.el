@@ -44,7 +44,7 @@
 (defun nov-xwidget-save--position ()
   (interactive)
   (when-let* ((key (nov-xwidget--position-key)))
-    (xwidget-execute-script
+    (xwidget-webkit-eval-script
      (format "var s=window.getSelection(),n=s.focusNode;
 if(n&&n.nodeType===3){var idx=0,w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
 while(w.nextNode()&&w.currentNode!==n)idx++;
@@ -55,7 +55,7 @@ window.localStorage.setItem('%s',JSON.stringify({i:idx,o:s.focusOffset}));
   (interactive)
   (when nov-xwidget-need-resume-position
     (when-let* ((key (nov-xwidget--position-key)))
-      (xwidget-execute-script
+      (xwidget-webkit-eval-script
        (format "var d=localStorage.getItem('%s');
 if(d){var p=JSON.parse(d),n;
 var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
@@ -69,7 +69,7 @@ window.scroll(0,rng.getBoundingClientRect().top-window.innerHeight/3);}}
 
 (defun nov-xwidget--inject-scroll-autosave ()
   (when-let* ((key (nov-xwidget--position-key)))
-    (xwidget-execute-script
+    (xwidget-webkit-eval-script
      (format "window.addEventListener('scroll',function(){
 var s=window.getSelection(),n=s.focusNode;
 if(n&&n.nodeType===3){var idx=0,w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);

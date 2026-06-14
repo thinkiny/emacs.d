@@ -51,9 +51,9 @@ The file is read at load time and injected into xwidget-webkit pages."
     (let ((post caret-xwidget--after-inject-js))
       (setq caret-xwidget--after-inject-js nil)
       (xwidget-webkit-execute-script xw
-        (concat caret-xwidget--js-source
-                (and post (concat "\n" caret-xwidget--js-prefix post))
-                "\nvoid 0;")))))
+                                     (concat caret-xwidget--js-source
+                                             (and post (concat "\n" caret-xwidget--js-prefix post))
+                                             "\nvoid 0;")))))
 
 (defun caret-xwidget--callback-advice (orig-fn xwidget event-type)
   "Advice around `xwidget-webkit-callback' to re-inject caret.js on load."
@@ -94,6 +94,18 @@ Set this to navigate to the previous document/chapter.")
   (when-let* ((xw (xwidget-webkit-current-session)))
     (xwidget-webkit-execute-script xw js callback)))
 
+(defun caret-xwidget-scroll-percent ()
+  "Return scroll percent for the current xwidget buffer as a number."
+  (let ((result (xwidget-webkit-execute-script-sync
+                 (concat "window.__caretEmacs ? window.__caretEmacs.getScrollPercent() : 0")
+                 0.1)))
+    (cond
+     ((numberp result) result)
+     ((null result) (message "caret-xwidget-scroll-percent: timeout")
+      0)
+     (t (message "caret-xwidget-scroll-percent: unexpected %S" result)
+        0))))
+
 (defun caret-xwidget--handle-boundary-result (result)
   "Auto-paginate based on boundary RESULT from moveWithBoundaryCheck."
   (when-let* ((fn (pcase (string-trim (or result "") "\"" "\"")
@@ -112,10 +124,10 @@ Set this to navigate to the previous document/chapter.")
             caret-xwidget-previous-page-function)
         (let ((buf (current-buffer)))
           (xwidget-webkit-execute-script xw js
-            (lambda (result)
-              (when (buffer-live-p buf)
-                (with-current-buffer buf
-                  (caret-xwidget--handle-boundary-result result))))))
+                                         (lambda (result)
+                                           (when (buffer-live-p buf)
+                                             (with-current-buffer buf
+                                               (caret-xwidget--handle-boundary-result result))))))
       ;; No page functions -- just execute the movement.
       (xwidget-webkit-execute-script xw js))))
 
@@ -235,17 +247,17 @@ Set this to navigate to the previous document/chapter.")
   (interactive)
   (caret-xwidget--exec
    (concat caret-xwidget--js-prefix "wordInfo()")
-    (lambda (result)
-      (when (and result (not (string-empty-p result)))
-        (let* ((data (json-parse-string result))
-               (word (gethash "text" data))
-               (left (gethash "left" data))
-               (bottom (gethash "bottom" data))
-               (x (round left))
-               (y (round bottom)))
-          (setq caret-xwidget-translate-pos (cons x y))
-          (when (not (string-empty-p word))
-            (translate-brief word)))))))
+   (lambda (result)
+     (when (and result (not (string-empty-p result)))
+       (let* ((data (json-parse-string result))
+              (word (gethash "text" data))
+              (left (gethash "left" data))
+              (bottom (gethash "bottom" data))
+              (x (round left))
+              (y (round bottom)))
+         (setq caret-xwidget-translate-pos (cons x y))
+         (when (not (string-empty-p word))
+           (translate-brief word)))))))
 
 (defun caret-xwidget-copy-and-deactivate ()
   "Copy selection to kill-ring and deactivate mark."
@@ -276,25 +288,25 @@ Set this to navigate to the previous document/chapter.")
   "Dump caret.js debug log to *caret-debug* buffer."
   (interactive)
   (caret-xwidget--exec (concat caret-xwidget--js-prefix "dumpDebug()")
-    (lambda (result)
-      (let ((payload (string-trim (or result "") "\"" "\"")))
-        (with-current-buffer (get-buffer-create "*caret-debug*")
-          (erase-buffer)
-          (insert payload)
-          (goto-char (point-min))
-          (pop-to-buffer (current-buffer)))))))
+                       (lambda (result)
+                         (let ((payload (string-trim (or result "") "\"" "\"")))
+                           (with-current-buffer (get-buffer-create "*caret-debug*")
+                             (erase-buffer)
+                             (insert payload)
+                             (goto-char (point-min))
+                             (pop-to-buffer (current-buffer)))))))
 
 (defun caret-xwidget-debug-dump-to-file (&optional file)
   "Dump caret.js debug log to FILE (defaults to ~/.emacs.d/caret.log)."
   (interactive)
   (let ((target (expand-file-name (or file "~/.emacs.d/caret.log"))))
     (caret-xwidget--exec (concat caret-xwidget--js-prefix "dumpDebug()")
-      (lambda (result)
-        (let ((payload (string-trim (or result "") "\"" "\"")))
-          (with-temp-buffer
-            (insert payload)
-            (write-region (point-min) (point-max) target nil 'silent))
-          (message "caret.js debug log written to %s" target))))))
+                         (lambda (result)
+                           (let ((payload (string-trim (or result "") "\"" "\"")))
+                             (with-temp-buffer
+                               (insert payload)
+                               (write-region (point-min) (point-max) target nil 'silent))
+                             (message "caret.js debug log written to %s" target))))))
 
 (defun caret-xwidget-reload-js ()
   "Reload caret.js from disk and re-inject it into the current xwidget."

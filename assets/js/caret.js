@@ -10,10 +10,10 @@ const cloneRect = (r) => ({ top: r.top, left: r.left, width: r.width, height: r.
 
 const CURSOR_CSS = `
 ${CURSOR_TAG}{
-  position:absolute;pointer-events:none;z-index:2147483647;
-  background:var(--caret-color, #4488ff);display:none;box-sizing:border-box;
-  border-radius:1px;min-width:2px;
-  animation:caretBlink 1s step-end infinite;
+position:absolute;pointer-events:none;z-index:2147483647;
+background:var(--caret-color, #4488ff);display:none;box-sizing:border-box;
+border-radius:1px;min-width:2px;
+animation:caretBlink 1s step-end infinite;
 }
 @keyframes caretBlink{0%,100%{opacity:0.5}50%{opacity:0}}
 `.trim();
@@ -752,7 +752,7 @@ class CaretEmacs {
         : !!(anchorNode.compareDocumentPosition(focusNode) & Node.DOCUMENT_POSITION_FOLLOWING);
       if (fwd && focusNode.nodeType === Node.TEXT_NODE) {
         sel.setBaseAndExtent(anchorNode, anchorOff, focusNode,
-                             Math.min(focusOff + 1, focusNode.textContent.length));
+          Math.min(focusOff + 1, focusNode.textContent.length));
       } else {
         sel.setBaseAndExtent(anchorNode, anchorOff, focusNode, focusOff);
       }
@@ -1117,8 +1117,8 @@ class CaretEmacs {
       if (focusOff < focus.length) {
         let step = 1;
         if (text.charCodeAt(focusOff) >= 0xD800 && text.charCodeAt(focusOff) <= 0xDBFF
-            && focusOff + 1 < focus.length
-            && text.charCodeAt(focusOff + 1) >= 0xDC00 && text.charCodeAt(focusOff + 1) <= 0xDFFF) {
+          && focusOff + 1 < focus.length
+          && text.charCodeAt(focusOff + 1) >= 0xDC00 && text.charCodeAt(focusOff + 1) <= 0xDFFF) {
           step = 2;
         }
         sel.collapse(focus, focusOff + step);
@@ -1138,8 +1138,8 @@ class CaretEmacs {
       if (focusOff > 0) {
         let step = 1;
         if (text.charCodeAt(focusOff - 1) >= 0xDC00 && text.charCodeAt(focusOff - 1) <= 0xDFFF
-            && focusOff - 2 >= 0
-            && text.charCodeAt(focusOff - 2) >= 0xD800 && text.charCodeAt(focusOff - 2) <= 0xDBFF) {
+          && focusOff - 2 >= 0
+          && text.charCodeAt(focusOff - 2) >= 0xD800 && text.charCodeAt(focusOff - 2) <= 0xDBFF) {
           step = 2;
         }
         sel.collapse(focus, focusOff - step);
@@ -1589,7 +1589,7 @@ class CaretEmacs {
         sel.addRange(targetRange);
       }
       return this._finishMove(sel, !!targetRange, markAnchorNode, markAnchorOff,
-                               !!targetRange && fwd);
+        !!targetRange && fwd);
     }
 
     // PDF sentence: use visual line model to find [.!?。！？] boundaries.
@@ -2110,6 +2110,33 @@ class CaretEmacs {
 
   beginningOfBuffer() { this._jumpToBufferEdge(true); }
   endOfBuffer() { this._jumpToBufferEdge(false); }
+
+  getScrollPercent() {
+    if (this._isPdfMode()) {
+      const page = this._currentPage();
+      if (page) {
+        const pRect = page.getBoundingClientRect();
+        const sel = window.getSelection();
+        let y = -pRect.top;
+        if (sel?.focusNode) {
+          const rect = this._rangeRectAt(sel.focusNode, sel.focusOffset)
+            || this._collapsedRange(sel.focusNode, sel.focusOffset).getBoundingClientRect();
+          if (rect) y = rect.top - pRect.top;
+        }
+        const total = pRect.height;
+        return total > 0 ? Math.min(100, Math.max(0, y / total * 100)) : 0;
+      }
+    }
+    const total = this._scrollHeight - this._viewportHeight;
+    let y = this._scrollTop;
+    const sel = window.getSelection();
+    if (sel?.focusNode) {
+      const rect = this._rangeRectAt(sel.focusNode, sel.focusOffset)
+        || this._collapsedRange(sel.focusNode, sel.focusOffset).getBoundingClientRect();
+      if (rect) y = rect.top + this._scrollTop;
+    }
+    return total > 0 ? Math.min(100, y / total * 100) : 0;
+  }
 
   beginningOfPage() {
     const p = this._currentPage();
