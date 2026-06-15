@@ -92,6 +92,38 @@ class CaretEmacs {
     return this._debugLog.map((entry) => JSON.stringify(entry)).join("\n");
   }
 
+  /** Dump page layout: mode, scroll, caret, visual lines with segments. */
+  dumpPage() {
+    const page = this._currentPage() || this.el;
+    const { ordered, lines } = this._visuallyOrderedWithLines(page);
+    const caret = this._savedFocus;
+    const vp = this._viewportRect();
+    const mode = this._isPdfMode() ? "PDF" : "HTML";
+    const r = [`=== dumpPage ===`,
+      `mode: ${mode}  page: ${page?.dataset?.pageNumber || "-"}`,
+      `viewport: ${Math.round(vp.left)},${Math.round(vp.top)} - ${Math.round(vp.right)},${Math.round(vp.bottom)}`,
+      `scroll: ${Math.round(this._scrollTop)}/${Math.round(this._scrollHeight)} (${this.getScrollPercent().toFixed(1)}%)`,
+      `mark: ${this.markActive}  caret: node=${caret?.node?.textContent?.slice(0, 10) || "-"} off=${caret?.offset ?? "-"}`,
+      `lines: ${lines.length}  segments: ${ordered.length}`,
+      `---`
+    ];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const bounds = this._lineBounds(line);
+      const segs = line.map(e => {
+        const x = Math.round(e.rect.left);
+        const w = Math.round(e.rect.width);
+        const h = Math.round(e.rect.height);
+        const txt = (e.node.textContent || "").slice(0, 25).replace(/\n/g, "\\n");
+        const grp = e.groupRoot ? `g` : `-`;
+        const idx = ordered.indexOf(e);
+        return `[${x}+${w}x${h} ${grp} #${idx} "${txt}"]`;
+      }).join(" ");
+      r.push(`L${i}: y=${Math.round(bounds.top)} x=${Math.round(bounds.left)}-${Math.round(bounds.right)} h=${Math.round(bounds.height)}  ${segs}`);
+    }
+    return r.join("\n");
+  }
+
   _logDebug(event, data) {
     if (!this._debug) return;
     this._debugLog.push({ event, ...data });
@@ -981,24 +1013,15 @@ class CaretEmacs {
       const sameGroup = this._isPdfMode() || entry.groupRoot === currentLine[0].groupRoot
         || currentLine[0].groupRoot?.contains(entry.groupRoot)
         || entry.groupRoot?.contains(currentLine[0].groupRoot);
-      // Detect column break: horizontal gap exceeding entry height means
-      // the entry belongs to a different column on the same visual line.
-      // Check gap against ALL segments in the current line (not just the last),
-      // because inline elements like <code> can create gaps between non-adjacent
-      // segments that are later filled by their own segments in sort order.
       let sameColumn = true;
       if (sameVisualLine && sameGroup && currentLine.length > 0) {
         sameColumn = false;
         for (let j = 0; j < currentLine.length; j++) {
           const existing = currentLine[j];
           const gap = entry.rect.left - (existing.rect.left + existing.rect.width);
-          if (gap <= Math.max(entry.rect.height, existing.rect.height)) {
-            sameColumn = true;
-            break;
-          }
-          // Also check reverse: entry to the left of existing
           const revGap = existing.rect.left - (entry.rect.left + entry.rect.width);
-          if (revGap <= Math.max(entry.rect.height, existing.rect.height)) {
+          const horizontalDist = Math.max(gap, revGap);
+          if (horizontalDist <= Math.max(entry.rect.height, existing.rect.height)) {
             sameColumn = true;
             break;
           }
@@ -1082,20 +1105,15 @@ class CaretEmacs {
     let top = first.rect.top;
     let bottom = first.rect.top + first.rect.height;
     let height = first.rect.height;
+    let left = Infinity, right = -Infinity;
     for (const entry of line) {
       top = Math.min(top, entry.rect.top);
       bottom = Math.max(bottom, entry.rect.top + entry.rect.height);
       height = Math.max(height, entry.rect.height);
+      left = Math.min(left, entry.rect.left);
+      right = Math.max(right, entry.rect.left + entry.rect.width);
     }
-    return {
-      first,
-      last,
-      left: first.rect.left,
-      right: last.rect.left + last.rect.width,
-      top,
-      bottom,
-      height: Math.max(height, bottom - top)
-    };
+    return { first, last, left, right, top, bottom, height: Math.max(height, bottom - top) };
   }
 
   /* ── Character & Word Movement ─────────────────────────────── */
@@ -1368,14 +1386,20 @@ class CaretEmacs {
           }
         }
 
-        // Merge entries from adjacent line groups at the same visual Y
+        // Merge entries from adjacent line groups at the same visual Y,
+        // but only from the same column (horizontally overlapping with caret)
+        const currBounds = this._lineBounds(lines[currentLineIndex]);
         const mergedLine = [...lines[targetLineIndex]];
         for (let j = targetLineIndex - 1; j >= 0; j--) {
           if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
+          const b = this._lineBounds(lines[j]);
+          if (currBounds && b && (currBounds.right < b.left || b.right < currBounds.left)) continue;
           mergedLine.unshift(...lines[j]);
         }
         for (let j = targetLineIndex + 1; j < lines.length; j++) {
           if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
+          const b = this._lineBounds(lines[j]);
+          if (currBounds && b && (currBounds.right < b.left || b.right < currBounds.left)) continue;
           mergedLine.push(...lines[j]);
         }
         return { range: this._pickPositionOnLine(mergedLine, goalX), scrolled: false };

@@ -308,6 +308,18 @@ Set this to navigate to the previous document/chapter.")
                                (write-region (point-min) (point-max) target nil 'silent))
                              (message "caret.js debug log written to %s" target))))))
 
+(defun caret-xwidget-debug-dump-page (&optional file)
+  "Dump page layout info to FILE (defaults to ~/.emacs.d/caret_page.log)."
+  (interactive)
+  (let ((target (expand-file-name (or file "~/.emacs.d/caret_page.log"))))
+    (caret-xwidget--exec (concat caret-xwidget--js-prefix "dumpPage()")
+                         (lambda (result)
+                           (let ((payload (string-trim (or result "") "\"" "\"")))
+                             (with-temp-buffer
+                               (insert payload)
+                               (write-region (point-min) (point-max) target nil 'silent))
+                             (message "caret.js page dump written to %s" target))))))
+
 (defun caret-xwidget-reload-js ()
   "Reload caret.js from disk and re-inject it into the current xwidget."
   (interactive)
