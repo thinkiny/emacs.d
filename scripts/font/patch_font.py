@@ -2,7 +2,6 @@ import argparse
 import os
 import shutil
 import unicodedata
-
 import fontforge
 
 SFNT_LANGUAGE = "English (US)"
@@ -57,10 +56,19 @@ def parse_arguments() -> argparse.Namespace:
         default=None,
         help="Line-height factor; scales the ascent/descent span (enables line-height adjustment)",
     )
+    parser.add_argument(
+        "--fill-ascii",
+        dest="fill_ascii",
+        action="store_true",
+        help="Copy printable-ASCII glyphs (0x20-0x7E) missing from the input "
+        "from the reference font (requires --width-ref).",
+    )
     parser.add_argument("--family", default=None, help="The new font family name")
     parser.add_argument("--style", default="Regular", help="The font style name")
 
     args = parser.parse_args()
+    if args.fill_ascii and args.width_ref is None:
+        parser.error("--fill-ascii requires --width-ref")
     if args.width_ref is None and args.line_height is None:
         parser.error("nothing to do; pass --width-ref and/or --line-height")
     return args
@@ -123,17 +131,54 @@ def fix_glyph_widths(
     for glyph in input_font.glyphs():
         if glyph.unicode < 0:
             continue
+
         # Preserve zero-advance glyphs (combining marks, control chars, etc.).
         if glyph.width == 0:
             continue
+
         if is_cjk(glyph.unicode):
-            glyph.width = double_width
+            new_width = double_width
             cjk_count += 1
         else:
-            glyph.width = single_width
+            new_width = single_width
             half_count += 1
 
+        # Recenter so the width delta splits across both sidebearings instead of piling on one side.
+        delta = new_width - glyph.width
+        if delta:
+            glyph.width = new_width
+            glyph.transform((1, 0, 0, 1, delta / 2, 0))
+
     return cjk_count, half_count
+
+
+def fill_missing_ascii(input_font: fontforge.font, ref_font: fontforge.font) -> int:
+    """Copy printable-ASCII glyphs absent from input_font from ref_font.
+
+    Run before fix_glyph_widths so injected glyphs get the normalized
+    single-width advance. Returns the number of glyphs copied.
+    """
+    existing = {g.unicode for g in input_font.glyphs()}
+    em_ratio = input_font.em / ref_font.em
+    copied = 0
+    # Space (0x20) through tilde (0x7E); 0x7F (DEL) is non-printable.
+    for cp in range(0x20, 0x7F):
+        if cp in existing:
+            continue
+        try:
+            donor = ref_font[cp]
+        except Exception:
+            continue
+        if not donor.isWorthOutputting():
+            continue
+        target = input_font.createMappedChar(cp)
+        pen = target.glyphPen()
+        donor.draw(pen)
+        del pen  # finalize: fontforge commits the outline on pen GC
+        if em_ratio != 1.0:
+            target.transform((em_ratio, 0, 0, em_ratio, 0, 0))
+        copied += 1
+    return copied
 
 
 def scale_glyphs(font: fontforge.font, scale: float) -> None:
@@ -225,6 +270,9 @@ def main() -> None:
         # outlines). It never touches vertical metrics, so the line-height above is
         # preserved; running it last keeps the aligned widths authoritative.
         if do_width:
+            if args.fill_ascii:
+                n = fill_missing_ascii(font, ref_font)
+                print(f"Copied {n} missing printable-ASCII glyph(s) from reference")
             cjk_count, half_count = fix_glyph_widths(font, ref_font)
             if args.width_scale:
                 scale_glyphs(font, args.width_scale)
