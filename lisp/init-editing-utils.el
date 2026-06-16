@@ -69,8 +69,8 @@
          ("C-c m a" . mc/edit-beginnings-of-lines)))
 
 ;; Progressive selection expansion (word -> sentence)
-(defvar-local selection--pre-selection-point nil
-  "Point position before `selection/expand' was first invoked.")
+(defvar-local selection--saved-caret nil
+  "Original point before `selection/expand'. `selection/quit' restores to this.")
 
 (defun selection--sentence-bounds ()
   "Return (START . END) of the sentence at point, limited by empty lines."
@@ -95,32 +95,33 @@
   (interactive)
   (if (not (region-active-p))
       (progn
-        (setq selection--pre-selection-point (point))
-        (when-let* ((bounds (bounds-of-thing-at-point 'word)))
-          (goto-char (car bounds))
-          (push-mark (cdr bounds) nil t)))
-    (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
-      (unless (string-match-p "[.!?。！？]\\|\\S-\\s-+\\S-" text)
-        (goto-char (region-beginning))
-        (when-let* ((bounds (selection--sentence-bounds)))
-          (goto-char (car bounds))
-          (push-mark (cdr bounds) nil t))))))
+        (setq selection--saved-caret (point))
+        (skip-syntax-backward "w")
+        (mark-word 1))
+    (when (eq last-command 'selection/expand)
+      (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
+        (unless (string-match-p "[.!?。！？]\\|\\S-\\s-+\\S-" text)
+          (goto-char (region-beginning))
+          (when-let* ((bounds (selection--sentence-bounds)))
+            (push-mark (car bounds) nil t)
+            (goto-char (cdr bounds))))))))
 
 (defun selection/toggle-mark ()
   "Toggle the mark, like `set-mark-command'."
   (interactive)
+  (setq selection--saved-caret nil)
   (if (region-active-p)
       (deactivate-mark)
     (push-mark (point) nil t)))
 
 (defun selection/quit ()
-  "Quit selection, restoring point if `selection/expand' moved it."
+  "Deactivate mark; if `selection/expand' set saved caret, restore point there."
   (interactive)
   (if (region-active-p)
       (progn
-        (when selection--pre-selection-point
-          (goto-char selection--pre-selection-point)
-          (setq selection--pre-selection-point nil))
+        (when selection--saved-caret
+          (goto-char selection--saved-caret)
+          (setq selection--saved-caret nil))
         (deactivate-mark))
     (keyboard-quit)))
 
@@ -197,11 +198,18 @@ With arg N, insert N newlines."
          ("M-p" . symbol-overlay-jump-prev)))
 
 (defun forward-word-begin ()
-  "Move point to the beginning of the next word."
+  "Move point to the beginning of the next word.
+When region is active, extend selection to end of next word."
   (interactive)
-  (forward-word 1)
-  (forward-word 1)
-  (backward-word 1))
+  (if (region-active-p)
+      (let ((anchor (region-beginning))
+            (end (region-end)))
+        (goto-char end)
+        (forward-word 1)
+        (push-mark anchor nil t))
+    (forward-word 1)
+    (forward-word 1)
+    (backward-word 1)))
 
 ;;----------------------------------------------------------------------------
 ;; Code Folding

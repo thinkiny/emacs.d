@@ -25,6 +25,7 @@ class CaretEmacs {
   constructor(el = document, opts = {}) {
     this.el = el;
     this.markActive = false;
+    this._savedCaret = null;
     this._debug = false;
     this._debugLog = [];
     this._onSelectionChange = this._updateCursor.bind(this);
@@ -1534,6 +1535,19 @@ class CaretEmacs {
       let moved = granularity === "character"
         ? this._moveCharVisual(sel, fwd)
         : this._moveWordVisual(sel, fwd);
+      // After expandSelection, _moveWordVisual lands at the start of the next word,
+      // but the selection should include that entire word. Extend past it.
+      if (moved && this._savedCaret && granularity === "word") {
+        let n = sel.focusNode, o = sel.focusOffset;
+        if (n.nodeType === Node.TEXT_NODE) {
+          if (fwd) {
+            while (o < n.textContent.length && this._isWordChar(n.textContent[o])) o++;
+          } else {
+            while (o > 0 && this._isWordChar(n.textContent[o - 1])) o--;
+          }
+          if (o !== sel.focusOffset) sel.collapse(n, o);
+        }
+      }
       if (moved) this._snapToText(sel, fwd);
       if (moved && this._movedWrongWay(startNode, startOff, sel.focusNode, sel.focusOffset, fwd)) {
         sel.collapse(startNode, startOff);
@@ -2045,6 +2059,7 @@ class CaretEmacs {
       return false;
     }
     this.markActive = true;
+    this._savedCaret = null;
     document.documentElement.style.setProperty("--caret-color", "#ff4444");
     this._updateCursor();
     return true;
@@ -2054,7 +2069,8 @@ class CaretEmacs {
     this.markActive = false;
     document.documentElement.style.setProperty("--caret-color", "");
     const sel = window.getSelection();
-    const c = this._savedFocus;
+    const c = this._savedCaret || this._savedFocus;
+    this._savedCaret = null;
     if (c?.node && this._root.contains(c.node)) {
       sel.collapse(c.node, c.offset);
     } else if (sel?.rangeCount) {
@@ -2071,7 +2087,7 @@ class CaretEmacs {
 
     const scope = this._detectSelectionScope();
     if (scope === 'none') {
-      this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+      this._savedCaret = { node: sel.focusNode, offset: sel.focusOffset };
       const node = sel.focusNode;
       const off = sel.focusOffset;
       if (node.nodeType === Node.TEXT_NODE) {
@@ -2094,11 +2110,8 @@ class CaretEmacs {
             end = off;
           }
         }
-        const rng = document.createRange();
-        rng.setStart(node, start);
-        rng.setEnd(node, end);
-        sel.removeAllRanges();
-        sel.addRange(rng);
+        sel.setBaseAndExtent(node, start, node, end);
+        this._savedFocus = { node, offset: end };
       } else {
         sel.modify('move', 'forward', 'word');
         sel.modify('extend', 'backward', 'word');

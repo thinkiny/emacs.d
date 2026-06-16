@@ -158,12 +158,11 @@ def fill_missing_ascii(input_font: fontforge.font, ref_font: fontforge.font) -> 
     Run before fix_glyph_widths so injected glyphs get the normalized
     single-width advance. Returns the number of glyphs copied.
     """
-    existing = {g.unicode for g in input_font.glyphs()}
     em_ratio = input_font.em / ref_font.em
     copied = 0
     # Space (0x20) through tilde (0x7E); 0x7F (DEL) is non-printable.
     for cp in range(0x20, 0x7F):
-        if cp in existing:
+        if cp in input_font:
             continue
         try:
             donor = ref_font[cp]
@@ -171,12 +170,19 @@ def fill_missing_ascii(input_font: fontforge.font, ref_font: fontforge.font) -> 
             continue
         if not donor.isWorthOutputting():
             continue
+
         target = input_font.createMappedChar(cp)
         pen = target.glyphPen()
         donor.draw(pen)
-        del pen  # finalize: fontforge commits the outline on pen GC
+        pen = None  # finalize: fontforge commits the outline on pen GC
+
+        # draw() copies outlines but width defaults to input_font.em, not the
+        # donor's actual advance.  Correct it so scaling works properly.
+        target.width = donor.width
+
         if em_ratio != 1.0:
             target.transform((em_ratio, 0, 0, em_ratio, 0, 0))
+
         copied += 1
     return copied
 
@@ -276,6 +282,7 @@ def main() -> None:
             cjk_count, half_count = fix_glyph_widths(font, ref_font)
             if args.width_scale:
                 scale_glyphs(font, args.width_scale)
+
             scale_tag = (
                 str(args.width_scale).replace(".", "_") if args.width_scale else "NS"
             )
