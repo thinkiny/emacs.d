@@ -83,12 +83,10 @@ Pixel-scrolls tall non-text content and repositions at window boundaries."
               (precision-scroll--line-non-text-p dir))
           (ignore-errors
             (if (precision-scroll--line-non-text-p)
-                (let* ((row (count-screen-lines (window-start) (point)))
-                       (target (precision-scroll--skip-to-text dir)))
+                (let ((target (precision-scroll--skip-to-text dir)))
                   (when target
                     (goto-char target)
-                    (set-window-vscroll nil 0 t)
-                    (recenter row)))
+                    (set-window-vscroll nil 0 t)))
               (if (> dir 0)
                   (pixel-scroll-precision-scroll-down (precision-scroll-nontext-height))
                 (pixel-scroll-precision-scroll-up (precision-scroll-nontext-height))))))
@@ -149,8 +147,10 @@ Keep point if still visible; otherwise move to bottom of window."
   :set (lambda (symbol val)
          (set-default symbol val)
          (if (bound-and-true-p *is-a-nt*) ; Windows
-             (set-frame-parameter nil 'alpha (cons val val))
-           (set-frame-parameter nil 'alpha-background val))))
+             (modify-all-frames-parameters
+              (list (cons 'alpha (cons val val))))
+           (modify-all-frames-parameters
+            (list (cons 'alpha-background val))))))
 
 (defun set-transparency ()
   "Set the transparency of the frame window from 0=transparent to 100=opaque."
@@ -271,7 +271,7 @@ reader assets."
     nil)
    (t
     (if (= (point-max) (point-min)) 0
-      (round (* 100.0 (/ (float (point)) (- (point-max) (point-min)))))))))
+      (min 100 (round (* 100.0 (/ (float (point)) (- (point-max) (point-min))))))))))
 
 (defun mode-line-position ()
   "Display line number and position."

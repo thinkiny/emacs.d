@@ -15,16 +15,24 @@
   (define-key elfeed-search-mode-map (kbd "O") #'elfeed-open-selected-in-chrome)
   (define-key elfeed-search-mode-map (kbd "o") #'elfeed-open-selected-in-chrome-background))
 
+;; shr
+(with-eval-after-load 'shr
+  (setq shr-max-width nil)
+  (setq shr-use-colors nil)
+  (setq shr-sliced-image-height 0.1)
+  (set-face-attribute 'variable-pitch nil :family 'unspecified)
+  (set-face-attribute 'variable-pitch-text nil :height 1.0)
+
+  (unbind-key (kbd "v") 'shr-map)
+  (unbind-key (kbd "w") 'shr-map))
+
+;; elfeed options
 (defun elfeed--switch ()
   "Switch to *elfeed-entry* if it exists, otherwise run elfeed."
   (interactive)
   (if (get-buffer "*elfeed-entry*")
       (switch-to-buffer "*elfeed-entry*")
     (elfeed)))
-
-(with-eval-after-load 'shr
-  (setq shr-use-colors nil)
-  (setq shr-sliced-image-height 0.3))
 
 (defun kill-elfeed-show-buffer()
   (when-let* ((buffer (get-buffer "*elfeed-entry*")))
@@ -73,11 +81,6 @@
 
 (defun my-elfeed-show-mode-hook()
   (visual-line-mode)
-  (eldoc-mode -1)
-  (font-lock-mode -1)
-  (unbind-key (kbd "v") 'shr-map)
-  (unbind-key (kbd "w") 'shr-map)
-  (face-remap-add-relative 'shr-text :inherit 'default)
   (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'translate-at-point)
   (define-key elfeed-show-mode-map (kbd "=")   #'selection/expand)
   (define-key elfeed-show-mode-map (kbd "n")   #'precision-scroll-next-line)
@@ -108,10 +111,11 @@
   (define-key elfeed-show-mode-map (kbd "N")   #'elfeed-show-next)
   (define-key elfeed-show-mode-map (kbd "P")   #'elfeed-show-prev)
   (define-key elfeed-show-mode-map (kbd "M-c") #'kill-ring-save)
-  (define-key elfeed-show-mode-map (kbd "M-w") #'kill-ring-save)
-  )
+  (define-key elfeed-show-mode-map (kbd "M-w") #'kill-ring-save))
 
 (add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook)
+
+;; elfeed-show-update-hook
 (defun elfeed-show--jump-to-content ()
   "Jump to the main content, past the header metadata."
   (forward-paragraph)

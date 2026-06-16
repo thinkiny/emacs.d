@@ -9,7 +9,7 @@
   :group 'applications
   :prefix "pdf-xwidget-")
 
-(defconst pdf-xwidget-name-format "*PDF: %s")
+(defconst pdf-xwidget-name-format "*PDF: %s*")
 
 (defcustom pdf-xwidget-pdfjs-dir
   (expand-file-name "assets/pdfjs" user-emacs-directory)

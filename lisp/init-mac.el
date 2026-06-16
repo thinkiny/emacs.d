@@ -111,7 +111,8 @@ fi"
   :type 'integer
   :set (lambda (symbol val)
          (set-default symbol val)
-         (set-frame-parameter nil 'ns-background-blur val)))
+         (modify-all-frames-parameters
+          (list (cons 'ns-background-blur val)))))
 
 (defun set-background-blur ()
   "Set the background blur of the frame window (macOS only)."

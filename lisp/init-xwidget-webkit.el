@@ -5,7 +5,7 @@
 ;;; Customization
 
 (defgroup xwidget-webkit '() "xwidget webkit" :group 'tools)
-(setq xwidget-webkit-buffer-name-format "*WEB: %T")
+(setq xwidget-webkit-buffer-name-format "*WEB: %T*")
 (setq xwidget-webkit-proxy (local-proxy-http-url))
 
 ;;; URL & Session Helpers

@@ -315,7 +315,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
                     (nov-xwidget-previous-document)
                     (run-at-time 0.1 nil #'xwidget-webkit-scroll-bottom)))
       (set-buffer-modified-p nil)
-      (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s" (file-name-nondirectory epub-file-name))))))
+      (setq-local xwidget-webkit-buffer-name-format (format "*Epub: %s*" (file-name-nondirectory epub-file-name))))))
 
 (defun nov-xwidget--goto-index (index)
   (let* ((docs nov-documents)

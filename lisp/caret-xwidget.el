@@ -94,17 +94,22 @@ Set this to navigate to the previous document/chapter.")
   (when-let* ((xw (xwidget-webkit-current-session)))
     (xwidget-webkit-execute-script xw js callback)))
 
+(defvar-local caret-xwidget--scroll-percent-cache 0
+  "Cached last valid scroll percent for the current xwidget buffer.")
+
 (defun caret-xwidget-scroll-percent ()
   "Return scroll percent for the current xwidget buffer as a number."
   (let ((result (xwidget-webkit-execute-script-sync
                  (concat "window.__caretEmacs ? window.__caretEmacs.getScrollPercent() : 0")
                  0.1)))
     (cond
-     ((numberp result) result)
-     ((null result) (message "caret-xwidget-scroll-percent: timeout")
-      0)
+     ((numberp result)
+      (setq caret-xwidget--scroll-percent-cache result))
+     ((null result)
+      ;;(message "caret-xwidget-scroll-percent: timeout")
+      caret-xwidget--scroll-percent-cache)
      (t (message "caret-xwidget-scroll-percent: unexpected %S" result)
-        0))))
+        caret-xwidget--scroll-percent-cache))))
 
 (defun caret-xwidget--handle-boundary-result (result)
   "Auto-paginate based on boundary RESULT from moveWithBoundaryCheck."
