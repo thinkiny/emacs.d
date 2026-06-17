@@ -354,8 +354,15 @@ When region is active, extend selection to end of next word."
          ([remap dired-do-shell-command] . dwim-shell-command)
          ([remap dired-smart-shell-command] . dwim-shell-command)))
 
-;; string-inflection
-(use-package string-inflection)
+(defun map-buffer-to-local-file (local-file)
+  "Map the current buffer to a `LOCAL-FILE."
+  (when-let* ((file (and local-file (expand-file-name local-file)))
+              (dir (file-name-directory file))
+              ((file-directory-p dir)))
+    (setq default-directory dir
+          buffer-file-name file)
+    (add-hook 'kill-buffer-query-functions
+              (lambda () (set-buffer-modified-p nil) t) nil t)))
 
 ;;----------------------------------------------------------------------------
 ;; Text Utilities

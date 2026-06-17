@@ -205,4 +205,7 @@ Returns nil if no key matches TARGET or if ALIST is empty."
         (cdr longest-pair)))))
 
 
+;; string-inflection
+(use-package string-inflection)
+
 (provide 'init-utils)

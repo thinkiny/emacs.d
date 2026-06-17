@@ -7,6 +7,8 @@
   (use-proxy-local 'url-retrieve)
   (when-let* ((proxy-url (local-proxy-http-url)))
     (setq elfeed-curl-extra-arguments (list "-x" proxy-url)))
+
+  (defvar elfeed-local-mapping "~/org/*elfeed*")
   (setq elfeed-db-directory "~/.emacs.d/elfeed")
   (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
   (setq elfeed-search-print-entry-function #'elfeed-search-print-entry--custom)
@@ -43,7 +45,7 @@
   (interactive)
   (when-let* ((link (elfeed-entry-link elfeed-show-entry)))
     (kill-elfeed-show-buffer)
-    (xwidget-webkit-browse-open-url link t)))
+    (xwidget-webkit-browse-open-url link t elfeed-local-mapping)))
 
 (defun elfeed-open-entry-in-chrome(entry &optional background)
   (let* ((link (or (get-text-property (point) 'shr-url)
@@ -82,6 +84,7 @@
 
 (defun my-elfeed-show-mode-hook()
   (visual-line-mode)
+  (map-buffer-to-local-file elfeed-local-mapping)
   (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'translate-at-point)
   (define-key elfeed-show-mode-map (kbd "=")   #'selection/expand)
   (define-key elfeed-show-mode-map (kbd "n")   #'precision-scroll-next-line)

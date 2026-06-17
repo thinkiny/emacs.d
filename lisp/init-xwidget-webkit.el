@@ -26,7 +26,15 @@
       (xwidget-webkit-goto-uri (xwidget-at (point-min)) url)
     (xwidget-webkit-new-session url)))
 
-(defun xwidget-webkit-browse-open-url(url &optional new-session)
+(defun xwidget-webkit-set-local-file-mapping(local-file)
+  (when-let* ((session (xwidget-at (point-min)))
+              (buffer (xwidget-buffer session))
+              (local-file (or local-file
+                              (file-name-concat (or (projectile-project-root) "~/org") "*web*"))))
+    (with-current-buffer buffer
+      (map-buffer-to-local-file local-file))))
+
+(defun xwidget-webkit-browse-open-url(url &optional new-session local-file)
   "Ask xwidget-webkit to browse URL.
 When NEW-SESSION is non-nil, open URL in a new xwidget session instead of
 reusing an existing one."
@@ -42,7 +50,8 @@ reusing an existing one."
         (funcall 'pdf-xwidget-open url)
       (if new-session
           (xwidget-webkit-new-session url)
-        (xwidget-webkit-create-or-goto-url url)))))
+        (xwidget-webkit-create-or-goto-url url)))
+    (xwidget-webkit-set-local-file-mapping local-file)))
 
 (setq browse-url-browser-function 'xwidget-webkit-browse-open-url)
 

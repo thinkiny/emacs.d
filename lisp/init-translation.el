@@ -47,12 +47,12 @@
           detailed-translation translation "\n- %s:" "\n%d.%s ")
        (concat ": " translation)))))
 
-(defun google-translate--format-sentence-output (gtos)
+(defun google-translate--format-sentences-output (gtos)
   (let ((norm (lambda (text)
                 (string-trim
                  (replace-regexp-in-string
                   "[[:space:]]+" " "
-                  (replace-regexp-in-string "\n" "" text))))))
+                  (replace-regexp-in-string "\n" " " text))))))
     (concat
      (funcall norm (gtos-translation gtos))
      "\n"
@@ -63,7 +63,7 @@
   (google-translate--trim-string
    (if (google-translate--word-p (gtos-text gtos))
        (google-translate--format-word-output gtos detail)
-     (google-translate--format-sentence-output gtos))))
+     (google-translate--format-sentences-output gtos))))
 
 (defun google-translate-echo-area-output-translation (gtos)
   "Output translation to the echo area. "
@@ -93,7 +93,7 @@ PX-POS is a cons (X . Y) in pixels."
     (cons px-pos (min avail max-cols))))
 
 (defun google-translate-posframe-output-translation (gtos)
-  "Output translation to the posframe tooltip based on `GTOS` using `posframe' package."
+  "Output translation to the posframe tooltip based on `GTOS`."
   (let* ((pos+width (google-translate-posframe-pos))
          (px-pos (car pos+width))
          (max-width (cdr pos+width))
@@ -130,7 +130,7 @@ PX-POS is a cons (X . Y) in pixels."
 
 ;; tranlate functions
 (defvar translate-backend 'google
-  "Translation backend to use. Either 'bing or 'google.")
+  "Translation backend to use.Either `bing or `google.")
 
 (defvar-local caret-xwidget-translate-pos nil
   "Saved pixel position (X . Y) for posframe in xwidget buffers.")
