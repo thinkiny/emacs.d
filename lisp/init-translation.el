@@ -48,11 +48,15 @@
        (concat ": " translation)))))
 
 (defun google-translate--format-sentence-output (gtos)
-  (concat
-   (replace-regexp-in-string "\n" " " (gtos-translation gtos))
-   "\n"
-   (replace-regexp-in-string "\n" " " (gtos-text gtos))
-   ))
+  (let ((norm (lambda (text)
+                (string-trim
+                 (replace-regexp-in-string
+                  "[[:space:]]+" " "
+                  (replace-regexp-in-string "\n" "" text))))))
+    (concat
+     (funcall norm (gtos-translation gtos))
+     "\n"
+     (funcall norm (gtos-text gtos)))))
 
 (defun google-translate--format-output (gtos &optional detail)
   "Format translation output from GTOS."

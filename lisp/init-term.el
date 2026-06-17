@@ -65,6 +65,11 @@ Otherwise, enter copy mode and go to window start."
       (goto-char (point-max))
     (ghostel-readonly-exit)))
 
+(defun ghostel-copy-mode-quit ()
+  "Deactivate region, otherwise exit ghostel readonly mode."
+  (interactive)
+  (selection/quit #'ghostel-readonly-exit))
+
 ;; ghostel semi-char mode keybindings
 (define-key ghostel-semi-char-mode-map (kbd "M-w") #'kill-ring-save)
 (define-key ghostel-semi-char-mode-map (kbd "C-e") #'ghostel--send-event)
@@ -87,7 +92,7 @@ Otherwise, enter copy mode and go to window start."
 (define-key ghostel-readonly-mode-map (kbd "<SPC>") #'selection/toggle-mark)
 (define-key ghostel-readonly-mode-map (kbd "C-c v") #'ghostel-readonly-exit)
 (define-key ghostel-readonly-mode-map (kbd "=") #'selection/expand)
-(define-key ghostel-readonly-mode-map (kbd "C-g") #'selection/quit)
+(define-key ghostel-readonly-fast-exit-mode-map (kbd "C-g") #'ghostel-copy-mode-quit)
 (define-key ghostel-readonly-mode-map (kbd ",") #'translate-at-point)
 (define-key ghostel-readonly-mode-map (kbd "n") #'precision-scroll-next-line)
 (define-key ghostel-readonly-mode-map (kbd "p") #'precision-scroll-prev-line)
@@ -177,7 +182,7 @@ Otherwise, enter copy mode and go to window start."
   (define-key vterm-copy-mode-map (kbd "<SPC>") #'selection/toggle-mark)
   (define-key vterm-copy-mode-map (kbd "C-c v") 'vterm-copy-mode)
   (define-key vterm-copy-mode-map (kbd "=") #'selection/expand)
-  (define-key vterm-copy-mode-map (kbd "C-g") #'selection/quit)
+  (define-key vterm-copy-mode-map (kbd "C-g") #'vterm-copy-mode-quit)
   (define-key vterm-copy-mode-map (kbd ",") #'translate-at-point)
   (define-key vterm-copy-mode-map (kbd "n") #'precision-scroll-next-line)
   (define-key vterm-copy-mode-map (kbd "p") #'precision-scroll-prev-line)
@@ -247,6 +252,11 @@ In *claude-code buffers, go to the last prompt line (❯ or ⏺) instead."
       (goto-char (point-max))
     (vterm-copy-mode -1)
     (vterm-reset-cursor-point)))
+
+(defun vterm-copy-mode-quit ()
+  "Deactivate region, otherwise exit `vterm-copy-mode'."
+  (interactive)
+  (selection/quit #'vterm-copy-mode))
 
 (defun term-copy-mode-backward-prompt ()
   "In *claude-code buffers, jump to the last or previous prompt (❯ or ⏺).

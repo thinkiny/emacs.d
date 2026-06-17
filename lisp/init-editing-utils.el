@@ -114,8 +114,9 @@
       (deactivate-mark)
     (push-mark (point) nil t)))
 
-(defun selection/quit ()
-  "Deactivate mark; if `selection/expand' set saved caret, restore point there."
+(defun selection/quit (&optional quit-function)
+  "Deactivate mark; if `selection/expand' set saved caret, restore point there.
+When no region is active, call QUIT-FUNCTION if non-nil, else `keyboard-quit'."
   (interactive)
   (if (region-active-p)
       (progn
@@ -123,7 +124,9 @@
           (goto-char selection--saved-caret)
           (setq selection--saved-caret nil))
         (deactivate-mark))
-    (keyboard-quit)))
+    (if quit-function
+        (funcall quit-function)
+      (keyboard-quit))))
 
 ;;----------------------------------------------------------------------------
 ;; Don't disable narrowing commands

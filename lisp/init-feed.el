@@ -11,6 +11,7 @@
   (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
   (setq elfeed-search-print-entry-function #'elfeed-search-print-entry--custom)
   (define-key elfeed-search-mode-map (kbd "j") #'next-line)
+  (define-key elfeed-search-mode-map (kbd "v") #'scroll-up)
   (define-key elfeed-search-mode-map (kbd "k") #'previous-line)
   (define-key elfeed-search-mode-map (kbd "O") #'elfeed-open-selected-in-chrome)
   (define-key elfeed-search-mode-map (kbd "o") #'elfeed-open-selected-in-chrome-background))
