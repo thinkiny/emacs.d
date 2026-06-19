@@ -278,12 +278,12 @@ reader assets."
   (let ((percent (mode-line-scroll-percent)))
     (cond
      ((derived-mode-p 'xwidget-webkit-mode)
-      (format " %s(%d%%%%) " (buffer-name) percent))
+      (format " %d%%%% %s" percent (buffer-name)))
      ((derived-mode-p '(ghostel-mode vterm-mode eshell-mode))
       (format-mode-line " %b "))
      (t
-      (format " %d:%s(%d%%%%) "
-              (line-number-at-pos) (buffer-name) percent)))))
+      (format " %d%%%% %d:%s"
+               percent (line-number-at-pos) (buffer-name))))))
 
 (cl-defstruct (mode-line-cache (:constructor mode-line-cache-create))
   project-name
@@ -313,9 +313,10 @@ reader assets."
     project-name))
 
 (defun mode-line-cache--compute-flymake-counters ()
-  (if (bound-and-true-p flymake-mode)
-      (concat (format-mode-line (flymake--mode-line-counters)) " ")
-    ""))
+  (concat (if (bound-and-true-p flymake-mode)
+              (format-mode-line (flymake--mode-line-counters))
+            "")
+          " "))
 
 (defun mode-line-cache-refresh (&optional buffer)
   (with-current-buffer (or buffer (current-buffer))

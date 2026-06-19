@@ -29,7 +29,7 @@ PDFJS_THEME_HOOK_ANCHOR = '  <script src="viewer.mjs" type="module"></script>'
 NOV_TEMPLATE = """html,body{{
   background: {background} !important;
   color: {foreground} !important;
-}}"""
+}}{dark_block}"""
 
 PDFJS_THEME_TEMPLATE = """<script>
 document.addEventListener(
@@ -153,7 +153,7 @@ THEME_MODES: dict[str, ThemeMode] = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Update generated EPUB/PDF.js reader assets to match a provided theme mode and foreground color.",
+        description="Update generated EPUB/PDF.js reader assets to match a provided theme style and foreground color.",
         epilog=(
             "Examples:\n"
             "  python3 scripts/update_reader_theme_colors.py dark f8f8f2\n"
@@ -168,9 +168,9 @@ def parse_args() -> argparse.Namespace:
         help="Validate the expected reader asset state without writing files.",
     )
     parser.add_argument(
-        "theme",
+        "theme_style",
         choices=sorted(THEME_MODES),
-        help="Theme mode for generated overrides.",
+        help="Theme style for generated overrides.",
     )
     parser.add_argument(
         "--background",
@@ -269,14 +269,28 @@ def write_text_if_changed(path: Path, updated: str) -> bool:
     return True
 
 
-def nov_source_path(theme_name: str) -> Path:
-    if theme_name == "light":
+def nov_source_path(theme_style: str) -> Path:
+    if theme_style == "light":
         return NOV_SOURCE_LIGHT_CSS
     return NOV_SOURCE_DARK_CSS
 
 
-def build_nov_override_body(foreground: str, background: str) -> str:
-    return NOV_TEMPLATE.format(foreground=foreground, background=background)
+def build_nov_override_body(theme_style: str, foreground: str, background: str) -> str:
+    dark_block = ""
+    if theme_style == "dark":
+        dark_block = (
+            "\n#sbo-rt-content * {{\n"
+            "  color: {foreground} !important;\n"
+            "  background: {background} !important;\n"
+            "}}\n"
+            "#sbo-rt-content img,\n"
+            "#sbo-rt-content svg {{\n"
+            "    filter: invert(1) hue-rotate(180deg) !important;\n"
+            "}}\n"
+        ).format(foreground=foreground, background=background)
+    return NOV_TEMPLATE.format(
+        foreground=foreground, background=background, dark_block=dark_block
+    )
 
 
 def strip_nov_generated_block(source_path: Path) -> str:
@@ -284,13 +298,15 @@ def strip_nov_generated_block(source_path: Path) -> str:
     return remove_marker_block(contents, NOV_MARKER_START, NOV_MARKER_END)
 
 
-def build_nov_override_contents(theme_name: str, foreground: str, background: str) -> str:
-    source_contents = strip_nov_generated_block(nov_source_path(theme_name))
+def build_nov_override_contents(
+    theme_style: str, foreground: str, background: str
+) -> str:
+    source_contents = strip_nov_generated_block(nov_source_path(theme_style))
     return set_marker_block(
         source_contents,
         NOV_MARKER_START,
         NOV_MARKER_END,
-        build_nov_override_body(foreground, background),
+        build_nov_override_body(theme_style, foreground, background),
     )
 
 
@@ -390,33 +406,39 @@ def run_operations(
     return 0
 
 
-def build_sync_operations(theme_name: str, foreground: str, background: str) -> list[AssetOperation]:
-    theme_mode = THEME_MODES[theme_name]
-    source_css = nov_source_path(theme_name)
+def build_sync_operations(
+    theme_style: str, foreground: str, background: str
+) -> list[AssetOperation]:
+    theme_mode = THEME_MODES[theme_style]
+    source_css = nov_source_path(theme_style)
     return [
         AssetOperation(
-            label=f"{theme_name} EPUB reader override state",
+            label=f"{theme_style} EPUB reader override state",
             path=NOV_OVERRIDE_CSS,
-            build_expected=lambda: build_nov_override_contents(theme_name, foreground, background),
+            build_expected=lambda: build_nov_override_contents(
+                theme_style, foreground, background
+            ),
             changed_message=(
                 f"Rebuilt {NOV_OVERRIDE_CSS.name} from {source_css.name} "
-                f"for {theme_name} theme using background {background} and foreground {foreground}"
+                f"for {theme_style} theme using background {background} and foreground {foreground}"
             ),
         ),
         AssetOperation(
-            label=f"{theme_name} PDF.js theme hook state",
+            label=f"{theme_style} PDF.js theme hook state",
             path=PDFJS_VIEWER_HTML,
             build_expected=lambda: build_pdfjs_theme_html_contents(theme_mode),
             changed_message=(
-                f"Updated {PDFJS_VIEWER_HTML.name} for {theme_name} PDF.js theme hook"
+                f"Updated {PDFJS_VIEWER_HTML.name} for {theme_style} PDF.js theme hook"
             ),
         ),
         AssetOperation(
-            label=f"{theme_name} PDF.js CSS override state",
+            label=f"{theme_style} PDF.js CSS override state",
             path=PDFJS_VIEWER_CSS,
-            build_expected=lambda: build_pdfjs_viewer_css_contents(foreground, background),
+            build_expected=lambda: build_pdfjs_viewer_css_contents(
+                foreground, background
+            ),
             changed_message=(
-                f"Updated {PDFJS_VIEWER_CSS.name} for {theme_name} PDF.js foreground {foreground}"
+                f"Updated {PDFJS_VIEWER_CSS.name} for {theme_style} PDF.js foreground {foreground}"
             ),
         ),
     ]
@@ -425,8 +447,10 @@ def build_sync_operations(theme_name: str, foreground: str, background: str) -> 
 # Top-level workflows
 
 
-def sync_reader_assets(theme_name: str, foreground: str, background: str, check: bool = False) -> int:
-    source_css = nov_source_path(theme_name)
+def sync_reader_assets(
+    theme_style: str, foreground: str, background: str, check: bool = False
+) -> int:
+    source_css = nov_source_path(theme_style)
     try:
         ensure_paths_exist([source_css, PDFJS_VIEWER_HTML, PDFJS_VIEWER_CSS])
     except FileNotFoundError as exc:
@@ -438,14 +462,14 @@ def sync_reader_assets(theme_name: str, foreground: str, background: str, check:
 
     try:
         return run_operations(
-            build_sync_operations(theme_name, foreground, background),
+            build_sync_operations(theme_style, foreground, background),
             check=check,
             success_message=(
-                f"Reader assets already match {theme_name} theme "
+                f"Reader assets already match {theme_style} theme "
                 f"with background {background} and foreground {foreground}"
             ),
             unchanged_message=(
-                f"No changes needed; reader assets already match {theme_name} theme "
+                f"No changes needed; reader assets already match {theme_style} theme "
                 f"with background {background} and foreground {foreground}"
             ),
         )
@@ -471,7 +495,7 @@ def main() -> int:
             print(f"error: {exc}", file=sys.stderr)
             return 2
 
-    return sync_reader_assets(args.theme, foreground, background, check=args.check)
+    return sync_reader_assets(args.theme_style, foreground, background, check=args.check)
 
 
 if __name__ == "__main__":

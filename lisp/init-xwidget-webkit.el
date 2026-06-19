@@ -125,6 +125,7 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (interactive)
   (if (y-or-n-p (format "Close %s? " (buffer-name)))
       (let ((kill-buffer-query-functions nil))
+        (set-buffer-modified-p nil)
         (kill-buffer (current-buffer)))
     (quit-window)))
 

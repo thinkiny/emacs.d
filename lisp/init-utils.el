@@ -109,8 +109,13 @@
                    ,@body)))))
 
 ;; proxy
-(defvar local-proxy-endpoint "127.0.0.1:1087")
-(defconst local-proxy-no-proxy-regexp "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
+(defcustom local-proxy-endpoint nil
+  "Host and port of the local HTTP proxy, e.g. \"127.0.0.1:1087\".
+When nil, proxy-related functions behave as if no proxy is configured."
+  :type '(choice (string :tag "Host:Port")
+                 (const :tag "No proxy" nil)))
+
+(defvar local-proxy-no-proxy-regexp "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
 
 (defun local-proxy-http-url ()
   "Return HTTP proxy URL from `local-proxy-endpoint'."
@@ -138,11 +143,14 @@
 
 (defun set-proxy()
   (interactive)
+  (unless local-proxy-endpoint
+    (setq local-proxy-endpoint "127.0.0.1:1087"))
   (setq url-proxy-services-local (local-proxy-url-proxy-services))
   (setq url-proxy-services url-proxy-services-local))
 
 (defun unset-proxy()
   (interactive)
+  (setq local-proxy-endpoint nil)
   (setq url-proxy-services nil))
 
 (defun advice/use-proxy-local (func &rest args)
