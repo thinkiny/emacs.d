@@ -361,6 +361,7 @@ When region is active, extend selection to end of next word."
               ((file-directory-p dir)))
     (setq default-directory dir
           buffer-file-name file)
+    (set-buffer-modified-p nil)
     (add-hook 'kill-buffer-query-functions
               (lambda () (set-buffer-modified-p nil) t) nil t)))
 

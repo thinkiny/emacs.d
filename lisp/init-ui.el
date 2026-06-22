@@ -280,7 +280,7 @@ reader assets."
      ((derived-mode-p 'xwidget-webkit-mode)
       (format " %d%%%% %s" percent (buffer-name)))
      ((derived-mode-p '(ghostel-mode vterm-mode eshell-mode))
-      (format-mode-line " %b "))
+      (format-mode-line " %b"))
      (t
       (format " %d%%%% %d:%s"
                percent (line-number-at-pos) (buffer-name))))))

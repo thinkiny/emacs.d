@@ -272,7 +272,7 @@ TIMEOUT defaults to 2 seconds."
   (when (not (derived-mode-p 'nov-xwidget-webkit-mode 'pdf-xwidget-mode))
     (xwidget-webkit-eval-script
      "var s = document.createElement('style');
-s.textContent = 'html,body,:not(caret-cursor){background:transparent!important}';
+s.textContent = 'html,body,:not(caret-cursor){background:transparent!important} ::selection{background:auto!important;}';
 document.head.appendChild(s);")))
 
 (defun xwidget-webkit--transparent-bg-callback-advice (orig-fn xwidget event-type)

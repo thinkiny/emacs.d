@@ -268,7 +268,7 @@ MAX-WIDTH controls text truncation (defaults to window width)."
 
 (defconst project-search--rg-base-args
   '("--no-heading" "--line-number" "--column"
-    "--ignore-case" "--color" "never" "--hidden" "--fixed-strings")
+    "--ignore-case" "--color" "never" "--hidden")
   "Base ripgrep flags shared by sync and async search.")
 
 (defun project-search--parse-rg-line (line project-root)
