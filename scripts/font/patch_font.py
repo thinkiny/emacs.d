@@ -150,25 +150,49 @@ def fix_glyph_widths(
 
 
 def merge_symbol_font(
-    input_font: fontforge.font, donor_path: str, donor_font: fontforge.font
-) -> int:
+    input_font: fontforge.font,
+    donor_path: str,
+    donor_font: fontforge.font,
+    single_width: int | None = None,
+) -> tuple[int, int]:
     """Copy every glyph missing from input_font from the donor font.
 
     mergeFonts handles all codepoints, composite glyphs, and cubic↔quadratic
     conversion natively — no per-glyph draw() and no "No glyph named X"
-    warning chatter.  Added outlines are em-scaled to match input_font;
-    fix_glyph_widths later snaps their advances to the cell width.
+    warning chatter.  Added outlines are em-scaled to match input_font; any
+    added glyph whose ink is wider than the mono cell (single_width) is then
+    shrunk to fit and recentered, so wide donor icons (e.g. a non-Mono Nerd
+    Font) don't overflow into neighbouring cells.  fix_glyph_widths later
+    snaps their advances to the cell width.
+
+    Returns (added, resized).
     """
     em_ratio = input_font.em / donor_font.em
     existing = {g.unicode for g in input_font.glyphs() if g.unicode >= 0}
     input_font.mergeFonts(donor_path)
     added = 0
+    resized = 0
     for glyph in input_font.glyphs():
         cp = glyph.unicode
         if cp >= 0 and cp not in existing:
             glyph.transform((em_ratio, 0, 0, em_ratio, 0, 0))
+            if single_width:
+                try:
+                    minx, _miny, maxx, _maxy = glyph.boundingBox()
+                except (TypeError, ValueError):
+                    minx = maxx = 0
+                ink = maxx - minx
+                if ink > single_width:
+                    # Uniform scale to fit the cell, then recenter.  Set the
+                    # advance last: fontforge's transform also shifts it.
+                    fit = single_width / ink
+                    cx = (minx + maxx) / 2
+                    glyph.transform((fit, 0, 0, fit, 0, 0))
+                    glyph.transform((1, 0, 0, 1, single_width / 2 - cx * fit, 0))
+                    glyph.width = single_width
+                    resized += 1
             added += 1
-    return added
+    return added, resized
 
 
 def scale_glyphs(font: fontforge.font, scale: float) -> None:
@@ -181,13 +205,43 @@ def scale_glyphs(font: fontforge.font, scale: float) -> None:
         glyph.round()
 
 
-def adjust_font_properties(font: fontforge.font, factor: float) -> None:
-    """Adjust ascent and descent properties of the font by a line-height factor.
+def compute_ink_envelope(font: fontforge.font) -> tuple[float, float]:
+    """Combined ink bounding box of every mapped glyph, clamped to the em square.
 
-    factor > 1.0 → taller lines; factor < 1.0 → shorter lines.
-    Delta is split symmetrically so the baseline stays centered.
-    Typo line gap is folded into the typo ascent so that all three
-    metric pairs describe the same total line height after scaling.
+    Returns (top, bottom) in font units: top >= 0 is the highest ink above the
+    baseline, bottom <= 0 the lowest below it.  Used to re-center the line cell
+    on the actual glyph ink (Latin + CJK + PUA), so glyphs merged in by
+    --copy-symbol are centered too.  Clamped to +/-em so a single oversize icon
+    can't inflate the ascent and clip real descenders.
+    """
+    top = -10**9
+    bottom = 10**9
+    for glyph in font.glyphs():
+        if glyph.unicode < 0:
+            continue
+        try:
+            _, min_y, _, max_y = glyph.boundingBox()
+        except (TypeError, ValueError):
+            continue
+        if max_y > top:
+            top = max_y
+        if min_y < bottom:
+            bottom = min_y
+    return min(top, font.em), max(bottom, -font.em)
+
+
+def adjust_font_properties(font: fontforge.font, factor: float) -> None:
+    """Scale the line height by `factor` and re-center the ink envelope in it.
+
+    The total ascent+descent span is scaled by `factor`, then ascent/descent are
+    set so the combined glyph ink (Latin + CJK + PUA) sits centered in the new
+    line -- equal padding above the highest ink and below the lowest.  This
+    corrects the source font's built-in vertical offset instead of preserving it
+    (the old symmetric split kept ascent-descent constant and so reproduced
+    whatever offset the font shipped with).
+
+    Typo line gap is folded into the typo ascent first so all three metric pairs
+    describe the same total line height after scaling.
     """
     # Fold the typolinegap into typoascent so all pairs share the same
     # effective span.  Without this, Emacs adds typolinegap on top of
@@ -197,6 +251,9 @@ def adjust_font_properties(font: fontforge.font, factor: float) -> None:
         font.os2_typoascent += line_gap
         font.os2_typolinegap = 0
 
+    ink_top, ink_bottom = compute_ink_envelope(font)
+    ink_height = ink_top - ink_bottom  # ink_bottom <= 0
+
     for ascent_prop, descent_prop in METRIC_PAIRS:
         ascent_value = getattr(font, ascent_prop)
         descent_value = getattr(font, descent_prop)
@@ -205,13 +262,15 @@ def adjust_font_properties(font: fontforge.font, factor: float) -> None:
         is_win = "windescent" in descent_prop
         span = ascent_value + descent_value if is_win else ascent_value - descent_value
         new_span = round(span * factor)
-        delta = new_span - span
-        half = delta // 2
-        setattr(font, ascent_prop, ascent_value + half)
-        if is_win:
-            setattr(font, descent_prop, descent_value + (delta - half))
-        else:
-            setattr(font, descent_prop, descent_value - (delta - half))
+
+        # Center the ink envelope: split the slack evenly above ink_top and
+        # below |ink_bottom| instead of growing each side by half the delta
+        # (which preserved the source font's lopsided split).
+        pad = (new_span - ink_height) / 2
+        new_ascent = round(ink_top + pad)
+        descent_mag = new_span - new_ascent
+        setattr(font, ascent_prop, new_ascent)
+        setattr(font, descent_prop, descent_mag if is_win else -descent_mag)
 
 
 def generate_patched_font(
@@ -262,21 +321,29 @@ def main() -> None:
         cjk_count = half_count = 0
         width_tag = line_height_tag = None
 
-        # Line-height runs first: it owns the vertical metrics (ascent/descent).
-        if do_line_height:
-            adjust_font_properties(font, args.line_height)
-            line_height_tag = f"L{str(args.line_height).replace('.', '_')}"
-
         # Copy ASCII, symbols, and PUA icons missing from the input from the
-        # --copy-symbol donor.  Runs before fix_glyph_widths so the copied glyphs
-        # are snapped onto the mono grid along with everything else.
+        # --copy-symbol donor; over-wide merged glyphs are shrunk to the cell.
+        # Runs before line-height so the resized glyphs count toward the ink
+        # envelope used to re-center the cell, and before fix_glyph_widths so
+        # their advances are snapped onto the mono grid too.
         if symbol_font:
-            n = merge_symbol_font(font, args.copy_symbol, symbol_font)
+            n, resized = merge_symbol_font(
+                font, args.copy_symbol, symbol_font, single_width
+            )
             print(f"Copied {n} ASCII/symbol glyph(s) from {args.copy_symbol}")
+            if resized:
+                print(f"Resized {resized} over-wide glyph(s) to fit the mono cell")
             # Close the donor now: keeping multiple fontforge fonts open through
             # the later generate() can invalidate them and crash cleanup.
             symbol_font.close()
             symbol_font = None
+
+        # Line-height re-centers the combined ink envelope (Latin + any merged
+        # CJK/PUA) in the scaled line.  It only touches vertical metrics, so the
+        # width pass below is unaffected.
+        if do_line_height:
+            adjust_font_properties(font, args.line_height)
+            line_height_tag = f"L{str(args.line_height).replace('.', '_')}"
 
         # Width runs last and only aligns glyph advance widths (and optionally scales
         # outlines). It never touches vertical metrics, so the line-height above is

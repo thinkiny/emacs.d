@@ -11,9 +11,14 @@
               vc-ignore-dir-regexp
               tramp-file-name-regexp)))
 
+(use-package smerge-mode
+  :init
+  (setq smerge-command-prefix "\C-c"))
+
 (use-package magit
   :init (setq magit-auto-revert-mode nil)
   :config
+  (setq smerge-command-prefix "\e")
   (setq transient-default-level 5
         magit-diff-refine-hunk t
         magit-save-repository-buffers nil

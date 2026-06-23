@@ -79,7 +79,8 @@
   "Kill the elfeed entry buffer and return to elfeed search."
   (interactive)
   (kill-buffer)
-  (elfeed))
+  (elfeed)
+  (elfeed-mapping-local-file))
 
 (defun my-elfeed-show-mode-hook()
   (visual-line-mode)

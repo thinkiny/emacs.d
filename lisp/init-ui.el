@@ -167,11 +167,7 @@ Keep point if still visible; otherwise move to bottom of window."
         modus-themes-bold-constructs t))
 
 (use-package ef-themes)
-(use-package spacemacs-theme
-  :config
-  (setq spacemacs-theme-comment-italic t
-        spacemacs-theme-org-height nil
-        spacemacs-theme-comment-bg nil))
+(use-package vscode-dark-plus-theme)
 
 (defcustom default-theme 'modus-operandi
   "The current theme."

@@ -7,7 +7,7 @@
 (use-package org-roam
   :bind (("C-c n f" . org-roam-node-find)
          ("C-c n r" . org-roam-node-random)
-         (:map global-map
+         (:map org-mode-map
                (("C-c n i" . org-roam-node-insert)
                 ("C-c n o" . org-id-get-create)
                 ("C-c n t" . org-roam-tag-add)

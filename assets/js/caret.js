@@ -2201,25 +2201,29 @@ class CaretEmacs {
       { bubbles: true, cancelable: true, clientX: x, clientY: y }));
   }
 
-  wordInfo() {
+  caretInfo() {
     const s = window.getSelection();
+    const c = this._savedCaret || this._savedFocus || { node: s.focusNode, offset: s.focusOffset };
+    // Collapsed range at the saved caret
+    let rc = this._collapsedRange(c.node, c.offset).getBoundingClientRect();
+    if (!rc || (!rc.width && !rc.height))
+      rc = this._cursorRectAt(c.node, c.offset);
+    const left = rc?.left ?? 0, bottom = rc?.bottom ?? 0;
+    let text = "";
     if (!s.isCollapsed) {
-      const text = s.toString(), rc = s.getRangeAt(0).getClientRects()[0];
+      text = s.toString();
       this.deactivateMark();
-      return JSON.stringify({ text, left: rc.left, bottom: rc.bottom });
+    } else {
+      const n = s.focusNode, o = s.focusOffset;
+      if (n?.nodeType === 3) {
+        const t = n.textContent;
+        let b = o;
+        while (b > 0 && this._isWordChar(t[b - 1])) b--;
+        const m = t.slice(b).match(new RegExp('^' + WORD_CHAR_RE.source + '+', 'u'));
+        if (m) text = m[0];
+      }
     }
-    const n = s.focusNode, o = s.focusOffset;
-    if (n.nodeType !== 3) return "";
-    const t = n.textContent;
-    let b = o;
-    while (b > 0 && this._isWordChar(t[b - 1])) b--;
-    const wcSrc = WORD_CHAR_RE.source;
-    const m = t.slice(b).match(new RegExp('^' + wcSrc + '+', 'u'));
-    if (!m) return "";
-    const rng = document.createRange();
-    rng.setStart(n, b); rng.setEnd(n, b + m[0].length);
-    const rc = rng.getBoundingClientRect();
-    return JSON.stringify({ text: m[0], left: rc.left, bottom: rc.bottom });
+    return JSON.stringify({ text, left, bottom });
   }
 
   /** Remove all event listeners and the cursor overlay. */

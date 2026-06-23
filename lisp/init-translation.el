@@ -52,7 +52,7 @@
                 (string-trim
                  (replace-regexp-in-string
                   "[[:space:]]+" " "
-                  (replace-regexp-in-string "\n" " " text))))))
+                  (replace-regexp-in-string "\n" "" text))))))
     (concat
      (funcall norm (gtos-translation gtos))
      "\n"
@@ -73,7 +73,8 @@
 (defun google-translate-point-pixel-pos ()
   "Return frame-relative pixel position (X . Y) below point in current window."
   (let* ((edges (window-inside-pixel-edges))
-         (xy (posn-x-y (posn-at-point (point)))))
+         (pos (or selection--saved-caret (point)))
+         (xy (posn-x-y (posn-at-point pos))))
     (cons (+ (car edges) (car xy))
           (+ (cadr edges) (cdr xy) (default-line-height)))))
 
@@ -108,7 +109,7 @@ PX-POS is a cons (X . Y) in pixels."
                    :border-color (face-background 'default)
                    :background-color (face-background 'default))
     (when (use-region-p)
-      (deactivate-mark))
+      (selection/quit))
     (setq cleanup-hook
           (lambda ()
             (posframe-delete " *google-translate-posframe*")
