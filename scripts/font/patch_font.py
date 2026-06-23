@@ -57,21 +57,17 @@ def parse_arguments() -> argparse.Namespace:
         help="Line-height factor; scales the ascent/descent span (enables line-height adjustment)",
     )
     parser.add_argument(
-        "--fill-ascii",
-        dest="fill_ascii",
-        action="store_true",
-        help="Copy printable-ASCII glyphs (0x20-0x7E) missing from the input "
-        "from the reference font (requires --width-ref).",
+        "--copy-symbol",
+        dest="copy_symbol",
+        default=None,
+        help="Path to a donor font; ASCII, symbol, and PUA-icon glyphs "
+        "missing from the input are copied in (CJK excluded), so they "
+        "render at the correct cell width instead of falling back to "
+        "another font.",
     )
     parser.add_argument("--family", default=None, help="The new font family name")
     parser.add_argument("--style", default="Regular", help="The font style name")
-
-    args = parser.parse_args()
-    if args.fill_ascii and args.width_ref is None:
-        parser.error("--fill-ascii requires --width-ref")
-    if args.width_ref is None and args.line_height is None:
-        parser.error("nothing to do; pass --width-ref and/or --line-height")
-    return args
+    return parser.parse_args()
 
 
 def append_sfnt_name(font: fontforge.font, name_id: str, value: str) -> None:
@@ -120,10 +116,8 @@ def apply_font_metadata(
 
 
 def fix_glyph_widths(
-    input_font: fontforge.font, ref_font: fontforge.font
+    input_font: fontforge.font, single_width: int
 ) -> tuple[int, int]:
-    ref_width = ref_font["m"].width if "m" in ref_font else ref_font["A"].width
-    single_width = round(ref_width * input_font.em / ref_font.em)
     double_width = single_width * 2
     cjk_count = 0
     half_count = 0
@@ -144,47 +138,37 @@ def fix_glyph_widths(
             half_count += 1
 
         # Recenter so the width delta splits across both sidebearings instead of piling on one side.
+        # Transform FIRST, then set the width: fontforge's transform applies the
+        # x-translation to the advance width too, so doing it after would corrupt
+        # the value we just set (e.g. 500 -> 450).
         delta = new_width - glyph.width
         if delta:
-            glyph.width = new_width
             glyph.transform((1, 0, 0, 1, delta / 2, 0))
+            glyph.width = new_width
 
     return cjk_count, half_count
 
 
-def fill_missing_ascii(input_font: fontforge.font, ref_font: fontforge.font) -> int:
-    """Copy printable-ASCII glyphs absent from input_font from ref_font.
+def merge_symbol_font(
+    input_font: fontforge.font, donor_path: str, donor_font: fontforge.font
+) -> int:
+    """Copy every glyph missing from input_font from the donor font.
 
-    Run before fix_glyph_widths so injected glyphs get the normalized
-    single-width advance. Returns the number of glyphs copied.
+    mergeFonts handles all codepoints, composite glyphs, and cubic↔quadratic
+    conversion natively — no per-glyph draw() and no "No glyph named X"
+    warning chatter.  Added outlines are em-scaled to match input_font;
+    fix_glyph_widths later snaps their advances to the cell width.
     """
-    em_ratio = input_font.em / ref_font.em
-    copied = 0
-    # Space (0x20) through tilde (0x7E); 0x7F (DEL) is non-printable.
-    for cp in range(0x20, 0x7F):
-        if cp in input_font:
-            continue
-        try:
-            donor = ref_font[cp]
-        except Exception:
-            continue
-        if not donor.isWorthOutputting():
-            continue
-
-        target = input_font.createMappedChar(cp)
-        pen = target.glyphPen()
-        donor.draw(pen)
-        pen = None  # finalize: fontforge commits the outline on pen GC
-
-        # draw() copies outlines but width defaults to input_font.em, not the
-        # donor's actual advance.  Correct it so scaling works properly.
-        target.width = donor.width
-
-        if em_ratio != 1.0:
-            target.transform((em_ratio, 0, 0, em_ratio, 0, 0))
-
-        copied += 1
-    return copied
+    em_ratio = input_font.em / donor_font.em
+    existing = {g.unicode for g in input_font.glyphs() if g.unicode >= 0}
+    input_font.mergeFonts(donor_path)
+    added = 0
+    for glyph in input_font.glyphs():
+        cp = glyph.unicode
+        if cp >= 0 and cp not in existing:
+            glyph.transform((em_ratio, 0, 0, em_ratio, 0, 0))
+            added += 1
+    return added
 
 
 def scale_glyphs(font: fontforge.font, scale: float) -> None:
@@ -262,7 +246,18 @@ def main() -> None:
     do_line_height = args.line_height is not None
 
     ref_font = fontforge.open(args.width_ref) if do_width else None
+    symbol_font = fontforge.open(args.copy_symbol) if args.copy_symbol else None
     font = fontforge.open(args.input)
+
+    # Read the reference cell width NOW, before any heavy glyph work:
+    # fontforge can invalidate auxiliary font objects (ref_font, the donor)
+    # once we start mutating/copying glyphs, so we must not touch ref_font
+    # again after this point.
+    single_width = None
+    if ref_font is not None:
+        ref_glyph = ref_font["m"] if "m" in ref_font else ref_font["A"]
+        single_width = round(ref_glyph.width * font.em / ref_font.em)
+
     try:
         cjk_count = half_count = 0
         width_tag = line_height_tag = None
@@ -272,14 +267,22 @@ def main() -> None:
             adjust_font_properties(font, args.line_height)
             line_height_tag = f"L{str(args.line_height).replace('.', '_')}"
 
+        # Copy ASCII, symbols, and PUA icons missing from the input from the
+        # --copy-symbol donor.  Runs before fix_glyph_widths so the copied glyphs
+        # are snapped onto the mono grid along with everything else.
+        if symbol_font:
+            n = merge_symbol_font(font, args.copy_symbol, symbol_font)
+            print(f"Copied {n} ASCII/symbol glyph(s) from {args.copy_symbol}")
+            # Close the donor now: keeping multiple fontforge fonts open through
+            # the later generate() can invalidate them and crash cleanup.
+            symbol_font.close()
+            symbol_font = None
+
         # Width runs last and only aligns glyph advance widths (and optionally scales
         # outlines). It never touches vertical metrics, so the line-height above is
         # preserved; running it last keeps the aligned widths authoritative.
         if do_width:
-            if args.fill_ascii:
-                n = fill_missing_ascii(font, ref_font)
-                print(f"Copied {n} missing printable-ASCII glyph(s) from reference")
-            cjk_count, half_count = fix_glyph_widths(font, ref_font)
+            cjk_count, half_count = fix_glyph_widths(font, single_width)
             if args.width_scale:
                 scale_glyphs(font, args.width_scale)
 
@@ -310,9 +313,14 @@ def main() -> None:
         if do_line_height:
             print(f"Applied line-height factor {args.line_height}")
     finally:
-        font.close()
-        if ref_font is not None:
-            ref_font.close()
+        # fontforge may invalidate font objects during generate(); guard each
+        # close so cleanup never crashes after a successful patch.
+        for opened in (font, ref_font, symbol_font):
+            if opened is not None:
+                try:
+                    opened.close()
+                except RuntimeError:
+                    pass
 
 
 if __name__ == "__main__":

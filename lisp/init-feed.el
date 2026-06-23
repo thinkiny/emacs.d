@@ -81,7 +81,7 @@
   (kill-buffer)
   (elfeed))
 
-(defun my-elfeed-show-mode()
+(defun my-elfeed-show-mode-hook()
   (visual-line-mode)
   (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'translate-at-point)
   (define-key elfeed-show-mode-map (kbd "=")   #'selection/expand)
@@ -118,17 +118,16 @@
 (defun elfeed-mapping-local-file()
   (map-buffer-to-local-file elfeed-local-mapping))
 
-(add-hook 'elfeed-search-mode-hook #'elfeed-mapping-local-file)
-(add-hook 'elfeed-show-update-hook #'elfeed-mapping-local-file)
-(add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode)
-
-;; elfeed-show-update-hook
-(defun elfeed-show--jump-to-content ()
+;; set hooks
+(defun my-elfeed-show-update-hook ()
   "Jump to the main content, past the header metadata."
   (forward-paragraph)
-  (forward-line))
+  (forward-line)
+  (elfeed-mapping-local-file))
 
-(add-hook 'elfeed-show-update-hook #'elfeed-show--jump-to-content)
+(add-hook 'elfeed-search-update-hook #'elfeed-mapping-local-file)
+(add-hook 'elfeed-show-update-hook #'my-elfeed-show-update-hook)
+(add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook)
 
 ;; setup feeds
 (defun feed-github-commit (repo)

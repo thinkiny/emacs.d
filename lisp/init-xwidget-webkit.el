@@ -114,9 +114,12 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
          (format xwidget-webkit-search-js
                  search-forward
                  search-repeat
-                 (regexp-quote string))
+                 string)
          #'xwidget-webkit-search-cb)
-        (point-min)))))
+        (let ((target-point (if isearch-forward (point-min) (point-max))))
+          (goto-char target-point)
+          (set-match-data (list target-point target-point))
+          target-point)))))
 
 ;;; Buffer Quit
 
@@ -232,8 +235,9 @@ TIMEOUT defaults to 2 seconds."
 
 (defun my-xwidget-webkit-mode-hook()
   (eldoc-mode -1)
-  (setq-local isearch-search-fun-function #'xwidget-webkit-search-fun-function)
+  (setq-local isearch-search-fun-function 'xwidget-webkit-search-fun-function)
   (setq-local isearch-lazy-highlight nil)
+  (setq-local isearch-wrap-function 'ignore)
   (setq-local header-line-format nil))
 
 (add-hook 'xwidget-webkit-mode-hook #'my-xwidget-webkit-mode-hook)
@@ -250,7 +254,7 @@ TIMEOUT defaults to 2 seconds."
   "Adjust xwidget size to fit WINDOW for any `xwidget-webkit-mode' derivative."
   (with-current-buffer (window-buffer window)
     (when (derived-mode-p 'xwidget-webkit-mode)
-      (when-let* ((xwidget (xwidget-webkit-current-session)))
+      (when-let* ((xwidget (xwidget-at (point-min))))
         (xwidget-webkit-adjust-size-to-window xwidget window)))))
 
 (defun xwidget-webkit-adjust-size-derived-in-frame (frame)

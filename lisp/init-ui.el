@@ -221,7 +221,6 @@ reader assets."
     :config
     (setq cnfonts-use-face-font-rescale t)
     (setq cnfonts-disable-italic nil)
-    (setq use-default-font-for-symbols nil)
     (cnfonts-mode)
     (unbind-all-keys cnfonts-mode-map)))
 

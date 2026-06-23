@@ -96,7 +96,6 @@ or \\[ghostel-editor-abort] to cancel."
     (quit-window t)
     (with-current-buffer source
       (ghostel-send-string (if (term--claude-buffer-p) "\x03" "\x15"))
-      (ghostel--flush-input source)
       (ghostel-send-string content))))
 
 (defun ghostel-editor-abort ()
