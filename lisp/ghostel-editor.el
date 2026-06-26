@@ -78,7 +78,7 @@ or \\[ghostel-editor-abort] to cancel."
       (when-let* ((input (ghostel-editor--extract-input source)))
         (insert input)
         (goto-char (point-max)))
-      (markdown-mode)
+      (gfm-mode)
       (ghostel-editor-mode 1)
       (setq ghostel-editor--source-buffer source)
       (setq header-line-format

@@ -311,19 +311,6 @@ Otherwise go to the beginning of the buffer."
                               (with-current-buffer buf
                                 (vterm--scroll-session-end))))))))
 
-(with-eval-after-load 'vterm
-  (defun vterm--get-directory(path)
-    "Get normalized directory to PATH, handling TRAMP paths specifically,
-else mirroring original vterm logic."
-    (when path
-      (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
-          (let ((dir (match-string 3 path))
-                (remote-prefix (file-remote-p default-directory)))
-            (if remote-prefix
-                (file-name-as-directory (concat remote-prefix dir))
-              (file-name-as-directory dir)))
-        (file-name-as-directory path)))))
-
 (use-package vterm-editor
   :after vterm
   :bind (:map vterm-mode-map

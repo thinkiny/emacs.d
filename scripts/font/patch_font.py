@@ -16,13 +16,6 @@ METRIC_PAIRS = (
 TOOL_NAME = "font-patcher"
 
 
-def is_cjk(unicode_val: int) -> bool:
-    try:
-        return unicodedata.east_asian_width(chr(unicode_val)) in ("W", "F")
-    except (ValueError, OverflowError):
-        return False
-
-
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Adjust a font's line height and/or align its glyph widths in a single pass.",
@@ -127,15 +120,20 @@ def align_glyph_widths(
     half_count = 0
 
     for glyph in input_font.glyphs():
-        if glyph.unicode < 0:
+        if glyph.unicode < 0 or glyph.width == 0:
             continue
 
-        if glyph.width == 0:
-            continue
+        try:
+            ea_width = unicodedata.east_asian_width(chr(glyph.unicode))
+        except (ValueError, OverflowError):
+            ea_width = "N"
 
-        if is_cjk(glyph.unicode):
+        if ea_width in ("W", "F"):
             new_width = double_width
             cjk_count += 1
+        elif ea_width == "A":
+            new_width = ref_glyph_width
+            half_count += 1
         else:
             ref_w = ref_widths.get(glyph.unicode, ref_glyph_width)
             new_width = round(ref_w * em_scale)
