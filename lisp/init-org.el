@@ -249,7 +249,7 @@ BASENAME is the optional base name for the downloaded file."
         org-src-fontify-natively t
         org-src-tab-acts-natively t
         org-src-preserve-indentation nil
-        org-edit-src-content-indentation 0
+        org-src-content-indentation 0
         org-export-time-stamp-file nil
         org-html-html5-fancy t
         org-html-doctype "html5"
@@ -441,12 +441,13 @@ BASENAME is the optional base name for the downloaded file."
 ;;; Hydra Definitions
 
 (defhydra hydra-org-table (:color blue :hint nil)
-  "Org table manipulation commands.
+  "
+Org table manipulation commands.
 
-^Rows^            ^Columns^           ^size^
+Rows            Columns           size
 -----------------------------------------------------------------
-_i_: insert row   _c_: insert column  _w_: widen
-_d_: delete row   _k_: delete column  _s_: shorten
+i: insert row   c: insert column  w: widen
+d: delete row   k: delete column  s: shorten
 "
   ("i" org-table-insert-row)
   ("d" org-table-kill-row)
@@ -483,13 +484,14 @@ _d_: delete row   _k_: delete column  _s_: shorten
   (define-key org-mode-map (kbd "C-v") #'precision-scroll-up-page)
   (define-key org-mode-map (kbd "M-v") #'precision-scroll-down-page)
   (define-key org-mode-map (kbd "C-c v") #'org-overview)
-  (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
-  (define-key org-mode-map (kbd "C-c t i") #'org-toggle-inline-images)
+  (define-key org-mode-map (kbd "C-c t d") #'org-table-kill-row)
+  (define-key org-mode-map (kbd "C-c t i") #'org-table-insert-row)
   (define-key org-mode-map (kbd "C-c t c") #'org-table-convert-region)
   (define-key org-mode-map (kbd "C-c t t") #'hydra-org-table/body)
   (define-key org-mode-map (kbd "C-c i") #'org-clip-paste)
   (define-key org-mode-map (kbd "C-M-<up>") #'org-up-element)
   (define-key org-mode-map (kbd "M-.") #'org-open-at-point)
+  (define-key org-mode-map (kbd "C-c t l") #'org-toggle-link-display)
   (define-key org-mode-map (kbd "C-c d l") #'org-delete-link-at-point))
 
 ;;; Hooks

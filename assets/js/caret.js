@@ -1070,7 +1070,8 @@ class CaretEmacs {
   _pickPositionOnLine(line, goalX) {
     const lineRect = line[0]?.rect;
     if (!lineRect) return null;
-    let bestRange = null, bestDist = Infinity;
+    let bestRange = null, bestDist = Infinity;        // visible chars
+    let bestWsRange = null, bestWsDist = Infinity;    // whitespace (fallback)
     for (const entry of line) {
       const start = entry.startOffset ?? 0;
       const end = entry.endOffset ?? entry.node.length;
@@ -1081,13 +1082,17 @@ class CaretEmacs {
         if (!cr.width || !cr.height) continue;
         if (!this._isSameLine(cr, lineRect)) continue;
         const d = Math.abs(cr.left + cr.width / 2 - goalX);
-        if (d < bestDist) {
+        // Prefer a visible character so the caret doesn't land on invisible
+        // indentation whitespace (which made line content like '#' unreachable).
+        if (/\s/.test(entry.node.textContent[off])) {
+          if (d < bestWsDist) { bestWsDist = d; bestWsRange = this._collapsedRange(entry.node, off); }
+        } else if (d < bestDist) {
           bestDist = d;
           bestRange = this._collapsedRange(entry.node, off);
         }
       }
     }
-    return bestRange;
+    return bestRange || bestWsRange;
   }
 
   /** Find the segment containing the caret offset in the visual ordering.
@@ -1532,14 +1537,21 @@ class CaretEmacs {
       return false;
     }
 
-    // Pre-snap: if on whitespace node, snap to visible text first
-    const { node: snapNode, offset: snapOff } =
-      this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
-    if (snapNode !== sel.focusNode || snapOff !== sel.focusOffset) {
-      if (this.markActive) {
-        sel.setBaseAndExtent(markAnchorNode, markAnchorOff, snapNode, snapOff);
-      } else {
-        sel.collapse(snapNode, snapOff);
+    // Pre-snap: if on whitespace node, snap to visible text first.
+    // Skip for line/lineboundary: they use the visual-line model, and
+    // _moveLine resolves the caret forward itself. A backward snap here
+    // would move the start to the previous line and cancel a forward line
+    // move (caret appears stuck on pre-wrap indentation whitespace).
+    const skipPreSnap = granularity === "line" || granularity === "lineboundary";
+    if (!skipPreSnap) {
+      const { node: snapNode, offset: snapOff } =
+        this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
+      if (snapNode !== sel.focusNode || snapOff !== sel.focusOffset) {
+        if (this.markActive) {
+          sel.setBaseAndExtent(markAnchorNode, markAnchorOff, snapNode, snapOff);
+        } else {
+          sel.collapse(snapNode, snapOff);
+        }
       }
     }
 
