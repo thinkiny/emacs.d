@@ -13,7 +13,9 @@
   "Search backward for a Claude Code prompt line (❯ or ⏺)."
   (beginning-of-line)
   (when (re-search-backward term--claude-previous-re nil t)
-    (beginning-of-line)))
+    (beginning-of-line))
+  (unless (pos-visible-in-window-p (point) (selected-window))
+    (recenter 0)))
 
 ;;; ghostel
 
@@ -54,7 +56,8 @@
 Otherwise, enter copy mode and go to window start."
   (interactive)
   (ghostel-copy-mode)
-  (if (string-prefix-p "*claude-code" (buffer-name))
+  (ghostel-force-redraw)
+  (if (term--claude-buffer-p)
       (term--goto-previous-claude-prompt)
     (goto-char (window-start))))
 
@@ -114,15 +117,14 @@ Otherwise, enter copy mode and go to window start."
   (when ghostel--scroll-timer
     (cancel-timer ghostel--scroll-timer)
     (setq ghostel--scroll-timer nil))
-  (when (and (derived-mode-p 'ghostel-mode)
-             (not (memq ghostel--input-mode '(copy emacs))))
-    (ghostel-copy-mode)))
+  (unless (memq ghostel--input-mode '(copy emacs))
+    (ghostel-copy-mode)
+    (ghostel-force-redraw)))
 
 (defun ghostel--scroll-session-end ()
   "Handle scroll session end."
   (setq ghostel--scroll-timer nil)
-  (when (and (derived-mode-p 'ghostel-mode)
-             (memq ghostel--input-mode '(copy emacs))
+  (when (and (memq ghostel--input-mode '(copy emacs))
              (>= (window-end) (point-max)))
     (ghostel-readonly-exit)))
 

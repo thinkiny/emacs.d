@@ -12,12 +12,23 @@
 (require 'tramp)
 (require 'perspective)
 
-(defconst counsel-mt-shell-type 'ghostel
-  "Terminal backend to use.  Either `vterm', `eshell', or `ghostel'.")
+(defcustom counsel-mt-shell-type 'ghostel
+  "Terminal backend to use.
+Requires the corresponding package on set (including at load),
+so `counsel-mt--launch' can call it directly."
+  :type '(choice (const :tag "ghostel" ghostel)
+                 (const :tag "vterm" vterm)
+                 (const :tag "eshell" eshell))
+  :set (lambda (sym val)
+         (set-default sym val)
+         (pcase val
+           ('vterm  (require 'vterm))
+           ('ghostel (require 'ghostel))))
+  :group 'term)
 
 (defcustom counsel-mt-refresh-interval 1
   "Idle seconds between terminal buffer name refreshes."
-  :type 'number :group 'convenience)
+  :type 'number :group 'term)
 
 (defconst counsel-mt-name-header "*TERM-"
   "Prefix string for managed terminal buffer names.")
@@ -107,10 +118,10 @@ longest prefix of the current directory."
          (name (generate-new-buffer-name (counsel-mt--buf-name idx))))
     (pcase counsel-mt-shell-type
       ('eshell (call-interactively 'eshell) (rename-buffer name))
-      ('vterm (require 'vterm)
-              (switch-to-buffer (vterm name)) (rename-buffer name))
-      ('ghostel (require 'ghostel)
-                (ghostel t) (rename-buffer name)))
+      ('vterm (switch-to-buffer (vterm name)) (rename-buffer name))
+      ('ghostel (ghostel t)
+                (setq-local ghostel-buffer-name-function nil)
+                (rename-buffer name)))
     (setq-local counsel-mt-index idx)))
 
 (defun counsel-term ()
