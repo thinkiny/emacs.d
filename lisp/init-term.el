@@ -46,7 +46,7 @@
   (interactive)
   (condition-case nil
       (progn
-        (scroll-up)
+        (precision-scroll-up-page)
         (when (pos-visible-in-window-p (point-max))
           (ghostel-readonly-exit)))
     (error (ghostel-readonly-exit))))
@@ -55,8 +55,8 @@
   "In *claude-code buffers, enter copy mode and jump to previous prompt (❯ or ⏺).
 Otherwise, enter copy mode and go to window start."
   (interactive)
-  (ghostel-copy-mode)
   (ghostel-force-redraw)
+  (ghostel-copy-mode)
   (if (term--claude-buffer-p)
       (term--goto-previous-claude-prompt)
     (goto-char (window-start))))
@@ -106,6 +106,8 @@ Otherwise, enter copy mode and go to window start."
 (define-key ghostel-readonly-mode-map (kbd "a") #'backward-sentence)
 (define-key ghostel-readonly-mode-map (kbd "e") #'forward-sentence)
 (define-key ghostel-readonly-mode-map (kbd "v") #'ghostel-readonly-scroll-up)
+(define-key ghostel-readonly-mode-map (kbd "C-v") #'ghostel-readonly-scroll-up)
+(define-key ghostel-readonly-mode-map (kbd "M-v") #'precision-scroll-down-page)
 (define-key ghostel-readonly-mode-map (kbd "M-<") #'term-copy-mode-backward-prompt)
 (define-key ghostel-readonly-mode-map (kbd "M->") #'ghostel-copy-mode-goto-buffer-end)
 (define-key ghostel-readonly-mode-map [remap pixel-scroll-precision] #'ghostel-pixel-scroll-precision)
@@ -118,8 +120,8 @@ Otherwise, enter copy mode and go to window start."
     (cancel-timer ghostel--scroll-timer)
     (setq ghostel--scroll-timer nil))
   (unless (memq ghostel--input-mode '(copy emacs))
-    (ghostel-copy-mode)
-    (ghostel-force-redraw)))
+    (ghostel-force-redraw)
+    (ghostel-copy-mode)))
 
 (defun ghostel--scroll-session-end ()
   "Handle scroll session end."
@@ -194,6 +196,7 @@ Otherwise, enter copy mode and go to window start."
   (define-key vterm-copy-mode-map (kbd "f") #'forward-word-begin)
   (define-key vterm-copy-mode-map (kbd "a") #'backward-sentence)
   (define-key vterm-copy-mode-map (kbd "e") #'forward-sentence)
+  (define-key vterm-copy-mode-map (kbd "C-v") #'vterm-copy-mode-scroll-up)
   (define-key vterm-copy-mode-map (kbd "v") #'vterm-copy-mode-scroll-up)
   (define-key vterm-copy-mode-map [remap pixel-scroll-precision] #'vterm-pixel-scroll-precision)
   (define-key vterm-copy-mode-map (kbd "M->") #'vterm-copy-mode-goto-buffer-end)
@@ -240,7 +243,7 @@ In *claude-code buffers, go to the last prompt line (❯ or ⏺) instead."
   (interactive)
   (condition-case nil
       (progn
-        (scroll-up)
+        (precision-scroll-up-page)
         (when (pos-visible-in-window-p (point-max))
           (vterm-copy-mode -1)
           (vterm-reset-cursor-point)))

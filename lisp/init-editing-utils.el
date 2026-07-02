@@ -9,6 +9,7 @@
               indent-tabs-mode nil
               case-fold-search t
               truncate-lines t
+              sentence-end-double-space nil
               truncate-partial-width-windows nil
               mouse-yank-at-point t
               save-interprogram-paste-before-kill t

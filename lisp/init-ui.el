@@ -123,6 +123,9 @@ Keep point if still visible; otherwise move to bottom of window."
         (goto-char opoint)
       (goto-char (window-end)))))
 
+(global-set-key (kbd "C-v") #'precision-scroll-up-page)
+(global-set-key (kbd "M-v") #'precision-scroll-down-page)
+
 ;; icons
 (use-package nerd-icons)
 
