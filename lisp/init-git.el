@@ -16,7 +16,6 @@
   (setq smerge-command-prefix "\C-c"))
 
 (use-package magit
-  :init (setq magit-auto-revert-mode nil)
   :config
   (setq smerge-command-prefix "\e")
   (setq transient-default-level 5

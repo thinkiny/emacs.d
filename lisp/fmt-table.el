@@ -166,6 +166,12 @@ symbols, and BEG/END are buffer positions."
           (push (fmt-table--parse-cells trimmed) data-rows)))))
     (setq header-rows (nreverse header-rows))
     (setq data-rows (nreverse data-rows))
+    (unless found-sep
+      ;; No separator row: gfm-mode still treats consecutive pipe rows as
+      ;; a table, so treat the first row as the header and demote the rest
+      ;; to data rows instead of silently dropping them on re-render.
+      (setq data-rows (append (cdr header-rows) data-rows)
+            header-rows (list (car header-rows))))
     (let* ((headers (car (fmt-table--merge-continuations header-rows)))
            (num-cols (length headers))
            (rows (fmt-table--merge-continuations data-rows))

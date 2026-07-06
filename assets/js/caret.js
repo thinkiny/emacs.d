@@ -403,8 +403,17 @@ class CaretEmacs {
       && el.style.display === "block") { return; }
 
     if (!this._isContained(sel.focusNode)) { el.style.display = "none"; return; }
-    const { node, offset } = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
-    const rect = this._cursorRectAt(node, offset);
+    // Render at the actual focus when it's a text node with a usable rect —
+    // whitespace-only nodes (e.g. a blank line " \n" inside <pre>) are real
+    // positions. Resolving them backward renders the overlay on the prior
+    // line, so a forward move onto a blank looks like it didn't move.
+    let node = sel.focusNode, offset = sel.focusOffset;
+    let rect = node.nodeType === Node.TEXT_NODE ? this._cursorRectAt(node, offset) : null;
+    if (!rect?.height) {
+      const r = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
+      node = r.node; offset = r.offset;
+      rect = this._cursorRectAt(node, offset);
+    }
     if (!rect?.height) { el.style.display = "none"; return; }
     const cw = this._cursorWidth(rect);
     let cursorTop = rect.top + window.scrollY;
@@ -1335,10 +1344,19 @@ class CaretEmacs {
     const sel = window.getSelection();
     if (!sel?.rangeCount) return { range: null, scrolled: false };
 
-    const { node: lineNode, offset: lineOffset } =
-      this._resolveCursorPosition(sel.focusNode, sel.focusOffset, true);
-    const startRange = this._collapsedRange(lineNode, lineOffset);
-    const caretRect = this._lineMoveRect(lineNode, lineOffset) || this._charRect(startRange);
+    // Use the actual focus when it has a usable rect — even whitespace-only
+    // text nodes (e.g. a blank line " \n" inside <pre>) are real line
+    // positions. Resolving forward off them relocates the caret to a neighbor
+    // line, which makes a backward line-move land back on the blank (stuck)
+    // and a forward line-move skip the next line.
+    let lineNode = sel.focusNode, lineOffset = sel.focusOffset;
+    let caretRect = this._lineMoveRect(lineNode, lineOffset);
+    if (!caretRect?.height) {
+      const r = this._resolveCursorPosition(sel.focusNode, sel.focusOffset, fwd);
+      lineNode = r.node; lineOffset = r.offset;
+      const startRange = this._collapsedRange(lineNode, lineOffset);
+      caretRect = this._lineMoveRect(lineNode, lineOffset) || this._charRect(startRange);
+    }
     if (!caretRect?.height) {
       return { range: null, scrolled: false };
     }

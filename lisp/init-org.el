@@ -207,8 +207,8 @@ BASENAME is the optional base name for the downloaded file."
 
 (defun my-org-mode-hook()
   "Custom `org-mode' hook."
-  (setq-local electric-pair-inhibit-predicate (lambda (c) (char-equal c ?<)))
-  (setq-local org-download-image-dir (concat (buffer-name) "-assets/images")))
+  (setq-local electric-pair-inhibit-predicate (lambda (c) (char-equal c ?<))))
+
 
 (defun org-clock-todo-change ()
   "Clock in when state changes to NEXT, clock out otherwise."
@@ -315,6 +315,7 @@ BASENAME is the optional base name for the downloaded file."
 
   ;; Clipboard/Download setup
   (require 'org-download)
+  (setq org-download-image-dir "./assets/images")
   (setq org-download-annotate-function #'org-download-annotate-empty))
 
 ;;; Todo & Workflow
