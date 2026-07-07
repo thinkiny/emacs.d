@@ -71,6 +71,8 @@ or \\[ghostel-editor-abort] to cancel."
   (interactive)
   (unless (derived-mode-p 'ghostel-mode)
     (user-error "Not in a ghostel buffer"))
+  (if (ghostel--readonly-mode-p)
+      (ghostel-readonly-exit))
   (let ((source (current-buffer))
         (buf (get-buffer-create "*ghostel-editor*")))
     (with-current-buffer buf

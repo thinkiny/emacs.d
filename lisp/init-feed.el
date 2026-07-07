@@ -83,9 +83,12 @@
   (elfeed-mapping-local-file))
 
 (defun my-elfeed-show-mode-hook()
-  (visual-line-mode)
+  (visual-line-mode))
+
+(with-eval-after-load 'elfeed-show
   (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'translate-at-point)
   (define-key elfeed-show-mode-map (kbd "=")   #'selection/expand)
+  (define-key elfeed-show-mode-map (kbd "r")   #'revert-buffer)
   (define-key elfeed-show-mode-map (kbd "n")   #'precision-scroll-next-line)
   (define-key elfeed-show-mode-map (kbd "p")   #'precision-scroll-prev-line)
   (define-key elfeed-show-mode-map (kbd "j")   #'precision-scroll-next-line)

@@ -73,6 +73,10 @@ Otherwise, enter copy mode and go to window start."
   (interactive)
   (selection/quit #'ghostel-readonly-exit))
 
+(defun ghostel--readonly-mode-p ()
+  "Non-nil when in a readonly/navigation input mode (copy or emacs)."
+  (memq ghostel--input-mode '(copy emacs)))
+
 ;; ghostel semi-char mode keybindings
 (define-key ghostel-semi-char-mode-map (kbd "M-w") #'kill-ring-save)
 (define-key ghostel-semi-char-mode-map (kbd "C-e") #'ghostel--send-event)
@@ -94,6 +98,7 @@ Otherwise, enter copy mode and go to window start."
 (define-key ghostel-readonly-mode-map (kbd "M-w") 'kill-ring-save)
 (define-key ghostel-readonly-mode-map (kbd "<SPC>") #'selection/toggle-mark)
 (define-key ghostel-readonly-mode-map (kbd "C-c v") #'ghostel-readonly-exit)
+(define-key ghostel-readonly-mode-map (kbd "C-c e") #'ghostel-editor-open)
 (define-key ghostel-readonly-mode-map (kbd "=") #'selection/expand)
 (define-key ghostel-readonly-fast-exit-mode-map (kbd "C-g") #'ghostel-copy-mode-quit)
 (define-key ghostel-readonly-mode-map (kbd ",") #'translate-at-point)
@@ -119,14 +124,14 @@ Otherwise, enter copy mode and go to window start."
   (when ghostel--scroll-timer
     (cancel-timer ghostel--scroll-timer)
     (setq ghostel--scroll-timer nil))
-  (unless (memq ghostel--input-mode '(copy emacs))
+  (unless (ghostel--readonly-mode-p)
     (ghostel-force-redraw)
     (ghostel-copy-mode)))
 
 (defun ghostel--scroll-session-end ()
   "Handle scroll session end."
   (setq ghostel--scroll-timer nil)
-  (when (and (memq ghostel--input-mode '(copy emacs))
+  (when (and (ghostel--readonly-mode-p)
              (>= (window-end) (point-max)))
     (ghostel-readonly-exit)))
 

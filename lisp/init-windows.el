@@ -87,4 +87,18 @@ transpositions to execute in sequence."
 ;;(require 'init-workgroups)
 (require 'init-persp)
 
+(defun split-window-right-recent ()
+  "Split window horizontally and display the most recent buffer."
+  (interactive)
+  (split-window-right)
+  (with-selected-window (next-window)
+    (switch-to-buffer (persp-other-buffer (current-buffer)))))
+
+(defun split-window-below-recent ()
+  "Split window vertically and display the most recent buffer."
+  (interactive)
+  (split-window-below)
+  (with-selected-window (next-window)
+    (switch-to-buffer (persp-other-buffer (current-buffer)))))
+
 (provide 'init-windows)

@@ -9,12 +9,11 @@
 (setq xwidget-webkit-proxy (local-proxy-http-url))
 
 ;;; URL & Session Helpers
-
-(defun xwidget-webkit-get-current-url()
-  (if (derived-mode-p 'xwidget-webkit-mode)
-      (when-let* ((session (xwidget-webkit-current-session))
-                  (url (xwidget-webkit-uri session)))
-        url)))
+(defun xwidget-webkit-get-current-url ()
+  "Return the URL of the current xwidget session, or nil if none exists."
+  (and (derived-mode-p 'xwidget-webkit-mode)
+       (if-let* ((session (xwidget-webkit-current-session)))
+           (xwidget-webkit-uri session))))
 
 (defun xwidget-webkit-get-file-url ()
   (if (s-ends-with? ".html" (buffer-file-name))
@@ -175,8 +174,8 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 (with-eval-after-load 'xwidget
   (easy-menu-define nil xwidget-webkit-mode-map "Xwidget WebKit menu."
     (list "Xwidget WebKit" :visible nil))
-  (unbind-key (kbd "-") xwidget-webkit-mode-map)
-  (unbind-key (kbd "+") xwidget-webkit-mode-map)
+  (unbind-key (kbd "-") 'xwidget-webkit-mode-map)
+  (unbind-key (kbd "+") 'xwidget-webkit-mode-map)
   (define-key xwidget-webkit-mode-map (kbd "g") #'xwidget-webkit-browse-open-url)
   (define-key xwidget-webkit-mode-map (kbd "F") 'xwidget-webkit-forward)
   (define-key xwidget-webkit-mode-map (kbd "B") 'xwidget-webkit-back)
@@ -188,7 +187,9 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
   (define-key xwidget-webkit-mode-map (kbd "C-s") #'isearch-forward)
   (define-key xwidget-webkit-mode-map (kbd "C-r") #'isearch-backward)
   (define-key xwidget-webkit-mode-map (kbd "q") #'xwidget-webkit-quit)
-  (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range))
+  (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range)
+  (define-key xwidget-webkit-mode-map (kbd "C-x 2") 'split-window-below-recent)
+  (define-key xwidget-webkit-mode-map (kbd "C-x 3") 'split-window-right-recent))
 
 ;;; JS Execution
 
@@ -238,7 +239,8 @@ TIMEOUT defaults to 2 seconds."
   (setq-local isearch-search-fun-function 'xwidget-webkit-search-fun-function)
   (setq-local isearch-lazy-highlight nil)
   (setq-local isearch-wrap-function 'ignore)
-  (setq-local header-line-format nil))
+  (setq-local header-line-format nil)
+  (add-hook 'window-configuration-change-hook #'xwidget-webkit-auto-adjust-size-derived nil t))
 
 (add-hook 'xwidget-webkit-mode-hook #'my-xwidget-webkit-mode-hook)
 
@@ -250,19 +252,12 @@ TIMEOUT defaults to 2 seconds."
 
 ;;; Window Sizing
 
-(defun xwidget-webkit-auto-adjust-size-derived (window)
+(defun xwidget-webkit-auto-adjust-size-derived ()
   "Adjust xwidget size to fit WINDOW for any `xwidget-webkit-mode' derivative."
-  (with-current-buffer (window-buffer window)
-    (when (derived-mode-p 'xwidget-webkit-mode)
-      (when-let* ((xwidget (xwidget-at (point-min))))
-        (xwidget-webkit-adjust-size-to-window xwidget window)))))
-
-(defun xwidget-webkit-adjust-size-derived-in-frame (frame)
-  "Adjust xwidget sizes for all xwidget-webkit derived-mode windows in FRAME."
-  (walk-windows #'xwidget-webkit-auto-adjust-size-derived 'no-minibuf frame))
-
-(add-to-list 'window-size-change-functions
-             #'xwidget-webkit-adjust-size-derived-in-frame)
+  (when (derived-mode-p 'xwidget-webkit-mode)
+    (when-let* ((xwidget (xwidget-at (point-min))))
+      (dolist (win (get-buffer-window-list (current-buffer) nil t))
+        (xwidget-webkit-adjust-size-to-window xwidget win)))))
 
 (setq window-size-change-functions
       (remove 'xwidget-webkit-adjust-size-in-frame
