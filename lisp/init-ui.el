@@ -311,10 +311,9 @@ reader assets."
     project-name))
 
 (defun mode-line-cache--compute-flymake-counters ()
-  (concat (if (bound-and-true-p flymake-mode)
-              (format-mode-line (flymake--mode-line-counters))
-            "")
-          " "))
+  (if (bound-and-true-p flymake-mode)
+      (concat (format-mode-line (flymake--mode-line-counters)) " ")
+    " "))
 
 (defun mode-line-cache-refresh (&optional buffer)
   (with-current-buffer (or buffer (current-buffer))
@@ -338,9 +337,9 @@ reader assets."
   (when (timerp mode-line-cache-timer)
     (cancel-timer mode-line-cache-timer))
   (setq mode-line-cache-timer
-        (run-at-time  mode-line-cache-refresh-interval
-                      mode-line-cache-refresh-interval
-                      #'mode-line-cache-refresh-current-buffer)))
+        (run-at-time mode-line-cache-refresh-interval
+                     mode-line-cache-refresh-interval
+                     #'mode-line-cache-refresh-current-buffer)))
 
 (defun mode-line-persp-project ()
   (mode-line-cache-persp-project (mode-line-cache-get)))

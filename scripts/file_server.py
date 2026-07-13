@@ -13,7 +13,6 @@ import http.client
 import logging
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from zipfile import ZipFile
 from urllib.parse import urlparse
 
 class FileHandler(SimpleHTTPRequestHandler):
@@ -78,16 +77,6 @@ class FileHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
-def extract_pdfjs():
-    logging.info("extract pdfjs")
-    assets_dir = Path.home() / ".emacs.d" / "assets"
-    pdfjs_path = assets_dir / "pdfjs"
-    pdfjs_zip = assets_dir / "pdfjs.zip"
-    if not pdfjs_path.exists():
-        with ZipFile(pdfjs_zip, "r") as z:
-            z.extractall(path=assets_dir)
-
-
 def init_http_proxy():
     proxy_support = urllib.request.ProxyHandler()
     opener = urllib.request.build_opener(proxy_support)
@@ -106,6 +95,5 @@ if __name__ == "__main__":
         format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
     )
     init_http_proxy()
-    extract_pdfjs()
     atexit.register(FileHandler.cleanup)
     start_server(int(sys.argv[1]))
