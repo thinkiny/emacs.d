@@ -108,13 +108,10 @@ def apply_font_metadata(
 
 
 def align_glyph_widths(
-    input_font: fontforge.font, ref_widths: dict[int, int], ref_em: int
+    input_font: fontforge.font, ref_widths: dict[int, int]
 ) -> tuple[int, int]:
-    # Scale ref widths to input font's em so rendered pixel widths match
-    em_scale = input_font.em / ref_em
-
-    ref_glyph_width = ref_widths.get(ord("m"), ref_widths.get(ord("A"), 600))
-    double_width = round(ref_glyph_width * 2 * em_scale)
+    ref_glyph_width = ref_widths.get(ord("m"), ref_widths.get(ord("A")))
+    double_width = ref_glyph_width * 2
 
     cjk_count = 0
     half_count = 0
@@ -131,12 +128,11 @@ def align_glyph_widths(
         if ea_width in ("W", "F"):
             new_width = double_width
             cjk_count += 1
-        elif ea_width == "A":
-            new_width = ref_glyph_width
-            half_count += 1
         else:
-            ref_w = ref_widths.get(glyph.unicode, ref_glyph_width)
-            new_width = round(ref_w * em_scale)
+            # Non-CJK glyphs are one cell in a monospace target. Don't borrow the
+            # CJK ref's per-glyph width -- it inflates neutral symbols (U+25CA,
+            # U+FB01..FB04) to full-width.
+            new_width = ref_glyph_width
             half_count += 1
 
         # Recenter so width change splits evenly across both sidebearings
@@ -294,9 +290,7 @@ def main() -> None:
     # Extract ref widths before glyph operations (fontforge may invalidate auxiliary fonts)
     single_width = None
     ref_widths: dict[int, int] = {}
-    ref_em = 0
     if ref_font is not None:
-        ref_em = ref_font.em
         ref_glyph = ref_font["m"] if "m" in ref_font else ref_font["A"]
         single_width = round(ref_glyph.width * font.em / ref_font.em)
         for g in ref_font.glyphs():
@@ -312,7 +306,7 @@ def main() -> None:
 
     # Width alignment before copy_symbol so copied glyphs don't get recentered
     if do_width:
-        cjk_count, half_count = align_glyph_widths(font, ref_widths, ref_em)
+        cjk_count, half_count = align_glyph_widths(font, ref_widths)
         if args.width_scale:
             scale_glyph_outlines(font, args.width_scale)
 
