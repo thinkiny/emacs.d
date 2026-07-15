@@ -46,6 +46,21 @@
     (kill-elfeed-show-buffer)
     (xwidget-webkit-browse-open-url link t elfeed-local-mapping)))
 
+(defun elfeed-show-open-url (url)
+  "Prompt for a URL (default: current entry link) and act on it.
+A plain RET reloads the current entry.  Editing the URL opens it
+via `browse-url' (your xwidget), mirroring `xwidget-webkit-browse-open-url'."
+  (interactive
+   (list (read-string "open URL: "
+                      (elfeed-entry-link elfeed-show-entry))))
+  (unless (stringp url)
+    (user-error "No URL"))
+  (unless (string-match "\\`[A-Za-z]+:" url)
+    (setq url (concat "https://" url)))
+  (if (string= url (elfeed-entry-link elfeed-show-entry))
+      (elfeed-show-refresh)
+    (browse-url url)))
+
 (defun elfeed-open-entry-in-chrome(entry &optional background)
   (let* ((link (or (get-text-property (point) 'shr-url)
                    (elfeed-entry-link entry))))
@@ -79,8 +94,7 @@
   "Kill the elfeed entry buffer and return to elfeed search."
   (interactive)
   (kill-buffer)
-  (elfeed)
-  (elfeed-mapping-local-file))
+  (elfeed))
 
 (defun my-elfeed-show-mode-hook()
   (visual-line-mode))
@@ -113,6 +127,7 @@
   (define-key elfeed-show-mode-map (kbd "o")   #'elfeed-open-current-in-chrome-background)
   (define-key elfeed-show-mode-map (kbd "C-g") #'selection/quit)
   (define-key elfeed-show-mode-map (kbd "x")   #'elfeed-show-open-xwidget)
+  (define-key elfeed-show-mode-map (kbd "g")   #'elfeed-show-open-url)
   (define-key elfeed-show-mode-map (kbd "y")   #'elfeed-show-yank)
   (define-key elfeed-show-mode-map (kbd "N")   #'elfeed-show-next)
   (define-key elfeed-show-mode-map (kbd "P")   #'elfeed-show-prev)
@@ -129,9 +144,18 @@
   (forward-line)
   (elfeed-mapping-local-file))
 
-(add-hook 'elfeed-search-update-hook #'elfeed-mapping-local-file)
+(defun elfeed--search-clear-modified (&rest _)
+  "Clear the modified flag on the elfeed search buffer after showing an entry."
+  (when-let* ((buf (get-buffer "*elfeed-search*")))
+    (with-current-buffer buf
+      (map-buffer-to-local-file-clear-modified))))
+
+(advice-add 'elfeed-search-show-entry :after #'elfeed--search-clear-modified)
+(advice-add 'elfeed-search-untag-all-unread :after #'elfeed--search-clear-modified)
+(add-hook 'elfeed-search-update-hook #'map-buffer-to-local-file-clear-modified)
 (add-hook 'elfeed-show-update-hook #'my-elfeed-show-update-hook)
 (add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook)
+(add-hook 'elfeed-search-mode-hook #'elfeed-mapping-local-file)
 
 ;; setup feeds
 (defun feed-github-commit (repo)

@@ -354,6 +354,10 @@ When region is active, extend selection to end of next word."
          ([remap dired-do-shell-command] . dwim-shell-command)
          ([remap dired-smart-shell-command] . dwim-shell-command)))
 
+(defun map-buffer-to-local-file-clear-modified()
+  (set-buffer-modified-p nil)
+  t)
+
 (defun map-buffer-to-local-file (local-file)
   "Map the current buffer to a `LOCAL-FILE."
   (when-let* ((file (and local-file (expand-file-name local-file)))
@@ -362,8 +366,7 @@ When region is active, extend selection to end of next word."
     (setq default-directory dir
           buffer-file-name file)
     (set-buffer-modified-p nil)
-    (add-hook 'kill-buffer-query-functions
-              (lambda () (set-buffer-modified-p nil) t) nil t)))
+    (add-hook 'kill-buffer-query-functions #'map-buffer-to-local-file-clear-modified nil t)))
 
 ;;----------------------------------------------------------------------------
 ;; Text Utilities

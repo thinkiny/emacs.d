@@ -6,7 +6,6 @@
   :config
   (setq markdown-command "multimarkdown")
   (setq markdown-fontify-code-blocks-natively t)
-  (setq markdown-italic-underscore nil)
   (define-key markdown-mode-command-map (kbd "g") 'grip-mode))
 
 (defun my-markdown-mode-hook()
