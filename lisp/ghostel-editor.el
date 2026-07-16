@@ -23,6 +23,7 @@
 
 (require 'ghostel)
 (require 'subr-x)
+(require 'cl-lib)
 
 (defvar-local ghostel-editor--source-buffer nil
   "The ghostel buffer where the edited text will be sent.")
@@ -73,8 +74,9 @@ or \\[ghostel-editor-abort] to cancel."
     (user-error "Not in a ghostel buffer"))
   (if (ghostel--readonly-mode-p)
       (ghostel-readonly-exit))
-  (let ((source (current-buffer))
-        (buf (get-buffer-create "*ghostel-editor*")))
+  (let* ((source (current-buffer))
+         (name (generate-new-buffer-name "*ghostel-editor*"))
+         (buf (get-buffer-create name)))
     (with-current-buffer buf
       (erase-buffer)
       (when-let* ((input (ghostel-editor--extract-input source)))
@@ -104,6 +106,72 @@ or \\[ghostel-editor-abort] to cancel."
   "Close the editor buffer without sending anything to ghostel."
   (interactive)
   (quit-window t))
+
+
+;;; Redirect Claude Code `at-mentioned' inserts into the project editor
+(declare-function claude-code-ide-mcp--get-buffer-project "claude-code-ide-mcp" ())
+(declare-function claude-code-ide--get-buffer-name "claude-code-ide" (&optional directory))
+
+(defun ghostel-editor--visible-for-source (source)
+  "Return the visible ghostel editor whose `--source-buffer' is SOURCE, else nil."
+  (when (buffer-live-p source)
+    (cl-find-if
+     (lambda (b)
+       (and (buffer-local-value 'ghostel-editor--source-buffer b)
+            (eq (buffer-local-value 'ghostel-editor--source-buffer b) source)
+            (get-buffer-window b)))
+     (buffer-list))))
+
+(defun ghostel-editor--source-for-project (proj)
+  "Return the live claude-code terminal buffer for PROJ, else nil."
+  (when-let* (proj
+              (name (claude-code-ide--get-buffer-name proj))
+              (src (get-buffer name))
+              ((buffer-live-p src)))
+    src))
+
+(defun ghostel-editor--mention (beg end proj)
+  "Build an @rel#L<n>-<m> mention for BEG..END relative to PROJ."
+  (let* ((rel (file-relative-name (buffer-file-name) proj))
+         (l1 (line-number-at-pos beg))
+         (l2 (line-number-at-pos end)))
+    (if (= l1 l2)
+        (format "@%s#L%d" rel l1)
+      (format "@%s#L%d-%d" rel l1 l2))))
+
+(defun ghostel-editor--insert-mention (orig args source mention)
+  "Insert MENTION into the editor for SOURCE if live+visible, else run ORIG with ARGS."
+  (if-let* ((editor (ghostel-editor--visible-for-source source)))
+      (progn
+        (pop-to-buffer editor)
+        (with-current-buffer editor
+          (goto-char (point-max))
+          (insert mention " ")
+          (goto-char (point-max))))
+    (apply orig args)))
+
+(defun ghostel-editor--insert-selection (orig &rest args)
+  "Advice for `claude-code-ide-insert-at-mentioned'."
+  (let* ((proj (claude-code-ide-mcp--get-buffer-project))
+         (source (ghostel-editor--source-for-project proj))
+         (beg (if (use-region-p) (region-beginning) (line-beginning-position)))
+         (end (if (use-region-p) (region-end) (line-end-position)))
+         (mention (ghostel-editor--mention beg end proj)))
+    (ghostel-editor--insert-mention orig args source mention)))
+
+(defun ghostel-editor--insert-defun (orig &rest args)
+  "Advice for `claude-code-ide-insert-defun-at-mentioned'."
+  (save-excursion
+    (mark-defun)
+    (let* ((proj (claude-code-ide-mcp--get-buffer-project))
+           (source (ghostel-editor--source-for-project proj))
+           (mention (ghostel-editor--mention (region-beginning) (region-end) proj)))
+      (ghostel-editor--insert-mention orig args source mention))))
+
+(advice-add 'claude-code-ide-insert-at-mentioned :around
+            #'ghostel-editor--insert-selection)
+(advice-add 'claude-code-ide-insert-defun-at-mentioned :around
+            #'ghostel-editor--insert-defun)
 
 (provide 'ghostel-editor)
 ;;; ghostel-editor.el ends here
