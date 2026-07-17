@@ -161,12 +161,14 @@ or \\[ghostel-editor-abort] to cancel."
 
 (defun ghostel-editor--insert-defun (orig &rest args)
   "Advice for `claude-code-ide-insert-defun-at-mentioned'."
-  (save-excursion
-    (mark-defun)
-    (let* ((proj (claude-code-ide-mcp--get-buffer-project))
-           (source (ghostel-editor--source-for-project proj))
-           (mention (ghostel-editor--mention (region-beginning) (region-end) proj)))
-      (ghostel-editor--insert-mention orig args source mention))))
+  (let* ((proj (claude-code-ide-mcp--get-buffer-project))
+         (source (ghostel-editor--source-for-project proj))
+         (beg (save-excursion (beginning-of-defun) (point)))
+         (end (save-excursion (end-of-defun) (point)))
+         (mention (if (> end beg)
+                      (ghostel-editor--mention beg end proj)
+                    (ghostel-editor--mention beg beg proj))))
+    (ghostel-editor--insert-mention orig args source mention)))
 
 (advice-add 'claude-code-ide-insert-at-mentioned :around
             #'ghostel-editor--insert-selection)

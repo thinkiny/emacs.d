@@ -8,6 +8,7 @@
   (corfu-auto-prefix 2)
   (corfu-quit-no-match 'separator)
   (corfu-preview-current nil)
+  (corfu-border-width 0)
   (corfu-separator ?\s)          ;; Orderless field separator
   ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
   ;; (corfu-preselect-first nil)    ;; Disable candidate preselection

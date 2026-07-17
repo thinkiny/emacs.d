@@ -1,6 +1,7 @@
 import argparse
 import os
 import shutil
+import statistics
 import unicodedata
 
 import fontforge
@@ -147,15 +148,15 @@ def align_glyph_widths(
 def copy_missing_glyphs(
     input_font: fontforge.font,
     donor_path: str,
-    donor_font: fontforge.font,
     single_width: int | None = None,
 ) -> int:
-    """Copy missing glyphs from donor with em and width scaling.
+    """Copy missing glyphs from donor, scaling each uniformly into the target cell.
 
-    Width scaling preserves relative positioning (e.g., box-drawing alignment)
-    when donor has a different cell width.
+    One scale (target cell width / donor glyph width) is applied to both axes,
+    so the donor glyph keeps its aspect ratio and simply renders at the target
+    cell size.  Sidebearings are then recentered so positioning matches the
+    glyphs normalized by align_glyph_widths.
     """
-    em_ratio = input_font.em / donor_font.em
     existing = {g.unicode for g in input_font.glyphs() if g.unicode >= 0}
 
     input_font.mergeFonts(donor_path)
@@ -164,15 +165,25 @@ def copy_missing_glyphs(
         cp = glyph.unicode
         if cp < 0 or cp in existing:
             continue
-        glyph.transform((em_ratio, 0, 0, em_ratio, 0, 0))
 
-        # Scale horizontally if donor cell width differs from target
-        if single_width and glyph.width != single_width and glyph.width > 0:
-            width_scale = single_width / glyph.width
-            glyph.transform((width_scale, 0, 0, 1, 0, 0))
+        # One uniform scale maps the donor glyph's cell design into the target
+        # cell, preserving the glyph's aspect ratio.  The ratio is taken from
+        # the merged glyph width (already in input-em units after mergeFonts
+        # adopts the input em), so it accounts for any em difference between
+        # donor and input -- a separate em-ratio transform would double-apply
+        # that correction and break the X/Y proportionality.
+        if single_width and glyph.width > 0 and glyph.width != single_width:
+            scale = single_width / glyph.width
+            glyph.transform((scale, 0, 0, scale, 0, 0))
 
-        old_width = glyph.width
-        glyph.width = single_width if single_width else old_width
+        # Recenter so the residual width change splits evenly across both
+        # sidebearings, matching how align_glyph_widths treats existing
+        # glyphs (consistent positioning across the font).
+        delta = (single_width - glyph.width) if single_width else 0
+        if delta:
+            glyph.transform((1, 0, 0, 1, delta / 2, 0))
+        if single_width:
+            glyph.width = single_width
         added += 1
     return added
 
@@ -188,16 +199,18 @@ def scale_glyph_outlines(font: fontforge.font, scale: float) -> None:
 
 
 def compute_ink_envelope(font: fontforge.font) -> tuple[float, float]:
-    """Combined ink bounding box of every mapped glyph, clamped to the em square.
+    """Median ink extents of mapped glyphs, in font units.
 
-    Returns (top, bottom) in font units: top >= 0 is the highest ink above the
-    baseline, bottom <= 0 the lowest below it.  Used to re-center the line cell
-    on the actual glyph ink (Latin + CJK + PUA), so glyphs merged in by
-    --copy-symbol are centered too.  Clamped to +/-em so a single oversize icon
-    can't inflate the ascent and clip real descenders.
+    Returns (median_top, median_bottom): the median of each glyph's
+    highest ink, and the median of its below-baseline ink.  The median
+    ignores the oversized tail (accents, ``|``, box drawing, PUA icons
+    spanning the em) so a few icons can't inflate the line height and
+    push ordinary text to the cell bottom.  The bottom uses only
+    below-baseline values so it tracks real descender depth rather than
+    the baseline most glyphs sit on.
     """
-    top = -(10**9)
-    bottom = 10**9
+    tops: list[float] = []
+    descenders: list[float] = []
     for glyph in font.glyphs():
         if glyph.unicode < 0:
             continue
@@ -205,22 +218,29 @@ def compute_ink_envelope(font: fontforge.font) -> tuple[float, float]:
             _, min_y, _, max_y = glyph.boundingBox()
         except (TypeError, ValueError):
             continue
-        if max_y > top:
-            top = max_y
-        if min_y < bottom:
-            bottom = min_y
-    return min(top, font.em), max(bottom, -font.em)
+        if max_y == 0 and min_y == 0:
+            continue
+        tops.append(max_y)
+        if min_y < 0:
+            descenders.append(min_y)
+
+    if not tops:
+        return font.os2_typoascent, font.os2_typodescent
+
+    return statistics.median(tops), (
+        statistics.median(descenders) if descenders else 0.0
+    )
 
 
 def scale_line_height(font: fontforge.font, factor: float) -> None:
-    """Scale the line height by `factor` and re-center the ink envelope in it.
+    """Scale the line height by `factor` and re-center it on the ink envelope.
 
-    The total ascent+descent span is scaled by `factor`, then ascent/descent are
-    set so the combined glyph ink (Latin + CJK + PUA) sits centered in the new
-    line -- equal padding above the highest ink and below the lowest.  This
-    corrects the source font's built-in vertical offset instead of preserving it
-    (the old symmetric split kept ascent-descent constant and so reproduced
-    whatever offset the font shipped with).
+    The total ascent+descent span is scaled by `factor`, then ascent/descent
+    are set so the median glyph ink range sits centered in the new line --
+    equal padding above the median top and below the median below-baseline
+    bottom.  Centering on the medians (not the raw min/max) keeps oversized
+    glyphs in the tails from dominating, so ordinary text stays optically
+    centered instead of drooping to the cell bottom.
 
     Typo line gap is folded into the typo ascent first so all three metric pairs
     describe the same total line height after scaling.
@@ -315,8 +335,8 @@ def main() -> None:
         )
         width_tag = f"M{scale_tag}"
 
-    if symbol_font:
-        n = copy_missing_glyphs(font, args.copy_symbol, symbol_font, single_width)
+    if symbol_font is not None:
+        n = copy_missing_glyphs(font, args.copy_symbol, single_width)
         print(f"Copied {n} ASCII/symbol glyph(s) from {args.copy_symbol}")
 
     tag = "-".join(t for t in (width_tag, line_height_tag) if t)
