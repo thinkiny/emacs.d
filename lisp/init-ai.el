@@ -18,7 +18,6 @@
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'ghostel)
   (setq claude-code-ide-show-claude-window-in-ediff nil)
-  (setq claude-code-ide-vterm-render-delay 0.02)
   (setq claude-code-ide-window-side 'right
         claude-code-ide-window-width 80
         claude-code-ide-use-side-window nil)

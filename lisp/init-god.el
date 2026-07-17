@@ -14,7 +14,7 @@
   (define-key god-local-mode-map (kbd "[") #'xref-pop-marker-stack)
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)
   (add-to-list 'god-exempt-major-modes 'ivy-occur-mode)
-  (add-to-list 'god-exempt-major-modes 'vterm-mode)
+  (add-to-list 'god-exempt-major-modes 'ghostel-mode)
   (delete #'god-view-mode-p god-exempt-predicates))
 
 (when window-system

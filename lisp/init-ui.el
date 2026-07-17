@@ -240,7 +240,7 @@ reader assets."
 ;; disable fringe based on major-mode
 (defun no-fringe-mode-p ()
   "Return non-nil if current buffer should hide fringes."
-  (derived-mode-p 'xwidget-webkit-mode 'vterm-mode))
+  (derived-mode-p 'xwidget-webkit-mode 'ghostel-mode))
 
 (defun sync-fringe-by-mode (frame)
   "Sync fringe width for all non-minibuffer windows in FRAME."
@@ -265,7 +265,7 @@ reader assets."
   (cond
    ((derived-mode-p 'xwidget-webkit-mode)
     (caret-xwidget-scroll-percent))
-   ((derived-mode-p '(ghostel-mode vterm-mode eshell-mode))
+   ((derived-mode-p '(ghostel-mode eshell-mode))
     nil)
    (t
     (if (= (point-max) (point-min)) 0
@@ -277,7 +277,7 @@ reader assets."
     (cond
      ((derived-mode-p 'xwidget-webkit-mode)
       (format " %d%%%% %s" percent (buffer-name)))
-     ((derived-mode-p '(ghostel-mode vterm-mode eshell-mode))
+     ((derived-mode-p '(ghostel-mode eshell-mode))
       (format-mode-line " %b"))
      (t
       (format " %d%%%% %d:%s"

@@ -3,7 +3,7 @@
 ;;; Commentary:
 ;;
 ;; Provides `counsel-term', an ivy-based picker for managed terminal
-;; buffers (vterm or eshell).  Bound to `C-x t' in init-term.el.
+;; buffers (eshell or ghostel).  Bound to `C-x t' in init-term.el.
 
 ;;; Code:
 
@@ -17,12 +17,10 @@
 Requires the corresponding package on set (including at load),
 so `counsel-mt--launch' can call it directly."
   :type '(choice (const :tag "ghostel" ghostel)
-                 (const :tag "vterm" vterm)
                  (const :tag "eshell" eshell))
   :set (lambda (sym val)
          (set-default sym val)
          (pcase val
-           ('vterm  (require 'vterm))
            ('ghostel (require 'ghostel))))
   :group 'term)
 
@@ -118,7 +116,6 @@ longest prefix of the current directory."
          (name (generate-new-buffer-name (counsel-mt--buf-name idx))))
     (pcase counsel-mt-shell-type
       ('eshell (call-interactively 'eshell) (rename-buffer name))
-      ('vterm (switch-to-buffer (vterm name)) (rename-buffer name))
       ('ghostel (ghostel t)
                 (setq-local ghostel-buffer-name-function nil)
                 (rename-buffer name)))
