@@ -272,16 +272,15 @@ TIMEOUT defaults to 2 seconds."
     (xwidget-webkit-eval-script
      "var s = document.createElement('style');
 s.textContent = 'html,body,:not(caret-cursor){background:transparent!important} ::selection{background:auto!important;}';
-document.head.appendChild(s);")))
+(document.head || document.documentElement).appendChild(s);")))
 
-(defun xwidget-webkit--transparent-bg-callback-advice (orig-fn xwidget event-type)
-  "Inject transparent background CSS on page load."
-  (funcall orig-fn xwidget event-type)
+(defun xwidget-webkit--transparent-bg-callback-advice (xwidget event-type)
+  "Inject transparent background CSS on `load-committed'."
   (when (and (eq event-type 'load-changed)
-             (string-equal (nth 3 last-input-event) "load-finished"))
+             (string-equal (nth 3 last-input-event) "load-committed"))
     (xwidget-webkit-inject-transparent-bg)))
 
-(advice-add 'xwidget-webkit-callback :around
+(advice-add 'xwidget-webkit-callback :after
             #'xwidget-webkit--transparent-bg-callback-advice)
 
 (provide 'init-xwidget-webkit)

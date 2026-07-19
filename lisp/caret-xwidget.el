@@ -55,11 +55,10 @@ The file is read at load time and injected into xwidget-webkit pages."
                                              (and post (concat "\n" caret-xwidget--js-prefix post))
                                              "\nvoid 0;")))))
 
-(defun caret-xwidget--callback-advice (orig-fn xwidget event-type)
-  "Advice around `xwidget-webkit-callback' to re-inject caret.js on load."
-  (funcall orig-fn xwidget event-type)
+(defun caret-xwidget--callback-advice (xwidget event-type)
+  "Inject caret.js after `xwidget-webkit-callback' on `load-committed'."
   (when (and (eq event-type 'load-changed)
-             (string-equal (nth 3 last-input-event) "load-finished"))
+             (string-equal (nth 3 last-input-event) "load-committed"))
     (caret-xwidget--inject)))
 
 ;; ---------------------------------------------------------------------------
@@ -371,7 +370,7 @@ Set this to navigate to the previous document/chapter.")
   (define-key xwidget-webkit-mode-map (kbd "=")     #'caret-xwidget-expand-selection)
 
   ;; Inject caret.js on every page load (initial and subsequent navigations).
-  (advice-add 'xwidget-webkit-callback :around #'caret-xwidget--callback-advice))
+  (advice-add 'xwidget-webkit-callback :after #'caret-xwidget--callback-advice))
 
 (provide 'caret-xwidget)
 
