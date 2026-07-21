@@ -56,9 +56,9 @@ The file is read at load time and injected into xwidget-webkit pages."
                                              "\nvoid 0;")))))
 
 (defun caret-xwidget--callback-advice (xwidget event-type)
-  "Inject caret.js after `xwidget-webkit-callback' on `load-committed'."
+  "Inject caret.js after `xwidget-webkit-callback' on `load-finished'."
   (when (and (eq event-type 'load-changed)
-             (string-equal (nth 3 last-input-event) "load-committed"))
+             (string-equal (nth 3 last-input-event) "load-finished"))
     (caret-xwidget--inject)))
 
 ;; ---------------------------------------------------------------------------

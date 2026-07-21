@@ -8,13 +8,9 @@
   :config
   (setq claude-code-ide-debug nil)
   (setq claude-code-ide-cli-debug nil)
-  (setq claude-code-ide-emacs-prompt
-"<IMPORTANT>
-- Review MCP tools descriptions thoroughly. Prioritize MCP tools over any other tools or agents.
+  (setq claude-code-ide-emacs-prompt "# IMPORTANT
 - Avoid reading any binary file (e.g., PDF or EPUB).
-- Line numbers are 1-based; column numbers are 0-based.
-</IMPORTANT>")
-
+- Line numbers are 1-based, column numbers are 0-based.")
   (setq claude-code-ide-terminal-initialization-delay 1)
   (setq claude-code-ide-terminal-backend 'ghostel)
   (setq claude-code-ide-show-claude-window-in-ediff nil)

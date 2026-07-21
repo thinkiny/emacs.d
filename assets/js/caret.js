@@ -387,6 +387,9 @@ class CaretEmacs {
   _updateCursor() {
     const el = this._cursorEl;
     if (!el) return;
+    // The overlay can be stripped from the DOM by page hydration/re-render;
+    // re-attach before drawing or it updates a detached (invisible) node.
+    if (!el.isConnected) document.documentElement.appendChild(el);
     const sel = window.getSelection();
     if (!sel?.rangeCount) {
       // Selection unexpectedly lost — restore from last rendered position
@@ -730,6 +733,15 @@ class CaretEmacs {
     const sel = window.getSelection();
     this._setSelectionRange(sel, range);
     this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+  }
+
+  /** Probe one visual line below/above a caret rect (fallback for _moveLine). */
+  _probeLineFromCaret(fwd, caretRect) {
+    if (!caretRect) return null;
+    const step = (caretRect.height || 18) + 6;
+    const cx = caretRect.left + (caretRect.width || 1) / 2;
+    const cy = fwd ? caretRect.bottom + step : caretRect.top - step;
+    return this._probeTextAt(cx, cy);
   }
 
   /* ── Selection Management ──────────────────────────────────── */
@@ -1412,11 +1424,15 @@ class CaretEmacs {
             : currentLineRect.top - targetLineBottom;
           const vp = this._viewportRect();
           const targetInViewport = targetLineRect.top < vp.bottom && targetLineBottom > vp.top;
-          if (lineGap > this._scrollPx && !targetInViewport && !caretInGap) {
+          // Scroll 200px over a large gap (e.g. an image) instead of jumping
+          // over it to the next text line, even when the caret is on a line.
+          if (lineGap > this._scrollPx && !targetInViewport) {
             if (this._canScroll(fwd)) {
               this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
               this._invalidateLayoutCaches();
-              return { range: null, scrolled: true, targetLineIndex, goalX };
+              // One 200px scroll per press over a large gap (e.g. an image);
+              // do not retry/cache — subsequent presses continue stepping.
+              return { range: null, scrolled: true, stop: true };
             }
             // At scroll boundary — fall through to jump
           }
@@ -1619,6 +1635,14 @@ class CaretEmacs {
 
       // If scrolled incrementally, cache target and retry
       if (result.scrolled) {
+        if (result.stop) {
+          // One-shot step (e.g. over an image): no retry, no cache. The page
+          // already scrolled; the caret stays put, treated as a move so the
+          // boundary wrapper doesn't misread it as a pagination boundary.
+          this._lineMoveTargetIndex = null;
+          this._lineMoveGoalX = null;
+          return true;
+        }
         // Only cache valid target indices (>= 0)
         if (result.targetLineIndex !== undefined && result.targetLineIndex >= 0) {
           this._lineMoveTargetIndex = result.targetLineIndex;
@@ -1631,7 +1655,14 @@ class CaretEmacs {
       this._lineMoveTargetIndex = null;
       this._lineMoveGoalX = null;
 
-      const lineRange = result.range;
+      let lineRange = result.range;
+      // _moveLine may stay on the caret's own row (same-Y cluster, e.g. a
+      // timestamp label sharing the text row); if so, probe one line over.
+      const movedRect = lineRange && this._rangeRectAt(lineRange.startContainer, lineRange.startOffset);
+      if (lineRange && movedRect && preRect && this._isSameLine(movedRect, preRect)) {
+        const probe = this._probeLineFromCaret(fwd, preRect);
+        if (probe) lineRange = probe;
+      }
       if (!lineRange) {
         const atVisibleBoundary = this._isAtVisibleBoundary(direction);
         const atViewportEdge = fwd ? this.isAtBottom() : this.isAtTop();

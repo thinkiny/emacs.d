@@ -50,6 +50,13 @@ Applies to both the LSP and rg paths in the interactive ivy command."
       (or (alist-get kind eglot--symbol-kind-names) "Unknown")
     "Unknown"))
 
+(defun project-search--normalize-query (query)
+  "Return QUERY trimmed when it is a non-empty string, else nil."
+  (when (stringp query)
+    (let ((trimmed (string-trim query)))
+      (unless (string-empty-p trimmed)
+        trimmed))))
+
 (defun project-search--lsp-filter-and-sort-by-score (results)
   "Filter and order LSP symbol RESULTS using optional `:score`.
 
@@ -164,12 +171,13 @@ Falls back to (1 . 0) when neither works."
 
 (defun project-search--sync-lsp-xrefs (server query &optional max-width)
   "Query SERVER for workspace symbols matching QUERY."
-  (condition-case err
-      (let* ((raw (jsonrpc-request server :workspace/symbol `(:query ,query)))
-             (ordered (project-search--lsp-filter-and-sort-by-score raw))
-             (xrefs (project-search--lsp-to-xrefs ordered query max-width)))
-        xrefs)
-    (error (message "project-search LSP error: %S" err) nil)))
+  (when-let* ((query (project-search--normalize-query query)))
+    (condition-case err
+        (let* ((raw (jsonrpc-request server :workspace/symbol `(:query ,query)))
+               (ordered (project-search--lsp-filter-and-sort-by-score raw))
+               (xrefs (project-search--lsp-to-xrefs ordered query max-width)))
+          xrefs)
+      (error (message "project-search LSP error: %S" err) nil))))
 
 (defun project-search--sync-rg-fallback (query root limit width)
   "Run rg search, returning xref items."
@@ -363,31 +371,32 @@ against `project-search--request-id' to discard stale
 responses.  When KIND-PREFIX is non-nil, only symbols whose kind
 name starts with that prefix are kept.  When MAX-RESULTS is
 non-nil, it caps the rg fallback output."
-  (jsonrpc-async-request
-   server :workspace/symbol `(:query ,query)
-   :success-fn
-   (lambda (resp)
-     (when (= req-id project-search--request-id)
-       (ignore-errors
-         (let* ((results (append resp nil))
-                (filtered (if kind-prefix
-                              (seq-filter
-                               (lambda (r)
-                                 (project-search--kind-matches-prefix-p
-                                  (plist-get r :kind) kind-prefix))
-                               results)
-                            results))
-                (ordered (project-search--lsp-filter-and-sort-by-score filtered))
-                (xrefs (project-search--lsp-to-xrefs ordered query)))
-           (if xrefs
-               (project-search--update-ivy-candidates xrefs)
-             (project-search--rg-fallback-ivy query project-root req-id max-results))))))
-   :error-fn
-   (lambda (&rest _)
-     (project-search--rg-fallback-ivy query project-root req-id max-results))
-   :timeout-fn
-   (lambda ()
-     (project-search--rg-fallback-ivy query project-root req-id max-results))))
+  (when-let* ((query (project-search--normalize-query query)))
+    (jsonrpc-async-request
+     server :workspace/symbol `(:query ,query)
+     :success-fn
+     (lambda (resp)
+       (when (= req-id project-search--request-id)
+         (ignore-errors
+           (let* ((results (append resp nil))
+                  (filtered (if kind-prefix
+                                (seq-filter
+                                 (lambda (r)
+                                   (project-search--kind-matches-prefix-p
+                                    (plist-get r :kind) kind-prefix))
+                                 results)
+                              results))
+                  (ordered (project-search--lsp-filter-and-sort-by-score filtered))
+                  (xrefs (project-search--lsp-to-xrefs ordered query)))
+             (if xrefs
+                 (project-search--update-ivy-candidates xrefs)
+               (project-search--rg-fallback-ivy query project-root req-id max-results))))))
+     :error-fn
+     (lambda (&rest _)
+       (project-search--rg-fallback-ivy query project-root req-id max-results))
+     :timeout-fn
+     (lambda ()
+       (project-search--rg-fallback-ivy query project-root req-id max-results)))))
 
 (defun project-search--debounce-send (fn &rest args)
   "Cancel pending timer, schedule FN with ARGS after debounce delay.

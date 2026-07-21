@@ -3,14 +3,17 @@
 (use-package elfeed
   :bind (:map global-map
               ("C-x e" . elfeed--switch))
+  :custom
+  (elfeed-search-filter "+unread")
+  (elfeed-tree-filter "+unread")
+  (elfeed-db-directory "~/.emacs.d/elfeed")
+  (elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
   :config
   (use-proxy-local 'url-retrieve)
   (when-let* ((proxy-url (local-proxy-http-url)))
     (setq elfeed-curl-extra-arguments (list "-x" proxy-url)))
 
   (defconst elfeed-local-mapping "~/org/*elfeed*")
-  (setq elfeed-db-directory "~/.emacs.d/elfeed")
-  (setq elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
   (setq elfeed-search-print-entry-function #'elfeed-search-print-entry--custom)
   (define-key elfeed-search-mode-map (kbd "j") #'next-line)
   (define-key elfeed-search-mode-map (kbd "v") #'scroll-up)
