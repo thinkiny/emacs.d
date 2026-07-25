@@ -1428,6 +1428,8 @@ class CaretEmacs {
           // over it to the next text line, even when the caret is on a line.
           if (lineGap > this._scrollPx && !targetInViewport) {
             if (this._canScroll(fwd)) {
+              // Suppress caret relocation so stepping over a big image doesn't bounce back.
+              this._suppressScrollRelocate = true;
               this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
               this._invalidateLayoutCaches();
               // One 200px scroll per press over a large gap (e.g. an image);

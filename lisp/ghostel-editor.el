@@ -25,6 +25,10 @@
 (require 'subr-x)
 (require 'cl-lib)
 
+(declare-function term--claude-buffer-p "init-term" ())
+(declare-function ghostel--readonly-mode-p "init-term" ())
+(declare-function gfm-mode "markdown-mode" (&optional arg))
+
 (defvar-local ghostel-editor--source-buffer nil
   "The ghostel buffer where the edited text will be sent.")
 
@@ -99,7 +103,12 @@ or \\[ghostel-editor-abort] to cancel."
       (user-error "Source ghostel buffer no longer exists"))
     (quit-window t)
     (with-current-buffer source
-      (ghostel-send-string (if (term--claude-buffer-p) "\x03" "\x15"))
+      (if (term--claude-buffer-p)
+          (let* ((end   ghostel--cursor-char-pos)
+                 (start (ghostel-editor--find-prompt-line-start end)))
+            (when (and start end (> end start))
+              (ghostel-send-string (make-string (- end start) ?\x7f))))
+        (ghostel-send-string "\x15"))
       (ghostel-send-string content))))
 
 (defun ghostel-editor-abort ()
@@ -140,7 +149,7 @@ or \\[ghostel-editor-abort] to cancel."
       (format "@%s#L%d-%d" rel l1 l2))))
 
 (defun ghostel-editor--insert-mention (orig args source mention)
-  "Insert MENTION into the editor for SOURCE if live+visible, else run ORIG with ARGS."
+  "Insert MENTION into SOURCE's editor if live+visible; else call ORIG with ARGS."
   (if-let* ((editor (ghostel-editor--visible-for-source source)))
       (progn
         (pop-to-buffer editor)
@@ -151,7 +160,7 @@ or \\[ghostel-editor-abort] to cancel."
     (apply orig args)))
 
 (defun ghostel-editor--insert-selection (orig &rest args)
-  "Advice for `claude-code-ide-insert-at-mentioned'."
+  "Advice for `claude-code-ide-insert-at-mentioned'; fallback to ORIG ARGS."
   (let* ((proj (claude-code-ide-mcp--get-buffer-project))
          (source (ghostel-editor--source-for-project proj))
          (beg (if (use-region-p) (region-beginning) (line-beginning-position)))
@@ -160,7 +169,7 @@ or \\[ghostel-editor-abort] to cancel."
     (ghostel-editor--insert-mention orig args source mention)))
 
 (defun ghostel-editor--insert-defun (orig &rest args)
-  "Advice for `claude-code-ide-insert-defun-at-mentioned'."
+  "Advice for `claude-code-ide-insert-defun-at-mentioned'; fallback to ORIG ARGS."
   (let* ((proj (claude-code-ide-mcp--get-buffer-project))
          (source (ghostel-editor--source-for-project proj))
          (beg (save-excursion (beginning-of-defun) (point)))
