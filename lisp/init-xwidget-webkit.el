@@ -6,7 +6,24 @@
 
 (defgroup xwidget-webkit '() "xwidget webkit" :group 'tools)
 (setq xwidget-webkit-buffer-name-format "*WEB: %T*")
-(setq xwidget-webkit-proxy (local-proxy-http-url))
+(defun local-proxy-endpoint--sync-xwidget()
+  "Mirror `local-proxy-endpoint' into `xwidget-webkit-proxy'."
+  (setq xwidget-webkit-proxy (local-proxy-http-url)))
+
+(add-hook 'local-proxy-endpoint-change-functions
+          #'local-proxy-endpoint--sync-xwidget)
+
+(local-proxy-endpoint--sync-xwidget)
+
+;;; Event Guard
+
+(defun xwidget-webkit--event-handler-guard (orig-fn &rest _)
+  "Skip `xwidget-event-handler' when its xwidget is no longer live."
+  (when (xwidget-live-p (nth 2 last-input-event))
+    (funcall orig-fn)))
+
+(advice-add 'xwidget-event-handler :around
+            #'xwidget-webkit--event-handler-guard)
 
 ;;; URL & Session Helpers
 (defun xwidget-webkit-get-current-url ()

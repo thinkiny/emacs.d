@@ -14,6 +14,15 @@
   :type 'file
   :group 'file-server)
 
+(defun file-server-restart ()
+  "Restart the file server so it inherits the current proxy env."
+  (when (get-process "file-server")
+    (delete-process "file-server")
+    (file-server-start)))
+
+(add-hook 'local-proxy-endpoint-change-functions
+          #'file-server-restart)
+
 (defun file-server-start ()
   (interactive)
   (unless (get-process "file-server")

@@ -109,9 +109,20 @@
                    ,@body)))))
 
 ;; proxy
+(defvar local-proxy-endpoint-change-functions nil
+  "Normal hook run when `local-proxy-endpoint' is set via Customize.
+Functions read the current `local-proxy-endpoint' directly.")
+
+(defun local-proxy-endpoint--set (symbol value)
+  "Customize `:set' for `local-proxy-endpoint'.
+Store VALUE, then run `local-proxy-endpoint-change-functions'."
+  (custom-set-default symbol value)
+  (run-hooks 'local-proxy-endpoint-change-functions))
+
 (defcustom local-proxy-endpoint nil
   "Host and port of the local HTTP proxy, e.g. \"127.0.0.1:1087\".
 When nil, proxy-related functions behave as if no proxy is configured."
+  :set #'local-proxy-endpoint--set
   :type '(choice (string :tag "Host:Port")
                  (const :tag "No proxy" nil)))
 
@@ -138,19 +149,12 @@ When nil, proxy-related functions behave as if no proxy is configured."
         ("http_proxy" . ,proxy-url)
         ("https_proxy" . ,proxy-url)))))
 
-
-(defvar url-proxy-services-local (local-proxy-url-proxy-services))
-
 (defun set-proxy()
   (interactive)
-  (unless local-proxy-endpoint
-    (setq local-proxy-endpoint "127.0.0.1:1087"))
-  (setq url-proxy-services-local (local-proxy-url-proxy-services))
-  (setq url-proxy-services url-proxy-services-local))
+  (setq url-proxy-services (local-proxy-url-proxy-services)))
 
 (defun unset-proxy()
   (interactive)
-  (setq local-proxy-endpoint nil)
   (setq url-proxy-services nil))
 
 (defun advice/use-proxy-local (func &rest args)
