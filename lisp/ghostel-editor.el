@@ -32,16 +32,24 @@
 (defvar-local ghostel-editor--source-buffer nil
   "The ghostel buffer where the edited text will be sent.")
 
+(defconst ghostel-editor--input-prompt-re "^❯\\s-"
+  "Regex matching the Claude Code live user-input prompt line.
+`❯' plus one whitespace separator (Claude uses a no-break space, U+00A0,
+which has whitespace syntax).  `match-end' lands past the separator, so
+the extracted input has no leading separator.")
+
 (defun ghostel-editor--find-prompt-line-start (cursor-pos)
-  "Walk backwards from CURSOR-POS to find the primary prompt line.
-Returns position after the prompt prefix, or nil."
+  "Walk backwards from CURSOR-POS to find the live Claude input prompt.
+Returns position past the `❯' and its separator (first input char), or nil."
   (save-excursion
     (goto-char cursor-pos)
     (catch 'found
-      (while (not (bobp))
-        (when-let* ((prompt-end (ghostel--regex-prompt-end (point))))
-          (throw 'found prompt-end))
-        (forward-line -1)))))
+      (let (done)
+        (while (not done)
+          (goto-char (line-beginning-position))
+          (when (looking-at ghostel-editor--input-prompt-re)
+            (throw 'found (match-end 0)))
+          (setq done (not (zerop (forward-line -1)))))))))
 
 (defun ghostel-editor--extract-input (source)
   "Extract current input text from a ghostel buffer SOURCE."
@@ -51,8 +59,17 @@ Returns position after the prompt prefix, or nil."
                            (ghostel-editor--find-prompt-line-start end))
                       (and end (ghostel-input-start-point)))))
       (when (and start end (< start end))
-        (replace-regexp-in-string "^[[:space:]]+" ""
-         (buffer-substring-no-properties start end))))))
+        (buffer-substring-no-properties start end)))))
+
+(defun ghostel-editor--goto-end-when-idle (buffer)
+  "Re-anchor point to `point-max' in BUFFER once Emacs goes idle.
+Deferring past ghostel's `pre-redisplay' re-anchor so the move sticks."
+  (run-with-idle-timer
+   0 nil
+   (lambda ()
+     (when (buffer-live-p buffer)
+       (with-current-buffer buffer
+         (goto-char (point-max)))))))
 
 (defvar ghostel-editor-mode-map
   (let ((map (make-sparse-keymap)))
@@ -107,15 +124,18 @@ or \\[ghostel-editor-abort] to cancel."
           (let* ((end   ghostel--cursor-char-pos)
                  (start (ghostel-editor--find-prompt-line-start end)))
             (when (and start end (> end start))
-              (ghostel-send-string (make-string (- end start) ?\x7f))))
+              (ghostel-send-string
+               (make-string (- end start) ?\x7f))))
         (ghostel-send-string "\x15"))
-      (ghostel-send-string content))))
+      (ghostel-send-string content)
+      (ghostel-editor--goto-end-when-idle source))))
 
 (defun ghostel-editor-abort ()
   "Close the editor buffer without sending anything to ghostel."
   (interactive)
-  (quit-window t))
-
+  (let ((source ghostel-editor--source-buffer))
+    (quit-window t)
+    (ghostel-editor--goto-end-when-idle source)))
 
 ;;; Redirect Claude Code `at-mentioned' inserts into the project editor
 (declare-function claude-code-ide-mcp--get-buffer-project "claude-code-ide-mcp" ())
