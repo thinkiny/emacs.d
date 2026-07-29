@@ -123,26 +123,25 @@ Return the callback string result, or nil on timeout."
   "Build a selection alist for the current xwidget buffer.
 TEXT defaults to the result of `claude-xwidgets--selected-text'."
   (let* ((text (or text (claude-xwidgets--selected-text)))
-         (file-path (buffer-file-name))
+         (file-path (and (buffer-file-name) (file-exists-p (buffer-file-name))))
          (empty (string-empty-p text)))
     `((text . ,text)
-      (filePath . ,(or file-path ""))
       ,@(when file-path
-          `((fileUrl . ,(concat "file://" file-path))))
+          `((filePath . ,file-path)
+            (fileUrl . ,(concat "file://" file-path))))
       (selection . ((start . ((line . 1) (character . 1)))
                     (end . ((line . 1) (character . 1)))
                     (isEmpty . ,(if empty t :json-false)))))))
 
 ;;; getCurrentSelection :around advice
 
-(defun claude-mcp--current-selection-advice (orig-fn arguments)
+(defun claude-mcp--current-selection-advice (orig-fn)
   "Around advice: handle xwidget buffers, delegate everything else.
-ORIG-FN is the original `getCurrentSelection' handler.
-ARGUMENTS are the MCP tool arguments (unused)."
+ORIG-FN is the original `getCurrentSelection' handler."
   (if (claude-xwidgets--buffer-p)
       (claude-xwidgets--selection-alist)
     ;; Not an xwidget buffer: call the original handler
-    (funcall orig-fn arguments)))
+    (funcall orig-fn)))
 
 ;;; getVisibleText
 
@@ -288,7 +287,7 @@ function requires `buffer-file-name'.  ORIG-FN is the original function."
 ;;;###autoload
 (defun claude-extra-mcp-tools-setup ()
   "Register extra MCP tools for claude-code-ide."
-  (advice-add 'claude-code-ide-mcp-handle-get-current-selection
+  (advice-add 'claude-code-ide-mcp--get-current-selection
               :around #'claude-mcp--current-selection-advice)
   (advice-add 'claude-code-ide-mcp--send-selection-for-project
               :around #'claude-mcp--selection-poll-advice)
