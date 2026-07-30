@@ -41,7 +41,8 @@
 
 (defun kill-elfeed-show-buffer()
   (when-let* ((buffer (get-buffer "*elfeed-entry*")))
-    (kill-buffer buffer)))
+    (kill-buffer buffer))
+  (elfeed-search-update :force))
 
 (defun elfeed-show-open-xwidget ()
   (interactive)
