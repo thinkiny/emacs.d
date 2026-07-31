@@ -29,6 +29,36 @@
   (interactive)
   (ghostel--send-string "\x16"))
 
+;; Debounce: after ghostel-send-string, coalesce a trailing (point-max) into one timer
+(defcustom ghostel-send-string-debounce-delay 0.05
+  "Seconds to wait after `ghostel-send-string` before jumping to `point-max`.
+Consecutive sends within this window collapse into a single jump."
+  :type 'number
+  :group 'ghostel)
+
+(defvar-local ghostel--send-string-debounce-timer nil
+  "Buffer-local debounce timer scheduling `(point-max)` after a send burst.
+Cleared when fired or when the buffer dies.")
+
+(defun ghostel--debounce-send-string-goto-max (buf)
+  "Idle-timer callback: jump to `point-max` in the live terminal buffer BUF."
+  (when (buffer-live-p buf)
+    (with-current-buffer buf
+      (setq ghostel--send-string-debounce-timer nil)
+      (goto-char (point-max)))))
+
+(defun ghostel--send-string-debounce (&rest _)
+  "Debounce advice: schedule `(point-max)` after `ghostel-send-string`."
+  (when (timerp ghostel--send-string-debounce-timer)
+    (cancel-timer ghostel--send-string-debounce-timer))
+  (setq ghostel--send-string-debounce-timer
+        (run-with-timer ghostel-send-string-debounce-delay nil
+                        #'ghostel--debounce-send-string-goto-max
+                        (current-buffer))))
+
+(with-eval-after-load 'ghostel
+  (advice-add 'ghostel-send-string :after #'ghostel--send-string-debounce))
+
 (defun ghostel-semi-char-kill-line ()
   "Save cursor-to-EOL text to Emacs kill ring, then send C-k to terminal."
   (interactive)

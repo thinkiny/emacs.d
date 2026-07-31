@@ -61,16 +61,6 @@ Returns position past the `❯' and its separator (first input char), or nil."
       (when (and start end (< start end))
         (buffer-substring-no-properties start end)))))
 
-(defun ghostel-editor--goto-end-when-idle (buffer)
-  "Re-anchor point to `point-max' in BUFFER once Emacs goes idle.
-Deferring past ghostel's `pre-redisplay' re-anchor so the move sticks."
-  (run-with-idle-timer
-   0 nil
-   (lambda ()
-     (when (buffer-live-p buffer)
-       (with-current-buffer buffer
-         (goto-char (point-max)))))))
-
 (defvar ghostel-editor-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") #'ghostel-editor-finish)
@@ -127,15 +117,12 @@ or \\[ghostel-editor-abort] to cancel."
               (ghostel-send-string
                (make-string (- end start) ?\x7f))))
         (ghostel-send-string "\x15"))
-      (ghostel-send-string content)
-      (ghostel-editor--goto-end-when-idle source))))
+      (ghostel-send-string content))))
 
 (defun ghostel-editor-abort ()
   "Close the editor buffer without sending anything to ghostel."
   (interactive)
-  (let ((source ghostel-editor--source-buffer))
-    (quit-window t)
-    (ghostel-editor--goto-end-when-idle source)))
+  (quit-window t))
 
 ;;; Redirect Claude Code `at-mentioned' inserts into the project editor
 (declare-function claude-code-ide-mcp--get-buffer-project "claude-code-ide-mcp" ())

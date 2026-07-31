@@ -48,8 +48,12 @@ class CaretEmacs {
     this._lineMoveGoalX = null;
 
     this._onKeyDown = (e) => {
-      if (e.ctrlKey && e.key === 'g' && !e.shiftKey && !e.altKey && !e.metaKey)
+      if (e.ctrlKey && e.key === 'g' && !e.altKey && !e.metaKey)
         this.deactivateMark();
+    };
+    // A mouse click quits the mark (Emacs down-mouse semantics).
+    this._onMouseDown = () => {
+      if (this.markActive) this.deactivateMark();
     };
     this._onScroll = () => this._onUserScroll();
     this._onResize = () => {
@@ -69,6 +73,7 @@ class CaretEmacs {
       this._initCursor();
       document.addEventListener("selectionchange", this._onSelectionChange);
       document.addEventListener("keydown", this._onKeyDown);
+      document.addEventListener("mousedown", this._onMouseDown);
       if (this.scrollContainer) {
         this._initPdfScroll();
       } else {
@@ -2333,6 +2338,7 @@ class CaretEmacs {
   destroy() {
     document.removeEventListener("selectionchange", this._onSelectionChange);
     document.removeEventListener("keydown", this._onKeyDown);
+    document.removeEventListener("mousedown", this._onMouseDown);
     if (this.scrollContainer && this._onPdfScroll) {
       this.scrollContainer.removeEventListener("scroll", this._onPdfScroll);
     } else {

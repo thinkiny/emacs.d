@@ -170,7 +170,6 @@ Keep point if still visible; otherwise move to bottom of window."
         modus-themes-bold-constructs t))
 
 (use-package ef-themes)
-(use-package vscode-dark-plus-theme)
 
 (defcustom default-theme 'modus-operandi
   "The current theme."
