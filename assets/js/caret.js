@@ -2168,14 +2168,12 @@ class CaretEmacs {
     }
     this.markActive = true;
     this._savedCaret = null;
-    document.documentElement.style.setProperty("--caret-color", "#ff4444");
     this._updateCursor();
     return true;
   }
 
   deactivateMark() {
     this.markActive = false;
-    document.documentElement.style.setProperty("--caret-color", "");
     const sel = window.getSelection();
     const c = this._savedCaret || this._savedFocus;
     this._savedCaret = null;

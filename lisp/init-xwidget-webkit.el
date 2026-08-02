@@ -283,13 +283,18 @@ TIMEOUT defaults to 2 seconds."
 ;;; Transparent Background
 
 (defun xwidget-webkit-inject-transparent-bg ()
-  "Inject CSS to make page background transparent."
+  "Inject CSS to make page background transparent and theme the caret color."
   (interactive)
-  (when (not (derived-mode-p 'nov-xwidget-webkit-mode 'pdf-xwidget-mode))
-    (xwidget-webkit-eval-script
-     "var s = document.createElement('style');
-s.textContent = 'html,body,:not(caret-cursor){background:transparent!important} ::selection{background:auto!important;}';
-(document.head || document.documentElement).appendChild(s);")))
+  (unless (derived-mode-p 'nov-xwidget-webkit-mode 'pdf-xwidget-mode)
+    (let* ((caret-color (current-theme-cursor-hex))
+           (caret-rule (if caret-color
+                           (format ":root{--caret-color:%s}" caret-color)
+                         "")))
+      (xwidget-webkit-eval-script
+       (format "var s = document.createElement('style');
+s.textContent = '%shtml,body,:not(caret-cursor){background:transparent!important} ::selection{background:auto!important;}';
+(document.head || document.documentElement).appendChild(s);"
+               caret-rule)))))
 
 (defun xwidget-webkit--transparent-bg-callback-advice (xwidget event-type)
   "Inject transparent background CSS on `load-committed'."

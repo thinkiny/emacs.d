@@ -391,6 +391,17 @@ reader assets."
   "Return the current default face foreground color as #rrggbb."
   (face-attribute-hex :foreground "unspecified-fg"))
 
+(defun current-theme-cursor-hex ()
+  "Return the current `cursor' face background as #rrggbb, or nil if unspecified."
+  (let ((color (face-attribute 'cursor :background nil t)))
+    (when (and (stringp color) (not (equal color "unspecified")))
+      (let ((rgb (color-values color)))
+        (and rgb
+             (format "#%02x%02x%02x"
+                     (/ (nth 0 rgb) 257)
+                     (/ (nth 1 rgb) 257)
+                     (/ (nth 2 rgb) 257)))))))
+
 (defun reader-css-theme-colors ()
   "Return (FOREGROUND BACKGROUND) for the reader."
   (if (and (eq reader-css-theme 'light) (theme-dark-p))
@@ -406,9 +417,13 @@ reader assets."
                                          user-emacs-directory))
                (output-buffer (get-buffer-create "*update-reader-theme-colors*"))
                (default-directory user-emacs-directory)
-               (args (if (equal background "transparent")
-                         (list script (symbol-name theme) foreground)
-                       (list script "--background" background (symbol-name theme) foreground)))
+               (caret (current-theme-cursor-hex))
+               (args (append (list script)
+                             (unless (equal background "transparent")
+                               (list "--background" background))
+                             (when caret
+                               (list "--caret-color" caret))
+                             (list (symbol-name theme) foreground)))
                (exit-code (with-current-buffer output-buffer
                             (erase-buffer)
                             (apply #'call-process "python3" nil output-buffer nil args))))

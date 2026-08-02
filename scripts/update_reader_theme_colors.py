@@ -5,11 +5,10 @@ import argparse
 import re
 import shutil
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
 from zipfile import ZipFile
-
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 NOV_SOURCE_LIGHT_CSS = REPO_ROOT / "assets" / "css" / "nov-light.css"
@@ -29,6 +28,7 @@ PDFJS_CSS_MARKER_END = "/* reader-color-override:pdfjs:end */"
 PDFJS_THEME_HOOK_ANCHOR = '  <script src="viewer.mjs" type="module"></script>'
 
 NOV_TEMPLATE = """html,body{{
+  --caret-color: {caret_color};
   background: {background} !important;
   color: {foreground} !important;
 }}{dark_block}"""
@@ -47,6 +47,7 @@ document.addEventListener(
 </script>"""
 
 PDFJS_UI_CSS_TEMPLATE = """:root {{
+  --caret-color: {caret_color};
   --page-bg-color: {background};
   --page-fg-color: {foreground};
   --body-bg-color: {background};
@@ -169,6 +170,11 @@ def parse_args() -> argparse.Namespace:
         help="Background hex color for opaque mode (e.g. '#ffffff'). Default: transparent.",
     )
     parser.add_argument(
+        "--caret-color",
+        default="#4488ff",
+        help="Caret (cursor) hex color emitted as --caret-color in reader CSS (e.g. '#4488ff'). Default: #4488ff.",
+    )
+    parser.add_argument(
         "foreground",
         help="Foreground hex color (e.g. '#f8f8f2' or 'f8f8f2'). Three-digit forms are also accepted.",
     )
@@ -180,11 +186,10 @@ def normalize_hex_color(value: str) -> str:
     if not value:
         raise ValueError("Color value cannot be empty.")
     stripped = value.strip()
-    if stripped.startswith("#"):
-        stripped = stripped[1:]
+    stripped = stripped.removeprefix("#")
     if len(stripped) not in (3, 6):
         raise ValueError("Color must have 3 or 6 hexadecimal digits.")
-    if not re.fullmatch(r"[0-9a-fA-F]{%d}" % len(stripped), stripped):
+    if not re.fullmatch(rf"[0-9a-fA-F]{{{len(stripped)}}}", stripped):
         raise ValueError("Color must contain only hexadecimal digits.")
     if len(stripped) == 3:
         stripped = "".join(ch * 2 for ch in stripped)
@@ -280,21 +285,21 @@ def nov_source_path(theme_style: str) -> Path:
     return NOV_SOURCE_DARK_CSS
 
 
-def build_nov_override_body(theme_style: str, foreground: str, background: str) -> str:
+def build_nov_override_body(theme_style: str, foreground: str, background: str, caret_color: str) -> str:
     dark_block = ""
     if theme_style == "dark":
         dark_block = (
-            "\n#sbo-rt-content * {{\n"
-            "  color: {foreground} !important;\n"
-            "  background: {background} !important;\n"
-            "}}\n"
+            "\n#sbo-rt-content * {\n"
+            f"  color: {foreground} !important;\n"
+            f"  background: {background} !important;\n"
+            "}\n"
             "#sbo-rt-content img,\n"
-            "#sbo-rt-content svg {{\n"
+            "#sbo-rt-content svg {\n"
             "    filter: invert(1) hue-rotate(180deg) !important;\n"
-            "}}\n"
-        ).format(foreground=foreground, background=background)
+            "}\n"
+        )
     return NOV_TEMPLATE.format(
-        foreground=foreground, background=background, dark_block=dark_block
+        foreground=foreground, background=background, caret_color=caret_color, dark_block=dark_block
     )
 
 
@@ -304,14 +309,14 @@ def strip_nov_generated_block(source_path: Path) -> str:
 
 
 def build_nov_override_contents(
-    theme_style: str, foreground: str, background: str
+    theme_style: str, foreground: str, background: str, caret_color: str
 ) -> str:
     source_contents = strip_nov_generated_block(nov_source_path(theme_style))
     return set_marker_block(
         source_contents,
         NOV_MARKER_START,
         NOV_MARKER_END,
-        build_nov_override_body(theme_style, foreground, background),
+        build_nov_override_body(theme_style, foreground, background, caret_color),
     )
 
 
@@ -322,8 +327,8 @@ def build_pdfjs_theme_hook(viewer_css_theme: int) -> str:
     return PDFJS_THEME_TEMPLATE.format(viewer_css_theme=viewer_css_theme)
 
 
-def build_pdfjs_chrome_override(foreground: str, background: str) -> str:
-    return PDFJS_UI_CSS_TEMPLATE.format(foreground=foreground, background=background)
+def build_pdfjs_chrome_override(foreground: str, background: str, caret_color: str) -> str:
+    return PDFJS_UI_CSS_TEMPLATE.format(foreground=foreground, background=background, caret_color=caret_color)
 
 
 def insert_before_anchor(contents: str, anchor: str, block: str, path: Path) -> str:
@@ -346,17 +351,17 @@ def build_pdfjs_theme_html_contents(viewer_css_theme: int) -> str:
     )
 
 
-def build_pdfjs_viewer_css_contents(foreground: str, background: str) -> str:
+def build_pdfjs_viewer_css_contents(foreground: str, background: str, caret_color: str) -> str:
     contents = PDFJS_VIEWER_CSS.read_text(encoding="utf-8")
     return set_marker_block(
         contents,
         PDFJS_CSS_MARKER_START,
         PDFJS_CSS_MARKER_END,
-        build_pdfjs_chrome_override(foreground, background),
+        build_pdfjs_chrome_override(foreground, background, caret_color),
     )
 
 
-def sync_reader_assets(theme_style: str, foreground: str, background: str) -> int:
+def sync_reader_assets(theme_style: str, foreground: str, background: str, caret_color: str) -> int:
     extract_pdfjs()
     source_css = nov_source_path(theme_style)
     try:
@@ -371,7 +376,7 @@ def sync_reader_assets(theme_style: str, foreground: str, background: str) -> in
         operations = [
             AssetWrite(
                 NOV_OVERRIDE_CSS,
-                build_nov_override_contents(theme_style, foreground, background),
+                build_nov_override_contents(theme_style, foreground, background, caret_color),
                 f"Rebuilt {NOV_OVERRIDE_CSS.name} from {source_css.name} "
                 f"for {theme_style} theme using background {background} and foreground {foreground}",
             ),
@@ -382,7 +387,7 @@ def sync_reader_assets(theme_style: str, foreground: str, background: str) -> in
             ),
             AssetWrite(
                 PDFJS_VIEWER_CSS,
-                build_pdfjs_viewer_css_contents(foreground, background),
+                build_pdfjs_viewer_css_contents(foreground, background, caret_color),
                 f"Updated {PDFJS_VIEWER_CSS.name} for {theme_style} PDF.js foreground {foreground}",
             ),
         ]
@@ -419,7 +424,13 @@ def main() -> int:
             print(f"error: {exc}", file=sys.stderr)
             return 2
 
-    return sync_reader_assets(args.theme_style, foreground, background)
+    try:
+        caret_color = normalize_hex_color(args.caret_color)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    return sync_reader_assets(args.theme_style, foreground, background, caret_color)
 
 
 if __name__ == "__main__":
