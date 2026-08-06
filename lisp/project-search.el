@@ -84,19 +84,26 @@ filtered unscored list as-is (no sorting)."
              unscored))))
 
 (defun project-search--find-eglot-server (&optional project-root)
-  "Find an active Eglot server for PROJECT-ROOT that supports workspace/symbol.
-
-Returns nil when no suitable server exists, causing callers to fall back to
-ripgrep."
+  "Return a workspace/symbol-capable Eglot server for PROJECT-ROOT.
+Prefer a server on a project buffer whose file extension matches the
+current buffer's; a non-file buffer accepts any capable server.  Returns
+nil so callers fall back to ripgrep."
   (let* ((root (or project-root (project-search--project-root)))
-         (bufs (projectile-project-buffers root)))
-    (cl-some (lambda (buf)
-               (with-current-buffer buf
-                 (when-let* ((server (eglot-current-server)))
-                   (let ((eglot--cached-server server))
-                     (and (eglot-server-capable :workspaceSymbolProvider)
-                          server)))))
-             bufs)))
+         (wanted-extension (and buffer-file-name
+                                (downcase (file-name-extension buffer-file-name))))
+         (project-buffers (projectile-project-buffers root)))
+    (cl-some
+     (lambda (buffer)
+       (with-current-buffer buffer
+         (let ((buffer-extension (and buffer-file-name
+                                      (downcase (file-name-extension buffer-file-name)))))
+           (when-let* ((server (eglot-current-server))
+                       ((or (not wanted-extension)
+                            (equal wanted-extension buffer-extension))))
+             (let ((eglot--cached-server server))
+               (and (eglot-server-capable :workspaceSymbolProvider)
+                    server))))))
+     (cons (current-buffer) (remove (current-buffer) project-buffers)))))
 
 (defun project-search--location-line-col (loc)
   "Return (LINE . COL) for xref location LOC.
