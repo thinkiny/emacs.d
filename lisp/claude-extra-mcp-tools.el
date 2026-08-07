@@ -9,7 +9,7 @@
 (require 'claude-code-ide-mcp-server)
 
 
-(declare-function claude-code-ide-mcp--send-notification "claude-code-ide-mcp")
+(require 'claude-code-ide-mcp)
 
 (defgroup claude-extra-mcp-tools nil
   "Extra MCP tools for Claude Code IDE."
@@ -191,12 +191,17 @@ Returns an alist with text and location information."
 
 ;;; Xwidget selection polling
 (defun claude-xwidgets--on-selection-change (buf text)
-  "Send notification when selection changes in BUF."
+  "Send notification when selection changes in BUF.
+Fans the `selection_changed' notification out to every Claude
+instance of BUF's project, mirroring how the package broadcasts
+file-buffer selections (one notification per session)."
   (when (buffer-live-p buf)
     (with-current-buffer buf
-      (claude-code-ide-mcp--send-notification
-       "selection_changed"
-       (claude-xwidgets--selection-alist text)))))
+      (when-let* ((project-dir (claude-code-ide-mcp--get-buffer-project))
+                  (payload (claude-xwidgets--selection-alist text)))
+        (dolist (session (claude-code-ide-mcp--sessions-for-project project-dir))
+          (claude-code-ide-mcp--send-notification
+           "selection_changed" payload session))))))
 
 (defun claude-xwidgets--poll-selection ()
   "Poll xwidget selection and send notification if changed.
@@ -229,10 +234,8 @@ function requires `buffer-file-name'.  ORIG-FN is the original function."
 
 (defun claude-mcp--insert-at-mentioned-advice (orig-fn &rest args)
   "Around advice for `claude-code-ide-insert-at-mentioned'.
-In xwidget buffers, silently switch to the Claude Code buffer (if any)
-and otherwise do nothing, since the original command's
-buffer-file-name/project mention logic does not apply there.
-Delegate to ORIG-FN for all other buffers."
+In xwidget buffers, switch to the Claude Code buffer instead of
+ORIG-FN, whose buffer-file-name mention logic doesn't apply."
   (if (claude-xwidgets--session)
       (if (eq claude-code-ide-terminal-backend 'ghostel)
           (let ((text (claude-xwidgets--selected-text)))
@@ -240,7 +243,8 @@ Delegate to ORIG-FN for all other buffers."
             (ghostel-send-string text))
         (claude-code-ide-switch-to-buffer)
         (goto-char (point-max)))
-    (apply orig-fn args)))
+    (apply orig-fn args)
+    (claude-code-ide-switch-to-buffer)))
 
 ;;; treesit-info size guard
 

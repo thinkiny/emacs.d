@@ -83,27 +83,18 @@ filtered unscored list as-is (no sorting)."
       (nconc (seq-sort-by (lambda (r) (or (plist-get r :score) -1)) #'> scored)
              unscored))))
 
-(defun project-search--find-eglot-server (&optional project-root)
-  "Return a workspace/symbol-capable Eglot server for PROJECT-ROOT.
-Prefer a server on a project buffer whose file extension matches the
-current buffer's; a non-file buffer accepts any capable server.  Returns
-nil so callers fall back to ripgrep."
-  (let* ((root (or project-root (project-search--project-root)))
-         (wanted-extension (and buffer-file-name
-                                (downcase (file-name-extension buffer-file-name))))
-         (project-buffers (projectile-project-buffers root)))
-    (cl-some
-     (lambda (buffer)
-       (with-current-buffer buffer
-         (let ((buffer-extension (and buffer-file-name
-                                      (downcase (file-name-extension buffer-file-name)))))
-           (when-let* ((server (eglot-current-server))
-                       ((or (not wanted-extension)
-                            (equal wanted-extension buffer-extension))))
-             (let ((eglot--cached-server server))
-               (and (eglot-server-capable :workspaceSymbolProvider)
-                    server))))))
-     (cons (current-buffer) (remove (current-buffer) project-buffers)))))
+(defun project-search--find-eglot-servers (&optional project-root)
+  "Return all workspace/symbol-capable Eglot servers for PROJECT-ROOT.
+Duplicate server objects are returned only once.  Returns nil so callers
+fall back to ripgrep when no project LSP server is available."
+  (let ((servers nil))
+    (dolist (buffer (projectile-project-buffers
+                     (or project-root (project-search--project-root))))
+      (with-current-buffer buffer
+        (when-let* ((server (eglot-current-server)))
+          (when (eglot-server-capable :workspaceSymbolProvider)
+            (cl-pushnew server servers :test #'eq)))))
+    (nreverse servers)))
 
 (defun project-search--location-line-col (loc)
   "Return (LINE . COL) for xref location LOC.
@@ -176,15 +167,18 @@ Falls back to (1 . 0) when neither works."
   (when-let* ((backend (xref-find-backend)))
     (xref-backend-apropos backend query)))
 
-(defun project-search--sync-lsp-xrefs (server query &optional max-width)
-  "Query SERVER for workspace symbols matching QUERY."
+(defun project-search--sync-lsp-xrefs (servers query &optional max-width)
+  "Query SERVERS for workspace symbols matching QUERY."
   (when-let* ((query (project-search--normalize-query query)))
-    (condition-case err
-        (let* ((raw (jsonrpc-request server :workspace/symbol `(:query ,query)))
-               (ordered (project-search--lsp-filter-and-sort-by-score raw))
-               (xrefs (project-search--lsp-to-xrefs ordered query max-width)))
-          xrefs)
-      (error (message "project-search LSP error: %S" err) nil))))
+    (let ((xrefs nil))
+      (dolist (server servers)
+        (condition-case nil
+            (let* ((results (append (jsonrpc-request server :workspace/symbol `(:query ,query)) nil))
+                   (ordered (project-search--lsp-filter-and-sort-by-score results))
+                   (server-xrefs (project-search--lsp-to-xrefs ordered query max-width)))
+              (setq xrefs (nconc xrefs server-xrefs)))
+          (error nil)))
+      xrefs)))
 
 (defun project-search--sync-rg-fallback (query root limit width)
   "Run rg search, returning xref items."
@@ -196,9 +190,9 @@ Uses Eglot when available, falling back to xref then ripgrep."
   (let* ((root (project-search--project-root))
          (limit project-search-sync-max-results)
          (width project-search-sync-truncate-width)
-         (server (project-search--find-eglot-server root))
-         (xrefs (if server
-                    (or (project-search--sync-lsp-xrefs server query width)
+         (servers (project-search--find-eglot-servers root))
+         (xrefs (if servers
+                    (or (project-search--sync-lsp-xrefs servers query width)
                         (project-search--sync-rg-fallback query root limit width))
                   ;; No LSP: try xref, fall back to rg
                   (or (ignore-errors (project-search--xref-query query))
@@ -214,8 +208,8 @@ Uses Eglot when available, falling back to xref then ripgrep."
 (defvar project-search--ivy-project-root nil
   "Project root for the current `ivy-project-search' session.")
 
-(defvar project-search--ivy-server nil
-  "Eglot server for the current `ivy-project-search' session.")
+(defvar project-search--ivy-servers nil
+  "Eglot servers for the current `ivy-project-search' session.")
 
 (defvar project-search--ivy-rg-extra-args nil
   "Extra rg flags for the current ivy session (e.g. \"-tgo -i\").")
@@ -371,39 +365,32 @@ kind name from `eglot--symbol-kind-names'."
     (project-search--update-ivy-candidates
      (project-search--rg-to-xrefs query project-root max-results))))
 
-(defun project-search--send-lsp-request (req-id server query project-root &optional kind-prefix max-results)
-  "Send workspace/symbol request for QUERY to SERVER.
+(defun project-search--send-lsp-request (req-id servers query project-root &optional kind-prefix max-results)
+  "Send workspace/symbol request for QUERY to SERVERS.
 PROJECT-ROOT is used for candidate formatting.  REQ-ID is checked
 against `project-search--request-id' to discard stale
 responses.  When KIND-PREFIX is non-nil, only symbols whose kind
 name starts with that prefix are kept.  When MAX-RESULTS is
 non-nil, it caps the rg fallback output."
   (when-let* ((query (project-search--normalize-query query)))
-    (jsonrpc-async-request
-     server :workspace/symbol `(:query ,query)
-     :success-fn
-     (lambda (resp)
-       (when (= req-id project-search--request-id)
-         (ignore-errors
-           (let* ((results (append resp nil))
-                  (filtered (if kind-prefix
-                                (seq-filter
-                                 (lambda (r)
-                                   (project-search--kind-matches-prefix-p
-                                    (plist-get r :kind) kind-prefix))
-                                 results)
-                              results))
-                  (ordered (project-search--lsp-filter-and-sort-by-score filtered))
-                  (xrefs (project-search--lsp-to-xrefs ordered query)))
-             (if xrefs
-                 (project-search--update-ivy-candidates xrefs)
-               (project-search--rg-fallback-ivy query project-root req-id max-results))))))
-     :error-fn
-     (lambda (&rest _)
-       (project-search--rg-fallback-ivy query project-root req-id max-results))
-     :timeout-fn
-     (lambda ()
-       (project-search--rg-fallback-ivy query project-root req-id max-results)))))
+    (let ((all-xrefs nil))
+      (dolist (server servers)
+        (condition-case nil
+            (let* ((results (append (jsonrpc-request server :workspace/symbol `(:query ,query)) nil))
+                   (filtered (if kind-prefix
+                                 (seq-filter
+                                  (lambda (r)
+                                    (project-search--kind-matches-prefix-p
+                                     (plist-get r :kind) kind-prefix))
+                                  results)
+                               results))
+                   (ordered (project-search--lsp-filter-and-sort-by-score filtered))
+                   (xrefs (project-search--lsp-to-xrefs ordered query)))
+              (setq all-xrefs (nconc all-xrefs xrefs)))
+          (error nil)))
+      (if all-xrefs
+          (project-search--update-ivy-candidates all-xrefs)
+        (project-search--rg-fallback-ivy query project-root req-id max-results)))))
 
 (defun project-search--debounce-send (fn &rest args)
   "Cancel pending timer, schedule FN with ARGS after debounce delay.
@@ -418,19 +405,19 @@ so the scheduled function receives the ID that was current at call time."
                fn project-search--request-id args))
   0)
 
-(defun project-search--ivy-lsp-query (server query project-root kind-prefix max-results)
-  "Send a debounced async LSP workspace/symbol request."
+(defun project-search--ivy-lsp-query (servers query project-root kind-prefix max-results)
+  "Send a debounced async LSP workspace/symbol request to SERVERS."
   (project-search--debounce-send
    #'project-search--send-lsp-request
-   server query project-root kind-prefix max-results))
+   servers query project-root kind-prefix max-results))
 
 (defun project-search--ivy-function (input &rest _)
   "Dynamic collection function for `ivy-project-search'."
   (pcase-let ((`(,query . ,kind-prefix) (project-search--parse-input input)))
     (or (let ((ivy-text query)) (ivy-more-chars))
-        (if project-search--ivy-server
+        (if project-search--ivy-servers
             (project-search--ivy-lsp-query
-             project-search--ivy-server query
+             project-search--ivy-servers query
              project-search--ivy-project-root kind-prefix
              project-search-max-results)
           (project-search--ivy-rg-query
@@ -526,7 +513,7 @@ Session variables are set with `setq' so they survive `ivy-resume'."
   (let* ((project-root (project-search--project-root))
          (default-directory project-root))
     (setq project-search--ivy-project-root project-root
-          project-search--ivy-server nil
+          project-search--ivy-servers nil
           project-search--ivy-rg-extra-args options)
     (project-search--ivy-read "rg: " #'project-search--ivy-rg-function 'ivy-project-rg)))
 
@@ -541,10 +528,10 @@ Session variables are set with `setq' so they survive `ivy-resume'.
 When called interactively with prefix arg, pre-fill with symbol at point."
   (interactive)
   (let* ((project-root (project-search--project-root))
-         (server (project-search--find-eglot-server project-root))
+         (servers (project-search--find-eglot-servers project-root))
          (default-directory project-root))
     (setq project-search--ivy-project-root project-root
-          project-search--ivy-server server)
+          project-search--ivy-servers servers)
     (project-search--ivy-read "search: " #'project-search--ivy-function 'ivy-project-search initial-query)))
 
 ;;;###autoload

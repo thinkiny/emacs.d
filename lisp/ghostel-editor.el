@@ -32,11 +32,12 @@
 (defvar-local ghostel-editor--source-buffer nil
   "The ghostel buffer where the edited text will be sent.")
 
-(defconst ghostel-editor--input-prompt-re "^❯\\s-"
+(defconst ghostel-editor--input-prompt-re "^\\s-*❯\\s-*"
   "Regex matching the Claude Code live user-input prompt line.
-`❯' plus one whitespace separator (Claude uses a no-break space, U+00A0,
-which has whitespace syntax).  `match-end' lands past the separator, so
-the extracted input has no leading separator.")
+Optional leading indent, then `❯', then one whitespace separator.
+Claude uses a no-break space (U+00A0, whitespace syntax) for both, so
+`\\s-*' covers plain space and NBSP.  `match-end' lands past the
+separator, so the extracted input has no leading separator.")
 
 (defun ghostel-editor--find-prompt-line-start (cursor-pos)
   "Walk backwards from CURSOR-POS to find the live Claude input prompt.

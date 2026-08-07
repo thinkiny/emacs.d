@@ -2,7 +2,7 @@
 
 (use-package claude-code-ide
   :ensure t
-  :vc (:url "https://github.com/thinkiny/claude-code-ide.el" :rev "mine")
+  :vc (:url "https://github.com/thinkiny/claude-code-ide.el" :rev "emacs")
   :bind (:map global-map
               ("C-c y" . claude-code-ide-menu))
   :config
