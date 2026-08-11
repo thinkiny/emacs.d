@@ -42,6 +42,8 @@ class CaretEmacs {
     // Performance caches
     this._fontSizeCache = new WeakMap();
     this._textBoundsCache = new WeakMap();
+    this._visualOrderCache = { root: null, layoutGeneration: -1, ordered: null, lines: null };
+    this._layoutGeneration = 0;
 
     // Line move state preservation
     this._lineMoveTargetIndex = null;
@@ -58,13 +60,18 @@ class CaretEmacs {
     this._onScroll = () => this._onUserScroll();
     this._onResize = () => {
       this._suppressScrollRelocate = true;
+      this._lastScrollTop = this._scrollTop;
       requestAnimationFrame(() => {
         this._suppressScrollRelocate = true;
         requestAnimationFrame(() => {
           this._lastRenderedPos = null;
           this._invalidateLayoutCaches();
           this._updateCursor();
-          this._scrollToSelection();
+          // Reveal, not recenter: avoid the 1/3-viewport jump after reflow.
+          this._scrollToSelectionLineBounded();
+          // Re-arm: a resize can clamp scrollY and fire a stray scroll event.
+          this._suppressScrollRelocate = true;
+          this._lastScrollTop = this._scrollTop;
         });
       });
     };
@@ -80,8 +87,10 @@ class CaretEmacs {
         this._ensureSelection();
         this._updateCursor();
         window.addEventListener('scroll', this._onScroll, { passive: true });
-        window.addEventListener('resize', this._onResize, { passive: true });
       }
+      // resize fires on window in both modes (resizing the xwidget buffer is a
+      // window resize; elements don't emit resize events without ResizeObserver).
+      window.addEventListener('resize', this._onResize, { passive: true });
     };
     document.body ? init() : document.addEventListener("DOMContentLoaded", init, { once: true });
   }
@@ -91,6 +100,7 @@ class CaretEmacs {
   _invalidateLayoutCaches() {
     this._fontSizeCache = new WeakMap();
     this._textBoundsCache = new WeakMap();
+    this._layoutGeneration++;
   }
 
   /* ── Debug ─────────────────────────────────────────────────── */
@@ -521,7 +531,7 @@ class CaretEmacs {
     if (!this._isContained(node)) return null;
     const tw = this._textWalker(node);
     let textNode = fwd ? tw.nextNode() : tw.previousNode();
-    while (textNode && !this._isNavigableTextNode(textNode)) {
+    while (textNode && !(this._isNavigableTextNode(textNode) && this._hasRenderedBox(textNode))) {
       textNode = fwd ? tw.nextNode() : tw.previousNode();
     }
     return textNode;
@@ -549,6 +559,19 @@ class CaretEmacs {
     const text = textNode.textContent || "";
     if (!text.length) return false;
     return this._preservesWhitespace(textNode) || !!text.trim();
+  }
+
+  /** True if the text node currently has a layout box — false inside
+   *  display:none / hidden ancestors, SVG <title>/<desc>, aria-hidden. */
+  _hasRenderedBox(textNode) {
+    if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return false;
+    const range = document.createRange();
+    range.selectNodeContents(textNode);
+    const rects = range.getClientRects();
+    for (let i = 0; i < rects.length; i++) {
+      if (rects[i].width && rects[i].height) return true;
+    }
+    return false;
   }
 
   /** Return visible text bounds within a text node, excluding leading/trailing whitespace except preserved whitespace contexts. */
@@ -603,7 +626,8 @@ class CaretEmacs {
       const t = this._walkToVisible(start, true) || this._walkToVisible(start, false);
       if (t) return { node: t, offset: this._textVisibleEdgeOffset(t, true) };
     }
-    if (node.nodeType === Node.TEXT_NODE && !(node.textContent || "").trim()) {
+    if (node.nodeType === Node.TEXT_NODE &&
+      (!(node.textContent || "").trim() || !this._hasRenderedBox(node))) {
       // When probing (preferFwd), walk forward first — stays on same visual
       // line. Backward walk can cross page boundaries to far-away text.
       const first = this._walkToVisible(node, preferFwd);
@@ -869,18 +893,66 @@ class CaretEmacs {
     return (adjIdx >= 0 && adjIdx < pages.length) ? pages[adjIdx] : null;
   }
 
-  /** Build visual ordering and grouped lines for a scope root. */
+  /** Cached visual ordering for a scope root. The line membership/order and
+   *  per-segment rects are stable across a single layout generation; any scroll,
+   *  resize, or text-layer render bumps _layoutGeneration via
+   *  _invalidateLayoutCaches, invalidating this. Positions that must be exact
+   *  are still re-read live by callers (_pickPositionOnLine, the caret rect). */
   _visuallyOrderedTextNodes(root) {
+    const cached = this._visualOrderCache;
+    if (cached.root === root
+      && cached.layoutGeneration === this._layoutGeneration
+      && cached.ordered) {
+      return { ordered: cached.ordered, lines: cached.lines };
+    }
+    const result = this._buildVisuallyOrderedTextNodes(root);
+    this._visualOrderCache = {
+      root, layoutGeneration: this._layoutGeneration,
+      ordered: result.ordered, lines: result.lines
+    };
+    return result;
+  }
+
+  /** Build visual ordering and grouped lines for a scope root. */
+  _buildVisuallyOrderedTextNodes(root) {
+    // Phase 1 — coarse collect: one cheap getBoundingClientRect per node.
+    // Offscreen nodes stay as a single coarse segment; only viewport-band
+    // nodes pay the expensive getClientRects refine. getBoundingClientRect is
+    // ~27× cheaper cold than getClientRects, so the whole-document pass is fast.
+    const range = document.createRange();
     const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     let domIndex = 0;
     while (tw.nextNode()) {
       const textNode = tw.currentNode;
       if (!this._isNavigableTextNode(textNode)) continue;
-      const segments = this._splitNodeIntoLineSegments(textNode, domIndex++, root);
-      for (const seg of segments) nodes.push(seg);
+      const groupRoot = this._isPdfMode() ? null : this._lineGroupingRoot(textNode, root);
+      range.selectNodeContents(textNode);
+      const boundingRect = range.getBoundingClientRect();
+      if (!boundingRect.width || !boundingRect.height) continue;
+      nodes.push({
+        node: textNode, rect: cloneRect(boundingRect),
+        startOffset: 0, endOffset: textNode.length, domIndex, groupRoot
+      });
+      domIndex++;
     }
     if (!nodes.length) return { ordered: [], lines: [] };
+
+    // Phase 2 — refine: replace coarse segments overlapping the viewport window
+    // with real per-fragment segments (reusing the split logic). Done before
+    // banding so on-screen bands stay tight; offscreen coarse bands land far
+    // from the viewport and don't corrupt on-screen grouping.
+    const margin = this._viewportHeight;
+    const vp = this._viewportRect();
+    const vpTop = vp.top - margin, vpBottom = vp.bottom + margin;
+    for (let i = 0; i < nodes.length; i++) {
+      const seg = nodes[i];
+      if (seg.rect.bottom < vpTop || seg.rect.top > vpBottom) continue;
+      const fragments = this._splitNodeFragments(seg.node, seg.domIndex, seg.groupRoot);
+      if (!fragments.length) continue;
+      nodes.splice(i, 1, ...fragments);
+      i += fragments.length - 1;
+    }
 
     // Cluster segments into vertical line-bands before sorting, so inline
     // boxes that share a visual line but differ in height/center (e.g. taller
@@ -914,14 +986,14 @@ class CaretEmacs {
         });
       }
     }
-
     return { ordered, lines };
   }
 
-  /** Split a text node into per-visual-line segments.
-   *  Returns [{ node, rect, startOffset, endOffset, domIndex }]. */
-  _splitNodeIntoLineSegments(textNode, domIndex, scopeRoot = null) {
-    const groupRoot = this._isPdfMode() ? null : this._lineGroupingRoot(textNode, scopeRoot);
+  /** Split a text node into per-visual-line segments via getClientRects + band
+   *  + binary-search. Takes a precomputed groupRoot (the coarse collect derives
+   *  it once during the walk). Returns [{ node, rect, startOffset, endOffset,
+   *  domIndex, groupRoot }] with a real per-line rect each. */
+  _splitNodeFragments(textNode, domIndex, groupRoot) {
     const range = document.createRange();
     range.selectNodeContents(textNode);
     const rects = Array.from(range.getClientRects()).filter(r => r.height && r.width);
@@ -1282,6 +1354,14 @@ class CaretEmacs {
   /* ── Line Movement ─────────────────────────────────────────── */
 
   _lineTargetIndex(currentLineIndex, isForward, lines) {
+    const candidate = this._lineScan(currentLineIndex, isForward, lines, true);
+    if (candidate >= 0) return candidate;
+    // Caret's column is exhausted — fall back to nearest line in reading
+    // order so a two-column page doesn't dead-end on its sidebar/footer.
+    return this._lineScan(currentLineIndex, isForward, lines, false);
+  }
+
+  _lineScan(currentLineIndex, isForward, lines, checkColumn) {
     const currentBounds = this._lineBounds(lines[currentLineIndex]);
     const curRect = lines[currentLineIndex][0].rect;
     const start = isForward ? currentLineIndex + 1 : currentLineIndex - 1;
@@ -1289,10 +1369,12 @@ class CaretEmacs {
     for (let i = start; isForward ? i < end : i > end; i += isForward ? 1 : -1) {
       const targetRect = lines[i][0].rect;
       if (this._isSameLine(targetRect, curRect)) continue;
-      const targetBounds = this._lineBounds(lines[i]);
-      if (currentBounds && targetBounds
-        && (currentBounds.right < targetBounds.left
-          || targetBounds.right < currentBounds.left)) continue;
+      if (checkColumn) {
+        const targetBounds = this._lineBounds(lines[i]);
+        if (currentBounds && targetBounds
+          && (currentBounds.right < targetBounds.left
+            || targetBounds.right < currentBounds.left)) continue;
+      }
       return i;
     }
     return -1;
@@ -1392,6 +1474,7 @@ class CaretEmacs {
     if (!lines.length) return { range: null, scrolled: false };
 
     let currentLineIndex, targetLineIndex;
+    let forceGapJump = false;
 
     // Use cached target if available (continuing incremental scroll)
     if (cachedTargetLineIndex !== null && cachedTargetLineIndex >= 0 && cachedTargetLineIndex < lines.length) {
@@ -1429,10 +1512,15 @@ class CaretEmacs {
             : currentLineRect.top - targetLineBottom;
           const vp = this._viewportRect();
           const targetInViewport = targetLineRect.top < vp.bottom && targetLineBottom > vp.top;
-          // Scroll 200px over a large gap (e.g. an image) instead of jumping
-          // over it to the next text line, even when the caret is on a line.
+          // Step 200px over a large gap (e.g. an image) instead of jumping,
+          // but only while the caret's own line stays on screen. Once the
+          // next step would push it off (a gap taller than the viewport),
+          // fall through to the jump so the cursor stays visible.
+          const anchorVisibleAfterStep = fwd
+            ? currentLineRect.top - this._scrollPx >= vp.top
+            : currentLineRect.bottom + this._scrollPx <= vp.bottom;
           if (lineGap > this._scrollPx && !targetInViewport) {
-            if (this._canScroll(fwd)) {
+            if (this._canScroll(fwd) && anchorVisibleAfterStep) {
               // Suppress caret relocation so stepping over a big image doesn't bounce back.
               this._suppressScrollRelocate = true;
               this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
@@ -1441,7 +1529,8 @@ class CaretEmacs {
               // do not retry/cache — subsequent presses continue stepping.
               return { range: null, scrolled: true, stop: true };
             }
-            // At scroll boundary — fall through to jump
+            // Anchor would leave the viewport, or at scroll boundary — jump.
+            forceGapJump = true;
           }
         }
       }
@@ -1466,7 +1555,7 @@ class CaretEmacs {
         if (currBounds && b && (currBounds.right < b.left || b.right < currBounds.left)) continue;
         mergedLine.push(...lines[j]);
       }
-      return { range: this._pickPositionOnLine(mergedLine, goalX), scrolled: false };
+      return { range: this._pickPositionOnLine(mergedLine, goalX), scrolled: false, gapJump: forceGapJump };
     }
 
     // No target line in scope — scroll incrementally or cross page
@@ -1680,7 +1769,9 @@ class CaretEmacs {
       sel.removeAllRanges();
       sel.addRange(lineRange);
 
-      // If caret was off-screen before move, use minimal scroll to reveal
+      // If caret was off-screen before move, reveal it. A gap jump (over a
+      // tall image) needs a full reveal — the bounded 200px scroll would
+      // leave the target still off screen.
       const vpNow = this._viewportRect();
       const preBottom = preRect ? (preRect.bottom ?? (preRect.top + preRect.height)) : null;
       const preOnscreen = preRect && preBottom >= vpNow.top && preRect.top <= vpNow.bottom;
@@ -1688,7 +1779,8 @@ class CaretEmacs {
         this._savedFocus = this.markActive && markAnchorNode != null
           ? this._applyMarkSelection(sel, markAnchorNode, markAnchorOff)
           : { node: sel.focusNode, offset: sel.focusOffset };
-        this._scrollToSelectionLineBounded();
+        if (result.gapJump) this._scrollToSelection();
+        else this._scrollToSelectionLineBounded();
         this._updateCursor();
         return true;
       }
@@ -2341,10 +2433,11 @@ class CaretEmacs {
       this.scrollContainer.removeEventListener("scroll", this._onPdfScroll);
     } else {
       window.removeEventListener("scroll", this._onScroll);
-      window.removeEventListener("resize", this._onResize);
     }
+    window.removeEventListener("resize", this._onResize);
     this._cursorEl?.remove();
     this._cursorEl = null;
+    this._visualOrderCache = { root: null, layoutGeneration: -1, ordered: null, lines: null };
   }
 }
 

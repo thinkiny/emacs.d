@@ -15,16 +15,6 @@
 
 (local-proxy-endpoint--sync-xwidget)
 
-;;; Event Guard
-
-(defun xwidget-webkit--event-handler-guard (orig-fn &rest _)
-  "Skip `xwidget-event-handler' when its xwidget is no longer live."
-  (when (xwidget-live-p (nth 2 last-input-event))
-    (funcall orig-fn)))
-
-(advice-add 'xwidget-event-handler :around
-            #'xwidget-webkit--event-handler-guard)
-
 ;;; URL & Session Helpers
 (defun xwidget-webkit-get-current-url ()
   "Return the URL of the current xwidget session, or nil if none exists."
@@ -140,13 +130,12 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
 ;;; Buffer Quit
 
 (defun xwidget-webkit-quit ()
-  "Ask to kill the buffer; if no, quit the window."
+  "Ask to kill the buffer; if no, stay in the buffer."
   (interactive)
-  (if (y-or-n-p (format "Close %s? " (buffer-name)))
-      (let ((kill-buffer-query-functions nil))
-        (set-buffer-modified-p nil)
-        (kill-buffer (current-buffer)))
-    (quit-window)))
+  (when (y-or-n-p (format "Close %s? " (buffer-name)))
+    (let ((kill-buffer-query-functions nil))
+      (set-buffer-modified-p nil)
+      (kill-buffer (current-buffer)))))
 
 ;;; Translate
 
@@ -292,7 +281,9 @@ TIMEOUT defaults to 2 seconds."
                          "")))
       (xwidget-webkit-eval-script
        (format "var s = document.createElement('style');
-s.textContent = '%shtml,body,:not(caret-cursor){background:transparent!important} ::selection{background:auto!important;}';
+s.textContent = '%shtml, body > *:not(a, input, select, button, caret-cursor) {
+  background-color: transparent !important;
+}';
 (document.head || document.documentElement).appendChild(s);"
                caret-rule)))))
 
