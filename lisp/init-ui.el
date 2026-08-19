@@ -123,6 +123,24 @@ Keep point if still visible; otherwise move to bottom of window."
         (goto-char opoint)
       (goto-char (window-end)))))
 
+(defun apply-reader-keybindings (map)
+  "Install the shared read-only navigation keys into MAP.
+Callers may override individual keys with a later `define-key'."
+  (define-key map (kbd ",")   #'translate-at-point)
+  (define-key map (kbd "n")   #'precision-scroll-next-line)
+  (define-key map (kbd "p")   #'precision-scroll-prev-line)
+  (define-key map (kbd "j")   #'precision-scroll-next-line)
+  (define-key map (kbd "k")   #'precision-scroll-prev-line)
+  (define-key map (kbd "b")   #'backward-word)
+  (define-key map (kbd "f")   #'forward-word-begin)
+  (define-key map (kbd "a")   #'backward-sentence)
+  (define-key map (kbd "e")   #'forward-sentence)
+  (define-key map (kbd "v")   #'precision-scroll-up-page)
+  (define-key map (kbd "C-v") #'precision-scroll-up-page)
+  (define-key map (kbd "M-v") #'precision-scroll-down-page)
+  (define-key map (kbd "=")   #'selection/expand)
+  (define-key map (kbd "C-g") #'selection/quit))
+
 (global-set-key (kbd "C-v") #'precision-scroll-up-page)
 (global-set-key (kbd "M-v") #'precision-scroll-down-page)
 

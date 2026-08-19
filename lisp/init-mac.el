@@ -91,8 +91,12 @@ fi"
   (string= (frame-monitor-attribute 'name) "Built-in Retina Display"))
 
 (defun toggle-frame-maximized-macos()
+  ;; Bind `display-buffer-alist' to nil so the dock-toggle's internal
+  ;; `pop-to-buffer-same-window' (which restores focus to the current buffer)
+  ;; is not hijacked by buffer-specific display rules into re-splitting the frame.
   (let ((frame-status (get-current-frame-maximized))
-        (dock-status (get-dock-autohide-macos)))
+        (dock-status (get-dock-autohide-macos))
+        (display-buffer-alist nil))
     (if frame-status
         (if dock-status
             ;; show

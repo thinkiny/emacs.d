@@ -169,6 +169,10 @@ When nil, proxy-related functions behave as if no proxy is configured."
   (dolist (func funcs)
     (advice-add func :around #'advice/use-proxy-local)))
 
+;; url-retrieve proxy
+(use-proxy-local 'url-retrieve)
+(use-proxy-local 'aio-url-retrieve)
+
 ;; common string
 (defun common-string-length (a b &optional idx)
   (setq idx (or idx 0))

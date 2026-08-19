@@ -126,8 +126,9 @@ or \\[ghostel-editor-abort] to cancel."
   (quit-window t))
 
 ;;; Redirect Claude Code `at-mentioned' inserts into the project editor
-(declare-function claude-code-ide-mcp--get-buffer-project "claude-code-ide-mcp" ())
-(declare-function claude-code-ide--get-buffer-name "claude-code-ide" (&optional directory))
+(declare-function claude-code-ide--resolve-session "claude-code-ide" (intent &optional prompt))
+(declare-function claude-code-ide-mcp-session-buffer "claude-code-ide-mcp" (session))
+(declare-function claude-code-ide-mcp-session-project-dir "claude-code-ide-mcp" (session))
 
 (defun ghostel-editor--visible-for-source (source)
   "Return the visible ghostel editor whose `--source-buffer' is SOURCE, else nil."
@@ -139,13 +140,12 @@ or \\[ghostel-editor-abort] to cancel."
             (get-buffer-window b)))
      (buffer-list))))
 
-(defun ghostel-editor--source-for-project (proj)
-  "Return the live claude-code terminal buffer for PROJ, else nil."
-  (when-let* (proj
-              (name (claude-code-ide--get-buffer-name proj))
-              (src (get-buffer name))
-              ((buffer-live-p src)))
-    src))
+(defun ghostel-editor--target-session ()
+  "Session that `claude-code-ide-insert-at-mentioned' would target, or nil.
+Returns nil under a prefix argument: the original command prompts for an
+instance there, and intercepting would double-prompt."
+  (unless current-prefix-arg
+    (claude-code-ide--resolve-session 'auto)))
 
 (defun ghostel-editor--mention (beg end proj)
   "Build an @rel#L<n>-<m> mention for BEG..END relative to PROJ."
@@ -169,23 +169,29 @@ or \\[ghostel-editor-abort] to cancel."
 
 (defun ghostel-editor--insert-selection (orig &rest args)
   "Advice for `claude-code-ide-insert-at-mentioned'; fallback to ORIG ARGS."
-  (let* ((proj (claude-code-ide-mcp--get-buffer-project))
-         (source (ghostel-editor--source-for-project proj))
-         (beg (if (use-region-p) (region-beginning) (line-beginning-position)))
-         (end (if (use-region-p) (region-end) (line-end-position)))
-         (mention (ghostel-editor--mention beg end proj)))
-    (ghostel-editor--insert-mention orig args source mention)))
+  (if-let* ((session (ghostel-editor--target-session))
+            (source (claude-code-ide-mcp-session-buffer session))
+            ((buffer-live-p source))
+            (proj (claude-code-ide-mcp-session-project-dir session))
+            (beg (if (use-region-p) (region-beginning) (line-beginning-position)))
+            (end (if (use-region-p) (region-end) (line-end-position)))
+            (mention (ghostel-editor--mention beg end proj)))
+      (ghostel-editor--insert-mention orig args source mention)
+    (apply orig args)))
 
 (defun ghostel-editor--insert-defun (orig &rest args)
   "Advice for `claude-code-ide-insert-defun-at-mentioned'; fallback to ORIG ARGS."
-  (let* ((proj (claude-code-ide-mcp--get-buffer-project))
-         (source (ghostel-editor--source-for-project proj))
-         (beg (save-excursion (beginning-of-defun) (point)))
-         (end (save-excursion (end-of-defun) (point)))
-         (mention (if (> end beg)
-                      (ghostel-editor--mention beg end proj)
-                    (ghostel-editor--mention beg beg proj))))
-    (ghostel-editor--insert-mention orig args source mention)))
+  (if-let* ((session (ghostel-editor--target-session))
+            (source (claude-code-ide-mcp-session-buffer session))
+            ((buffer-live-p source))
+            (proj (claude-code-ide-mcp-session-project-dir session))
+            (beg (save-excursion (beginning-of-defun) (point)))
+            (end (save-excursion (end-of-defun) (point)))
+            (mention (if (> end beg)
+                         (ghostel-editor--mention beg end proj)
+                       (ghostel-editor--mention beg beg proj))))
+      (ghostel-editor--insert-mention orig args source mention)
+    (apply orig args)))
 
 (advice-add 'claude-code-ide-insert-at-mentioned :around
             #'ghostel-editor--insert-selection)

@@ -70,6 +70,7 @@
 (require 'init-god)
 (require 'init-platform)
 (require 'init-ai)
+(require 'init-leetcode)
 
 ;; custom file
 (when (file-exists-p custom-file)

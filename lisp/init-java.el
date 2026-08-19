@@ -28,8 +28,18 @@
   (local-set-key (kbd "C-c b") #'eglot-java-project-build-task)
   (local-set-key (kbd "C-c u") #'eglot-java-project-build-refresh))
 
-(add-hook 'java-mode-hook #'my-java-mode-hook)
 (add-hook 'java-ts-mode-hook #'my-java-mode-hook)
+
+(use-package jal
+  :custom
+  (jal-auto-setup t)
+  :config
+  (jal-eglot-java-mode 1)
+  (defun jal-find-agents-if-java-ts-mode (original-function server)
+    (when (memq 'java-ts-mode (eglot--major-modes server))
+      (funcall original-function server)))
+  (advice-add 'jal--eglot-connect-hook-find-agents
+              :around #'jal-find-agents-if-java-ts-mode))
 
 (provide 'init-java)
 ;;; init-java ends here

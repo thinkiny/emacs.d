@@ -25,10 +25,10 @@ class CaretEmacs {
   constructor(el = document, opts = {}) {
     this.el = el;
     this.markActive = false;
+    this._markAnchor = null;
     this._savedCaret = null;
     this._debug = false;
     this._debugLog = [];
-    this._onSelectionChange = this._updateCursor.bind(this);
     this.scrollContainer = opts.scrollContainer || null;
     this._scrollPx = opts.scrollPx || 200;
     this._scrollDownFraction = opts.scrollDownFraction || 1 / 3;
@@ -49,6 +49,7 @@ class CaretEmacs {
     this._lineMoveTargetIndex = null;
     this._lineMoveGoalX = null;
 
+    this._onSelectionChange = this._updateCursor.bind(this);
     this._onKeyDown = (e) => {
       if (e.ctrlKey && e.key === 'g' && !e.altKey && !e.metaKey)
         this.deactivateMark();
@@ -59,6 +60,9 @@ class CaretEmacs {
     };
     this._onScroll = () => this._onUserScroll();
     this._onResize = () => {
+      // Capture pre-reflow viewport-relative Y before a reflow-triggered
+      // scroll event overwrites _caretViewportTop.
+      const targetRelTop = this._caretViewportTop;
       this._suppressScrollRelocate = true;
       this._lastScrollTop = this._scrollTop;
       requestAnimationFrame(() => {
@@ -66,9 +70,20 @@ class CaretEmacs {
         requestAnimationFrame(() => {
           this._lastRenderedPos = null;
           this._invalidateLayoutCaches();
+          // Anchor to the caret's pre-reflow viewport-relative Y; fall back
+          // to a bounded reveal.
+          let anchored = false;
+          if (targetRelTop != null) {
+            const sel = window.getSelection();
+            const caretRect = sel?.rangeCount ? this._selectionFocusRect(sel) : null;
+            if (caretRect) {
+              const delta = (caretRect.top - this._viewportRect().top) - targetRelTop;
+              if (Math.abs(delta) >= 1) this._scrollBy(delta);
+              anchored = true;
+            }
+          }
+          if (!anchored) this._scrollToSelectionLineBounded();
           this._updateCursor();
-          // Reveal, not recenter: avoid the 1/3-viewport jump after reflow.
-          this._scrollToSelectionLineBounded();
           // Re-arm: a resize can clamp scrollY and fire a stray scroll event.
           this._suppressScrollRelocate = true;
           this._lastScrollTop = this._scrollTop;
@@ -84,12 +99,14 @@ class CaretEmacs {
       if (this.scrollContainer) {
         this._initPdfScroll();
       } else {
-        this._ensureSelection();
+        // Reload builds a new DOM; restore the persisted caret and keep
+        // browser scroll restoration from fighting ours.
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        if (!this._restoreCaret()) this._ensureSelection();
         this._updateCursor();
         window.addEventListener('scroll', this._onScroll, { passive: true });
       }
-      // resize fires on window in both modes (resizing the xwidget buffer is a
-      // window resize; elements don't emit resize events without ResizeObserver).
+      // resize fires on window in both modes (elements need ResizeObserver).
       window.addEventListener('resize', this._onResize, { passive: true });
     };
     document.body ? init() : document.addEventListener("DOMContentLoaded", init, { once: true });
@@ -109,16 +126,20 @@ class CaretEmacs {
     return this._debugLog.map((entry) => JSON.stringify(entry)).join("\n");
   }
 
+  enableDebug(enabled) { this._debug = !!enabled; }
+
+  clearDebug() { this._debugLog = []; }
+
   /** Dump page layout: mode, scroll, caret, visual lines with segments. */
   dumpPage() {
     const page = this._currentPage() || this.el;
     const { ordered, lines } = this._visuallyOrderedTextNodes(page);
     const caret = this._savedFocus;
-    const vp = this._viewportRect();
+    const viewport = this._viewportRect();
     const mode = this._isPdfMode() ? "PDF" : "HTML";
-    const r = [`=== dumpPage ===`,
+    const report = [`=== dumpPage ===`,
       `mode: ${mode}  page: ${page?.dataset?.pageNumber || "-"}`,
-      `viewport: ${Math.round(vp.left)},${Math.round(vp.top)} - ${Math.round(vp.right)},${Math.round(vp.bottom)}`,
+      `viewport: ${Math.round(viewport.left)},${Math.round(viewport.top)} - ${Math.round(viewport.right)},${Math.round(viewport.bottom)}`,
       `scroll: ${Math.round(this._scrollTop)}/${Math.round(this._scrollHeight)} (${this.getScrollPercent().toFixed(1)}%)`,
       `mark: ${this.markActive}  caret: node=${caret?.node?.textContent?.slice(0, 10) || "-"} off=${caret?.offset ?? "-"}`,
       `lines: ${lines.length}  segments: ${ordered.length}`,
@@ -127,18 +148,18 @@ class CaretEmacs {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const bounds = this._lineBounds(line);
-      const segs = line.map(e => {
-        const x = Math.round(e.rect.left);
-        const w = Math.round(e.rect.width);
-        const h = Math.round(e.rect.height);
-        const txt = (e.node.textContent || "").slice(0, 25).replace(/\n/g, "\\n");
-        const grp = e.groupRoot ? `g` : `-`;
-        const idx = ordered.indexOf(e);
+      const segs = line.map(entry => {
+        const x = Math.round(entry.rect.left);
+        const w = Math.round(entry.rect.width);
+        const h = Math.round(entry.rect.height);
+        const txt = (entry.node.textContent || "").slice(0, 25).replace(/\n/g, "\\n");
+        const grp = entry.groupRoot ? `g` : `-`;
+        const idx = ordered.indexOf(entry);
         return `[${x}+${w}x${h} ${grp} #${idx} "${txt}"]`;
       }).join(" ");
-      r.push(`L${i}: y=${Math.round(bounds.top)} x=${Math.round(bounds.left)}-${Math.round(bounds.right)} h=${Math.round(bounds.height)}  ${segs}`);
+      report.push(`L${i}: y=${Math.round(bounds.top)} x=${Math.round(bounds.left)}-${Math.round(bounds.right)} h=${Math.round(bounds.height)}  ${segs}`);
     }
-    return r.join("\n");
+    return report.join("\n");
   }
 
   _logDebug(event, data) {
@@ -172,19 +193,19 @@ class CaretEmacs {
 
   // Any scroll shifts the viewport, so cached client rects become stale
   _scrollBy(dy) {
-    const c = this.scrollContainer;
-    const before = c ? c.scrollTop : window.scrollY;
-    if (c) c.scrollTop += dy;
+    const container = this.scrollContainer;
+    const before = container ? container.scrollTop : window.scrollY;
+    if (container) container.scrollTop += dy;
     else window.scrollBy(0, dy);
-    if ((c ? c.scrollTop : window.scrollY) !== before) this._invalidateLayoutCaches();
+    if ((container ? container.scrollTop : window.scrollY) !== before) this._invalidateLayoutCaches();
   }
 
   _scrollTo(y) {
-    const c = this.scrollContainer;
-    const before = c ? c.scrollTop : window.scrollY;
-    if (c) c.scrollTop = y;
+    const container = this.scrollContainer;
+    const before = container ? container.scrollTop : window.scrollY;
+    if (container) container.scrollTop = y;
     else window.scrollTo(0, y);
-    if ((c ? c.scrollTop : window.scrollY) !== before) this._invalidateLayoutCaches();
+    if ((container ? container.scrollTop : window.scrollY) !== before) this._invalidateLayoutCaches();
   }
 
   _scrollToSelectionLineBounded() {
@@ -260,24 +281,33 @@ class CaretEmacs {
   _scrollPage(direction) {
     const sel = this._ensureSelection();
     if (!sel?.rangeCount) return;
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    // Under mark, getRangeAt(0) is the region bbox — judge visibility by the
+    // real caret (_savedFocus) so an on-screen caret isn't relocated eagerly.
+    let rect;
+    if (this.markActive && this._savedFocus && this._isContained(this._savedFocus.node)) {
+      rect = this._rangeRectAt(this._savedFocus.node, this._savedFocus.offset)
+        || this._collapsedRange(this._savedFocus.node, this._savedFocus.offset).getBoundingClientRect();
+    } else {
+      rect = sel.getRangeAt(0).getBoundingClientRect();
+    }
+    if (!rect) return;
     const isForward = direction === "down";
     const delta = this._viewportHeight / 3;
     this._suppressScrollRelocate = true;
-    const dy = isForward ? delta : -delta;
-    this._scrollBy(dy);
+    const deltaY = isForward ? delta : -delta;
+    this._scrollBy(deltaY);
     // If cursor is still in viewport after scroll, keep it in place
     // rect is static so compute post-scroll position: screen shifts by -dy
-    const newTop = rect.top - dy;
-    const newBottom = rect.bottom - dy;
-    const vp = this._viewportRect();
-    if (newTop >= vp.top && newBottom <= vp.bottom) {
+    const newTop = rect.top - deltaY;
+    const newBottom = rect.bottom - deltaY;
+    const viewport = this._viewportRect();
+    if (newTop >= viewport.top && newBottom <= viewport.bottom) {
       this._updateCursor();
       return;
     }
-    const cx = rect.left + rect.width / 2;
-    const cy = isForward ? vp.top + this._viewportEdgeOffset : vp.bottom - this._viewportEdgeOffset;
-    const range = this._probeWithFallback(cx, cy, isForward, vp);
+    const probeX = rect.left + rect.width / 2;
+    const probeY = isForward ? viewport.top + this._viewportEdgeOffset : viewport.bottom - this._viewportEdgeOffset;
+    const range = this._probeWithFallback(probeX, probeY, isForward, viewport);
     if (!range) return;
     this._applyProbeResult(range);
     this._updateCursor();
@@ -353,19 +383,19 @@ class CaretEmacs {
       }
 
       // Use caret's current X (still valid even if off-screen), or viewport center
-      const cx = caretRect
+      const probeX = caretRect
         ? caretRect.left + caretRect.width / 2
         : (viewportRect.left + viewportRect.right) / 2;
-      const cy = isForward ? viewportRect.top + this._viewportEdgeOffset : viewportRect.bottom - this._viewportEdgeOffset;
+      const probeY = isForward ? viewportRect.top + this._viewportEdgeOffset : viewportRect.bottom - this._viewportEdgeOffset;
 
-      let resolved = this._probeTextAt(cx, cy);
+      let resolved = this._probeTextAt(probeX, probeY);
       // Reject probe result if it's outside the viewport
       if (resolved) {
         const probeRect = this._rangeRectAt(resolved.startContainer, resolved.startOffset);
         if (!this._isRectInViewport(probeRect, viewportRect)) resolved = null;
       }
       if (!resolved) {
-        resolved = this._probeWithFallback(cx, cy, isForward, viewportRect);
+        resolved = this._probeWithFallback(probeX, probeY, isForward, viewportRect);
       }
       if (resolved) {
         this._applyProbeResult(resolved);
@@ -374,8 +404,8 @@ class CaretEmacs {
         this._pendingTextRetry = true;
         this._onTextLayerReady(() => {
           this._pendingTextRetry = false;
-          const r = this._probeWithFallback(cx, cy, isForward, viewportRect);
-          if (r) this._applyProbeResult(r);
+          const range = this._probeWithFallback(probeX, probeY, isForward, viewportRect);
+          if (range) this._applyProbeResult(range);
           this._updateCursor();
         });
       }
@@ -402,38 +432,36 @@ class CaretEmacs {
   _updateCursor() {
     const el = this._cursorEl;
     if (!el) return;
-    // The overlay can be stripped from the DOM by page hydration/re-render;
-    // re-attach before drawing or it updates a detached (invisible) node.
+    // The overlay can be stripped by page hydration; re-attach before drawing.
     if (!el.isConnected) document.documentElement.appendChild(el);
     const sel = window.getSelection();
     if (!sel?.rangeCount) {
-      // Selection unexpectedly lost — restore from last rendered position
-      const c = this._lastRenderedPos;
-      if (c?.node && this._root.contains(c.node)) {
+      // Selection lost — restore from the last rendered position.
+      const saved = this._lastRenderedPos;
+      if (saved?.node && this._root.contains(saved.node)) {
         sel.removeAllRanges();
-        sel.addRange(this._collapsedRange(c.node, c.offset));
+        sel.addRange(this._collapsedRange(saved.node, saved.offset));
       }
       if (!sel?.rangeCount) { el.style.display = "none"; return; }
     }
     // Skip redundant redraw if position unchanged
-    const lrp = this._lastRenderedPos;
-    if (lrp && sel.focusNode === lrp.node && sel.focusOffset === lrp.offset
+    const lastRendered = this._lastRenderedPos;
+    if (lastRendered && sel.focusNode === lastRendered.node && sel.focusOffset === lastRendered.offset
       && el.style.display === "block") { return; }
 
     if (!this._isContained(sel.focusNode)) { el.style.display = "none"; return; }
-    // Render at the actual focus when it's a text node with a usable rect —
-    // whitespace-only nodes (e.g. a blank line " \n" inside <pre>) are real
-    // positions. Resolving them backward renders the overlay on the prior
-    // line, so a forward move onto a blank looks like it didn't move.
+    // Render at the actual focus when it has a usable rect — whitespace-only
+    // nodes are real positions; resolving them backward lands on the prior
+    // line and makes moves look stuck.
     let node = sel.focusNode, offset = sel.focusOffset;
     let rect = node.nodeType === Node.TEXT_NODE ? this._cursorRectAt(node, offset) : null;
     if (!rect?.height) {
-      const r = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
-      node = r.node; offset = r.offset;
+      const resolved = this._resolveCursorPosition(sel.focusNode, sel.focusOffset);
+      node = resolved.node; offset = resolved.offset;
       rect = this._cursorRectAt(node, offset);
     }
     if (!rect?.height) { el.style.display = "none"; return; }
-    const cw = this._cursorWidth(rect);
+    const cursorWidth = this._cursorWidth(rect);
     let cursorTop = rect.top + window.scrollY;
     let cursorLeft = rect.left + window.scrollX;
     let cursorHeight = rect.height;
@@ -449,9 +477,13 @@ class CaretEmacs {
         cursorHeight = fontSize;
       }
     }
-    el.style.cssText = `display:block;left:${cursorLeft}px;top:${cursorTop}px;width:${cw}px;height:${cursorHeight}px`;
+    el.style.cssText = `display:block;left:${cursorLeft}px;top:${cursorTop}px;width:${cursorWidth}px;height:${cursorHeight}px`;
     // Save current focus as last-rendered position
     this._lastRenderedPos = { node: sel.focusNode, offset: sel.focusOffset };
+    // Track viewport-relative Y for resize re-anchoring.
+    this._caretViewportTop = rect.top - this._viewportRect().top;
+    // Persist the caret across reloads (HTML only).
+    if (!this.scrollContainer) this._persistCaret();
   }
 
   /** Get a client rect for cursor display at the given text position. */
@@ -461,14 +493,14 @@ class CaretEmacs {
     // Try previous char if it's on the same visual line
     if (offset > 0) {
       const prevRect = this._rangeRectAt(node, offset - 1);
-      const cr = this._collapsedRange(node, offset).getBoundingClientRect();
-      if (prevRect && cr && Math.abs(prevRect.top - cr.top) <= (prevRect.height || 10)) {
+      const charRect = this._collapsedRange(node, offset).getBoundingClientRect();
+      if (prevRect && charRect && Math.abs(prevRect.top - charRect.top) <= (prevRect.height || 10)) {
         return prevRect;
       }
     }
     // Final fallback: collapsed range position
-    const cr = this._collapsedRange(node, offset);
-    return cr.getClientRects()[0] || cr.getBoundingClientRect();
+    const charRect = this._collapsedRange(node, offset);
+    return charRect.getClientRects()[0] || charRect.getBoundingClientRect();
   }
 
   /** Compute cursor width: use the rect's width if it looks like a single character, else approximate. */
@@ -504,13 +536,12 @@ class CaretEmacs {
     range.setStart(node, clampedOff);
     range.setEnd(node, clampedOff + 1);
     const rects = range.getClientRects();
-    // Skip zero-width rects (line-break artifacts in pre-wrap) and take
-    // the first rect with both height and width.
+    // Skip zero-width line-break artifacts in pre-wrap.
     for (let i = 0; i < rects.length; i++) {
       if (rects[i].height && rects[i].width) return rects[i];
     }
-    const bcr = range.getBoundingClientRect();
-    return (bcr?.height && bcr?.width) ? bcr : null;
+    const boundingRect = range.getBoundingClientRect();
+    return (boundingRect?.height && boundingRect?.width) ? boundingRect : null;
   }
 
   /** True when two rects share the same visual line. */
@@ -521,18 +552,18 @@ class CaretEmacs {
 
   /** Return a TreeWalker for text nodes, positioned at `node`. */
   _textWalker(node) {
-    const tw = document.createTreeWalker(this._root, NodeFilter.SHOW_TEXT);
-    tw.currentNode = node;
-    return tw;
+    const walker = document.createTreeWalker(this._root, NodeFilter.SHOW_TEXT);
+    walker.currentNode = node;
+    return walker;
   }
 
   /** Walk from `node` in direction `fwd`, returning the first visible text node, or null. */
   _walkToVisible(node, fwd) {
     if (!this._isContained(node)) return null;
-    const tw = this._textWalker(node);
-    let textNode = fwd ? tw.nextNode() : tw.previousNode();
+    const walker = this._textWalker(node);
+    let textNode = fwd ? walker.nextNode() : walker.previousNode();
     while (textNode && !(this._isNavigableTextNode(textNode) && this._hasRenderedBox(textNode))) {
-      textNode = fwd ? tw.nextNode() : tw.previousNode();
+      textNode = fwd ? walker.nextNode() : walker.previousNode();
     }
     return textNode;
   }
@@ -554,10 +585,19 @@ class CaretEmacs {
     return ws === 'pre' || ws === 'pre-wrap' || ws === 'break-spaces';
   }
 
+  /** True if the text node is rendered content — script/style text has no
+   *  visual box and produces broken selections. */
   _isNavigableTextNode(textNode) {
     if (textNode?.nodeType !== Node.TEXT_NODE) return false;
     const text = textNode.textContent || "";
     if (!text.length) return false;
+    for (let el = textNode.parentElement; el; el = el.parentElement) {
+      switch (el.tagName) {
+        case "SCRIPT": case "STYLE": case "NOSCRIPT": case "TEMPLATE": case "TITLE":
+          return false;
+        default: break;
+      }
+    }
     return this._preservesWhitespace(textNode) || !!text.trim();
   }
 
@@ -623,13 +663,13 @@ class CaretEmacs {
       }
 
       const start = child || node;
-      const t = this._walkToVisible(start, true) || this._walkToVisible(start, false);
-      if (t) return { node: t, offset: this._textVisibleEdgeOffset(t, true) };
+      const textNode = this._walkToVisible(start, true) || this._walkToVisible(start, false);
+      if (textNode) return { node: textNode, offset: this._textVisibleEdgeOffset(textNode, true) };
     }
     if (node.nodeType === Node.TEXT_NODE &&
-      (!(node.textContent || "").trim() || !this._hasRenderedBox(node))) {
-      // When probing (preferFwd), walk forward first — stays on same visual
-      // line. Backward walk can cross page boundaries to far-away text.
+      (!this._isNavigableTextNode(node) || !this._hasRenderedBox(node))) {
+      // When probing (preferFwd), walk forward first — backward can cross
+      // page boundaries to far-away text.
       const first = this._walkToVisible(node, preferFwd);
       if (first) return { node: first, offset: this._textVisibleEdgeOffset(first, preferFwd) };
       const second = this._walkToVisible(node, !preferFwd);
@@ -697,10 +737,32 @@ class CaretEmacs {
     sel.addRange(range);
   }
 
+  /** Nearest position:fixed/sticky ancestor of a node, or null — keeps the
+   *  scroll probe out of pinned chrome at the viewport edge. */
+  _pinnedAncestor(node) {
+    let el = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+    for (; el && el !== this._root; el = el.parentElement) {
+      const pos = getComputedStyle(el).position;
+      if (pos === 'fixed' || pos === 'sticky') return el;
+    }
+    return null;
+  }
+
   /** Probe for a text range at screen coordinates; returns a collapsed Range or null. */
   _probeTextAt(cx, cy) {
-    const range = document.caretRangeFromPoint(cx, cy);
+    let range = document.caretRangeFromPoint(cx, cy);
     if (!range) return null;
+    // Step below a pinned header that overlaps the probe point; guard
+    // against stacked bars.
+    let effectiveCy = cy;
+    for (let guard = 0; guard < 3; guard++) {
+      const pinned = this._pinnedAncestor(range.startContainer);
+      if (!pinned) break;
+      effectiveCy = pinned.getBoundingClientRect().bottom + 1;
+      const next = document.caretRangeFromPoint(cx, effectiveCy);
+      if (!next || next.startContainer === range.startContainer) return null;
+      range = next;
+    }
     if (!this._isContained(range.startContainer)) return null;
     if (this.scrollContainer) {
       const parentEl = range.startContainer.nodeType === Node.TEXT_NODE
@@ -709,8 +771,8 @@ class CaretEmacs {
     }
     const resolved = this._rangeToText(range);
     if (!resolved) return null;
-    const rr = this._rangeRectAt(resolved.startContainer, resolved.startOffset);
-    if (rr && Math.abs(rr.top - cy) > rr.height * 5) return null;
+    const rangeRect = this._rangeRectAt(resolved.startContainer, resolved.startOffset);
+    if (rangeRect && Math.abs(rangeRect.top - effectiveCy) > rangeRect.height * 5) return null;
     return resolved;
   }
 
@@ -757,20 +819,39 @@ class CaretEmacs {
     return range;
   }
 
-  /** Apply a probed range to the selection and save focus. */
+  /** The mark point with its offset clamped to the node's current length, or
+   *  null if the anchor node left the tree. Guards setBaseAndExtent (which
+   *  does not clamp) against a stale offset under DOM mutation. */
+  _markAnchorPoint() {
+    const anchor = this._markAnchor;
+    if (!anchor || !this._isContained(anchor.node)) return null;
+    const max = anchor.node.nodeType === Node.TEXT_NODE ? anchor.node.length : anchor.node.childNodes.length;
+    return { node: anchor.node, offset: Math.min(anchor.offset, max) };
+  }
+
+  /** Apply a probed range to the selection and save focus. Under mark, the
+   *  region is re-rendered from state (mark ↔ point). */
   _applyProbeResult(range) {
     const sel = window.getSelection();
     this._setSelectionRange(sel, range);
     this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+    const mark = this.markActive ? this._markAnchorPoint() : null;
+    if (mark) {
+      sel.setBaseAndExtent(mark.node, mark.offset, sel.focusNode, sel.focusOffset);
+    }
+    this._logDebug("probe-apply", {
+      rangeCount: sel?.rangeCount ?? 0,
+      markActive: this.markActive
+    });
   }
 
   /** Probe one visual line below/above a caret rect (fallback for _moveLine). */
   _probeLineFromCaret(fwd, caretRect) {
     if (!caretRect) return null;
     const step = (caretRect.height || 18) + 6;
-    const cx = caretRect.left + (caretRect.width || 1) / 2;
-    const cy = fwd ? caretRect.bottom + step : caretRect.top - step;
-    return this._probeTextAt(cx, cy);
+    const probeX = caretRect.left + (caretRect.width || 1) / 2;
+    const probeY = fwd ? caretRect.bottom + step : caretRect.top - step;
+    return this._probeTextAt(probeX, probeY);
   }
 
   /* ── Selection Management ──────────────────────────────────── */
@@ -781,11 +862,11 @@ class CaretEmacs {
       if (!skipRelocate) this._relocateIfOffscreen(sel);
       return sel;
     }
-    const c = this._savedFocus;
-    if (c?.node && this._root.contains(c.node)) {
-      const r = this._collapsedRange(c.node, c.offset);
+    const saved = this._savedFocus;
+    if (saved?.node && this._root.contains(saved.node)) {
+      const range = this._collapsedRange(saved.node, saved.offset);
       sel.removeAllRanges();
-      sel.addRange(r);
+      sel.addRange(range);
     } else {
       const range = document.createRange();
       range.selectNodeContents(this._root);
@@ -804,25 +885,77 @@ class CaretEmacs {
     if (this._isRectInViewport(focusRect, viewportRect)) return;
     const resolved = this._probeTextAt((viewportRect.left + viewportRect.right) / 2, viewportRect.top + this._viewportEdgeOffset);
     if (resolved) {
-      this._setSelectionRange(sel, resolved);
+      this._applyProbeResult(resolved);
     }
   }
 
-  _restoreCaretIfLost() {
+  /* ── Cross-reload position persistence (HTML) ──────────────────
+   *  Persist a global character offset (stable across reload) in
+   *  localStorage keyed by URL; resolve it back on the next load. Entries
+   *  are never auto-evicted; delete by hand. */
+
+  _caretStorageKey() {
+    const url = location.href.split(/[?#]/)[0];         // strip ?query / #hash
+    return `caret-pos:${url}`;
+  }
+
+  /** Count characters in navigable text nodes before (node, offset). */
+  _caretGlobalOffset(node, offset) {
+    if (node?.nodeType !== Node.TEXT_NODE) return null;
+    const walker = document.createTreeWalker(this._root, NodeFilter.SHOW_TEXT);
+    let total = 0;
+    while (walker.nextNode()) {
+      const textNode = walker.currentNode;
+      if (textNode === node) return total + Math.min(offset, textNode.length);
+      if (this._isNavigableTextNode(textNode)) total += textNode.length;
+    }
+    return null;
+  }
+
+  /** Resolve a global character offset back to a { node, offset }, or null. */
+  _resolveGlobalOffset(target) {
+    const walker = document.createTreeWalker(this._root, NodeFilter.SHOW_TEXT);
+    let total = 0;
+    while (walker.nextNode()) {
+      const textNode = walker.currentNode;
+      if (!this._isNavigableTextNode(textNode)) continue;
+      if (total + textNode.length >= target) return { node: textNode, offset: target - total };
+      total += textNode.length;
+    }
+    return null;
+  }
+
+  _persistCaret() {
     const sel = window.getSelection();
-    if (sel?.rangeCount) return;
-    const c = this._savedFocus;
-    if (!c?.node || !this._root.contains(c.node)) return;
-    const r = this._collapsedRange(c.node, c.offset);
-    sel.removeAllRanges();
-    sel.addRange(r);
-    this._updateCursor();
+    const caret = this._savedFocus
+      || (sel?.focusNode ? { node: sel.focusNode, offset: sel.focusOffset } : null);
+    if (!caret?.node || !this._isContained(caret.node)) return;
+    const offset = this._caretGlobalOffset(caret.node, caret.offset);
+    if (offset == null) return;
+    try { localStorage.setItem(this._caretStorageKey(), String(offset)); } catch (e) { }
+  }
+
+  /** Restore the persisted caret. Returns true if a position was applied. */
+  _restoreCaret() {
+    let stored;
+    try { stored = localStorage.getItem(this._caretStorageKey()); } catch (e) { return false; }
+    if (stored == null) return false;
+    const target = parseInt(stored, 10);
+    if (!Number.isFinite(target)) return false;
+    const position = this._resolveGlobalOffset(target);
+    if (!position) return false;
+    const sel = window.getSelection();
+    this._setSelectionRange(sel, this._collapsedRange(position.node, position.offset));
+    this._savedFocus = { node: position.node, offset: position.offset };
+    this._scrollToSelection();
+    return true;
   }
 
 
   _applyRange(sel, range) {
-    if (this.markActive) {
-      sel.setBaseAndExtent(sel.anchorNode, sel.anchorOffset,
+    const mark = this.markActive ? this._markAnchorPoint() : null;
+    if (mark) {
+      sel.setBaseAndExtent(mark.node, mark.offset,
         range.startContainer, range.startOffset);
     } else {
       sel.removeAllRanges();
@@ -873,10 +1006,10 @@ class CaretEmacs {
       if (page) return page;
     }
     // Fallback: element at viewport center
-    const vp = this._viewportRect();
-    const cx = (vp.left + vp.right) / 2;
-    const cy = (vp.top + vp.bottom) / 2;
-    return document.elementFromPoint(cx, cy)?.closest('.page[data-page-number]') || null;
+    const viewport = this._viewportRect();
+    const probeX = (viewport.left + viewport.right) / 2;
+    const probeY = (viewport.top + viewport.bottom) / 2;
+    return document.elementFromPoint(probeX, probeY)?.closest('.page[data-page-number]') || null;
   }
 
   _visuallyAdjacentPage(currentPage, fwd) {
@@ -884,8 +1017,8 @@ class CaretEmacs {
     if (pages.length < 2) return null;
     pages.sort((a, b) => {
       const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-      const dy = ra.top - rb.top;
-      return Math.abs(dy) > 5 ? dy : ra.left - rb.left;
+      const deltaY = ra.top - rb.top;
+      return Math.abs(deltaY) > 5 ? deltaY : ra.left - rb.left;
     });
     const idx = pages.indexOf(currentPage);
     if (idx === -1) return null;
@@ -893,11 +1026,10 @@ class CaretEmacs {
     return (adjIdx >= 0 && adjIdx < pages.length) ? pages[adjIdx] : null;
   }
 
-  /** Cached visual ordering for a scope root. The line membership/order and
-   *  per-segment rects are stable across a single layout generation; any scroll,
-   *  resize, or text-layer render bumps _layoutGeneration via
-   *  _invalidateLayoutCaches, invalidating this. Positions that must be exact
-   *  are still re-read live by callers (_pickPositionOnLine, the caret rect). */
+  /** Cached visual ordering for a scope root. Line membership/order and
+   *  per-segment rects are stable within one layout generation; scroll,
+   *  resize, or text-layer render bumps _layoutGeneration. Exact positions
+   *  are re-read live by callers. */
   _visuallyOrderedTextNodes(root) {
     const cached = this._visualOrderCache;
     if (cached.root === root
@@ -915,16 +1047,15 @@ class CaretEmacs {
 
   /** Build visual ordering and grouped lines for a scope root. */
   _buildVisuallyOrderedTextNodes(root) {
-    // Phase 1 — coarse collect: one cheap getBoundingClientRect per node.
-    // Offscreen nodes stay as a single coarse segment; only viewport-band
-    // nodes pay the expensive getClientRects refine. getBoundingClientRect is
-    // ~27× cheaper cold than getClientRects, so the whole-document pass is fast.
+    // Phase 1 — coarse collect: one cheap getBoundingClientRect per node
+    // (~27× cheaper than getClientRects); only viewport-band nodes pay the
+    // Phase 2 refine.
     const range = document.createRange();
-    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     let domIndex = 0;
-    while (tw.nextNode()) {
-      const textNode = tw.currentNode;
+    while (walker.nextNode()) {
+      const textNode = walker.currentNode;
       if (!this._isNavigableTextNode(textNode)) continue;
       const groupRoot = this._isPdfMode() ? null : this._lineGroupingRoot(textNode, root);
       range.selectNodeContents(textNode);
@@ -938,13 +1069,12 @@ class CaretEmacs {
     }
     if (!nodes.length) return { ordered: [], lines: [] };
 
-    // Phase 2 — refine: replace coarse segments overlapping the viewport window
-    // with real per-fragment segments (reusing the split logic). Done before
-    // banding so on-screen bands stay tight; offscreen coarse bands land far
-    // from the viewport and don't corrupt on-screen grouping.
+    // Phase 2 — refine: replace coarse segments overlapping the viewport
+    // window with real per-fragment segments, before banding so on-screen
+    // bands stay tight.
     const margin = this._viewportHeight;
-    const vp = this._viewportRect();
-    const vpTop = vp.top - margin, vpBottom = vp.bottom + margin;
+    const viewport = this._viewportRect();
+    const vpTop = viewport.top - margin, vpBottom = viewport.bottom + margin;
     for (let i = 0; i < nodes.length; i++) {
       const seg = nodes[i];
       if (seg.rect.bottom < vpTop || seg.rect.top > vpBottom) continue;
@@ -954,10 +1084,9 @@ class CaretEmacs {
       i += fragments.length - 1;
     }
 
-    // Cluster segments into vertical line-bands before sorting, so inline
-    // boxes that share a visual line but differ in height/center (e.g. taller
-    // <code> spans offset from surrounding prose) sort together by X. Sorting
-    // by raw midY would reorder them and split one visual line into groups.
+    // Cluster into vertical line-bands before sorting so inline boxes that
+    // share a visual line but differ in height (e.g. taller <code> spans)
+    // sort together by X.
     const byMid = [...nodes].sort((a, b) =>
       (a.rect.top + a.rect.height / 2) - (b.rect.top + b.rect.height / 2));
     let band = -1, bandMid = NaN, bandH = 0;
@@ -989,10 +1118,9 @@ class CaretEmacs {
     return { ordered, lines };
   }
 
-  /** Split a text node into per-visual-line segments via getClientRects + band
-   *  + binary-search. Takes a precomputed groupRoot (the coarse collect derives
-   *  it once during the walk). Returns [{ node, rect, startOffset, endOffset,
-   *  domIndex, groupRoot }] with a real per-line rect each. */
+  /** Split a text node into per-visual-line segments via getClientRects +
+   *  binary search. Returns [{ node, rect, startOffset, endOffset, domIndex,
+   *  groupRoot }]. */
   _splitNodeFragments(textNode, domIndex, groupRoot) {
     const range = document.createRange();
     range.selectNodeContents(textNode);
@@ -1011,23 +1139,24 @@ class CaretEmacs {
     const segments = [];
     let segStart = 0;
     for (let li = 0; li < lineRects.length; li++) {
-      const lr = lineRects[li];
-      const lrMid = lr.top + lr.height / 2;
+      const lineRect = lineRects[li];
+      const lineMid = lineRect.top + lineRect.height / 2;
       if (li < lineRects.length - 1) {
-        // Find the first offset that belongs to the next line
-        const nextLr = lineRects[li + 1];
-        const nextMid = nextLr.top + nextLr.height / 2;
+        // First offset on the next line: chars past the midpoint between
+        // line centers belong to the next line.
+        const nextLineRect = lineRects[li + 1];
+        const nextLineMid = nextLineRect.top + nextLineRect.height / 2;
         let lo = segStart, hi = textNode.length;
         while (lo < hi) {
           const mid = (lo + hi) >>> 1;
-          const cr = this._rangeRectAt(textNode, mid);
-          if (!cr) { lo = mid + 1; continue; }
-          const charMid = cr.top + cr.height / 2;
+          const rect = this._rangeRectAt(textNode, mid);
+          if (!rect) { lo = mid + 1; continue; }
+          const charMid = rect.top + rect.height / 2;
           // Is this char on the next line or beyond?
           // Use the midpoint between current and next line centers as the
           // decision boundary. Chars past this boundary belong to the next
           // line or further; chars at or before it belong to the current line.
-          const boundary = (lrMid + nextMid) / 2;
+          const boundary = (lineMid + nextLineMid) / 2;
           if (charMid > boundary) {
             hi = mid;
           } else {
@@ -1036,7 +1165,7 @@ class CaretEmacs {
         }
         if (lo > segStart) {
           segments.push({
-            node: textNode, rect: cloneRect(lr),
+            node: textNode, rect: cloneRect(lineRect),
             startOffset: segStart, endOffset: lo, domIndex, groupRoot
           });
         }
@@ -1045,7 +1174,7 @@ class CaretEmacs {
         // Last line: rest of the text
         if (textNode.length > segStart) {
           segments.push({
-            node: textNode, rect: cloneRect(lr),
+            node: textNode, rect: cloneRect(lineRect),
             startOffset: segStart, endOffset: textNode.length, domIndex, groupRoot
           });
         }
@@ -1159,8 +1288,8 @@ class CaretEmacs {
     for (let i = 0; i < lines.length; i++) {
       const firstRect = lines[i][0].rect;
       if (!this._isSameLine(firstRect, bestRect)) continue;
-      const b = this._lineBounds(lines[i]);
-      if (b && caretX >= b.left && caretX <= b.right) return i;
+      const bounds = this._lineBounds(lines[i]);
+      if (bounds && caretX >= bounds.left && caretX <= bounds.right) return i;
     }
     return bestIdx;
   }
@@ -1174,18 +1303,18 @@ class CaretEmacs {
       const start = entry.startOffset ?? 0;
       const end = entry.endOffset ?? entry.node.length;
       for (let off = start; off < end; off++) {
-        const r = document.createRange();
-        r.setStart(entry.node, off); r.setEnd(entry.node, off + 1);
-        const cr = r.getBoundingClientRect();
-        if (!cr.width || !cr.height) continue;
-        if (!this._isSameLine(cr, lineRect)) continue;
-        const d = Math.abs(cr.left + cr.width / 2 - goalX);
+        const range = document.createRange();
+        range.setStart(entry.node, off); range.setEnd(entry.node, off + 1);
+        const rect = range.getBoundingClientRect();
+        if (!rect.width || !rect.height) continue;
+        if (!this._isSameLine(rect, lineRect)) continue;
+        const distance = Math.abs(rect.left + rect.width / 2 - goalX);
         // Prefer a visible character so the caret doesn't land on invisible
-        // indentation whitespace (which made line content like '#' unreachable).
+        // indentation whitespace.
         if (/\s/.test(entry.node.textContent[off])) {
-          if (d < bestWsDist) { bestWsDist = d; bestWsRange = this._collapsedRange(entry.node, off); }
-        } else if (d < bestDist) {
-          bestDist = d;
+          if (distance < bestWsDist) { bestWsDist = distance; bestWsRange = this._collapsedRange(entry.node, off); }
+        } else if (distance < bestDist) {
+          bestDist = distance;
           bestRange = this._collapsedRange(entry.node, off);
         }
       }
@@ -1199,8 +1328,8 @@ class CaretEmacs {
     const { ordered } = this._visuallyOrderedTextNodes(scopeRoot);
     if (!ordered.length) return null;
     for (let i = 0; i < ordered.length; i++) {
-      const e = ordered[i];
-      if (e.node === focus && focusOff >= e.startOffset && focusOff <= e.endOffset) {
+      const entry = ordered[i];
+      if (entry.node === focus && focusOff >= entry.startOffset && focusOff <= entry.endOffset) {
         return { ordered, idx: i };
       }
     }
@@ -1357,7 +1486,7 @@ class CaretEmacs {
     const candidate = this._lineScan(currentLineIndex, isForward, lines, true);
     if (candidate >= 0) return candidate;
     // Caret's column is exhausted — fall back to nearest line in reading
-    // order so a two-column page doesn't dead-end on its sidebar/footer.
+    // order so a two-column page doesn't dead-end.
     return this._lineScan(currentLineIndex, isForward, lines, false);
   }
 
@@ -1416,8 +1545,7 @@ class CaretEmacs {
       targetStart = prevBreak + 1;
     }
 
-    // Loop: skip consecutive empty/whitespace-only lines (terminates at
-    // text node boundary).
+    // Loop: skip consecutive empty/whitespace-only lines.
     while (targetStart >= 0 && targetEnd >= targetStart) {
       if (text.substring(targetStart, targetEnd).trim()) {
         const targetOff = Math.min(targetStart + column, targetEnd);
@@ -1443,16 +1571,14 @@ class CaretEmacs {
     const sel = window.getSelection();
     if (!sel?.rangeCount) return { range: null, scrolled: false };
 
-    // Use the actual focus when it has a usable rect — even whitespace-only
-    // text nodes (e.g. a blank line " \n" inside <pre>) are real line
-    // positions. Resolving forward off them relocates the caret to a neighbor
-    // line, which makes a backward line-move land back on the blank (stuck)
-    // and a forward line-move skip the next line.
+    // Use the actual focus when it has a usable rect — whitespace-only
+    // nodes are real line positions; resolving off them lands on a neighbor
+    // line and makes moves look stuck.
     let lineNode = sel.focusNode, lineOffset = sel.focusOffset;
     let caretRect = this._lineMoveRect(lineNode, lineOffset);
     if (!caretRect?.height) {
-      const r = this._resolveCursorPosition(sel.focusNode, sel.focusOffset, fwd);
-      lineNode = r.node; lineOffset = r.offset;
+      const resolved = this._resolveCursorPosition(sel.focusNode, sel.focusOffset, fwd);
+      lineNode = resolved.node; lineOffset = resolved.offset;
       const startRange = this._collapsedRange(lineNode, lineOffset);
       caretRect = this._lineMoveRect(lineNode, lineOffset) || this._charRect(startRange);
     }
@@ -1488,12 +1614,12 @@ class CaretEmacs {
       const caretInGap = caretLineFound < 0;
       currentLineIndex = caretLineFound;
       if (currentLineIndex < 0) {
-        // Fallback: caret rect doesn't match any visual line — use closest by Y
+        // Caret rect matches no visual line — use closest by Y.
         const midY = caretRect.top + caretRect.height / 2;
         let best = -1, bestD = Infinity;
         for (let i = 0; i < lines.length; i++) {
-          const d = Math.abs(lines[i][0].rect.top + lines[i][0].rect.height / 2 - midY);
-          if (d < bestD) { bestD = d; best = i; }
+          const distance = Math.abs(lines[i][0].rect.top + lines[i][0].rect.height / 2 - midY);
+          if (distance < bestD) { bestD = distance; best = i; }
         }
         currentLineIndex = best;
       }
@@ -1510,23 +1636,29 @@ class CaretEmacs {
           const lineGap = fwd
             ? targetLineRect.top - currentLineBottom
             : currentLineRect.top - targetLineBottom;
-          const vp = this._viewportRect();
-          const targetInViewport = targetLineRect.top < vp.bottom && targetLineBottom > vp.top;
-          // Step 200px over a large gap (e.g. an image) instead of jumping,
-          // but only while the caret's own line stays on screen. Once the
-          // next step would push it off (a gap taller than the viewport),
-          // fall through to the jump so the cursor stays visible.
+          const viewport = this._viewportRect();
+          const targetInViewport = targetLineRect.top < viewport.bottom && targetLineBottom > viewport.top;
+          // A cross-column target (reading-order fallback) can be off screen
+          // at any vertical gap — step toward it instead of jumping.
+          const currentBounds = this._lineBounds(lines[currentLineIndex]);
+          const targetBounds = this._lineBounds(lines[targetLineIndex]);
+          const crossColumnOffscreen = !targetInViewport
+            && !!currentBounds && !!targetBounds
+            && (currentBounds.right < targetBounds.left
+              || targetBounds.right < currentBounds.left);
+          // Step 200px over a large gap instead of jumping, but only while
+          // the caret's own line stays on screen; past that, jump so the
+          // cursor stays visible.
           const anchorVisibleAfterStep = fwd
-            ? currentLineRect.top - this._scrollPx >= vp.top
-            : currentLineRect.bottom + this._scrollPx <= vp.bottom;
-          if (lineGap > this._scrollPx && !targetInViewport) {
+            ? currentLineRect.top - this._scrollPx >= viewport.top
+            : currentLineRect.bottom + this._scrollPx <= viewport.bottom;
+          if ((lineGap > this._scrollPx || crossColumnOffscreen) && !targetInViewport) {
             if (this._canScroll(fwd) && anchorVisibleAfterStep) {
-              // Suppress caret relocation so stepping over a big image doesn't bounce back.
+              // Suppress caret relocation so stepping doesn't bounce back.
               this._suppressScrollRelocate = true;
               this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
               this._invalidateLayoutCaches();
-              // One 200px scroll per press over a large gap (e.g. an image);
-              // do not retry/cache — subsequent presses continue stepping.
+              // One step per press; no retry/cache — presses continue stepping.
               return { range: null, scrolled: true, stop: true };
             }
             // Anchor would leave the viewport, or at scroll boundary — jump.
@@ -1545,14 +1677,14 @@ class CaretEmacs {
       const targetLineRect = lines[targetLineIndex][0].rect;
       for (let j = targetLineIndex - 1; j >= 0; j--) {
         if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
-        const b = this._lineBounds(lines[j]);
-        if (currBounds && b && (currBounds.right < b.left || b.right < currBounds.left)) continue;
+        const bounds = this._lineBounds(lines[j]);
+        if (currBounds && bounds && (currBounds.right < bounds.left || bounds.right < currBounds.left)) continue;
         mergedLine.unshift(...lines[j]);
       }
       for (let j = targetLineIndex + 1; j < lines.length; j++) {
         if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
-        const b = this._lineBounds(lines[j]);
-        if (currBounds && b && (currBounds.right < b.left || b.right < currBounds.left)) continue;
+        const bounds = this._lineBounds(lines[j]);
+        if (currBounds && bounds && (currBounds.right < bounds.left || bounds.right < currBounds.left)) continue;
         mergedLine.push(...lines[j]);
       }
       return { range: this._pickPositionOnLine(mergedLine, goalX), scrolled: false, gapJump: forceGapJump };
@@ -1567,10 +1699,10 @@ class CaretEmacs {
         const adjacentPage = this._visuallyAdjacentPage(currentPage, fwd);
         if (adjacentPage) {
           const pageRect = adjacentPage.getBoundingClientRect();
-          const vp = this._viewportRect();
+          const viewport = this._viewportRect();
           const pageNearEdge = fwd
-            ? pageRect.top < vp.top + this._scrollPx
-            : pageRect.bottom > vp.bottom - this._scrollPx;
+            ? pageRect.top < viewport.top + this._scrollPx
+            : pageRect.bottom > viewport.bottom - this._scrollPx;
           if (pageNearEdge) {
             // Adjacent page is close - cross to it
             return { range: this._moveLineCrossPage(currentPage, fwd, goalX), scrolled: false };
@@ -1586,8 +1718,8 @@ class CaretEmacs {
   }
 
   /**
-   * Scroll this._scrollPx toward non-text content, then probe for a text line
-   * that has entered the near viewport. Returns a Range or null.
+   * Scroll this._scrollPx toward non-text content, then probe for a text
+   * line that entered the near viewport. Returns a Range or null.
    */
   _scrollAndProbe(fwd, goalX, caretRect) {
     if (!this._canScroll(fwd)) return { range: null, scrolled: false };
@@ -1651,12 +1783,14 @@ class CaretEmacs {
     const sel = this._ensureSelection(true);
     if (!sel) { return false; }
 
-    // Capture mark anchor before any collapse that would lose it.
-    const markAnchorNode = this.markActive ? sel.anchorNode : null;
-    const markAnchorOff = this.markActive ? sel.anchorOffset : null;
+    // Capture mark anchor before any collapse loses it — _markAnchor is the
+    // source of truth; _markAnchorPoint clamps a stale offset.
+    const markPoint = this.markActive ? this._markAnchorPoint() : null;
+    const markAnchorNode = markPoint ? markPoint.node : (this.markActive ? sel.anchorNode : null);
+    const markAnchorOff = markPoint ? markPoint.offset : (this.markActive ? sel.anchorOffset : null);
 
-    // Restore real cursor position (before mark extension) so movement
-    // starts from the actual caret, not the extended selection endpoint.
+    // Restore the real cursor (pre-extension) so movement starts from the
+    // actual caret.
     if (this._savedFocus && this.markActive && sel.rangeCount) {
       sel.collapse(this._savedFocus.node, this._savedFocus.offset);
     }
@@ -1667,11 +1801,9 @@ class CaretEmacs {
       return false;
     }
 
-    // Pre-snap: if on whitespace node, snap to visible text first.
-    // Skip for line/lineboundary: they use the visual-line model, and
-    // _moveLine resolves the caret forward itself. A backward snap here
-    // would move the start to the previous line and cancel a forward line
-    // move (caret appears stuck on pre-wrap indentation whitespace).
+    // Pre-snap whitespace focus to visible text. Skip for line/
+    // lineboundary: they use the visual-line model and a backward snap here
+    // would cancel a forward line move.
     const skipPreSnap = granularity === "line" || granularity === "lineboundary";
     if (!skipPreSnap) {
       const { node: snapNode, offset: snapOff } =
@@ -1698,17 +1830,17 @@ class CaretEmacs {
       let moved = granularity === "character"
         ? this._moveCharVisual(sel, fwd)
         : this._moveWordVisual(sel, fwd);
-      // After expandSelection, _moveWordVisual lands at the start of the next word,
-      // but the selection should include that entire word. Extend past it.
+      // After expandSelection, _moveWordVisual lands at the start of the
+      // next word — extend past it so the word is included.
       if (moved && this._savedCaret && granularity === "word") {
-        let n = sel.focusNode, o = sel.focusOffset;
-        if (n.nodeType === Node.TEXT_NODE) {
+        let node = sel.focusNode, offset = sel.focusOffset;
+        if (node.nodeType === Node.TEXT_NODE) {
           if (fwd) {
-            while (o < n.textContent.length && this._isWordChar(n.textContent[o])) o++;
+            while (offset < node.textContent.length && this._isWordChar(node.textContent[offset])) offset++;
           } else {
-            while (o > 0 && this._isWordChar(n.textContent[o - 1])) o--;
+            while (offset > 0 && this._isWordChar(node.textContent[offset - 1])) offset--;
           }
-          if (o !== sel.focusOffset) sel.collapse(n, o);
+          if (offset !== sel.focusOffset) sel.collapse(node, offset);
         }
       }
       if (moved) this._snapToText(sel, fwd);
@@ -1732,9 +1864,8 @@ class CaretEmacs {
       // If scrolled incrementally, cache target and retry
       if (result.scrolled) {
         if (result.stop) {
-          // One-shot step (e.g. over an image): no retry, no cache. The page
-          // already scrolled; the caret stays put, treated as a move so the
-          // boundary wrapper doesn't misread it as a pagination boundary.
+          // One-shot step (e.g. over an image): no retry, no cache. Treated
+          // as a move so the boundary wrapper doesn't misread pagination.
           this._lineMoveTargetIndex = null;
           this._lineMoveGoalX = null;
           return true;
@@ -1752,8 +1883,8 @@ class CaretEmacs {
       this._lineMoveGoalX = null;
 
       let lineRange = result.range;
-      // _moveLine may stay on the caret's own row (same-Y cluster, e.g. a
-      // timestamp label sharing the text row); if so, probe one line over.
+      // _moveLine may stay on the caret's own row (same-Y cluster); if so,
+      // probe one line over.
       const movedRect = lineRange && this._rangeRectAt(lineRange.startContainer, lineRange.startOffset);
       if (lineRange && movedRect && preRect && this._isSameLine(movedRect, preRect)) {
         const probe = this._probeLineFromCaret(fwd, preRect);
@@ -1769,9 +1900,8 @@ class CaretEmacs {
       sel.removeAllRanges();
       sel.addRange(lineRange);
 
-      // If caret was off-screen before move, reveal it. A gap jump (over a
-      // tall image) needs a full reveal — the bounded 200px scroll would
-      // leave the target still off screen.
+      // If caret was off-screen before move, reveal it. A gap jump needs a
+      // full reveal — the bounded scroll would leave the target off screen.
       const vpNow = this._viewportRect();
       const preBottom = preRect ? (preRect.bottom ?? (preRect.top + preRect.height)) : null;
       const preOnscreen = preRect && preBottom >= vpNow.top && preRect.top <= vpNow.bottom;
@@ -1788,9 +1918,8 @@ class CaretEmacs {
       return this._finishMove(sel, true, markAnchorNode, markAnchorOff);
     }
 
-    // Lineboundary: use visual line model for both PDF and HTML.
-    // sel.modify("lineboundary") is unreliable in xwidget (goes to text node
-    // boundary, produces zero-width rects at element edges).
+    // Lineboundary: sel.modify is unreliable in xwidget (goes to text node
+    // boundary); use the visual line model.
     if (granularity === "lineboundary") {
       const scopeRoot = (this._isPdfMode() ? this._pageScopeRoot(sel.focusNode) : null) || this._root;
       const { lines } = this._visuallyOrderedTextNodes(scopeRoot);
@@ -1808,8 +1937,8 @@ class CaretEmacs {
         for (let si = line.length - 1; si >= 0 && !targetRange; si--) {
           const seg = line[si];
           for (let off = seg.endOffset - 1; off >= seg.startOffset; off--) {
-            const r = this._rangeRectAt(seg.node, off);
-            if (r) { targetRange = this._collapsedRange(seg.node, off); break; }
+            const range = this._rangeRectAt(seg.node, off);
+            if (range) { targetRange = this._collapsedRange(seg.node, off); break; }
           }
         }
       } else {
@@ -1817,8 +1946,8 @@ class CaretEmacs {
         for (let si = 0; si < line.length && !targetRange; si++) {
           const seg = line[si];
           for (let off = seg.startOffset; off < seg.endOffset; off++) {
-            const r = this._rangeRectAt(seg.node, off);
-            if (r) { targetRange = this._collapsedRange(seg.node, off); break; }
+            const range = this._rangeRectAt(seg.node, off);
+            if (range) { targetRange = this._collapsedRange(seg.node, off); break; }
           }
         }
       }
@@ -1863,7 +1992,7 @@ class CaretEmacs {
     if (sel.focusNode === startNode && sel.focusOffset === startOff) { moved = false; }
 
     if (moved && this._movedWrongWay(startNode, startOff, sel.focusNode, sel.focusOffset, fwd)) {
-      if (this.markActive) sel.setBaseAndExtent(sel.anchorNode, sel.anchorOffset, startNode, startOff);
+      if (this.markActive) sel.setBaseAndExtent(markAnchorNode, markAnchorOff, startNode, startOff);
       else sel.collapse(startNode, startOff);
       moved = false;
     }
@@ -1877,9 +2006,8 @@ class CaretEmacs {
   }
 
   /** Common epilogue: restore mark, save caret, scroll & redraw.
-   *  When extend is true (used by end-of-line), the selection endpoint is
-   *  shifted +1 forward so the character at the cursor is included.
-   *  _savedFocus always stores the real (pre-extension) offset. */
+   *  extend (end-of-line) shifts the endpoint +1 so the char at the cursor
+   *  is included; _savedFocus stores the real (pre-extension) offset. */
   _finishMove(sel, moved, anchorNode, anchorOff, extend = false) {
     if (this.markActive && anchorNode != null) {
       this._savedFocus = this._applyMarkSelection(sel, anchorNode, anchorOff, extend);
@@ -1971,8 +2099,8 @@ class CaretEmacs {
     if (fwd ? offset < node.length : offset > 0) return false;
     const hasNextVisible = !!this._walkToVisible(node, fwd);
     if (hasNextVisible) return false;
-    // No more text in DOM, but in multi-page PDF, adjacent pages may
-    // have unloaded text layers — not a true document boundary.
+    // No more text in DOM — but in multi-page PDF, adjacent pages may have
+    // unloaded text layers; not a true boundary.
     const page = node.parentElement?.closest('.page[data-page-number]');
     const hasAdjPage = !!(page && this._visuallyAdjacentPage(page, fwd));
     if (hasAdjPage) return false;
@@ -2148,8 +2276,8 @@ class CaretEmacs {
     };
   }
 
-  /** Skip past sentence-ending punctuation and whitespace in the given direction.
-   *  Returns an offset inside the adjacent sentence, or the original offset. */
+  /** Skip past sentence-ending punctuation and whitespace in the given
+   *  direction. Returns an offset inside the adjacent sentence. */
   _skipSentenceBoundary(text, offset, fwd) {
     const boundaryRe = /[\s\n.!?。！？]/;
     let off = offset;
@@ -2194,6 +2322,8 @@ class CaretEmacs {
     const ep = model.pointFromOffset(offsets.end);
     if (!sp?.node || !ep?.node) return false;
     sel.setBaseAndExtent(ep.node, ep.offset, sp.node, sp.offset);
+    this._markAnchor = { node: sp.node, offset: sp.offset };
+    this._savedFocus = { node: ep.node, offset: ep.offset };
 
     this.markActive = true;
     return true;
@@ -2214,6 +2344,8 @@ class CaretEmacs {
     sel.modify('extend', 'forward', granularity);
     const endNode = sel.focusNode, endOff = sel.focusOffset;
     sel.setBaseAndExtent(endNode, endOff, startNode, startOff);
+    this._markAnchor = { node: startNode, offset: startOff };
+    this._savedFocus = { node: endNode, offset: endOff };
     this.markActive = true;
   }
 
@@ -2258,7 +2390,17 @@ class CaretEmacs {
       this.deactivateMark();
       return false;
     }
+    const sel = this._ensureSelection(true);
     this.markActive = true;
+    if (sel?.rangeCount) {
+      this._markAnchor = { node: sel.focusNode, offset: sel.focusOffset };
+      // Keep movement start in sync: a click moved the DOM selection without
+      // updating state — a stale _savedFocus would build the region from the
+      // pre-click position.
+      this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
+    } else {
+      this._markAnchor = null;
+    }
     this._savedCaret = null;
     this._updateCursor();
     return true;
@@ -2266,16 +2408,16 @@ class CaretEmacs {
 
   deactivateMark() {
     this.markActive = false;
+    this._markAnchor = null;
     const sel = window.getSelection();
-    const c = this._savedCaret || this._savedFocus;
+    const saved = this._savedCaret || this._savedFocus;
     this._savedCaret = null;
-    if (c?.node && this._root.contains(c.node)) {
-      sel.collapse(c.node, c.offset);
+    if (saved?.node && this._root.contains(saved.node)) {
+      sel.collapse(saved.node, saved.offset);
     } else if (sel?.rangeCount) {
       sel.collapse(sel.focusNode, sel.focusOffset);
       this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
     }
-    setTimeout(() => this._restoreCaretIfLost(), 0);
     this._updateCursor();
   }
 
@@ -2309,10 +2451,13 @@ class CaretEmacs {
           }
         }
         sel.setBaseAndExtent(node, start, node, end);
+        this._markAnchor = { node, offset: start };
         this._savedFocus = { node, offset: end };
       } else {
         sel.modify('move', 'forward', 'word');
         sel.modify('extend', 'backward', 'word');
+        this._markAnchor = { node: sel.anchorNode, offset: sel.anchorOffset };
+        this._savedFocus = { node: sel.focusNode, offset: sel.focusOffset };
       }
       this.markActive = true;
     } else if (scope === 'word') {
@@ -2335,9 +2480,9 @@ class CaretEmacs {
     if (!this._isPdfMode()) return this._jumpToEdge(isForward);
     this._scrollTo(isForward ? 0 : this._scrollHeight);
     this._onTextLayerReady(() => {
-      const vp = this._viewportRect();
-      const y = isForward ? vp.top + 20 : vp.bottom - 20;
-      const el = document.elementFromPoint((vp.left + vp.right) / 2, y);
+      const viewport = this._viewportRect();
+      const y = isForward ? viewport.top + 20 : viewport.bottom - 20;
+      const el = document.elementFromPoint((viewport.left + viewport.right) / 2, y);
       const page = el?.closest('.page[data-page-number]');
       if (page) this._jumpToEdge(isForward, page);
     });
@@ -2374,22 +2519,22 @@ class CaretEmacs {
   }
 
   beginningOfPage() {
-    const p = this._currentPage();
-    if (p) this._jumpToEdge(true, p);
+    const page = this._currentPage();
+    if (page) this._jumpToEdge(true, page);
   }
 
   endOfPage() {
-    const p = this._currentPage();
-    if (p) this._jumpToEdge(false, p);
+    const page = this._currentPage();
+    if (page) this._jumpToEdge(false, page);
   }
 
   /** Simulate a mouse click at the current caret position. */
   clickAtCaret() {
     const sel = window.getSelection();
     if (!sel?.rangeCount) return;
-    const r = sel.getRangeAt(0).cloneRange();
-    r.collapse(true);
-    const rect = r.getBoundingClientRect();
+    const range = sel.getRangeAt(0).cloneRange();
+    range.collapse(true);
+    const rect = range.getBoundingClientRect();
     if (!rect?.height) return;
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
@@ -2400,25 +2545,25 @@ class CaretEmacs {
   }
 
   caretInfo() {
-    const s = window.getSelection();
-    const c = this._savedCaret || this._savedFocus || { node: s.focusNode, offset: s.focusOffset };
+    const sel = window.getSelection();
+    const saved = this._savedCaret || this._savedFocus || { node: sel.focusNode, offset: sel.focusOffset };
     // Collapsed range at the saved caret
-    let rc = this._collapsedRange(c.node, c.offset).getBoundingClientRect();
+    let rc = this._collapsedRange(saved.node, saved.offset).getBoundingClientRect();
     if (!rc || (!rc.width && !rc.height))
-      rc = this._cursorRectAt(c.node, c.offset);
+      rc = this._cursorRectAt(saved.node, saved.offset);
     const left = rc?.left ?? 0, bottom = rc?.bottom ?? 0;
     let text = "";
-    if (!s.isCollapsed) {
-      text = s.toString();
+    if (!sel.isCollapsed) {
+      text = sel.toString();
       this.deactivateMark();
     } else {
-      const n = s.focusNode, o = s.focusOffset;
-      if (n?.nodeType === 3) {
-        const t = n.textContent;
-        let b = o;
-        while (b > 0 && this._isWordChar(t[b - 1])) b--;
-        const m = t.slice(b).match(new RegExp('^' + WORD_CHAR_RE.source + '+', 'u'));
-        if (m) text = m[0];
+      const node = sel.focusNode, offset = sel.focusOffset;
+      if (node?.nodeType === 3) {
+        const nodeText = node.textContent;
+        let wordStart = offset;
+        while (wordStart > 0 && this._isWordChar(nodeText[wordStart - 1])) wordStart--;
+        const match = nodeText.slice(wordStart).match(new RegExp('^' + WORD_CHAR_RE.source + '+', 'u'));
+        if (match) text = match[0];
       }
     }
     return JSON.stringify({ text, left, bottom });

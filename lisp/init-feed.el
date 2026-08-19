@@ -9,10 +9,7 @@
   (elfeed-db-directory "~/.emacs.d/elfeed")
   (elfeed-user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
   :config
-  (use-proxy-local 'url-retrieve)
-  (when-let* ((proxy-url (local-proxy-http-url)))
-    (setq elfeed-curl-extra-arguments (list "-x" proxy-url)))
-
+  (local-proxy-endpoint--sync-elfeed)
   (defconst elfeed-local-mapping "~/org/*elfeed*")
   (setq elfeed-search-print-entry-function #'elfeed-search-print-entry--custom)
   (define-key elfeed-search-mode-map (kbd "j") #'next-line)
@@ -20,6 +17,16 @@
   (define-key elfeed-search-mode-map (kbd "k") #'previous-line)
   (define-key elfeed-search-mode-map (kbd "O") #'elfeed-open-selected-in-chrome)
   (define-key elfeed-search-mode-map (kbd "o") #'elfeed-open-selected-in-chrome-background))
+
+;; proxy
+(defun local-proxy-endpoint--sync-elfeed ()
+  "Mirror `local-proxy-endpoint' into `elfeed-curl-extra-arguments'."
+  (setq elfeed-curl-extra-arguments
+        (when-let* ((proxy-url (local-proxy-http-url)))
+          (list "-x" proxy-url))))
+
+(add-hook 'local-proxy-endpoint-change-functions
+          #'local-proxy-endpoint--sync-elfeed)
 
 ;; shr
 (with-eval-after-load 'shr
@@ -104,32 +111,21 @@ via `browse-url' (your xwidget), mirroring `xwidget-webkit-browse-open-url'."
   (visual-line-mode))
 
 (with-eval-after-load 'elfeed-show
+  (apply-reader-keybindings elfeed-show-mode-map)
   (define-key elfeed-show-mode-map (kbd "<double-mouse-1>") #'translate-at-point)
-  (define-key elfeed-show-mode-map (kbd "=")   #'selection/expand)
   (define-key elfeed-show-mode-map (kbd "r")   #'revert-buffer)
-  (define-key elfeed-show-mode-map (kbd "n")   #'precision-scroll-next-line)
-  (define-key elfeed-show-mode-map (kbd "p")   #'precision-scroll-prev-line)
-  (define-key elfeed-show-mode-map (kbd "j")   #'precision-scroll-next-line)
-  (define-key elfeed-show-mode-map (kbd "k")   #'precision-scroll-prev-line)
   (define-key elfeed-show-mode-map (kbd "h")   #'backward-word)
   (define-key elfeed-show-mode-map (kbd "l")   #'forward-word-begin)
   (define-key elfeed-show-mode-map (kbd "w")   #'precision-scroll-prev-line)
   (define-key elfeed-show-mode-map (kbd "s")   #'precision-scroll-next-line)
-  (define-key elfeed-show-mode-map (kbd "b")   #'backward-word)
-  (define-key elfeed-show-mode-map (kbd "f")   #'forward-word-begin)
   (define-key elfeed-show-mode-map (kbd "a")   #'beginning-of-line)
   (define-key elfeed-show-mode-map (kbd "e")   #'end-of-line)
   (define-key elfeed-show-mode-map (kbd "(")   #'backward-sentence)
   (define-key elfeed-show-mode-map (kbd ")")   #'forward-sentence)
   (define-key elfeed-show-mode-map (kbd "q")   #'elfeed--show-quit)
-  (define-key elfeed-show-mode-map (kbd ",")   #'translate-at-point)
   (define-key elfeed-show-mode-map (kbd "SPC") #'selection/toggle-mark)
-  (define-key elfeed-show-mode-map (kbd "v")   #'precision-scroll-up-page)
-  (define-key elfeed-show-mode-map (kbd "C-v") #'precision-scroll-up-page)
-  (define-key elfeed-show-mode-map (kbd "M-v") #'precision-scroll-down-page)
   (define-key elfeed-show-mode-map (kbd "O")   #'elfeed-open-current-in-chrome)
   (define-key elfeed-show-mode-map (kbd "o")   #'elfeed-open-current-in-chrome-background)
-  (define-key elfeed-show-mode-map (kbd "C-g") #'selection/quit)
   (define-key elfeed-show-mode-map (kbd "x")   #'elfeed-show-open-xwidget)
   (define-key elfeed-show-mode-map (kbd "g")   #'elfeed-show-open-url)
   (define-key elfeed-show-mode-map (kbd "y")   #'elfeed-show-yank)

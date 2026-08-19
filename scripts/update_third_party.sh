@@ -33,7 +33,7 @@ FILE_URLS=(
 update_repo() {
     echo "updating $1"
     pushd "$1" &> /dev/null
-    git pull
+    git pull -f
     popd &> /dev/null
 }
 

@@ -4,7 +4,6 @@
 (require 'shr)
 (require 'xwidget)
 (require 'cl-lib)
-(require 's)
 (require 'caret-xwidget)
 
 (defconst nov-xwidget-need-inject t)
@@ -12,7 +11,6 @@
 (defconst nov-xwidget-cache-dir (expand-file-name "cache/epub" user-emacs-directory))
 
 (defvar-local nov-xwidget-toc-path nil)
-(defvar-local nov-xwidget-need-resume-position t)
 
 (defun nov-xwidget--sanitize-index (documents index)
   "Return a valid index for DOCUMENTS, derived from INDEX."
@@ -30,52 +28,6 @@
   (concat "file://"
           (expand-file-name "assets/css/nov-override.css"
                             user-emacs-directory)))
-
-;;; Position save/restore
-
-(defun nov-xwidget--position-key ()
-  (when-let* ((session (xwidget-webkit-current-session))
-              (uri (xwidget-webkit-uri session))
-              (url (url-generic-parse-url uri))
-              (decode-url (url-unhex-string (url-filename url))))
-    (concat "epub-pos-"
-            (string-trim-left decode-url (concat "/" nov-xwidget-cache-dir "/")))))
-
-(defun nov-xwidget-save--position ()
-  (interactive)
-  (when-let* ((key (nov-xwidget--position-key)))
-    (xwidget-webkit-eval-script
-     (format "var s=window.getSelection(),n=s.focusNode;
-if(n&&n.nodeType===3){var idx=0,w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
-while(w.nextNode()&&w.currentNode!==n)idx++;
-window.localStorage.setItem('%s',JSON.stringify({i:idx,o:s.focusOffset}));
-}" key))))
-
-(defun nov-xwidget-restore-position ()
-  (interactive)
-  (when nov-xwidget-need-resume-position
-    (when-let* ((key (nov-xwidget--position-key)))
-      (xwidget-webkit-eval-script
-       (format "var d=localStorage.getItem('%s');
-if(d){var p=JSON.parse(d),n;
-var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
-for(var i=0;i<=p.i&&(w.nextNode());i++)n=w.currentNode;
-if(n){var s=window.getSelection();
-s.collapse(n,Math.min(p.o,n.length));
-var rng=document.createRange();rng.setStart(n,Math.min(p.o,n.length));rng.collapse(true);
-window.scroll(0,rng.getBoundingClientRect().top-window.innerHeight/3);}}
-" key))))
-  (setq nov-xwidget-need-resume-position t))
-
-(defun nov-xwidget--inject-scroll-autosave ()
-  (when-let* ((key (nov-xwidget--position-key)))
-    (xwidget-webkit-eval-script
-     (format "window.addEventListener('scroll',function(){
-var s=window.getSelection(),n=s.focusNode;
-if(n&&n.nodeType===3){var idx=0,w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
-while(w.nextNode()&&w.currentNode!==n)idx++;
-window.localStorage.setItem('%s',JSON.stringify({i:idx,o:s.focusOffset}));
-}});" key))))
 
 ;;; Keymap and mode
 
@@ -107,8 +59,7 @@ window.localStorage.setItem('%s',JSON.stringify({i:idx,o:s.focusOffset}));
 
 (defun nov-xwidget--save ()
   "Save current reading position."
-  (nov-xwidget--save-index)
-  (nov-xwidget-save--position))
+  (nov-xwidget--save-index))
 
 ;;; DOM transformation
 
@@ -260,10 +211,6 @@ window.localStorage.setItem('%s',JSON.stringify({i:idx,o:s.focusOffset}));
   (when (and uri (string-match "file:///\\([^#]*\\)" uri))
     (match-string 1 uri)))
 
-(defun nov-xwidget--skip-restore-p (uri)
-  (or (eq nov-documents-index nov-toc-id)
-      (s-contains? "#" uri)))
-
 (defun nov-xwidget--webkit-callback (xwidget xwidget-event-type)
   "Callback for xwidgets.
 XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
@@ -273,9 +220,6 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
     (with-current-buffer (xwidget-buffer xwidget)
       (when-let* ((uri (xwidget-webkit-uri xwidget))
                   (file (nov-xwidget--extract-filepath uri)))
-        (unless (nov-xwidget--skip-restore-p uri)
-          (nov-xwidget-restore-position))
-        (nov-xwidget--inject-scroll-autosave)
         (when-let* ((index (nov-xwidget--find-index-by-file file)))
           (setq-local nov-documents-index index)
           (nov-xwidget--save-index))))))
