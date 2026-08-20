@@ -3,7 +3,9 @@
 ;; ztree
 (use-package ediff
   :bind (:map global-map
-         ("C-c d e" . ediff-directories)))
+              ("C-c d e" . ediff-directories))
+  :config
+  (setq ediff-diff-options "-a"))
 
 (use-package ztree
   :bind (:map global-map

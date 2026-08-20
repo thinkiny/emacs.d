@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package pg)
+(use-package pgsql)
 (use-package mysql)
 
 (use-package ob-clutch

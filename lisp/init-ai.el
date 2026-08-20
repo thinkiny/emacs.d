@@ -30,7 +30,8 @@
                  (window-width . 0.5))))
 
 (defun claude-code--display-buffer (buffer alist)
-  (delete-other-windows)
+  (when (cdr (window-list))
+    (delete-other-windows))
   (display-buffer-in-direction buffer alist))
 
 (provide 'init-ai)

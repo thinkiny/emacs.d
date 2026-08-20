@@ -22,6 +22,7 @@
 (use-package ghostel
   :config
   (setq ghostel-tramp-shell-integration t)
+  (setq ghostel-enable-file-detection nil)
   (add-to-list 'ghostel-tramp-shells '("rpc" "/bin/bash")))
 
 (defun ghostel-send-C-v ()
@@ -60,15 +61,15 @@ Cleared when fired or when the buffer dies.")
   (advice-add 'ghostel-send-string :after #'ghostel--send-string-debounce))
 
 (defun ghostel-semi-char-kill-line ()
-  "Save cursor-to-EOL text to Emacs kill ring, then send C-k to terminal."
+  "Send C-k to terminal."
   (interactive)
-  (let ((cursor ghostel--cursor-char-pos))
-    (when cursor
-      (save-excursion
-        (goto-char cursor)
-        (let ((eol (line-end-position)))
-          (when (< cursor eol)
-            (kill-new (buffer-substring-no-properties cursor eol)))))))
+  ;; (let ((cursor ghostel--cursor-char-pos))
+  ;;   (when cursor
+  ;;     (save-excursion
+  ;;       (goto-char cursor)
+  ;;       (let ((eol (line-end-position)))
+  ;;         (when (< cursor eol)
+  ;;           (kill-new (buffer-substring-no-properties cursor eol)))))))
   (ghostel-send-string "\x0b"))
 
 (defun ghostel-readonly-scroll-up ()

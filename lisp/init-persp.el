@@ -1,6 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 (require 'cl-lib)
 
+(defvar persp-shared-buffer-names '("*Messages*")
+  "Buffer names that are members of every perspective.
+`persp-pin-buffer' never pins them, so `persp-forget-foreign-buffers'
+never removes them on switch.")
+
 (use-package perspective
   :init
   (setq persp-show-modestring nil)
@@ -15,13 +20,12 @@
   :config
   (global-set-key (kbd "C-x b") 'persp-ivy-switch-buffer)
   (global-set-key (kbd "C-x k") 'persp-kill-buffer*)
-  (advice-add 'persp-new :around #'set-new-presp-dir-to-home)
-  (advice-add 'persp-kill-buffer* :after #'xwidget-ensure-single-window)
-  (setq persp-modestring-short t)
   (setq persp-state-default-file (expand-file-name "persp.state" user-emacs-directory))
-  (after-load-theme
-    (set-face-attribute 'persp-selected-face nil :foreground (face-attribute 'mode-line :foreground)))
-  (persp-mode))
+  (persp-mode)
+  (advice-add 'persp-new :around #'presp--set-home-dir)
+  (advice-add 'persp-kill-buffer* :after #'persp--xwidget-ensure-single-window)
+  (add-hook 'persp-switch-hook #'persp--tweak-buffers))
+
 
 (defun persp-close-all-buffers ()
   "Kill all buffers in the current perspective excludes the perspective's scratch buffer."
@@ -31,16 +35,12 @@
              unless (eq buf (get-buffer (persp-scratch-buffer)))
              do (kill-buffer buf))))
 
-(defun set-new-presp-dir-to-home (orig &rest args)
+(defun presp--set-home-dir (orig &rest args)
   (let ((default-directory "~/"))
     (apply orig args)))
 
-(defun xwidget-ensure-single-window (&optional _killed &rest _)
-  "Move any non-selected window off a duplicate xwidget.
-An xwidget is a single native widget and cannot render in two windows;
-if a kill left a window duplicating an xwidget shown elsewhere, switch
-that window to the perspective's scratch buffer.  The window is kept,
-matching normal `kill-buffer' behavior."
+(defun persp--xwidget-ensure-single-window (&optional _killed &rest _)
+  "Move any non-selected window off a duplicate xwidget."
   (dolist (win (window-list))
     (when (and (with-current-buffer (window-buffer win)
                  (derived-mode-p 'xwidget-webkit-mode))
@@ -48,5 +48,10 @@ matching normal `kill-buffer' behavior."
                (not (eq win (selected-window))))
       (with-selected-window win
         (switch-to-buffer (persp-get-scratch-buffer))))))
+
+(defun persp--tweak-buffers (&rest _)
+  (dolist (buffer-name persp-shared-buffer-names)
+    (when-let* ((buffer (get-buffer buffer-name)))
+      (persp-add-buffer buffer))))
 
 (provide 'init-persp)

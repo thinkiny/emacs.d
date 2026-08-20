@@ -236,15 +236,15 @@ function requires `buffer-file-name'.  ORIG-FN is the original function."
   "Around advice for `claude-code-ide-insert-at-mentioned'.
 In xwidget buffers, switch to the Claude Code buffer instead of
 ORIG-FN, whose buffer-file-name mention logic doesn't apply."
-  (if (claude-xwidgets--session)
-      (if (eq claude-code-ide-terminal-backend 'ghostel)
-          (let ((text (claude-xwidgets--selected-text)))
-            (claude-code-ide-switch-to-buffer)
-            (ghostel-send-string text))
-        (claude-code-ide-switch-to-buffer)
-        (goto-char (point-max)))
-    (apply orig-fn args)
-    (claude-code-ide-switch-to-buffer)))
+  (let ((text (and (claude-xwidgets--session)
+                   (eq claude-code-ide-terminal-backend 'ghostel)
+                   (claude-xwidgets--selected-text))))
+    (unless (claude-xwidgets--session)
+      (apply orig-fn args))
+    (claude-code-ide-switch-to-buffer)
+    (if text
+        (ghostel-send-string text)
+      (claude-code-ide-scroll-buffer-windows-to-end (current-buffer)))))
 
 ;;; treesit-info size guard
 
