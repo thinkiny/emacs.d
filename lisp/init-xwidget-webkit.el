@@ -163,17 +163,29 @@ window.find(xwSearchString, false, !xwSearchForward, true, false, true);
                       (lambda ()
                         (select-frame-set-input-focus frame))))))
 
-(defun xwidget-webkit-open-in-chrome ()
-  "Open current xwidget URL in Chrome."
-  (interactive)
-  (when-let* ((url (xwidget-webkit-uri (xwidget-webkit-current-session))))
-    (xwidget-webkit-open-url-in-chrome url)))
+(defun xwidget-webkit-link-at-caret ()
+  "Return the URL of the link under the caret, or nil."
+  (when-let* ((result (xwidget-webkit-execute-script-sync
+                       "window.__caretEmacs ? window.__caretEmacs.linkAtCaret() : ''")))
+    (let ((url (string-trim result "\"" "\"")))
+      (unless (string-empty-p url) url))))
+
+(defun xwidget-webkit-open-in-chrome (&optional background)
+  "Open link at caret in Chrome; fall back to current session URL.
+With non-nil BACKGROUND (or prefix arg), refocus Emacs afterward."
+  (interactive "P")
+  (when-let* ((url (or (xwidget-webkit-link-at-caret)
+                       (xwidget-webkit-uri (xwidget-webkit-current-session)))))
+    (xwidget-webkit-open-url-in-chrome url background)))
 
 (defun xwidget-webkit-open-in-chrome-background ()
-  "Open current xwidget URL in Chrome."
+  "Open link at caret (or session URL) in Chrome without leaving Emacs."
   (interactive)
-  (when-let* ((url (xwidget-webkit-uri (xwidget-webkit-current-session))))
-    (xwidget-webkit-open-url-in-chrome url t)))
+  (xwidget-webkit-open-in-chrome t))
+
+
+;;; Caret.js
+(require 'caret-xwidget)
 
 ;;; Keymap
 
@@ -245,29 +257,28 @@ TIMEOUT defaults to 2 seconds."
   (setq-local isearch-search-fun-function 'xwidget-webkit-search-fun-function)
   (setq-local isearch-lazy-highlight nil)
   (setq-local isearch-wrap-function 'ignore)
-  (setq-local header-line-format nil)
-  (add-hook 'window-configuration-change-hook #'xwidget-webkit-auto-adjust-size-derived nil t))
+  (setq-local header-line-format nil))
 
 (add-hook 'xwidget-webkit-mode-hook #'my-xwidget-webkit-mode-hook)
 
 (global-set-key (kbd "C-x / /") #'xwidget-webkit-browse-open-url)
 
-;;; Caret.js
-
-(require 'caret-xwidget)
 
 ;;; Window Sizing
 
-(defun xwidget-webkit-auto-adjust-size-derived ()
-  "Adjust xwidget size to fit WINDOW for any `xwidget-webkit-mode' derivative."
-  (when (derived-mode-p 'xwidget-webkit-mode)
-    (when-let* ((xwidget (xwidget-at (point-min))))
-      (dolist (win (get-buffer-window-list (current-buffer) nil t))
-        (xwidget-webkit-adjust-size-to-window xwidget win)))))
+(defun xwidget-webkit-auto-adjust-size-derived (frame)
+  "Adjust xwidget size to fit FRAME for any `xwidget-webkit-mode' derivative."
+  (dolist (win (window-list frame))
+    (with-selected-window win
+      (when (derived-mode-p 'xwidget-webkit-mode)
+        (when-let* ((xwidget (xwidget-at (point-min))))
+          (xwidget-webkit-adjust-size-to-window xwidget win))))))
 
 (setq window-size-change-functions
       (remove 'xwidget-webkit-adjust-size-in-frame
               window-size-change-functions))
+
+(add-hook 'window-size-change-functions #'xwidget-webkit-auto-adjust-size-derived)
 
 ;;; Transparent Background
 

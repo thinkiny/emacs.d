@@ -43,6 +43,7 @@ update_repos() {
     update_repo "${ELPA_DIR}/tramp-rpc"
     update_repo "${ELPA_DIR}/clutch"
     update_repo "${ELPA_DIR}/ob-clutch"
+    update_repo "${ELPA_DIR}/leetcode"
 }
 
 # Update LSP tools

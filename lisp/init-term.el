@@ -5,9 +5,10 @@
 (defconst term--claude-previous-re "^\\(?:❯ \\|⏺ \\)"
   "Regex matching Claude Code prompt lines.")
 
-(defun term--claude-buffer-p ()
-  "Return non-nil if current buffer is a Claude Code terminal."
-  (string-prefix-p "*claude-code" (buffer-name)))
+(defun term--claude-buffer-p (&optional buf)
+  "Return non-nil if BUF is a Claude Code terminal. BUF defaults to current buffer."
+  (with-current-buffer (or buf (current-buffer))
+    (string-prefix-p "*claude-code" (buffer-name))))
 
 (defun term--goto-previous-claude-prompt ()
   "Search backward for a Claude Code prompt line (❯ or ⏺)."

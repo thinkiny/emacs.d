@@ -2544,6 +2544,20 @@ class CaretEmacs {
       { bubbles: true, cancelable: true, clientX: x, clientY: y }));
   }
 
+  /** Return the absolute href of the anchor at the caret, or "". */
+  linkAtCaret() {
+    const sel = window.getSelection();
+    const saved = this._savedCaret || this._savedFocus || { node: sel.focusNode, offset: sel.focusOffset };
+    if (!saved?.node || !this._root.contains(saved.node)) return "";
+    const { node, offset } = this._resolveCursorPosition(saved.node, saved.offset);
+    const rect = this._cursorRectAt(node, offset);
+    if (!rect?.height) return "";
+    const el = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    if (!el) return "";
+    const anchor = el.closest("a[href]");
+    return anchor ? anchor.href : "";
+  }
+
   caretInfo() {
     const sel = window.getSelection();
     const saved = this._savedCaret || this._savedFocus || { node: sel.focusNode, offset: sel.focusOffset };

@@ -150,11 +150,15 @@ ORIG-FN is the original `getCurrentSelection' handler."
    ((claude-xwidgets--session)
     (claude-xwidgets--viewport-text))
    (t
-    (let ((win (get-buffer-window (current-buffer) t)))
-      (if win
-          (with-selected-window win
-            (claude-mcp--window-text))
-        "")))))
+    ;; Iterate the frame's windows, picking the first non-Claude buffer.
+    ;; Falls back to "" only when every window shows a Claude buffer.
+    (cl-loop for win in (window-list (selected-frame))
+             for buf = (window-buffer win)
+             if (and buf (buffer-live-p buf)
+                      (not (term--claude-buffer-p buf)))
+             return (with-selected-window win
+                      (claude-mcp--window-text))
+             finally return ""))))
 
 (defun claude-mcp--selection-text ()
   "Return selected text if available, handling all buffer types.
@@ -166,7 +170,12 @@ Returns nil or empty string if no text is selected."
    (t
     ;; For regular buffers, check if region is active and get selected text
     (when (and (region-active-p) (use-region-p))
-      (buffer-substring-no-properties (region-beginning) (region-end))))))
+      ;; Clamp region endpoints against buffer limits to tolerate stale
+      ;; markers (e.g. after a DOM mutation that shortens the buffer).
+      (let* ((rbeg (max (region-beginning) (point-min)))
+             (rend (min (region-end) (point-max))))
+        (when (< rbeg rend)
+          (buffer-substring-no-properties rbeg rend)))))))
 
 (defun claude-mcp--read-screen ()
   "Handle getVisibleText MCP tool call.
