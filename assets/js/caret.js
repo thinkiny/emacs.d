@@ -99,11 +99,11 @@ class CaretEmacs {
       if (this.scrollContainer) {
         this._initPdfScroll();
       } else {
-        // Reload builds a new DOM; restore the persisted caret and keep
-        // browser scroll restoration from fighting ours.
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-        if (!this._restoreCaret()) this._ensureSelection();
-        this._updateCursor();
+        setTimeout(() => {
+          if (!this._restoreCaret()) this._ensureSelection();
+          this._updateCursor();
+        }, 300);
         window.addEventListener('scroll', this._onScroll, { passive: true });
       }
       // resize fires on window in both modes (elements need ResizeObserver).
@@ -592,6 +592,9 @@ class CaretEmacs {
     const text = textNode.textContent || "";
     if (!text.length) return false;
     for (let el = textNode.parentElement; el; el = el.parentElement) {
+      // SVG text renders, but WebKit gives its sub-ranges zero client rects,
+      // so the caret can never land on it — keep it out of the model.
+      if (el.namespaceURI === "http://www.w3.org/2000/svg") return false;
       switch (el.tagName) {
         case "SCRIPT": case "STYLE": case "NOSCRIPT": case "TEMPLATE": case "TITLE":
           return false;
@@ -1670,24 +1673,37 @@ class CaretEmacs {
 
     // Target line found — merge adjacent line groups and pick position
     if (targetLineIndex >= 0) {
-      // Merge entries from adjacent line groups at the same visual Y,
-      // but only from the same column (horizontally overlapping with caret)
-      const currBounds = this._lineBounds(lines[currentLineIndex]);
-      const mergedLine = [...lines[targetLineIndex]];
-      const targetLineRect = lines[targetLineIndex][0].rect;
-      for (let j = targetLineIndex - 1; j >= 0; j--) {
-        if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
-        const bounds = this._lineBounds(lines[j]);
-        if (currBounds && bounds && (currBounds.right < bounds.left || bounds.right < currBounds.left)) continue;
-        mergedLine.unshift(...lines[j]);
+      let picked = null;
+      // A line whose characters yield no rects (detached by a re-render,
+      // culled animation frame) is unlandable — skip to the next candidate.
+      while (targetLineIndex >= 0 && targetLineIndex < lines.length) {
+        // Merge entries from adjacent line groups at the same visual Y,
+        // but only from the same column (horizontally overlapping with caret)
+        const currBounds = this._lineBounds(lines[currentLineIndex]);
+        const mergedLine = [...lines[targetLineIndex]];
+        const targetLineRect = lines[targetLineIndex][0].rect;
+        for (let j = targetLineIndex - 1; j >= 0; j--) {
+          if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
+          const bounds = this._lineBounds(lines[j]);
+          if (currBounds && bounds && (currBounds.right < bounds.left || bounds.right < currBounds.left)) continue;
+          mergedLine.unshift(...lines[j]);
+        }
+        for (let j = targetLineIndex + 1; j < lines.length; j++) {
+          if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
+          const bounds = this._lineBounds(lines[j]);
+          if (currBounds && bounds && (currBounds.right < bounds.left || bounds.right < currBounds.left)) continue;
+          mergedLine.push(...lines[j]);
+        }
+        picked = this._pickPositionOnLine(mergedLine, goalX);
+        if (picked) break;
+        targetLineIndex = this._lineScan(targetLineIndex, fwd, lines, true);
+        if (targetLineIndex >= 0) targetLineIndex = this._lineScan(targetLineIndex, fwd, lines, false);
       }
-      for (let j = targetLineIndex + 1; j < lines.length; j++) {
-        if (!this._isSameLine(lines[j][0].rect, targetLineRect)) break;
-        const bounds = this._lineBounds(lines[j]);
-        if (currBounds && bounds && (currBounds.right < bounds.left || bounds.right < currBounds.left)) continue;
-        mergedLine.push(...lines[j]);
+      if (picked) {
+        return { range: picked, scrolled: false, gapJump: forceGapJump };
       }
-      return { range: this._pickPositionOnLine(mergedLine, goalX), scrolled: false, gapJump: forceGapJump };
+      // Every candidate below/above is unlandable — fall through to the
+      // incremental-scroll / cross-page handling as if no target existed.
     }
 
     // No target line in scope — scroll incrementally or cross page
