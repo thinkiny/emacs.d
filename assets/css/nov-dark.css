@@ -4,11 +4,7 @@ body {
   color: #bbc2cf !important;
   font-size: 20px !important;
   width: 95% !important;
-  height: 50% !important;
-  position: absolute !important;
-  left: 50% !important;
-  top: 30% !important;
-  transform: translate(-50%, -55%) !important;
+  margin: 0 auto !important;
   overflow-x: hidden;
 }
 p {
