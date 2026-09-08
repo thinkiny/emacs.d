@@ -36,6 +36,7 @@ class CaretEmacs {
     this._viewportEdgeOffset = opts.viewportEdgeOffset || 20;
     this._cursorEl = null;
     this._scrollRafPending = false;
+    this._caretViewportTop = null;
     this._lastScrollTop = 0;
     this._suppressScrollRelocate = false;
 
@@ -59,6 +60,18 @@ class CaretEmacs {
       if (this.markActive) this.deactivateMark();
     };
     this._onScroll = () => this._onUserScroll();
+    // bfcache resume never re-runs restore() and restores no scroll — re-anchor.
+    this._onPageShow = (e) => {
+      if (!e.persisted) return;
+      this._suppressScrollRelocate = true;
+      const sf = this._savedFocus;
+      if (sf?.node && this._root.contains(sf.node)) {
+        const sel = window.getSelection();
+        if (!sel.rangeCount || sel.focusNode !== sf.node || sel.focusOffset !== sf.offset)
+          this._setSelectionRange(sel, this._collapsedRange(sf.node, sf.offset));
+      }
+      this._revealCaret();
+    };
     this._onResize = () => {
       // Capture pre-reflow viewport-relative Y before a reflow-triggered
       // scroll event overwrites _caretViewportTop.
@@ -100,11 +113,9 @@ class CaretEmacs {
         this._initPdfScroll();
       } else {
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-        setTimeout(() => {
-          if (!this._restoreCaret()) this._ensureSelection();
-          this._updateCursor();
-        }, 300);
+        this.restore();
         window.addEventListener('scroll', this._onScroll, { passive: true });
+        window.addEventListener('pageshow', this._onPageShow);
       }
       // resize fires on window in both modes (elements need ResizeObserver).
       window.addEventListener('resize', this._onResize, { passive: true });
@@ -275,6 +286,100 @@ class CaretEmacs {
       return true;
     }
     return false;
+  }
+
+  /* ── Caret restore ────────────────────────────────────────────
+   * Place the caret at the persisted offset, then keep the view anchored on
+   * it. Delayed layout (fonts, bfcache reflow) can ignore programmatic
+   * scrolls for seconds, so reveal retries until the caret actually shows. */
+
+  /** Place the caret at the stored offset. Returns true when placed. */
+  _restoreCaret() {
+    let stored;
+    try { stored = localStorage.getItem(this._caretStorageKey()); } catch (e) { return false; }
+    if (stored == null) return false;
+    const target = parseInt(stored, 10);
+    if (!Number.isFinite(target)) return false;
+    const position = this._resolveGlobalOffset(target);
+    this._logDebug("restore-resolve", {
+      stored, target, resolved: !!position,
+      to: position ? (position.node.textContent || "").slice(0, 20) : null
+    });
+    if (!position) return false;
+    const sel = window.getSelection();
+    this._setSelectionRange(sel, this._collapsedRange(position.node, position.offset));
+    this._savedFocus = { node: position.node, offset: position.offset };
+    this._suppressScrollRelocate = true;
+    this._revealCaret();
+    return true;
+  }
+
+  /** Scroll the caret into view, retrying until it shows or 10s pass. */
+  _revealCaret() {
+    const deadline = performance.now() + 10000;
+    const poll = () => {
+      // Snap the selection back if a thaw/restore scroll relocated it.
+      const sf = this._savedFocus;
+      const sel = window.getSelection();
+      if (sf?.node && this._root.contains(sf.node)
+          && (!sel.rangeCount || sel.focusNode !== sf.node || sel.focusOffset !== sf.offset)) {
+        this._setSelectionRange(sel, this._collapsedRange(sf.node, sf.offset));
+      }
+      const caretRect = this._selectionFocusRect(window.getSelection());
+      if (caretRect && this._isRectInViewport(caretRect)) {
+        this._suppressScrollRelocate = false;
+        this._updateCursor();
+        return;
+      }
+      if (performance.now() >= deadline) {
+        this._suppressScrollRelocate = false;
+        this._updateCursor();
+        return;
+      }
+      if (caretRect) this._scrollToSelection();
+      setTimeout(poll, 100);
+    };
+    poll();
+  }
+
+  /** Restore the caret (see header above), preferring the native hash target. */
+  restore() {
+    if (location.hash) {
+      this._restoreHashTarget();
+      return;
+    }
+    if (this._restoreCaret()) return;   // placed; reveal-scroll is async
+    this._logDebug("restore-fallback", { scrollY: Math.round(window.scrollY) });
+    this._ensureSelection();
+    this._revealCaret();
+  }
+
+  /** Place the caret at a hash target after native fragment navigation. */
+  _restoreHashTarget() {
+    const hash = decodeURIComponent(location.hash.slice(1));
+    const target = document.getElementById(hash)
+      || document.getElementsByName(hash)[0];
+    if (!target) return;
+
+    const place = () => {
+      if (!this._isContained(target)) return;
+      const resolved = this._resolveCursorPosition(target, 0, true);
+      if (!resolved?.node || resolved.node.nodeType !== Node.TEXT_NODE
+          || !this._hasRenderedBox(resolved.node)) return;
+      const sel = window.getSelection();
+      this.markActive = false;
+      this._markAnchor = null;
+      this._setSelectionRange(sel, this._collapsedRange(resolved.node, resolved.offset));
+      this._savedFocus = { node: resolved.node, offset: resolved.offset };
+      this._savedCaret = null;
+      this._suppressScrollRelocate = true;
+      this._updateCursor();
+      this._suppressScrollRelocate = false;
+    };
+
+    // Fragment scrolling may occur before fonts and the target's text box exist.
+    if (target.getBoundingClientRect().height) place();
+    else requestAnimationFrame(place);
   }
 
   /** Page down/up: scroll viewport, then re-place caret using caretRangeFromPoint. */
@@ -902,7 +1007,8 @@ class CaretEmacs {
     return `caret-pos:${url}`;
   }
 
-  /** Count characters in navigable text nodes before (node, offset). */
+  /** Count characters in navigable text nodes before (node, offset).
+   *  Hidden text (display:none ancestors) is excluded so offsets stay stable. */
   _caretGlobalOffset(node, offset) {
     if (node?.nodeType !== Node.TEXT_NODE) return null;
     const walker = document.createTreeWalker(this._root, NodeFilter.SHOW_TEXT);
@@ -910,7 +1016,8 @@ class CaretEmacs {
     while (walker.nextNode()) {
       const textNode = walker.currentNode;
       if (textNode === node) return total + Math.min(offset, textNode.length);
-      if (this._isNavigableTextNode(textNode)) total += textNode.length;
+      if (this._isNavigableTextNode(textNode) && this._hasRenderedBox(textNode))
+        total += textNode.length;
     }
     return null;
   }
@@ -921,7 +1028,8 @@ class CaretEmacs {
     let total = 0;
     while (walker.nextNode()) {
       const textNode = walker.currentNode;
-      if (!this._isNavigableTextNode(textNode)) continue;
+      if (!this._isNavigableTextNode(textNode) || !this._hasRenderedBox(textNode))
+        continue;
       if (total + textNode.length >= target) return { node: textNode, offset: target - total };
       total += textNode.length;
     }
@@ -933,27 +1041,12 @@ class CaretEmacs {
     const caret = this._savedFocus
       || (sel?.focusNode ? { node: sel.focusNode, offset: sel.focusOffset } : null);
     if (!caret?.node || !this._isContained(caret.node)) return;
+    // Never persist an unrendered position — it can never restore visibly.
+    if (!this._hasRenderedBox(caret.node)) return;
     const offset = this._caretGlobalOffset(caret.node, caret.offset);
     if (offset == null) return;
     try { localStorage.setItem(this._caretStorageKey(), String(offset)); } catch (e) { }
   }
-
-  /** Restore the persisted caret. Returns true if a position was applied. */
-  _restoreCaret() {
-    let stored;
-    try { stored = localStorage.getItem(this._caretStorageKey()); } catch (e) { return false; }
-    if (stored == null) return false;
-    const target = parseInt(stored, 10);
-    if (!Number.isFinite(target)) return false;
-    const position = this._resolveGlobalOffset(target);
-    if (!position) return false;
-    const sel = window.getSelection();
-    this._setSelectionRange(sel, this._collapsedRange(position.node, position.offset));
-    this._savedFocus = { node: position.node, offset: position.offset };
-    this._scrollToSelection();
-    return true;
-  }
-
 
   _applyRange(sel, range) {
     const mark = this.markActive ? this._markAnchorPoint() : null;
@@ -2350,9 +2443,16 @@ class CaretEmacs {
       if (granularity === 'sentenceboundary' && this._expandPdfSentence(sel)) return;
     }
     const range = sel.getRangeAt(0);
-    const refNode = range.startContainer;
+    // Anchor on the focus end (the caret after a word-select), not the
+    // range start — and resolve element/empty anchors to text, else the
+    // sentence modify grabs a different paragraph than the one the caret
+    // is visually on.
+    const anchor = { node: sel.focusNode, offset: sel.focusOffset };
+    const resolved = anchor.node?.nodeType === Node.TEXT_NODE
+      ? anchor : this._resolveCursorPosition(range.startContainer, range.startOffset);
+    const refNode = resolved.node;
     const len = refNode.nodeType === Node.TEXT_NODE ? refNode.length : refNode.childNodes.length;
-    const refOff = Math.min(range.startOffset + 1, len);
+    const refOff = Math.min(resolved.offset + 1, len);
     sel.collapse(refNode, refOff);
     sel.modify('extend', 'backward', granularity);
     const startNode = sel.focusNode, startOff = sel.focusOffset;
@@ -2610,6 +2710,7 @@ class CaretEmacs {
       window.removeEventListener("scroll", this._onScroll);
     }
     window.removeEventListener("resize", this._onResize);
+    window.removeEventListener("pageshow", this._onPageShow);
     this._cursorEl?.remove();
     this._cursorEl = null;
     this._visualOrderCache = { root: null, layoutGeneration: -1, ordered: null, lines: null };
