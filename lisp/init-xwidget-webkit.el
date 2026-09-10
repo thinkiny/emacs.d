@@ -184,6 +184,69 @@ With non-nil BACKGROUND (or prefix arg), refocus Emacs afterward."
   (xwidget-webkit-open-in-chrome t))
 
 
+;;; HTML file opening
+
+(defun html-xwidget-view (&optional file)
+  "Open FILE as HTML in an xwidget-webkit session.
+When FILE is nil, uses `buffer-file-name' (for `auto-mode-alist' use).
+Creates a new xwidget session and kills the original file-visiting buffer."
+  (interactive "fHTML file: ")
+  (let ((html-file (expand-file-name (or file buffer-file-name)))
+        (init-buf (current-buffer)))
+    (xwidget-webkit-new-session (concat "file://" html-file))
+    (when-let* ((session (xwidget-webkit-last-session))
+                (buffer (xwidget-buffer session)))
+      (with-current-buffer buffer
+        (setq-local buffer-file-name html-file)
+        (setq-local buffer-read-only t)
+        (set-buffer-modified-p nil)
+        (setq-local default-directory (file-name-directory html-file))))
+    (kill-buffer init-buf)))
+
+(add-auto-mode 'html-xwidget-view "\\.html?\\'")
+
+;;; View Source
+
+(defun xwidget-webkit--decode-js-string (result)
+  "Decode the JSON-quoted string RESULT returned by script execution."
+  (if (and (stringp result) (string-prefix-p "\"" result))
+      (condition-case nil (json-read-from-string result) (error result))
+    result))
+
+(defun xwidget-webkit--show-source-buffer (source name)
+  "Show SOURCE html in a `web-mode' buffer named *source: NAME*."
+  (let ((source-buffer (get-buffer-create (format "*source: %s*" name))))
+    (with-current-buffer source-buffer
+      (erase-buffer)
+      (insert source)
+      (web-mode)
+      (goto-char (point-min)))
+    (switch-to-buffer source-buffer)))
+
+(defconst xwidget-webkit--html-file-regexp "\\.x?html?\\'"
+  "Files whose source `xwidget-webkit-view-source' opens directly.")
+
+(defun xwidget-webkit-view-source ()
+  "View the source of the page in the current xwidget-webkit session.
+  For a local HTML page, open its file in `web-mode'; otherwise fetch the
+  rendered HTML into a source buffer."
+  (interactive)
+  (if-let* ((file buffer-file-name)
+            ((string-match-p xwidget-webkit--html-file-regexp file))
+            ((file-exists-p file)))
+      ;; html-xwidget-view stamps buffer-file-name without visiting FILE, so
+      ;; hide it from get-file-buffer, which would hand back this buffer.
+      (let ((auto-mode-alist (cons (cons xwidget-webkit--html-file-regexp #'web-mode)
+                                   auto-mode-alist))
+            (buffer-file-name nil))
+        (switch-to-buffer (find-file-noselect file)))
+    (when-let* ((result (xwidget-webkit-execute-script-sync
+                         "(document.documentElement || document).outerHTML" 5))
+                (source (xwidget-webkit--decode-js-string result))
+                (session (xwidget-webkit-current-session)))
+      (xwidget-webkit--show-source-buffer
+       source (or (xwidget-webkit-title session) "xwidget")))))
+
 ;;; Caret.js
 (require 'caret-xwidget)
 
@@ -205,6 +268,7 @@ With non-nil BACKGROUND (or prefix arg), refocus Emacs afterward."
   (define-key xwidget-webkit-mode-map (kbd "C-s") #'isearch-forward)
   (define-key xwidget-webkit-mode-map (kbd "C-r") #'isearch-backward)
   (define-key xwidget-webkit-mode-map (kbd "q") #'xwidget-webkit-quit)
+  (define-key xwidget-webkit-mode-map (kbd "V") #'xwidget-webkit-view-source)
   (define-key xwidget-webkit-mode-map (kbd "C-,") #'xwidget-translate-range)
   (define-key xwidget-webkit-mode-map (kbd "C-x 2") 'split-window-below-recent)
   (define-key xwidget-webkit-mode-map (kbd "C-x 3") 'split-window-right-recent))

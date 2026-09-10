@@ -34,7 +34,6 @@
 (defvar nov-xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") #'nov-xwidget-goto-toc)
-    (define-key map (kbd "V") #'nov-xwidget-view-source-file)
     (define-key map (kbd "N") #'nov-xwidget-next-document)
     (define-key map (kbd "P") #'nov-xwidget-previous-document)
     (define-key map (kbd "G") #'xwidget-webkit-scroll-bottom)
@@ -192,11 +191,6 @@
         (xwidget-webkit-goto-uri (xwidget-webkit-last-session) url))
     (xwidget-webkit-goto-url url)
     (switch-to-buffer (xwidget-buffer (xwidget-webkit-current-session)))))
-
-(defun nov-xwidget-view-source-file ()
-  "Open the source file."
-  (interactive nil nov-xwidget-webkit-mode)
-  (find-file-other-window (cdr (aref nov-documents nov-documents-index))))
 
 ;;; Navigation
 

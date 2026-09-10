@@ -14,7 +14,7 @@
   (setq nxml-slash-auto-complete-flag t)
   (unbind-key (kbd "C-c ]") 'nxml-mode-map))
 
-(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+;; (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.css\\'" . css-ts-mode))
 
 (defun my-html-mode-hook()
