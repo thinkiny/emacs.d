@@ -9,6 +9,7 @@
   (setq claude-code-ide-debug nil)
   (setq claude-code-ide-cli-debug nil)
   (setq claude-code-ide-emacs-prompt "# IMPORTANT
+- Treat the executeCode tool as an absolute last resort, using it only if no other tool can resolve the request.
 - Avoid reading any binary file (e.g., PDF or EPUB) or any files where the filename begins and ends with an asterisk, (e.g. *web* or *elfeed*).
 - Line numbers are 1-based, column numbers are 0-based.")
   (setq claude-code-ide-terminal-initialization-delay 1)

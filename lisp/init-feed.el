@@ -40,11 +40,15 @@
 
 ;; elfeed options
 (defun elfeed--switch ()
-  "Switch to *elfeed-entry* if it exists, otherwise run elfeed."
+  "Switch to an existing Elfeed buffer, otherwise run Elfeed."
   (interactive)
-  (if (get-buffer "*elfeed-entry*")
-      (switch-to-buffer "*elfeed-entry*")
-    (elfeed)))
+  (cond
+   ((get-buffer "*elfeed-entry*")
+    (persp-switch-to-buffer "*elfeed-entry*"))
+   ((get-buffer "*elfeed-search*")
+    (persp-switch-to-buffer "*elfeed-search*"))
+   (t
+    (elfeed))))
 
 (defun kill-elfeed-show-buffer()
   (when-let* ((buffer (get-buffer "*elfeed-entry*")))
