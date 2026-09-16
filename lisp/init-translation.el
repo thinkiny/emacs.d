@@ -116,6 +116,23 @@ PX-POS is a cons (X . Y) in pixels."
             (remove-hook 'pre-command-hook cleanup-hook)))
     (add-hook 'pre-command-hook cleanup-hook)))
 
+(defun google-translate-request-with-retry (original-function &rest arguments)
+  "Call ORIGINAL-FUNCTION with ARGUMENTS, retrying twice on truncated JSON."
+  (let ((remaining-retries 2)
+        result
+        completed)
+    (while (not completed)
+      (condition-case error-data
+          (setq result (apply original-function arguments)
+                completed t)
+        (json-end-of-file
+         (if (> remaining-retries 0)
+             (setq remaining-retries (1- remaining-retries))
+           (signal (car error-data) (cdr error-data))))))
+    result))
+
+(advice-add #'google-translate-request :around
+            #'google-translate-request-with-retry)
 (use-proxy-local 'google-translate-request)
 
 ;; auto translate
