@@ -6,7 +6,11 @@
   :config
   (setq markdown-command "multimarkdown")
   (setq markdown-fontify-code-blocks-natively t)
-  (define-key markdown-mode-command-map (kbd "g") 'grip-mode))
+  (define-key markdown-mode-command-map (kbd "g") #'grip-browse-preview))
+
+(use-package markdown-mermaid
+  :config
+  (define-key markdown-mode-command-map (kbd "m") 'markdown-mermaid-preview))
 
 (defun my-markdown-mode-hook()
   (eglot-ensure))
@@ -26,17 +30,20 @@
       (call-interactively #'fmt-table-edit-field)
     (call-interactively #'markdown-edit-code-block)))
 
+(defun markdown-display-grip-preview-in-current-window
+    (original-function url)
+  (let ((display-buffer-overriding-action
+         '((display-buffer-same-window))))
+    (funcall original-function url)))
+
 (use-package grip-mode
-  :commands grip-mode
+  :commands (grip-mode grip-browse-preview)
   :config
   ;;go install github.com/chrishrb/go-grip@latest
   (setq grip-command 'go-grip)
-  (setq grip-preview-use-webkit t)
-  (add-to-list 'display-buffer-alist
-               '("\\*WEB: go-grip*"
-                 (display-buffer-in-side-window)
-                 (side . right)
-                 (window-width . 0.5))))
+  (setq grip-preview-in-webkit t)
+  (advice-add #'grip--browse-url :around
+              #'markdown-display-grip-preview-in-current-window))
 
 (defun markdown-live-preview-window-xwidgets (file)
   "Preview FILE with eww.
