@@ -2,14 +2,37 @@
 
 (use-package markdown-mode
   :mode ("\\.md\\'" . gfm-mode)
-  :hook (markdown-mode . my-markdown-mode-hook)
+  :hook (markdown-mode . eglot-ensure)
   :config
-  (setq markdown-command "multimarkdown")
-  (setq markdown-fontify-code-blocks-natively t)
-  (define-key markdown-mode-command-map (kbd "g") 'grip-mode))
+  (setq markdown-command "multimarkdown"
+        markdown-fontify-code-blocks-natively t))
 
-(defun my-markdown-mode-hook()
-  (eglot-ensure))
+;; preview
+;; (use-package markdown-xwidget
+;;   :after markdown-mode
+;;   :vc (:url "https://github.com/cfclrk/markdown-xwidget" :rev "main")
+;;   :bind (:map markdown-mode-command-map
+;;               ("x" . markdown-xwidget-preview-mode))
+;;   :config
+;;   (setq markdown-xwidget-github-theme "light"))
+
+(defun markdown-display-grip-preview-in-current-window
+    (original-function url)
+  (let ((display-buffer-overriding-action
+         '((display-buffer-same-window))))
+    (if grip-preview-in-webkit
+        (xwidget-webkit-browse-open-url url t)
+      (funcall original-function url))))
+
+(use-package grip-mode
+  :after markdown-mode
+  :bind (:map markdown-mode-command-map
+              ("p" . grip-browse-preview))
+  :config
+  ;;go install github.com/chrishrb/go-grip@latest
+  (setq grip-command 'go-grip)
+  (advice-add #'grip--browse-url :around
+              #'markdown-display-grip-preview-in-current-window))
 
 ;; fmt-table
 (use-package fmt-table
@@ -25,26 +48,5 @@
   (if (markdown-table-at-point-p)
       (call-interactively #'fmt-table-edit-field)
     (call-interactively #'markdown-edit-code-block)))
-
-(use-package grip-mode
-  :commands grip-mode
-  :config
-  ;;go install github.com/chrishrb/go-grip@latest
-  (setq grip-command 'go-grip)
-  (setq grip-preview-use-webkit t)
-  (add-to-list 'display-buffer-alist
-               '("\\*WEB: go-grip*"
-                 (display-buffer-in-side-window)
-                 (side . right)
-                 (window-width . 0.5))))
-
-(defun markdown-live-preview-window-xwidgets (file)
-  "Preview FILE with eww.
-To be used with `markdown-live-preview-window-function'."
-  (xwidget-webkit-browse-url (concat "file://" file) t)
-  (xwidget-buffer (xwidget-webkit-current-session)))
-
-(setq markdown-live-preview-window-function #'markdown-live-preview-window-xwidgets)
-(setq markdown-css-paths (list (concat "file://" (expand-file-name "~/.emacs.d/markdown/github.css"))))
 
 (provide 'init-markdown)

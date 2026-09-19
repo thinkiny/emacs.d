@@ -189,19 +189,22 @@ With non-nil BACKGROUND (or prefix arg), refocus Emacs afterward."
 (defun html-xwidget-view (&optional file)
   "Open FILE as HTML in an xwidget-webkit session.
 When FILE is nil, uses `buffer-file-name' (for `auto-mode-alist' use).
-Creates a new xwidget session and kills the original file-visiting buffer."
+Creates a new xwidget session and kills the original file-visiting buffer.
+Keep Markdown's internal live-preview export as a normal HTML buffer."
   (interactive "fHTML file: ")
-  (let ((html-file (expand-file-name (or file buffer-file-name)))
-        (init-buf (current-buffer)))
-    (xwidget-webkit-new-session (concat "file://" html-file))
-    (when-let* ((session (xwidget-webkit-last-session))
-                (buffer (xwidget-buffer session)))
-      (with-current-buffer buffer
-        (setq-local buffer-file-name html-file)
-        (setq-local buffer-read-only t)
-        (set-buffer-modified-p nil)
-        (setq-local default-directory (file-name-directory html-file))))
-    (kill-buffer init-buf)))
+  (if (bound-and-true-p markdown-live-preview-currently-exporting)
+      (html-mode)
+    (let ((html-file (expand-file-name (or file buffer-file-name)))
+          (init-buf (current-buffer)))
+      (xwidget-webkit-new-session (concat "file://" html-file))
+      (when-let* ((session (xwidget-webkit-last-session))
+                  (buffer (xwidget-buffer session)))
+        (with-current-buffer buffer
+          (setq-local buffer-file-name html-file)
+          (setq-local buffer-read-only t)
+          (set-buffer-modified-p nil)
+          (setq-local default-directory (file-name-directory html-file))))
+      (kill-buffer init-buf))))
 
 (add-auto-mode 'html-xwidget-view "\\.html?\\'")
 
