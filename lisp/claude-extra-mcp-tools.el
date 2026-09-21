@@ -307,6 +307,7 @@ ORIG-FN, whose buffer-file-name mention logic doesn't apply."
    :function #'claude-mcp--read-screen
    :name "claude-code-ide-mcp-read-screen"
    :description "Use this tool when you lack context; It retrieves the text currently visible in the user's active window."
+   :annotations '((readOnlyHint . t))
    :args nil)
 
   ;; Register project-search tool
@@ -314,6 +315,7 @@ ORIG-FN, whose buffer-file-name mention logic doesn't apply."
    :function #'claude-mcp--project-search
    :name "claude-code-ide-mcp-project-search"
    :description "Use this tool to search for functions, variables, classes, etc., by name pattern across the project."
+   :annotations '((readOnlyHint . t))
    :args '((:name "pattern"
                   :type string
                   :description "The pattern to search for symbols.")))
