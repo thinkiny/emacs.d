@@ -358,17 +358,17 @@ TIMEOUT defaults to 2 seconds."
                            (format ":root{--caret-color:%s}" caret-color)
                          "")))
       (xwidget-webkit-eval-script
-       (format "var s = document.createElement('style');
-s.textContent = '%shtml, body > *:not(a, input, select, button, caret-cursor) {
+       (format "var styleElement = document.createElement('style');
+styleElement.textContent = `%shtml, body, body > *:not(a, input, select, button, caret-cursor) {
   background-color: transparent !important;
-}';
-(document.head || document.documentElement).appendChild(s);"
+}`;
+(document.head || document.documentElement).appendChild(styleElement);"
                caret-rule)))))
 
 (defun xwidget-webkit--transparent-bg-callback-advice (xwidget event-type)
-  "Inject transparent background CSS on `load-committed'."
+  "Inject transparent background CSS on `load-finished'."
   (when (and (eq event-type 'load-changed)
-             (string-equal (nth 3 last-input-event) "load-committed"))
+             (string-equal (nth 3 last-input-event) "load-finished"))
     (xwidget-webkit-inject-transparent-bg)))
 
 (advice-add 'xwidget-webkit-callback :after
