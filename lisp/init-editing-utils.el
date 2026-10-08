@@ -358,15 +358,25 @@ When region is active, extend selection to end of next word."
   (set-buffer-modified-p nil)
   t)
 
-(defun map-buffer-to-local-file (local-file)
-  "Map the current buffer to a `LOCAL-FILE."
-  (when-let* ((file (and local-file (expand-file-name local-file)))
-              (dir (file-name-directory file))
-              ((file-directory-p dir)))
-    (setq default-directory dir
-          buffer-file-name file)
-    (set-buffer-modified-p nil)
-    (add-hook 'kill-buffer-query-functions #'map-buffer-to-local-file-clear-modified nil t)))
+(defvar-local buffer-local-file-mapping-explicit-p nil
+  "Whether the buffer's local file mapping was explicitly selected.")
+
+(defun map-buffer-to-local-file (local-file &optional automatic)
+  "Map the current buffer to LOCAL-FILE.
+When AUTOMATIC is non-nil, do not replace an explicit mapping and do not mark
+this mapping as explicit.  Return non-nil when the mapping is applied."
+  (when (or (not automatic)
+            (not buffer-local-file-mapping-explicit-p))
+    (when-let* ((file (and local-file (expand-file-name local-file)))
+                (directory (file-name-directory file))
+                ((file-directory-p directory)))
+      (setq default-directory directory
+            buffer-file-name file)
+      (unless automatic
+        (setq-local buffer-local-file-mapping-explicit-p t))
+      (set-buffer-modified-p nil)
+      (add-hook 'kill-buffer-query-functions #'map-buffer-to-local-file-clear-modified nil t)
+      t)))
 
 ;;----------------------------------------------------------------------------
 ;; Text Utilities
