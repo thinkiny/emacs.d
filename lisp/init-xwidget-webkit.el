@@ -1,6 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
 (require 'xwidget)
+(require 'url-parse)
+(require 'url-util)
 
 ;;; Customization
 
@@ -32,18 +34,78 @@
       (xwidget-webkit-goto-uri (xwidget-at (point-min)) url)
     (xwidget-webkit-new-session url)))
 
-(defun xwidget-webkit-set-local-file-mapping(local-file)
+(defun xwidget-webkit--local-file-url-path (url)
+  "Return the decoded local path represented by file URL, or nil."
+  (when (stringp url)
+    (let* ((parsed-url (url-generic-parse-url url))
+           (host (url-host parsed-url)))
+      (when (and (equal (url-type parsed-url) "file")
+                 (member host '(nil "" "localhost")))
+        (when-let* ((encoded-file-name (url-filename parsed-url)))
+          (let ((query-start (string-match-p "\\?" encoded-file-name)))
+            (decode-coding-string
+             (url-unhex-string
+              (if query-start
+                  (substring encoded-file-name 0 query-start)
+                encoded-file-name))
+             'utf-8)))))))
+
+(defun xwidget-webkit--title-local-file-name (title)
+  "Return a synthetic local filename based on page TITLE."
+  (let* ((normalized-title
+          (string-trim
+           (replace-regexp-in-string "[[:space:]]+" " " (or title ""))))
+         (safe-title
+          (replace-regexp-in-string "[[:cntrl:]/\\\\]+" "-" normalized-title)))
+    (format "*%s*" (if (string-empty-p safe-title)
+                        "xwidget-webkit"
+                      safe-title))))
+
+(defun xwidget-webkit--automatic-local-file-mapping (session)
+  "Return the automatic local file mapping for SESSION."
+  (or (xwidget-webkit--local-file-url-path
+       (xwidget-webkit-uri session))
+      (file-name-concat
+       (or (projectile-project-root) (expand-file-name "~/org"))
+       (xwidget-webkit--title-local-file-name
+        (xwidget-webkit-title session)))))
+
+(defun xwidget-webkit--update-local-file-mapping (session)
+  "Update the automatic local file mapping for SESSION.
+Derived viewers are skipped, and explicit mappings retain their source file."
+  (when (eq major-mode 'xwidget-webkit-mode)
+    (map-buffer-to-local-file
+     (xwidget-webkit--automatic-local-file-mapping session)
+     t)))
+
+(defun xwidget-webkit-set-local-file-mapping (local-file)
+  "Map the current xwidget buffer to LOCAL-FILE.
+A non-nil LOCAL-FILE is explicit and remains mapped across navigation.
+When LOCAL-FILE is nil, derive the mapping from the current URL and page title."
   (when-let* ((session (xwidget-at (point-min)))
-              (buffer (xwidget-buffer session))
-              (local-file (or local-file
-                              (file-name-concat (or (projectile-project-root) "~/org") "*web*"))))
+              (buffer (xwidget-buffer session)))
     (with-current-buffer buffer
-      (map-buffer-to-local-file local-file))))
+      (if local-file
+          (map-buffer-to-local-file local-file)
+        (xwidget-webkit--update-local-file-mapping session)))))
+
+(defun xwidget-webkit--local-file-mapping-callback-advice (xwidget event-type)
+  "Update XWIDGET's local file mapping after a completed load EVENT-TYPE."
+  (when (and (eq event-type 'load-changed)
+             (string-equal (nth 3 last-input-event) "load-finished"))
+    (when-let* ((buffer (xwidget-buffer xwidget))
+                ((buffer-live-p buffer)))
+      (with-current-buffer buffer
+        (xwidget-webkit--update-local-file-mapping xwidget)))))
+
+(advice-add 'xwidget-webkit-callback :after
+            #'xwidget-webkit--local-file-mapping-callback-advice)
 
 (defun xwidget-webkit-browse-open-url(url &optional new-session local-file)
   "Ask xwidget-webkit to browse URL.
 When NEW-SESSION is non-nil, open URL in a new xwidget session instead of
-reusing an existing one."
+reusing an existing one.  When LOCAL-FILE is non-nil, retain it as the
+session's explicit local file mapping."
   (interactive (progn
                  (list
                   (read-string "open URL: "
