@@ -39,6 +39,8 @@ class CaretEmacs {
     this._caretViewportTop = null;
     this._lastScrollTop = 0;
     this._suppressScrollRelocate = false;
+    this._historyPositions = new Map();
+    this._historyLocation = location.href;
 
     // Performance caches
     this._fontSizeCache = new WeakMap();
@@ -71,6 +73,13 @@ class CaretEmacs {
           this._setSelectionRange(sel, this._collapsedRange(sf.node, sf.offset));
       }
       this._revealCaret();
+    };
+    this._onHashChange = () => {
+      this._historyLocation = location.href;
+      this._invalidateLayoutCaches();
+      const position = this._historyPositions.get(location.href);
+      if (!position || !this._restoreHistoryPosition(position))
+        this._restoreHashTarget();
     };
     this._onResize = () => {
       // Capture pre-reflow viewport-relative Y before a reflow-triggered
@@ -116,6 +125,7 @@ class CaretEmacs {
         this.restore();
         window.addEventListener('scroll', this._onScroll, { passive: true });
         window.addEventListener('pageshow', this._onPageShow);
+        window.addEventListener('hashchange', this._onHashChange);
       }
       // resize fires on window in both modes (elements need ResizeObserver).
       window.addEventListener('resize', this._onResize, { passive: true });
@@ -354,6 +364,32 @@ class CaretEmacs {
     this._revealCaret();
   }
 
+  /** Save point and scroll for the current full URL. */
+  _saveHistoryPosition() {
+    if (location.href !== this._historyLocation) return;
+    const sel = window.getSelection();
+    const point = this.markActive && this._savedFocus
+      ? this._savedFocus
+      : sel?.focusNode ? { node: sel.focusNode, offset: sel.focusOffset } : null;
+    if (!point?.node || !this._isContained(point.node)) return;
+    this._historyPositions.set(location.href,
+      { node: point.node, offset: point.offset });
+  }
+
+  /** Restore point and scroll for a previously visited full URL. */
+  _restoreHistoryPosition(position) {
+    if (!this._isContained(position.node)) return false;
+    const sel = window.getSelection();
+    this.markActive = false;
+    this._markAnchor = null;
+    this._savedCaret = null;
+    this._savedFocus = { node: position.node, offset: position.offset };
+    this._setSelectionRange(sel, this._collapsedRange(position.node, position.offset));
+    this._suppressScrollRelocate = true;
+    this._revealCaret();
+    return true;
+  }
+
   /** Place the caret at a hash target after native fragment navigation. */
   _restoreHashTarget() {
     const hash = decodeURIComponent(location.hash.slice(1));
@@ -362,7 +398,6 @@ class CaretEmacs {
     if (!target) return;
 
     const place = () => {
-      if (!this._isContained(target)) return;
       const resolved = this._resolveCursorPosition(target, 0, true);
       if (!resolved?.node || resolved.node.nodeType !== Node.TEXT_NODE
           || !this._hasRenderedBox(resolved.node)) return;
@@ -373,11 +408,9 @@ class CaretEmacs {
       this._savedFocus = { node: resolved.node, offset: resolved.offset };
       this._savedCaret = null;
       this._suppressScrollRelocate = true;
-      this._updateCursor();
-      this._suppressScrollRelocate = false;
+      this._revealCaret();
     };
 
-    // Fragment scrolling may occur before fonts and the target's text box exist.
     if (target.getBoundingClientRect().height) place();
     else requestAnimationFrame(place);
   }
@@ -587,8 +620,11 @@ class CaretEmacs {
     this._lastRenderedPos = { node: sel.focusNode, offset: sel.focusOffset };
     // Track viewport-relative Y for resize re-anchoring.
     this._caretViewportTop = rect.top - this._viewportRect().top;
-    // Persist the caret across reloads (HTML only).
-    if (!this.scrollContainer) this._persistCaret();
+    // Persist the caret across reloads and same-document history (HTML only).
+    if (!this.scrollContainer) {
+      this._persistCaret();
+      this._saveHistoryPosition();
+    }
   }
 
   /** Get a client rect for cursor display at the given text position. */
@@ -1245,7 +1281,7 @@ class CaretEmacs {
         let lo = segStart, hi = textNode.length;
         while (lo < hi) {
           const mid = (lo + hi) >>> 1;
-          const rect = this._rangeRectAt(textNode, mid);
+          const rect = this._lineMoveRect(textNode, mid);
           if (!rect) { lo = mid + 1; continue; }
           const charMid = rect.top + rect.height / 2;
           // Is this char on the next line or beyond?
@@ -1742,22 +1778,25 @@ class CaretEmacs {
             && !!currentBounds && !!targetBounds
             && (currentBounds.right < targetBounds.left
               || targetBounds.right < currentBounds.left);
-          // Step 200px over a large gap instead of jumping, but only while
-          // the caret's own line stays on screen; past that, jump so the
-          // cursor stays visible.
-          const anchorVisibleAfterStep = fwd
-            ? currentLineRect.top - this._scrollPx >= viewport.top
-            : currentLineRect.bottom + this._scrollPx <= viewport.bottom;
+          // Keep intermediate presses bounded. When the final step can fully
+          // reveal the target line, retry immediately with fresh geometry.
           if ((lineGap > this._scrollPx || crossColumnOffscreen) && !targetInViewport) {
-            if (this._canScroll(fwd) && anchorVisibleAfterStep) {
+            if (this._canScroll(fwd)) {
+              const viewportHeight = Math.max(1, viewport.bottom - viewport.top);
+              const maximumScrollDistance = Math.min(this._scrollPx, viewportHeight);
+              const targetDistance = fwd
+                ? Math.max(1, targetLineBottom - viewport.bottom)
+                : Math.max(1, viewport.top - targetLineRect.top);
+              const scrollDistance = Math.min(maximumScrollDistance, targetDistance);
               // Suppress caret relocation so stepping doesn't bounce back.
               this._suppressScrollRelocate = true;
-              this._scrollBy(fwd ? this._scrollPx : -this._scrollPx);
+              this._scrollBy(fwd ? scrollDistance : -scrollDistance);
               this._invalidateLayoutCaches();
-              // One step per press; no retry/cache — presses continue stepping.
-              return { range: null, scrolled: true, stop: true };
+              if (scrollDistance < targetDistance)
+                return { range: null, scrolled: true, stop: true };
+              return { range: null, scrolled: true, targetLineIndex, goalX };
             }
-            // Anchor would leave the viewport, or at scroll boundary — jump.
+            // At the scroll boundary, jump to the available target line.
             forceGapJump = true;
           }
         }
@@ -2711,6 +2750,7 @@ class CaretEmacs {
     }
     window.removeEventListener("resize", this._onResize);
     window.removeEventListener("pageshow", this._onPageShow);
+    window.removeEventListener("hashchange", this._onHashChange);
     this._cursorEl?.remove();
     this._cursorEl = null;
     this._visualOrderCache = { root: null, layoutGeneration: -1, ordered: null, lines: null };

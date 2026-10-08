@@ -133,14 +133,28 @@ ORIG-FN is the original `getCurrentSelection' handler."
   "Extract visible text from the current xwidget viewport."
   (claude-xwidgets--exec-sync claude-xwidgets--viewport-visible-text-js))
 
-(defun claude-mcp--window-text ()
-  "Extract the text currently visible in the Emacs window."
-  (let* ((buf-min (point-min))
-         (buf-max (point-max))
-         (start (max (min (window-start) buf-max) buf-min))
-         (end (min (max (window-end nil t) buf-min) buf-max)))
-    (when (< start end)
-      (buffer-substring-no-properties start end))))
+(defun claude-mcp--content-window ()
+  "Return the first live window that does not display a Claude buffer."
+  (cl-find-if
+   (lambda (window)
+     (let ((buffer (window-buffer window)))
+       (and (buffer-live-p buffer)
+            (not (term--claude-buffer-p buffer)))))
+   (window-list (selected-frame))))
+
+(defun claude-mcp--window-text (&optional window)
+  "Extract visible text from WINDOW, or from the selected window."
+  (let* ((window (or window (selected-window)))
+         (buffer (window-buffer window)))
+    (with-current-buffer buffer
+      (let* ((buffer-minimum (point-min))
+             (buffer-maximum (point-max))
+             (start (max (min (window-start window) buffer-maximum)
+                         buffer-minimum))
+             (end (min (max (window-end window t) buffer-minimum)
+                       buffer-maximum)))
+        (when (< start end)
+          (buffer-substring-no-properties start end))))))
 
 (defun claude-mcp--visible-text ()
   "Get the text content currently visible to the user."
@@ -150,15 +164,9 @@ ORIG-FN is the original `getCurrentSelection' handler."
    ((claude-xwidgets--session)
     (claude-xwidgets--viewport-text))
    (t
-    ;; Iterate the frame's windows, picking the first non-Claude buffer.
-    ;; Falls back to "" only when every window shows a Claude buffer.
-    (cl-loop for win in (window-list (selected-frame))
-             for buf = (window-buffer win)
-             if (and buf (buffer-live-p buf)
-                      (not (term--claude-buffer-p buf)))
-             return (with-selected-window win
-                      (claude-mcp--window-text))
-             finally return ""))))
+    (if-let* ((content-window (claude-mcp--content-window)))
+        (claude-mcp--window-text content-window)
+      ""))))
 
 (defun claude-mcp--selection-text ()
   "Return selected text if available, handling all buffer types.
@@ -181,22 +189,37 @@ Returns nil or empty string if no text is selected."
   "Handle getVisibleText MCP tool call.
 Returns an alist with text and location information."
   (claude-code-ide-mcp-server-with-session-context nil
-    (let* ((selected-text (claude-mcp--selection-text))
-           (text (if (and selected-text (not (string-empty-p selected-text)))
-                     selected-text
-                   (claude-mcp--visible-text)))
-           (file-path (buffer-file-name))
-           (uri (cond
-                 (file-path (concat "file://" (expand-file-name file-path)))
-                 ((claude-xwidgets--session) (xwidget-webkit-uri (claude-xwidgets--session)))
-                 (t ""))))
-      (if (claude-xwidgets--session)
+    (if-let* ((session (claude-xwidgets--session)))
+        (let* ((selected-text (claude-mcp--selection-text))
+               (text (if (and selected-text
+                              (not (string-empty-p selected-text)))
+                         selected-text
+                       (claude-mcp--visible-text)))
+               (file-path (buffer-file-name))
+               (uri (if file-path
+                        (concat "file://" (expand-file-name file-path))
+                      (xwidget-webkit-uri session))))
           `((text . ,text)
-            (location . ((uri . ,uri))))
-        (let ((line (line-number-at-pos (window-start))))
-          `((text . ,text)
-            (location . ((uri . ,uri)
-                         (line . ,line)))))))))
+            (location . ((uri . ,uri)))))
+      (if-let* ((content-window (claude-mcp--content-window)))
+          (with-current-buffer (window-buffer content-window)
+            (let* ((selected-text (claude-mcp--selection-text))
+                   (text (if (and selected-text
+                                  (not (string-empty-p selected-text)))
+                             selected-text
+                           (claude-mcp--window-text content-window)))
+                   (file-path (buffer-file-name))
+                   (uri (if file-path
+                            (concat "file://" (expand-file-name file-path))
+                          ""))
+                   (line (line-number-at-pos
+                          (window-start content-window))))
+              `((text . ,text)
+                (location . ((uri . ,uri)
+                             (line . ,line))))))
+        '((text . "")
+          (location . ((uri . "")
+                       (line . 1))))))))
 
 ;;; Xwidget selection polling
 (defun claude-xwidgets--on-selection-change (buf text)

@@ -37,6 +37,25 @@ Applies to both the LSP and rg paths in the interactive ivy command."
   :type 'integer
   :group 'project-search)
 
+(defcustom project-search-sync-timeout 8.0
+  "Maximum time in seconds for one synchronous project search.
+This path is used by the MCP tool, so it must not wait indefinitely for
+an unavailable language server or a slow filesystem."
+  :type 'number
+  :group 'project-search)
+
+(defcustom project-search-sync-lsp-timeout 5.0
+  "Maximum time in seconds to wait for one LSP workspace-symbol request."
+  :type 'number
+  :group 'project-search)
+
+(defun project-search--call-with-timeout (timeout function)
+  "Call FUNCTION, returning nil when TIMEOUT seconds elapse or it errors."
+  (condition-case nil
+      (with-timeout ((max 0.1 (float timeout)) nil)
+        (funcall function))
+    (error nil)))
+
 ;;; ---- Shared Backend ----
 
 (defun project-search--project-root ()
@@ -173,7 +192,11 @@ Falls back to (1 . 0) when neither works."
     (let ((xrefs nil))
       (dolist (server servers)
         (condition-case nil
-            (let* ((results (append (jsonrpc-request server :workspace/symbol `(:query ,query)) nil))
+            (let* ((results (append
+                             (jsonrpc-request
+                              server :workspace/symbol `(:query ,query)
+                              :timeout project-search-sync-lsp-timeout)
+                             nil))
                    (ordered (project-search--lsp-filter-and-sort-by-score results))
                    (server-xrefs (project-search--lsp-to-xrefs ordered query max-width)))
               (setq xrefs (nconc xrefs server-xrefs)))
@@ -182,23 +205,32 @@ Falls back to (1 . 0) when neither works."
 
 (defun project-search--sync-rg-fallback (query root limit width)
   "Run rg search, returning xref items."
-  (ignore-errors (project-search--rg-to-xrefs query root limit nil width)))
+  (project-search--call-with-timeout
+   project-search-sync-timeout
+   (lambda () (project-search--rg-to-xrefs query root limit nil width))))
 
 (defun project-search-sync-query (query)
   "Search project for QUERY, returning normalized alist results.
 Uses Eglot when available, falling back to xref then ripgrep."
-  (let* ((root (project-search--project-root))
-         (limit project-search-sync-max-results)
-         (width project-search-sync-truncate-width)
-         (servers (project-search--find-eglot-servers root))
-         (xrefs (if servers
-                    (or (project-search--sync-lsp-xrefs servers query width)
-                        (project-search--sync-rg-fallback query root limit width))
-                  ;; No LSP: try xref, fall back to rg
-                  (or (ignore-errors (project-search--xref-query query))
-                      (project-search--sync-rg-fallback query root limit width)))))
-    (seq-take (seq-map #'project-search--sync-format-result (or xrefs '()))
-              limit)))
+  (or
+   (project-search--call-with-timeout
+    project-search-sync-timeout
+    (lambda ()
+      (let* ((root (project-search--project-root))
+             (limit project-search-sync-max-results)
+             (width project-search-sync-truncate-width)
+             (servers (project-search--find-eglot-servers root))
+             (xrefs (if servers
+                        (or (project-search--sync-lsp-xrefs servers query width)
+                            (project-search--sync-rg-fallback query root limit width))
+                      ;; No LSP: try xref, fall back to rg
+                      (or (project-search--call-with-timeout
+                           project-search-sync-timeout
+                           (lambda () (project-search--xref-query query)))
+                          (project-search--sync-rg-fallback query root limit width)))))
+        (seq-take (seq-map #'project-search--sync-format-result (or xrefs '()))
+                  limit))))
+   '()))
 
 ;;; ---- Ivy Interactive Command ----
 
