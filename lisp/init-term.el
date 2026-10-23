@@ -23,7 +23,6 @@
 (use-package ghostel
   :config
   (setq ghostel-tramp-shell-integration t)
-  (setq ghostel-enable-file-detection nil)
   (add-to-list 'ghostel-tramp-shells '("rpc" "/bin/bash")))
 
 (defun ghostel-send-C-v ()

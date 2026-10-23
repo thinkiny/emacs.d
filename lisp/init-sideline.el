@@ -10,20 +10,6 @@
                                   ))
   :hook (prog-mode . sideline-mode))
 
-(with-eval-after-load 'sideline
-  (defun sideline-basedpyright-update (text)
-    (if (eq major-mode 'python-ts-mode)
-        (replace-regexp-in-string "basedpyright \\[\\w+\\]: \\(.*\\)" "\\1" text)
-      ;;(replace-regexp-in-string "basedpyright \\[\\(\\w+\\)\\]: \\(.*\\)" "\\2, \\1" text)
-      text))
-
-  (defun advice/filter-sideline--create-ov(args)
-    (setf (nth 1 args) (sideline-basedpyright-update (nth 1 args)))
-    args)
-
-  ;; (advice-add 'sideline--create-ov :filter-args #'advice/filter-sideline--create-ov)
-  )
-
 (use-package sideline-flymake
   :config
   (setq sideline-flymake-display-mode 'line)

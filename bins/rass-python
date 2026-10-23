@@ -1,3 +1,3 @@
 #!/bin/zsh
-exec rass -- pyrefly lsp  -- ruff server
+exec rass "$HOME/.emacs.d/scripts/rass/python.py"
 #exec rass -- basedpyright-langserver --stdio  -- ruff server

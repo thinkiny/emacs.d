@@ -54,9 +54,6 @@ update_lsp() {
     echo "updating pyrefly"
     pipx upgrade pyrefly
 
-    # echo "updating basedpyright"
-    # pipx upgrade basedpyright
-
     echo "updating rassumfrassum"
     pipx upgrade rassumfrassum
 

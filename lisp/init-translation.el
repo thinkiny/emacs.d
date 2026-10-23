@@ -128,6 +128,12 @@ PX-POS is a cons (X . Y) in pixels."
         (json-end-of-file
          (if (> remaining-retries 0)
              (setq remaining-retries (1- remaining-retries))
+           (signal (car error-data) (cdr error-data))))
+        (wrong-type-argument
+         (if (equal error-data '(wrong-type-argument stringp nil))
+             (progn
+               (message "Translation request failed (check network or proxy)")
+               (setq completed t))
            (signal (car error-data) (cdr error-data))))))
     result))
 

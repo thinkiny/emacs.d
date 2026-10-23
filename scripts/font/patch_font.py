@@ -56,9 +56,9 @@ def parse_arguments() -> argparse.Namespace:
         dest="copy_symbol",
         default=None,
         help="Path to a donor font; ASCII, symbol, and PUA-icon glyphs "
-        "missing from the input are copied in (CJK excluded), so they "
-        "render at the correct cell width instead of falling back to "
-        "another font.",
+        "missing from the input are copied in (CJK excluded) and fitted "
+        "to the --width-ref cell width, or the input font's cell width "
+        "when no width reference is provided.",
     )
     parser.add_argument("--family", default=None, help="The new font family name")
     parser.add_argument("--style", default="Regular", help="The font style name")
@@ -136,10 +136,27 @@ def align_glyph_widths(
             new_width = ref_glyph_width
             half_count += 1
 
-        # Recenter so width change splits evenly across both sidebearings
-        delta = new_width - glyph.width
-        if delta:
-            glyph.transform((1, 0, 0, 1, delta / 2, 0))
+        # Scale sidebearings proportionally: the glyph keeps its existing
+        # left/right bearing ratio in the new cell, so slanted (italic)
+        # and deliberately asymmetric glyphs preserve their design intent.
+        # Then clamp: if the ink still crosses a cell edge (italic overhang),
+        # pull it back just enough to fit inside the cell.
+        try:
+            min_x, _, max_x, _ = glyph.boundingBox()
+        except (TypeError, ValueError):
+            min_x, max_x = 0.0, 0.0
+        if glyph.width > 0:
+            shift = min_x * new_width / glyph.width - min_x
+        else:
+            shift = 0
+        if max_x > min_x:
+            if max_x + shift > new_width:
+                shift -= (max_x + shift) - new_width
+            if min_x + shift < 0:
+                shift -= min_x + shift
+        if shift:
+            glyph.transform((1, 0, 0, 1, shift, 0))
+        if glyph.width != new_width:
             glyph.width = new_width
 
     return cjk_count, half_count
@@ -176,13 +193,22 @@ def copy_missing_glyphs(
             scale = single_width / glyph.width
             glyph.transform((scale, 0, 0, scale, 0, 0))
 
-        # Recenter so the residual width change splits evenly across both
-        # sidebearings, matching how align_glyph_widths treats existing
-        # glyphs (consistent positioning across the font).
-        delta = (single_width - glyph.width) if single_width else 0
-        if delta:
-            glyph.transform((1, 0, 0, 1, delta / 2, 0))
+        # After the uniform scale the glyph's sidebearings are scaled
+        # proportionally; then clamp any ink that crosses a cell edge
+        # back inside the cell, matching align_glyph_widths.
         if single_width:
+            try:
+                min_x, _, max_x, _ = glyph.boundingBox()
+            except (TypeError, ValueError):
+                min_x, max_x = 0.0, 0.0
+            shift = 0
+            if max_x > min_x:
+                if max_x > single_width:
+                    shift -= max_x - single_width
+                if min_x + shift < 0:
+                    shift -= min_x + shift
+            if shift:
+                glyph.transform((1, 0, 0, 1, shift, 0))
             glyph.width = single_width
         added += 1
     return added
@@ -311,11 +337,15 @@ def main() -> None:
     single_width = None
     ref_widths: dict[int, int] = {}
     if ref_font is not None:
-        ref_glyph = ref_font["m"] if "m" in ref_font else ref_font["A"]
-        single_width = round(ref_glyph.width * font.em / ref_font.em)
+        ref_glyph = ref_font[ord("m")] if ord("m") in ref_font else ref_font[ord("A")]
+        em_ratio = font.em / ref_font.em
+        single_width = round(ref_glyph.width * em_ratio)
         for g in ref_font.glyphs():
             if g.unicode >= 0 and g.width > 0:
-                ref_widths[g.unicode] = g.width
+                ref_widths[g.unicode] = round(g.width * em_ratio)
+    elif symbol_font is not None:
+        input_glyph = font[ord("m")] if ord("m") in font else font[ord("A")]
+        single_width = input_glyph.width
 
     cjk_count = half_count = 0
     width_tag = line_height_tag = None

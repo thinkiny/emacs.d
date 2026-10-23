@@ -90,7 +90,6 @@ there is no current file, eval the current buffer."
 ;; ----------------------------------------------------------------------------
 (use-package auto-compile
   :config
-  (setq auto-compile-check-parens nil)
   (add-hook 'after-init-hook 'auto-compile-on-save-mode)
   (add-hook 'after-init-hook 'auto-compile-on-load-mode))
 

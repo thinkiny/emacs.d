@@ -41,27 +41,21 @@
   (define-key eglot-mode-map (kbd "C-c a") 'eglot-code-actions)
 
   ;;(require 'eglot-hover)
+  ;; vtsls requests section "" (whole config); the empty-name key `:' answers it.
+  ;; rass selects the vtsls overlay for config responses and notifications.
   (setq-default eglot-workspace-configuration '(:gopls (:staticcheck  t
                                                         :usePlaceholders t
                                                         :analyses  (:ST1003 :json-false))
-                                                :vtsls (:autoUseWorkspaceTsdk t
-                                                        :typescript
-                                                        (:preferGoToSourceDefinition t
-                                                         :preferences (:importModuleSpecifier "relative"))
-                                                        :javascript
-                                                        (:preferGoToSourceDefinition t
-                                                         :preferences (:importModuleSpecifier "relative")))
-                                                       ;; :javascript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
-                                                       ;; :typescript (:format (:tabSize 2 :indentSize 2 :convertTabsToSpaces t))
-                                                       :basedpyright.analysis (:typeCheckingMode "standard"
-                                                                               :diagnosticSeverityOverrides (:reportOptionalMemberAccess "warning"
-                                                                                                             :reportOptionalSubscript "warning"
-                                                                                                             :reportReturnType "warning"
-                                                                                                             :reportTypedDictNotRequiredAccess "warning")
-                                                                               :useLibraryCodeForTypes t
-                                                                               :diagnosticMode "workspace"
-                                                                               :autoSearchPaths t)
-                                                       ))
+                                                : (:rass
+                                                   (:vtsls
+                                                    (:vtsls (:autoUseWorkspaceTsdk t)
+                                                     :typescript (:preferGoToSourceDefinition t
+                                                                  :suggest (:completeFunctionCalls t)
+                                                                  :preferences (:importModuleSpecifier "relative"))
+                                                     :javascript (:preferGoToSourceDefinition t
+                                                                  :suggest (:completeFunctionCalls t)
+                                                                  :preferences (:importModuleSpecifier "relative")))))
+                                                ))
 
   ;;(setq completion-category-defaults nil)
   (setq mode-line-misc-info
@@ -144,8 +138,13 @@
   ;; (eglot-hover-mode)
   )
 
-(with-eval-after-load-theme 'eglot
-                            (set-face-foreground 'eglot-inlay-hint-face (face-attribute 'default :foreground)))
+(defun sync-eglot-inlay-hint-face ()
+  (set-face-foreground 'eglot-inlay-hint-face
+                       (face-attribute 'default :foreground)))
+
+(with-eval-after-load 'eglot
+  (sync-eglot-inlay-hint-face)
+  (add-hook 'load-theme-hook #'sync-eglot-inlay-hint-face))
 
 ;; set-server-program
 (defun set-eglot-server-program (modes cmd)
