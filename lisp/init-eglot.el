@@ -31,7 +31,7 @@
                                             :documentRangeFormattingProvider))
 
   (setq jsonrpc-default-request-timeout 15)
-  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename)
+  (define-key eglot-mode-map (kbd "C-c r") 'eglot-rename-current)
   (define-key eglot-mode-map (kbd "C-c o") 'eglot-code-action-override)
   (define-key eglot-mode-map (kbd "C-c i") 'eglot-code-action-organize-imports)
   (define-key eglot-mode-map (kbd "C-c h") 'eldoc-box-help-at-point)
@@ -59,28 +59,27 @@
 
   ;;(setq completion-category-defaults nil)
   (setq mode-line-misc-info
-        (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info))
-
-  (eglot--code-action eglot-code-action-override "source.overrideMethods")
-
-  ;; override functions
-  (cl-defun eglot--rename-interactive (&aux region)
-    (eglot-server-capable-or-lose :renameProvider)
-    (let* ((probe (eglot--request (eglot--current-server-or-lose)
-                                  :textDocument/prepareRename
-                                  (eglot--TextDocumentPositionParams)))
-           (def
-            (cond ((null probe) (user-error "[eglot] Can't rename here"))
-                  ((plist-get probe :placeholder))
-                  ((plist-get probe :defaultBehavior) (thing-at-point 'symbol t))
-                  ((setq region (eglot-range-region probe))
-                   (buffer-substring-no-properties (car region) (cdr region))))))
-      (list (read-from-minibuffer
-             (format "Rename `%s' to: " (or def "unknown symbol"))
-             def nil nil nil def))))
-  )
+        (cl-remove-if (lambda (x) (eq (car x) 'eglot--managed-mode)) mode-line-misc-info)))
 
 ;; interactive commands
+(defun eglot-rename-current ()
+  "Rename the symbol at point with its current name prefilled."
+  (interactive)
+  (let ((bounds (refactor-backend-rename-bounds 'eglot)))
+    (unless bounds
+      (user-error "Eglot cannot rename the symbol at point"))
+    (let* ((symbol-name
+            (buffer-substring-no-properties (car bounds) (cdr bounds)))
+           (new-name
+            (string-trim
+             (read-from-minibuffer
+              (format "Rename `%s' to: " symbol-name)
+              symbol-name nil nil nil symbol-name))))
+      (refactor-apply-changeset (refactor-backend-rename 'eglot new-name)
+                                :origin this-command))))
+
+(refactor--define-kind-command eglot-code-action-override "source.overrideMethods")
+
 (defun eglot-first-flymake-current-line()
   (if-let* ((digs (flymake-diagnostics (line-beginning-position) (line-end-position))))
       (car (seq-sort-by

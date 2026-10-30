@@ -238,7 +238,10 @@ With non-nil BACKGROUND (or prefix arg), refocus Emacs afterward."
   (interactive "P")
   (when-let* ((url (or (xwidget-webkit-link-at-caret)
                        (xwidget-webkit-uri (xwidget-webkit-current-session)))))
-    (xwidget-webkit-open-url-in-chrome url background)))
+    (when (y-or-n-p (if background
+                        "Open current page in Chrome (background)? "
+                      "Open current page in Chrome? "))
+      (xwidget-webkit-open-url-in-chrome url background))))
 
 (defun xwidget-webkit-open-in-chrome-background ()
   "Open link at caret (or session URL) in Chrome without leaving Emacs."
@@ -289,18 +292,16 @@ Keep Markdown's internal live-preview export as a normal HTML buffer."
     (switch-to-buffer source-buffer)))
 
 (defconst xwidget-webkit--html-file-regexp "\\.x?html?\\'"
-  "Files whose source `xwidget-webkit-view-source' opens directly.")
+  "HTML files opened with `web-mode'.")
 
 (defun xwidget-webkit-view-source ()
   "View the source of the page in the current xwidget-webkit session.
-  For a local HTML page, open its file in `web-mode'; otherwise fetch the
-  rendered HTML into a source buffer."
+Open an existing mapped file in its source mode, using `web-mode' for HTML.
+Otherwise, show the page's rendered HTML."
   (interactive)
   (if-let* ((file buffer-file-name)
-            ((string-match-p xwidget-webkit--html-file-regexp file))
             ((file-exists-p file)))
-      ;; html-xwidget-view stamps buffer-file-name without visiting FILE, so
-      ;; hide it from get-file-buffer, which would hand back this buffer.
+      ;; Prevent get-file-buffer from returning this mapped xwidget buffer.
       (let ((auto-mode-alist (cons (cons xwidget-webkit--html-file-regexp #'web-mode)
                                    auto-mode-alist))
             (buffer-file-name nil))

@@ -59,6 +59,20 @@
   (add-hook 'ediff-prepare-buffer-hook #'my-ediff-prepare-buffer-hook)
   (add-hook 'ediff-cleanup-hook #'my-ediff-cleanup-hook))
 
+;; Mapped buffers name related files without visiting their contents.
+(defun ediff--ignore-mapped-file-buffer (orig file &rest args)
+  "Make ORIG visit FILE instead of reusing a mapped non-file buffer."
+  (if-let* ((buffer (get-file-buffer file))
+            ((buffer-local-boundp 'buffer-local-file-mapping-p buffer))
+            ((buffer-local-value 'buffer-local-file-mapping-p buffer)))
+      (with-current-buffer buffer
+        (let ((buffer-file-name nil))
+          (apply orig file args)))
+    (apply orig file args)))
+
+(with-eval-after-load 'ediff
+  (advice-add 'ediff-find-file :around #'ediff--ignore-mapped-file-buffer))
+
 ;; ediff-quit
 (with-eval-after-load 'ediff-util
   (advice-add 'ediff-quit :around

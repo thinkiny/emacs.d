@@ -12,31 +12,31 @@
                    ".*/.metals/"
                    ".*/.cache/"))
 
-(defun get-recentf-exclude-list(name)
+(defun recentf--exclude-list(name)
   (if (s-suffix-p "//" name)
       (seq-filter (apply-partially #'s-starts-with-p (substring name 0 -1)) recentf-list)
     (list name)))
 
-(defun delete-recentf-action(item)
+(defun recentf--delete-action(item)
   (defvar recentf-exclude)
-  (let ((recentf-exclude (get-recentf-exclude-list item)))
+  (let ((recentf-exclude (recentf--exclude-list item)))
     (call-interactively #'recentf-cleanup)))
 
-(defun delete-from-recentf()
+(defun recentf-delete-entry()
   "Delete selected folder from recentf list."
   (interactive)
   (ivy-read "Delete from recentf list: "
             (delete-dups (mapcar #'file-name-directory recentf-list))
-            :action #'delete-recentf-action))
+            :action #'recentf--delete-action))
 
 
-(defun recentf-keep-predicate (file)
+(defun recentf--keep-predicate (file)
   "Return non-nil if FILE should be kept in the recent list.
 It handles the case of remote files as well."
   (cond
    ((file-remote-p file) t)
    ((file-readable-p file))))
 
-(setq recentf-keep '(recentf-keep-predicate))
+(setq recentf-keep '(recentf--keep-predicate))
 
 (provide 'init-recentf)

@@ -361,6 +361,9 @@ When region is active, extend selection to end of next word."
 (defvar-local buffer-local-file-mapping-explicit-p nil
   "Whether the buffer's local file mapping was explicitly selected.")
 
+(defvar-local buffer-local-file-mapping-p nil
+  "Whether `buffer-file-name' records a mapping rather than a visited file.")
+
 (defun map-buffer-to-local-file (local-file &optional automatic)
   "Map the current buffer to LOCAL-FILE.
 When AUTOMATIC is non-nil, do not replace an explicit mapping and do not mark
@@ -371,7 +374,8 @@ this mapping as explicit.  Return non-nil when the mapping is applied."
                 (directory (file-name-directory file))
                 ((file-directory-p directory)))
       (setq default-directory directory
-            buffer-file-name file)
+            buffer-file-name file
+            buffer-local-file-mapping-p t)
       (unless automatic
         (setq-local buffer-local-file-mapping-explicit-p t))
       (set-buffer-modified-p nil)

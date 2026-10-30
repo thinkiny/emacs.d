@@ -33,7 +33,9 @@ FILE_URLS=(
 update_repo() {
     echo "updating $1"
     pushd "$1" &> /dev/null
-    git pull -f
+    if ! git pull -f; then
+        echo "Warning: failed to update $1; continuing." >&2
+    fi
     popd &> /dev/null
 }
 
