@@ -2200,19 +2200,14 @@ class CaretEmacs {
         if (!allowScroll) return { kind: 'stepped' };
         if (this._canScroll(forward)) {
           const maximum = Math.min(this._scrollPx, Math.max(1, viewport.bottom - viewport.top));
-          const distance = forward
-            ? Math.max(1, targetBottom - viewport.bottom)
-            : Math.max(1, viewport.top - targetRect.top);
-          const step = Math.min(maximum, distance);
+          const step = maximum;
           this._suppressScrollRelocate = true;
           const moved = this._scrollBy(forward ? step : -step);
           if (!moved) {
             this._suppressScrollRelocate = false;
             forceGapJump = true;
-          } else if (step < distance) {
-            return { kind: 'stepped' };
           } else {
-            return { kind: 'retry', goalX };
+            return { kind: 'stepped' };
           }
         } else {
           forceGapJump = true;

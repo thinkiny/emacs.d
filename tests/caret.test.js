@@ -933,6 +933,36 @@ test('one line command performs at most one fallback scroll step', () => {
   assert.equal(scrolls, 1);
 });
 
+test('partially visible large image still performs one full bounded step', () => {
+  const root = element('BODY');
+  const current = append(root, text('current'));
+  const target = append(root, text('target'));
+  const { selection } = resetEnvironment(root);
+  selection.collapse(current, 1);
+  const caret = bareCaret(root);
+  caret._lineMoveRect = () => ({ top: 500, bottom: 526, left: 20, width: 12, height: 26 });
+  caret._moveWithinPreservedTextNode = () => null;
+  caret._currentPage = () => null;
+  caret._findCaretLine = () => 0;
+  caret._viewportRect = () => ({ top: 0, bottom: 944, left: 0, right: 800 });
+  caret._canScroll = () => true;
+  let scrolled = 0;
+  caret._scrollBy = (distance) => { scrolled = distance; return distance; };
+  const lines = [
+    [{ node: current, startOffset: 0, endOffset: current.length,
+      rect: { top: 500, bottom: 526, left: 20, width: 100, height: 26 } }],
+    [{ node: target, startOffset: 0, endOffset: target.length,
+      rect: { top: 1055, bottom: 1081, left: 20, width: 100, height: 26 } }],
+  ];
+  caret._visuallyOrderedTextNodes = () => ({ ordered: lines.flat(), lines });
+
+  const result = caret._moveLine(true);
+  assert.equal(result.kind, 'stepped');
+  assert.equal(scrolled, 200);
+  assert.equal(selection.focusNode, current);
+  assert.equal(selection.focusOffset, 1);
+});
+
 test('rendered normalization retains abbreviations inside the native sentence', () => {
   const root = element('BODY');
   const node = append(root, text('Dr. Smith arrived.'));
