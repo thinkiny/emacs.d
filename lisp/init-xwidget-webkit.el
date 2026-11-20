@@ -396,19 +396,41 @@ TIMEOUT defaults to 2 seconds."
 
 ;;; Window Sizing
 
-(defun xwidget-webkit-auto-adjust-size-derived (frame)
-  "Adjust xwidget size to fit FRAME for any `xwidget-webkit-mode' derivative."
-  (dolist (win (window-list frame))
-    (with-selected-window win
+(defun xwidget-webkit-adjust-size-for-window (window)
+  "Fit the xwidget displayed in WINDOW, including derived viewer modes."
+  (when (window-live-p window)
+    (with-current-buffer (window-buffer window)
       (when (derived-mode-p 'xwidget-webkit-mode)
         (when-let* ((xwidget (xwidget-at (point-min))))
-          (xwidget-webkit-adjust-size-to-window xwidget win))))))
+          (xwidget-webkit-adjust-size-to-window xwidget window))))))
+
+(defun xwidget-webkit-handle-window-buffer-change (frame)
+  "Remove stale xwidget views and refit xwidgets after FRAME changes buffers."
+  (when (frame-live-p frame)
+    ;; Cocoa permits only one native view per xwidget model.  Purge every stale
+    ;; view because the destination window may redisplay before the source.
+    (dolist (view xwidget-view-list)
+      (let ((model (xwidget-view-model view))
+            (view-window (xwidget-view-window view)))
+        (when (or (not (window-live-p view-window))
+                  (not (xwidget-live-p model))
+                  (not (eq (window-buffer view-window)
+                           (xwidget-buffer model))))
+          (delete-xwidget-view view))))
+    (xwidget-webkit-auto-adjust-size-derived frame)))
+
+(defun xwidget-webkit-auto-adjust-size-derived (frame)
+  "Adjust xwidget size to fit FRAME for any `xwidget-webkit-mode' derivative."
+  (dolist (window (window-list frame))
+    (xwidget-webkit-adjust-size-for-window window)))
 
 (setq window-size-change-functions
       (remove 'xwidget-webkit-adjust-size-in-frame
               window-size-change-functions))
 
 (add-hook 'window-size-change-functions #'xwidget-webkit-auto-adjust-size-derived)
+(add-hook 'window-buffer-change-functions
+          #'xwidget-webkit-handle-window-buffer-change)
 
 ;;; Transparent Background
 
